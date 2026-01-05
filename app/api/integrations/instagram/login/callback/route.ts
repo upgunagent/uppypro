@@ -96,7 +96,8 @@ export async function GET(request: Request) {
             // Fetch each authorized page directly to find the one with IG
             for (const pageId of targetIds) {
                 console.log(`Checking Page ID: ${pageId}...`);
-                const pageRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}?fields=instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
+                // Request Page Access Token explicitly
+                const pageRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}?fields=access_token,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
                 const pageData = await pageRes.json();
 
                 if (pageData.instagram_business_account) {
@@ -109,7 +110,7 @@ export async function GET(request: Request) {
         // Fallback to /me/accounts if no target_ids (unlikely in business login) or if legacy token
         if (!foundPage) {
             console.log("No specific target_ids found or no IG linked in them. Trying /me/accounts fallback...");
-            const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
+            const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=access_token,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
             const accountsData = await accountsRes.json();
             foundPage = accountsData.data?.find((p: any) => p.instagram_business_account);
         }
@@ -124,24 +125,23 @@ export async function GET(request: Request) {
         const igAccount = pageWithIg.instagram_business_account;
         const igUserId = igAccount.id;
         const username = igAccount.username;
+        // USE PAGE ACCESS TOKEN
+        const pageAccessToken = pageWithIg.access_token;
 
         console.log("Found IG Account:", username, igUserId);
+        console.log("Page Access Token Found:", !!pageAccessToken);
 
-        console.log("Found IG Account:", username, igUserId);
-
-        // 2.5. IMPORTANT: Subscribe to Webhooks for this Page
-        // Even if configured in Dashboard, we must explicitly subscribe the Page to the App.
-        console.log("Subscribing Page to App Webhooks...");
-        const subscribeRes = await fetch(
-            `https://graph.facebook.com/v21.0/${pageWithIg.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins,message_deliveries,message_reads&access_token=${accessToken}`,
-            { method: "POST" }
-        );
-        const subscribeData = await subscribeRes.json();
-        console.log("Subscribe Result:", subscribeData);
-
-        if (!subscribeData.success) {
-            console.warn("Webhook Subscription Warning:", subscribeData);
-            // We don't block the flow, but it's good to know.
+        // 2.5. IMPORTANT: Subscribe to Webhooks for this Page using PAGE TOKEN
+        if (pageAccessToken) {
+            console.log("Subscribing Page to App Webhooks...");
+            const subscribeRes = await fetch(
+                `https://graph.facebook.com/v21.0/${pageWithIg.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins,message_deliveries,message_reads&access_token=${pageAccessToken}`,
+                { method: "POST" }
+            );
+            const subscribeData = await subscribeRes.json();
+            console.log("Subscribe Result:", subscribeData);
+        } else {
+            console.warn("No Page Access Token found. Skipping subscription (User Token might fail).");
         }
 
         // 3. Save to DB
@@ -155,9 +155,10 @@ export async function GET(request: Request) {
             meta_identifiers: {
                 ig_user_id: igUserId,
                 username: username,
-                account_type: "business"
+                account_type: "business",
+                page_id: pageWithIg.id // Store Page ID too valuable
             },
-            access_token_encrypted: accessToken
+            access_token_encrypted: pageAccessToken || accessToken // Prefer Page Token
         }, { onConflict: "tenant_id, channel" });
 
         if (dbError) {
