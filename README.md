@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UppyPro
 
-## Getting Started
+UppyPro, WhatsApp ve Instagram DM mesajlarını tek bir panelden yönetmeyi sağlayan, n8n üzerinden isteğe bağlı AI otomatik cevaplama entegrasyonu sunan bir SaaS uygulamasıdır.
 
-First, run the development server:
+## Özellikler
+
+- **Çok Kiracılı (Multi-Tenant) SaaS Mimarisi**: Ajans Yöneticisi ve İşletme Sahibi rolleri.
+- **Birleşik Inbox**: WhatsApp ve Instagram mesajlarını tek yerden yönetin.
+- **AI Entegrasyonu**: Açılıp kapatılabilir AI modu (Bot vs İnsan). n8n senaryolarına bağlanır.
+- **Faturalandırma**: Iyzico ödemeleri için entegrasyon yapısı.
+- **Karanlık Mod UI**: Premium, modern arayüz.
+
+## Teknolojiler
+
+- **Framework**: Next.js 14 (App Router)
+- **Veritabanı**: Supabase (Postgres)
+- **Kimlik Doğrulama**: Supabase Auth
+- **Stil**: Tailwind CSS
+
+## Başlangıç
+
+### 1. Gereksinimler
+- Node.js 18+
+- Supabase Projesi (supabase.com üzerinde oluşturun)
+
+### 2. Ortam Değişkenleri
+`.env.local.example` dosyasını `.env.local` olarak kopyalayın ve değerleri doldurun:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://projeniz.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=anon-key-değeriniz
+SUPABASE_SERVICE_ROLE_KEY=service-role-key-değeriniz
+META_VERIFY_TOKEN=uppypro_verify_token
+BOT_API_KEY=guvenli_rastgele_string
+MOCK_META_SEND=true
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Veritabanı Kurulumu
+1. Supabase SQL Editörüne gidin.
+2. `supabase/migrations/` klasöründeki dosyaları sırasıyla çalıştırın:
+   - `0001_initial_schema.sql`
+   - `0002_billing_schema.sql`
+   - `0003_rls_policies.sql`
+3. Seed verisini çalıştırın:
+   - `seed.sql`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Kurulum ve Çalıştırma
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`http://localhost:3000` adresine gidin.
 
-## Learn More
+### 5. Webhook Kurulumu
+- **Meta (Facebook) Developer Portal**: Webhook URL'ini `https://alanadiniz.com/api/webhooks/meta` olarak ayarlayın. Doğrulama tokeni: `uppypro_verify_token`.
+- **n8n**: n8n senaryonuzun `https://alanadiniz.com/api/messages/send` adresine `x-api-key` ile POST isteği atmasını sağlayın.
 
-To learn more about Next.js, take a look at the following resources:
+## Test Etme
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Kayıt Ol**: `/signup` sayfasına gidin, bir plan seçin ve yeni bir işletme oluşturun.
+- **Giriş**: `/login` sayfasından giriş yapın.
+- **Admin**: İlk kullanıcı otomatik Admin değildir. `/admin` sayfasına erişmek için Supabase panelinden `tenant_members` tablosundaki kullanıcınızın rolünü `agency_admin` olarak güncelleyin.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Lisans
+Özel Mülkiyet.
