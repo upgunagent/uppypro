@@ -23,44 +23,40 @@ export async function GET(request: Request) {
     }
 
     const accessToken = connection.access_token_encrypted;
-    // Note: We called it 'encrypted' but in MVP it might be plain text. If it's truly encrypted, we need to decrypt.
-    // Based on previous code in callback/route.ts, we are storing it directly: access_token_encrypted: accessToken 
-    // So we treat it as plain text here.
 
     if (!accessToken) {
         return NextResponse.json({ error: "No access token in connection record" }, { status: 500 });
     }
 
-    // 1. Get Page ID from /me/accounts or debug_token to find the connected page
-    // Actually, we need the Page ID to query subscribed_apps.
-    // Let's find the page ID using the token.
-
-    let pageId = null;
-    let pageName = null;
+    // 1. Get Page ID
+    // Check if we have it in DB first (new flow stores it)
+    let pageId = connection.meta_identifiers?.page_id;
+    let pageName = "Unknown (From DB)";
 
     try {
-        const pagesRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}`);
-        const pagesData = await pagesRes.json();
+        if (!pageId) {
+            // Fallback for legacy data: Try to find it via API
+            // Be careful: If accessToken is a Page Token, /me/accounts fails.
+            // Try /me first to see if it IS the page.
+            const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name,accounts&access_token=${accessToken}`);
+            const meData = await meRes.json();
 
-        // Find the page that has instagram_business_account matching our ig_user_id
-        // But simplistic approach: just use the first page or the one linked.
-        const linkedPage = pagesData.data?.find((p: any) => p.instagram_business_account); // This field requires 'instagram_basic' scope usually
-
-        // Or if we can't find it easily, let's try to fetch details of the page calling /me if token is page token? 
-        // No, token is usually User Access Token.
-        // Let's just try to find the page ID corresponding to the IG User ID we stored.
-
-        if (linkedPage) {
-            pageId = linkedPage.id;
-            pageName = linkedPage.name;
-        } else if (pagesData.data && pagesData.data.length > 0) {
-            // Fallback: Check the first page
-            pageId = pagesData.data[0].id;
-            pageName = pagesData.data[0].name;
+            if (meData.accounts) {
+                // It's a User Token
+                const found = meData.accounts.data?.find((p: any) => p.instagram_business_account);
+                if (found) {
+                    pageId = found.id;
+                    pageName = found.name;
+                }
+            } else if (meData.id) {
+                // It's likely a Page Token (no accounts field, just id/name)
+                pageId = meData.id;
+                pageName = meData.name;
+            }
         }
 
         if (!pageId) {
-            return NextResponse.json({ error: "Could not find any Page ID with this token", meta_response: pagesData }, { status: 400 });
+            return NextResponse.json({ error: "Could not determine Page ID. DB missing it and API lookup failed.", details: { token_preview: accessToken.substring(0, 10) } }, { status: 400 });
         }
 
         // 2. Report Subscribed Apps (GET)
@@ -79,7 +75,7 @@ export async function GET(request: Request) {
             page: { id: pageId, name: pageName },
             current_subscriptions: getJson,
             force_subscribe_attempt: postJson,
-            token_debug: { has_token: true, length: accessToken.length }
+            token_type: "Likely Page Token (Success)"
         });
 
     } catch (e: any) {
