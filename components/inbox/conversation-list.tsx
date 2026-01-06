@@ -180,17 +180,7 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
 
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
-            {/* CRITICAL DEBUG PANEL */}
-            <div className="bg-red-900/80 border border-red-500 p-3 rounded mb-2 text-xs font-mono text-red-100">
-                <div className="flex justify-between font-bold text-lg mb-1">
-                    <span>⚠️ DEBUG MODE v2.0</span>
-                    <button onClick={() => window.location.reload()} className="bg-white text-red-900 px-2 rounded">REFRESH</button>
-                </div>
-                <div>Tenant ID: {tenantId || "UNDEFINED"}</div>
-                <div>Last Poll: {lastPoll}</div>
-                <div>Conv Count: {conversations.length}</div>
-                {debugError && <div className="text-yellow-300 font-bold">ERROR: {debugError}</div>}
-            </div>
+            {/* Debug removed: System Stable */}
 
             {conversations.map((conv) => {
                 const msgs = Array.isArray(conv.messages) ? conv.messages : [];

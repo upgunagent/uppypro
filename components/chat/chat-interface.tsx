@@ -14,6 +14,8 @@ interface Message {
     text: string;
     sender: "CUSTOMER" | "BOT" | "HUMAN";
     created_at: string;
+    message_type?: string;
+    media_url?: string;
 }
 
 interface ChatInterfaceProps {
@@ -159,14 +161,43 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                             {/* Bubble */}
                             <div className={clsx(
-                                "px-4 py-2 rounded-2xl text-sm",
+                                "px-4 py-2 rounded-2xl text-sm overflow-hidden",
                                 isMe
                                     ? "bg-primary text-white rounded-br-none"
                                     : isBot
                                         ? "bg-purple-600/20 border border-purple-500/30 text-purple-100 rounded-bl-none"
                                         : "bg-white/10 text-gray-200 rounded-bl-none"
                             )}>
-                                {msg.text}
+                                {/* MEDIA CONTENT */}
+                                {msg.message_type === 'image' && msg.media_url ? (
+                                    <div className="-mx-2 -mt-2 mb-2">
+                                        <img
+                                            src={msg.media_url}
+                                            alt="Gelen Fotoğraf"
+                                            className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => window.open(msg.media_url, '_blank')}
+                                        />
+                                    </div>
+                                ) : msg.message_type === 'video' && msg.media_url ? (
+                                    <div className="-mx-2 -mt-2 mb-2">
+                                        <video
+                                            src={msg.media_url}
+                                            controls
+                                            className="max-w-[240px] rounded-lg"
+                                        />
+                                    </div>
+                                ) : msg.message_type === 'audio' && msg.media_url ? (
+                                    <div className="mb-1 min-w-[200px]">
+                                        <audio
+                                            src={msg.media_url}
+                                            controls
+                                            className="w-full h-8"
+                                        />
+                                    </div>
+                                ) : null}
+
+                                {/* TEXT CONTENT */}
+                                {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
                             </div>
 
                             {/* Time */}

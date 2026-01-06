@@ -66,21 +66,28 @@ export async function POST(request: Request) {
             let channel: 'whatsapp' | 'instagram' = 'whatsapp';
             let recipientId = null; // To find tenant
 
+            // FILTER: Ignore Status Updates (WhatsApp)
+            if (changes?.statuses) {
+                console.log("Ignoring value 'statuses' update");
+                continue;
+            }
+
             if (changes?.messages) {
-                // WhatsApp
+                // WhatsApp Logic
                 const msg = changes.messages[0];
                 eventData.external_msg_id = msg.id;
                 eventData.sender_id = msg.from;
                 eventData.timestamp = msg.timestamp;
 
+                // ... (existing message parsing)
                 // Determine Type
-                const msgType = msg.type; // text, image, video, audio, document...
+                const msgType = msg.type;
                 if (msgType === 'text') {
                     eventData.text = msg.text?.body || "";
                     eventData.type = 'text';
                 } else if (msgType === 'image') {
                     eventData.type = 'image';
-                    eventData.media_url = msg.image?.id; // Store ID for WA
+                    eventData.media_url = msg.image?.id;
                     eventData.media_type = msg.image?.mime_type;
                     eventData.text = msg.image?.caption || "[Photo]";
                 } else if (msgType === 'video') {
@@ -100,14 +107,27 @@ export async function POST(request: Request) {
                     eventData.text = "[Audio]";
                 } else {
                     eventData.text = `[${msgType}]`;
-                    eventData.type = 'text'; // Fallback
+                    eventData.type = 'text';
                 }
 
                 recipientId = changes.metadata?.phone_number_id;
                 channel = 'whatsapp';
+
             } else if (messaging) {
-                // Instagram
-                // messaging.recipient.id is the Instagram Account ID (Scoped)
+                // Instagram Logic
+
+                // FILTER: Ignore Echoes (Messages sent by us)
+                if (messaging.message?.is_echo) {
+                    console.log("Ignoring Instagram Echo message");
+                    continue;
+                }
+
+                // FILTER: Ignore Delivery/Read Watermarks
+                if (messaging.delivery || messaging.read) {
+                    console.log("Ignoring Instagram delivery/read");
+                    continue;
+                }
+
                 eventData.external_msg_id = messaging.message?.mid;
                 eventData.sender_id = messaging.sender?.id;
                 eventData.timestamp = messaging.timestamp;
@@ -116,19 +136,23 @@ export async function POST(request: Request) {
                 const attachments = messaging.message?.attachments;
                 if (attachments && attachments.length > 0) {
                     const att = attachments[0];
-                    eventData.type = att.type; // image, video, audio
-                    eventData.media_url = att.payload?.url; // IG gives URL!
+                    eventData.type = att.type;
+                    eventData.media_url = att.payload?.url;
                     eventData.text = "[Media]";
                 } else {
                     eventData.text = messaging.message?.text || "";
                     eventData.type = 'text';
                 }
 
-                recipientId = messaging.recipient?.id; // OUR Instagram Account ID
+                recipientId = messaging.recipient?.id;
                 channel = 'instagram';
             }
 
-            if (!eventData || !recipientId) continue;
+            // FINAL SAFETY CHECK: Don't insert empty junk
+            if (!eventData || !recipientId || (!eventData.text && !eventData.media_url)) {
+                console.log("Skipping invalid/empty event payload");
+                continue;
+            }
 
             // 1. Find Tenant
             let tenantId = null;
