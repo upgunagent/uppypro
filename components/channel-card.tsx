@@ -40,7 +40,10 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 page_id: type === "instagram" ? pageId : undefined,
             };
 
-            await connectChannelAction(payload);
+            const result = await connectChannelAction(payload);
+            if (!result?.success) {
+                throw new Error(result?.error || "Bilinmeyen bir hata oluştu.");
+            }
             setDialogOpen(false);
         } catch (error) {
             console.error(error);

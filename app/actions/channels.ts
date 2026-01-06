@@ -24,7 +24,7 @@ export async function connectChannelAction(data: ConnectPayload) {
         .limit(1)
         .maybeSingle();
 
-    if (!member) throw new Error("Tenant not found");
+    if (!member) return { success: false, error: "Tenant not found" };
 
     // 2. Prepare Meta Identifiers
     // We assume the user inputs correct IDs.
@@ -48,7 +48,7 @@ export async function connectChannelAction(data: ConnectPayload) {
         access_token_encrypted: data.access_token // TODO: Encrypt this in production
     }, { onConflict: "tenant_id, channel" });
 
-    if (error) throw new Error(error.message);
+    if (error) return { success: false, error: error.message };
 
     revalidatePath("/panel/settings");
     return { success: true };
