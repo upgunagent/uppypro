@@ -26,10 +26,25 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ initialConversations, tenantId }: ConversationListProps) {
-    const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
+    const [conversations, setConversations] = useState<Conversation[]>(
+        Array.isArray(initialConversations) ? initialConversations : []
+    );
+
+    // Helper for safe rendering
+    const safeString = (val: any): string => {
+        if (typeof val === 'string') return val;
+        if (typeof val === 'number') return String(val);
+        if (val === null || val === undefined) return '';
+        try {
+            return JSON.stringify(val);
+        } catch (e) {
+            return 'Invalid Data';
+        }
+    };
 
     useEffect(() => {
         const supabase = createClient();
+        console.log("Subscribing to inbox-list for tenant:", tenantId);
 
         // Subscribe to NEW messages
         const channel = supabase
@@ -50,14 +65,17 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                         const existingIdx = prev.findIndex(c => c.id === newMsg.conversation_id);
 
                         if (existingIdx !== -1) {
+                            console.log("Updating existing conversation:", newMsg.conversation_id);
                             // Move to top and update last message
                             const updatedConv = { ...prev[existingIdx] };
-                            // We only store 'last message' ideally, but here we append or just replace the cache
-                            // The naive implementation in page.tsx passed `messages` array.
-                            // Let's just push to it or make a mock message object
-                            const msgObj = { text: newMsg.text, created_at: newMsg.created_at };
 
-                            // Naively append, though the map logic takes the last one
+                            // Safe create object
+                            const msgObj = {
+                                text: safeString(newMsg.text),
+                                created_at: safeString(newMsg.created_at)
+                            };
+
+                            // Naively append
                             updatedConv.messages = [...(updatedConv.messages || []), msgObj];
                             updatedConv.updated_at = newMsg.created_at;
 
@@ -65,28 +83,32 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                             newList.splice(existingIdx, 1);
                             return [updatedConv, ...newList];
                         } else {
-                            // New conversation? We'd need to fetch it.
-                            // For now, if it's not in the list, we might miss it unless we fetch.
-                            // Let's rely on refresh for BRAND NEW conversations for MVP, 
-                            // but existing ones should update.
+                            // New conversation logic omitted for MVP
                             return prev;
                         }
                     });
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log("Inbox Subscription Status:", status);
+            });
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, [tenantId]);
 
-    // Render Logic (copied from page.tsx)
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
             {conversations.map((conv) => {
-                const msgs = conv.messages || [];
+                const msgs = Array.isArray(conv.messages) ? conv.messages : [];
                 const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+
+                // Safe date format
+                let timeStr = "";
+                try {
+                    timeStr = conv.updated_at ? new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+                } catch (e) { timeStr = "Invalid Date"; }
 
                 return (
                     <Link key={conv.id} href={`/panel/chat/${conv.id}`}>
@@ -99,16 +121,21 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                     }
                                 </div>
                                 <div>
-                                    <div className="font-bold text-lg">{conv.customer_handle || conv.external_thread_id}</div>
+                                    <div className="font-bold text-lg">
+                                        {safeString(conv.customer_handle || conv.external_thread_id)}
+                                    </div>
                                     <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                         {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
                                         {/* SAFE RENDER: Ensure text is string */}
-                                        {lastMsg ? (typeof lastMsg.text === 'string' ? lastMsg.text : JSON.stringify(lastMsg.text || '')) || 'Görsel/Medya' : 'Konuşma başlatıldı'}
+                                        {lastMsg
+                                            ? (safeString(lastMsg.text) || 'Görsel/Medya')
+                                            : 'Konuşma başlatıldı'
+                                        }
                                     </div>
                                 </div>
                             </div>
                             <div className="text-xs text-gray-500">
-                                {new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {timeStr}
                             </div>
                         </div>
                     </Link>
