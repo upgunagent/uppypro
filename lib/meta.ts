@@ -333,7 +333,7 @@ export async function editMessageInChannel(
         };
 
         const res = await fetch(url, {
-            method: "POST",
+            method: "PUT", // Try PUT since POST was unsupported
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${accessToken}`
