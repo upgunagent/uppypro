@@ -54,11 +54,17 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         setMessages(prev => prev.map(m => m.id === currentId ? { ...m, text: newVal } : m));
 
         try {
-            await editMessage(currentId, newVal, conversationId);
+            const res = await editMessage(currentId, newVal, conversationId);
+            if (!res.success) {
+                // Revert optimistic update if needed?
+                // For now just alert
+                alert("Düzenleme başarısız: " + res.error);
+                // Force refresh
+                window.location.reload();
+            }
         } catch (err: any) {
             console.error("Edit failed", err);
-            alert("Düzenleme başarısız: " + err.message);
-            // Optionally revert here
+            alert("Beklenmedik hata: " + err.message);
         }
     };
 

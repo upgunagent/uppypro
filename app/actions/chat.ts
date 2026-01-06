@@ -95,55 +95,62 @@ export async function deleteConversation(conversationId: string) {
 }
 
 export async function editMessage(messageId: string, newText: string, conversationId: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Yetkisiz Erişim");
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: false, error: "Yetkisiz Erişim" };
 
-    // 1. Get Message & Conv Details
-    const { data: msg, error } = await supabase
-        .from("messages")
-        .select("*, conversations(tenant_id, channel)")
-        .eq("id", messageId)
-        .single();
+        // 1. Get Message & Conv Details
+        const { data: msg, error } = await supabase
+            .from("messages")
+            .select("*, conversations(tenant_id, channel)")
+            .eq("id", messageId)
+            .single();
 
-    if (error || !msg) throw new Error("Mesaj bulunamadı");
-    if (msg.sender !== 'HUMAN') throw new Error("Sadece kendi mesajlarınızı düzenleyebilirsiniz");
+        if (error || !msg) return { success: false, error: "Mesaj bulunamadı" };
+        if (msg.sender !== 'HUMAN') return { success: false, error: "Sadece kendi mesajlarınızı düzenleyebilirsiniz" };
 
-    // Time Check (15 mins window for WhatsApp)
-    const created = new Date(msg.created_at);
-    const now = new Date();
-    const diffMins = (now.getTime() - created.getTime()) / 1000 / 60;
+        // Time Check (15 mins window for WhatsApp)
+        const created = new Date(msg.created_at);
+        const now = new Date();
+        const diffMins = (now.getTime() - created.getTime()) / 1000 / 60;
 
-    // 2. External Edit (WhatsApp Only)
-    const conv = msg.conversations as any;
+        // 2. External Edit (WhatsApp Only)
+        const conv = msg.conversations as any;
 
-    if (conv?.channel === 'whatsapp') {
-        if (diffMins > 15) throw new Error("WhatsApp mesajları sadece 15 dakika içinde düzenlenebilir.");
+        if (conv?.channel === 'whatsapp') {
+            if (diffMins > 15) return { success: false, error: "WhatsApp mesajları sadece 15 dakika içinde düzenlenebilir." };
 
-        if (msg.external_message_id) {
-            if (process.env.MOCK_META_SEND !== "true") {
-                const result = await editMessageInChannel(
-                    conv.tenant_id,
-                    'whatsapp',
-                    msg.external_message_id,
-                    newText
-                );
-                if (!result.success) throw new Error("WhatsApp düzenleme hatası: " + result.error);
+            if (msg.external_message_id) {
+                if (process.env.MOCK_META_SEND !== "true") {
+                    const result = await editMessageInChannel(
+                        conv.tenant_id,
+                        'whatsapp',
+                        msg.external_message_id,
+                        newText
+                    );
+                    if (!result.success) return { success: false, error: "WhatsApp düzenleme hatası: " + result.error };
+                }
+            } else {
+                return { success: false, error: "Bu mesajın WhatsApp ID'si bulunamadı (Eski mesaj olabilir), düzenlenemez." };
             }
         } else {
-            throw new Error("Bu mesajın WhatsApp ID'si bulunamadı (Eski mesaj olabilir), düzenlenemez.");
+            return { success: false, error: "Sadece WhatsApp mesajları düzenlenebilir." };
         }
-    } else {
-        throw new Error("Sadece WhatsApp mesajları düzenlenebilir.");
+
+        // 3. Local Update
+        const { error: updateError } = await supabase
+            .from("messages")
+            .update({ text: newText })
+            .eq("id", messageId);
+
+        if (updateError) return { success: false, error: "Veritabanı güncellenemedi" };
+
+        revalidatePath(`/panel/chat/${conversationId}`);
+        return { success: true };
+
+    } catch (err: any) {
+        console.error("Edit Action Error:", err);
+        return { success: false, error: "Sunucu hatası: " + (err.message || "Bilinmeyen hata") };
     }
-
-    // 3. Local Update
-    const { error: updateError } = await supabase
-        .from("messages")
-        .update({ text: newText })
-        .eq("id", messageId);
-
-    if (updateError) throw new Error("Veritabanı güncellenemedi");
-
-    revalidatePath(`/panel/chat/${conversationId}`);
 }
