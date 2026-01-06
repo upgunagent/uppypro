@@ -22,17 +22,32 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-    let body;
+    let bodyText = "";
     const supabaseAdmin = createAdminClient();
 
     try {
-        body = await request.json();
+        // 1. Read Raw Text
+        bodyText = await request.text();
 
-        // LOG RAW WEBHOOK TO DB
+        // 2. Parse JSON
+        let body;
+        try {
+            body = JSON.parse(bodyText);
+        } catch (e) {
+            console.error("JSON Parse Error", e);
+            body = { error: "Invalid JSON", raw: bodyText };
+        }
+
+        // 3. LOG RAW WEBHOOK TO DB
         await supabaseAdmin.from("webhook_logs").insert({
             body: body,
-            headers: {} // valid json
+            headers: Object.fromEntries(request.headers), // Capture headers
+            error_message: body.error ? "JSON Parse Error" : null
         });
+
+        if (!body.entry) {
+            return NextResponse.json({ success: true, note: "No entry found (verification or empty)" });
+        }
 
         for (const entry of body.entry || []) {
             const changes = entry.changes?.[0]?.value;
