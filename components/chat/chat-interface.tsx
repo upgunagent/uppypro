@@ -306,10 +306,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 .getPublicUrl(filePath);
 
                             // 4. Send Message via Server Action
+                            // Use file name as text/caption if inputs is empty
+                            const textToSend = input.trim() || file.name;
+
                             // Optimistic Update
                             const optimisticMsg: Message = {
                                 id: "temp-" + Date.now(),
-                                text: "",
+                                text: textToSend,
                                 sender: "HUMAN",
                                 created_at: new Date().toISOString(),
                                 message_type: msgType,
@@ -317,7 +320,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                             };
                             setMessages((prev) => [...prev, optimisticMsg]);
 
-                            await sendMessage(conversationId, "", publicUrl, msgType);
+                            // If we used the input as text, clear it
+                            if (input.trim()) setInput("");
+
+                            await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
 
                         } catch (err: any) {
                             console.error("Upload failed", err);
