@@ -31,7 +31,121 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
+    const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Audio Recording State
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Format seconds to MM:SS
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+
+        } catch (err) {
+            console.error("Microphone access denied:", err);
+            alert("Mikrofon erişimi reddedildi veya bulunamadı.");
+        }
+    };
+
+    const stopAndSendRecording = () => {
+        if (!mediaRecorderRef.current) return;
+
+        // Stop timer
+        if (timerRef.current) clearInterval(timerRef.current);
+
+        mediaRecorderRef.current.onstop = async () => {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); // webm is standard for MediaRecorder
+            const audioFile = new File([audioBlob], "voice_message.webm", { type: 'audio/webm' });
+
+            // Clean up stream tracks
+            mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+
+            setIsRecording(false);
+            setRecordingTime(0);
+
+            // Upload Logic
+            setSending(true);
+            try {
+                const supabase = createClient();
+                const fileName = `${conversationId}/voice_${Date.now()}.webm`;
+
+                const { error: uploadError } = await supabase
+                    .storage
+                    .from('chat-media')
+                    .upload(fileName, audioFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase
+                    .storage
+                    .from('chat-media')
+                    .getPublicUrl(fileName);
+
+                // Send
+                // Optimistic Update
+                const optimisticMsg: Message = {
+                    id: "temp-" + Date.now(),
+                    text: "",
+                    sender: "HUMAN",
+                    created_at: new Date().toISOString(),
+                    message_type: 'audio',
+                    media_url: publicUrl
+                };
+                setMessages((prev) => [...prev, optimisticMsg]);
+
+                await sendMessage(conversationId, "", publicUrl, 'audio');
+
+            } catch (err: any) {
+                console.error("Audio upload failed:", err);
+                alert("Ses gönderilemedi: " + err.message);
+            } finally {
+                setSending(false);
+            }
+        };
+
+        mediaRecorderRef.current.stop();
+    };
+
+    const cancelRecording = () => {
+        if (!mediaRecorderRef.current) return;
+
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+
+        if (timerRef.current) clearInterval(timerRef.current);
+
+        setIsRecording(false);
+        setRecordingTime(0);
+        audioChunksRef.current = [];
+    };
 
     // Scroll to bottom on load/new message
     useEffect(() => {
@@ -344,15 +458,56 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                 </button>
 
-                <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Mesaj yazın..."
-                    className="flex-1 bg-black/20 border-white/10"
-                />
-                <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
-                    <Send className="w-4 h-4" />
-                </Button>
+                {/* RECORDING UI */}
+                {isRecording ? (
+                    <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-4 py-2 border border-red-500/20 animate-pulse">
+                        <div className="flex items-center gap-2 text-red-500 font-mono font-medium">
+                            <div className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                            {formatTime(recordingTime)}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={cancelRecording}
+                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors font-medium text-xs"
+                            >
+                                İptal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={stopAndSendRecording}
+                                className="p-2 bg-primary hover:bg-primary/90 text-white rounded-full transition-colors shadow-lg shadow-primary/20"
+                            >
+                                <Send className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
+                            className="flex-1 bg-black/20 border-white/10"
+                        />
+                        {/* MIC BUTTON (Only show if input is empty) */}
+                        {!input.trim() && (
+                            <button
+                                type="button"
+                                onClick={startRecording}
+                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                            </button>
+                        )}
+                        {/* Send Button (Only show if input has text) */}
+                        {input.trim() && (
+                            <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
+                                <Send className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </>
+                )}
             </form>
             {conversationMode === 'BOT' && (
                 <div className="text-center text-xs text-purple-400 mt-2">
