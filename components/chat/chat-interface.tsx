@@ -210,7 +210,81 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSend} className="p-4 bg-white/5 border-t border-white/10 rounded-b-xl flex gap-2">
+            <form onSubmit={handleSend} className="p-4 bg-white/5 border-t border-white/10 rounded-b-xl flex gap-2 items-center">
+                {/* File Upload Button */}
+                <input
+                    type="file"
+                    id="file-upload"
+                    className="hidden"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        if (file.size > 50 * 1024 * 1024) {
+                            alert("Dosya boyutu 50MB'dan küçük olmalı");
+                            return;
+                        }
+
+                        setSending(true);
+                        try {
+                            // 1. Determine Type
+                            let msgType = 'document';
+                            if (file.type.startsWith('image/')) msgType = 'image';
+                            else if (file.type.startsWith('video/')) msgType = 'video';
+                            else if (file.type.startsWith('audio/')) msgType = 'audio';
+
+                            // 2. Upload to Supabase Storage
+                            const supabase = createClient();
+                            const ext = file.name.split('.').pop();
+                            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+                            const filePath = `${conversationId}/${fileName}`;
+
+                            const { data: uploadData, error: uploadError } = await supabase
+                                .storage
+                                .from('chat-media') // Ensure this bucket exists!
+                                .upload(filePath, file);
+
+                            if (uploadError) throw uploadError;
+
+                            // 3. Get Public URL
+                            const { data: { publicUrl } } = supabase
+                                .storage
+                                .from('chat-media')
+                                .getPublicUrl(filePath);
+
+                            // 4. Send Message via Server Action
+                            // Optimistic Update
+                            const optimisticMsg: Message = {
+                                id: "temp-" + Date.now(),
+                                text: "",
+                                sender: "HUMAN",
+                                created_at: new Date().toISOString(),
+                                message_type: msgType,
+                                media_url: publicUrl
+                            };
+                            setMessages((prev) => [...prev, optimisticMsg]);
+
+                            await sendMessage(conversationId, "", publicUrl, msgType);
+
+                        } catch (err: any) {
+                            console.error("Upload failed", err);
+                            alert("Yükleme hatası: " + err.message);
+                        } finally {
+                            setSending(false);
+                            // Reset input
+                            e.target.value = '';
+                        }
+                    }}
+                />
+                <button
+                    type="button"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    disabled={sending}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                </button>
+
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}

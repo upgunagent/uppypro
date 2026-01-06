@@ -4,15 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendToChannel } from "@/lib/meta";
 
-export async function sendMessage(conversationId: string, text: string) {
+export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text') {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Yetkisiz Erişim");
-
-    // Get tenant from conversation or member
-    // First verify member access to conversation
-    // RLS should handle this, but let's be explicit if needed.
-    // Actually, just inserting into 'messages' with 'HUMAN' sender
 
     // 1. Get conversation to know tenant_id and channel details
     const { data: conv } = await supabase.from("conversations").select("tenant_id, channel, external_thread_id").eq("id", conversationId).single();
@@ -24,7 +19,9 @@ export async function sendMessage(conversationId: string, text: string) {
         conversation_id: conversationId,
         direction: "OUT",
         sender: "HUMAN",
-        text: text
+        text: text,
+        media_url: mediaUrl,
+        message_type: messageType
     });
 
     if (error) throw new Error(error.message);
@@ -32,11 +29,16 @@ export async function sendMessage(conversationId: string, text: string) {
     // 3. Trigger Outbound API (Meta Send)
     if (process.env.MOCK_META_SEND !== "true") {
         try {
-            await sendToChannel(conv.tenant_id, conv.channel, conv.external_thread_id, text);
+            await sendToChannel(
+                conv.tenant_id,
+                conv.channel,
+                conv.external_thread_id,
+                text,
+                messageType,
+                mediaUrl
+            );
         } catch (e) {
             console.error("Failed to send to Meta:", e);
-            // We don't throw here to avoid rolling back the DB insert, 
-            // but in a real app we might want to mark message status as 'failed'
         }
     }
 

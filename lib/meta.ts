@@ -11,7 +11,9 @@ export async function sendToChannel(
     tenantId: string,
     channel: "whatsapp" | "instagram",
     recipientId: string,
-    text: string
+    text: string,
+    type: string = 'text',
+    mediaUrl?: string
 ): Promise<SendMessageResult> {
     const supabaseWithAdmin = createAdminClient();
 
@@ -38,17 +40,48 @@ export async function sendToChannel(
         }
 
         let url = "";
-        let body = {};
+        let body: any = {};
 
         // 2. Prepare Request based on Channel
         if (channel === "instagram") {
             // Instagram Send API: https://graph.facebook.com/v21.0/me/messages
-            // Scoped ID (recipientId) is enough.
+            // Instagram primarily supports media via nested 'attachment' logic or specific endpoints?
+            // Actually, Graph API for IG Send Message allows 'attachment' payload.
+
             url = `https://graph.facebook.com/v21.0/me/messages?access_token=${accessToken}`;
-            body = {
-                recipient: { id: recipientId },
-                message: { text: text }
-            };
+
+            if (type === 'text') {
+                body = {
+                    recipient: { id: recipientId },
+                    message: { text: text }
+                };
+            } else if (mediaUrl) {
+                // IG Media Template
+                // Types: 'image', 'video', 'audio' (maybe?)
+                // Note: 'audio' might not be fully supported on IG DM via API widely, but 'image'/'video' are.
+                // Assuming 'image' or 'video' or 'file' mapped to what IG accepts.
+                const igType = type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'image';
+
+                body = {
+                    recipient: { id: recipientId },
+                    message: {
+                        attachment: {
+                            type: igType,
+                            payload: {
+                                url: mediaUrl,
+                                is_reusable: true
+                            }
+                        }
+                    }
+                };
+            } else {
+                // Fallback to text if mediaUrl missing
+                body = {
+                    recipient: { id: recipientId },
+                    message: { text: text || "[Media]" }
+                };
+            }
+
         } else if (channel === "whatsapp") {
             // WhatsApp Send API: https://graph.facebook.com/v21.0/PHONE_NUMBER_ID/messages
             const phoneNumberId = identifiers?.phone_number_id;
@@ -58,30 +91,55 @@ export async function sendToChannel(
             }
 
             url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
-            body = {
-                messaging_product: "whatsapp",
-                recipient_type: "individual",
-                to: recipientId,
-                type: "text",
-                text: { body: text }
-            };
+
+            if (type === 'text') {
+                body = {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: recipientId,
+                    type: "text",
+                    text: { body: text }
+                };
+            } else if (mediaUrl) {
+                // WhatsApp Media Types: image, video, audio, document
+                // Note: 'voice' is also a type but 'audio' is safer for general files.
+
+                const waType = type === 'document' ? 'document' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'image';
+
+                body = {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: recipientId,
+                    type: waType,
+                    [waType]: {
+                        link: mediaUrl,
+                        // Add caption only for supported types (audio usually doesn't support caption in some versions, but standard image/video/doc do)
+                        ...(waType !== 'audio' && text ? { caption: text } : {})
+                    }
+                };
+
+                if (waType === 'document' && body.document) {
+                    // Try to set filename if valid? Optional.
+                    // body.document.filename = "file.pdf"; 
+                }
+            } else {
+                body = {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: recipientId,
+                    type: "text",
+                    text: { body: text || "[Media]" }
+                };
+            }
         } else {
             return { success: false, error: `Unsupported channel: ${channel}` };
         }
 
         // 3. Send Request
-        // Note: For WhatsApp, we need Bearer Token header usually, but query param might work for some endpoints. 
-        // Best practice is Header for WA. Instagram also supports header.
-        // Let's use Header for consistency.
-
         const headers: any = {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`
         };
-
-        // Remove access_token query param for WA if using header? 
-        // For IG `me/messages?access_token=` is common, but Bearer is safer.
-        // Let's stick to standard Graph API practices.
 
         const res = await fetch(url, {
             method: "POST",
@@ -94,7 +152,7 @@ export async function sendToChannel(
         // LOG TO DB (Debugging)
         await supabaseWithAdmin.from("webhook_logs").insert({
             body: body, // Outgoing body
-            headers: { url: url, response: data }, // URL and Response
+            headers: { url: url, response: data },
             error_message: !res.ok ? "OUTBOUND_ERROR" : "OUTBOUND_SUCCESS"
         });
 
