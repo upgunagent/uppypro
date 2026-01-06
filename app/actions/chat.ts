@@ -59,4 +59,29 @@ export async function toggleMode(conversationId: string, currentMode: "BOT" | "H
     if (error) throw new Error(error.message);
 
     revalidatePath(`/panel/chat/${conversationId}`);
-}
+
+    export async function deleteConversation(conversationId: string) {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Yetkisiz Erişim");
+
+        // Check ownership/tenancy via RLS implicitly
+
+        // Explicit Delete: Messages first (if no cascade)
+        // Actually, Supabase typically sets ON DELETE CASCADE for foreign keys.
+        // If not, we'd delete messages. Assuming CASCADE or explicit delete:
+        await supabase.from("messages").delete().eq("conversation_id", conversationId);
+
+        // Delete Conversation
+        const { error } = await supabase
+            .from("conversations")
+            .delete()
+            .eq("id", conversationId);
+
+        if (error) {
+            console.error("Delete conversation error:", error);
+            throw new Error("Konuşma silinemedi");
+        }
+
+        revalidatePath("/panel/inbox");
+    }

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle, Instagram } from "lucide-react";
+import { MessageCircle, Instagram, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { deleteConversation } from "@/app/actions/chat";
 
 interface Message {
     text: string;
@@ -193,8 +194,8 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                 } catch (e) { timeStr = "Invalid Date"; }
 
                 return (
-                    <Link key={conv.id} href={`/panel/chat/${conv.id}`}>
-                        <div className="p-4 glass rounded-lg border border-white/5 hover:bg-white/10 transition-colors flex items-center justify-between cursor-pointer">
+                    <Link key={conv.id} href={`/panel/chat/${conv.id}`} className="block relative group">
+                        <div className="p-4 glass rounded-lg border border-white/5 hover:bg-white/10 transition-colors flex items-center justify-between cursor-pointer pr-12">
                             <div className="flex items-center gap-4">
                                 <div className="bg-white/10 p-3 rounded-full">
                                     {conv.channel === 'whatsapp'
@@ -223,10 +224,32 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                     </div>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                                {timeStr}
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="text-xs text-gray-500">{timeStr}</span>
                             </div>
                         </div>
+
+                        {/* Delete Button - Visible on Hover (or always on mobile, but group-hover is good for desktop) */}
+                        <button
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-red-500/10 hover:bg-red-500/80 text-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (confirm("Bu konuşmayı ve tüm mesajları silmek istediğinize emin misiniz?")) {
+                                    try {
+                                        // Optimistic Update
+                                        setConversations(prev => prev.filter(c => c.id !== conv.id));
+                                        await deleteConversation(conv.id);
+                                    } catch (err) {
+                                        console.error("Delete failed", err);
+                                        alert("Silinirken hata oluştu");
+                                        // Revert optionally or just let SWR/Realtime fix it
+                                    }
+                                }
+                            }}
+                        >
+                            <Trash2 size={18} />
+                        </button>
                     </Link>
                 );
             })}
