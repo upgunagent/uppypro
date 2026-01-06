@@ -349,7 +349,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     // The previous attempts (POST/PUT/PROTOCOL) all failed with explicit "unsupported" errors.
                     // We are disabling it to prevent user confusion.
                     // const canEdit = message.sender === 'HUMAN' && platform === 'whatsapp' && isEditable;
-                    const canEdit = false; // Temporarily disabled until Meta allows text edits via APIssage_type || msg.message_type === 'text');
+                    const canEdit = false; // Temporarily disabled until Meta allows text edits via API
 
                     return (
                         <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
@@ -436,7 +436,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="whitespace-pre-wrap pr-6 relative">
+                                        <div className={clsx("whitespace-pre-wrap relative", canEdit ? "pr-6" : "")}>
                                             {msg.text}
                                             {/* Edit Menu Trigger */}
                                             {canEdit && (
