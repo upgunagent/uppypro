@@ -52,12 +52,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Check for supported mime types for WhatsApp compatibility
+            // Check for supported mime types
+            // detailed order: 
+            // 1. WebM (Robustly supported by Chrome/Firefox and handled by our backend fallback)
+            // 2. MP4 (Safari)
             const mimeTypes = [
-                'audio/mp4', // Best for WhatsApp
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
                 'audio/aac',
-                'audio/webm;codecs=opus', // Good for modern browsers
-                'audio/webm', // Fallback
             ];
 
             let selectedType = 'audio/webm';
