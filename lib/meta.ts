@@ -13,7 +13,8 @@ export async function sendToChannel(
     recipientId: string,
     text: string,
     type: string = 'text',
-    mediaUrl?: string
+    mediaUrl?: string,
+    filename?: string
 ): Promise<SendMessageResult> {
     const supabaseWithAdmin = createAdminClient();
 
@@ -118,9 +119,8 @@ export async function sendToChannel(
                     }
                 };
 
-                if (waType === 'document' && body.document) {
-                    // Try to set filename if valid? Optional.
-                    // body.document.filename = "file.pdf"; 
+                if (waType === 'document' && body.document && filename) {
+                    body.document.filename = filename;
                 }
             } else {
                 body = {

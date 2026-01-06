@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendToChannel } from "@/lib/meta";
 
-export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text') {
+export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text', filename?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Yetkisiz Erişim");
@@ -35,7 +35,8 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
                 conv.external_thread_id,
                 text,
                 messageType,
-                mediaUrl
+                mediaUrl,
+                filename
             );
         } catch (e) {
             console.error("Failed to send to Meta:", e);
