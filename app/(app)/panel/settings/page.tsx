@@ -135,14 +135,13 @@ export default async function SettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* DEBUG SECTION */}
+            <div className="p-4 bg-red-900/20 border border-red-500/50 rounded text-xs font-mono text-red-200 mt-8">
+                <p className="font-bold mb-2">DEBUG INFO (Production Debugging):</p>
+                <div className="mb-2">Member Tenant ID: {member?.tenant_id}</div>
+                <pre>{JSON.stringify(channels, null, 2)}</pre>
+            </div>
         </div>
-            
-            {/* DEBUG SECTION */ }
-    <div className="p-4 bg-red-900/20 border border-red-500/50 rounded text-xs font-mono text-red-200 mt-8">
-        <p className="font-bold mb-2">DEBUG INFO (Production Debugging):</p>
-        <div className="mb-2">Member Tenant ID: {member?.tenant_id}</div>
-        <pre>{JSON.stringify(channels, null, 2)}</pre>
-    </div>
-        </div >
     );
 }
