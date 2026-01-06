@@ -102,7 +102,8 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                     <div className="font-bold text-lg">{conv.customer_handle || conv.external_thread_id}</div>
                                     <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                         {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
-                                        {lastMsg ? (lastMsg.text || 'Görsel/Medya') : 'Konuşma başlatıldı'}
+                                        {/* SAFE RENDER: Ensure text is string */}
+                                        {lastMsg ? (typeof lastMsg.text === 'string' ? lastMsg.text : JSON.stringify(lastMsg.text || '')) || 'Görsel/Medya' : 'Konuşma başlatıldı'}
                                     </div>
                                 </div>
                             </div>
