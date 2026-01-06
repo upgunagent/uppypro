@@ -204,20 +204,39 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 {/* MEDIA CONTENT */}
                                 {msg.message_type === 'image' && msg.media_url ? (
                                     <div className="-mx-2 -mt-2 mb-2">
-                                        <img
-                                            src={msg.media_url}
-                                            alt="Gelen Fotoğraf"
-                                            className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                            onClick={() => window.open(msg.media_url, '_blank')}
-                                        />
+                                        <div
+                                            className="relative group cursor-pointer"
+                                            onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}
+                                        >
+                                            <img
+                                                src={msg.media_url}
+                                                alt="Gelen Fotoğraf"
+                                                className="max-w-[240px] rounded-lg transition-opacity hover:opacity-90"
+                                                onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
+                                            />
+                                        </div>
                                     </div>
                                 ) : msg.message_type === 'video' && msg.media_url ? (
                                     <div className="-mx-2 -mt-2 mb-2">
-                                        <video
-                                            src={msg.media_url}
-                                            controls
-                                            className="max-w-[240px] rounded-lg"
-                                        />
+                                        <div
+                                            className="relative group cursor-pointer max-w-[240px]"
+                                            onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'video' })}
+                                        >
+                                            {/* Video Thumbnail / Preview - Muted & AutoPlay for preview effect */}
+                                            <video
+                                                src={msg.media_url}
+                                                className="w-full rounded-lg pointer-events-none"
+                                                onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
+                                                muted
+                                                preload="metadata"
+                                            />
+                                            {/* Play Button Overlay */}
+                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                                                <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : msg.message_type === 'audio' && msg.media_url ? (
                                     <div className="mb-1 min-w-[200px]">
