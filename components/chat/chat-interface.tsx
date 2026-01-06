@@ -41,6 +41,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [editValue, setEditValue] = useState("");
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
+    // Sync state with server-side props (Important for replacing optimistic IDs with real IDs)
+    useEffect(() => {
+        setMessages(initialMessages);
+    }, [initialMessages]);
+
     const handleEditSave = async () => {
         if (!editingId || !editValue.trim()) return;
         const currentId = editingId;
