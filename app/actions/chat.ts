@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendToChannel, editMessageInChannel } from "@/lib/meta";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text', filename?: string) {
     const supabase = await createClient();
@@ -48,10 +49,15 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
         const extId = result.data?.messages?.[0]?.id || result.data?.message_id;
 
         if (extId && insertedMsg) {
-            await supabase
+            const adminDb = createAdminClient();
+            const { error: updateError } = await adminDb
                 .from("messages")
                 .update({ external_message_id: extId })
                 .eq("id", insertedMsg.id);
+
+            if (updateError) {
+                console.error("Failed to save external_message_id:", updateError);
+            }
         }
     }
 
