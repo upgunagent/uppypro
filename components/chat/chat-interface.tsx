@@ -148,7 +148,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 };
                 setMessages((prev) => [...prev, optimisticMsg]);
 
-                await sendMessage(conversationId, "", publicUrl, 'audio');
+                await sendMessage(conversationId, "", publicUrl, 'audio', fileName);
 
             } catch (err: any) {
                 console.error("Audio upload failed:", err);

@@ -28,18 +28,19 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
 
     // 3. Trigger Outbound API (Meta Send)
     if (process.env.MOCK_META_SEND !== "true") {
-        try {
-            await sendToChannel(
-                conv.tenant_id,
-                conv.channel,
-                conv.external_thread_id,
-                text,
-                messageType,
-                mediaUrl,
-                filename
-            );
-        } catch (e) {
-            console.error("Failed to send to Meta:", e);
+        const result = await sendToChannel(
+            conv.tenant_id,
+            conv.channel,
+            conv.external_thread_id,
+            text,
+            messageType,
+            mediaUrl,
+            filename
+        );
+
+        if (!result.success) {
+            console.error("Meta Send Failed:", result.error);
+            throw new Error(`Mesaj gönderildi (DB) ama iletilemedi: ${result.error}`);
         }
     }
 
