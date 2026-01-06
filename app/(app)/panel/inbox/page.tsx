@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageCircle, Instagram, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
+import { ConversationList } from "@/components/inbox/conversation-list";
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
     const supabase = await createClient();
@@ -97,44 +98,7 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2">
-                {conversations?.map((conv) => {
-                    const msgs = conv.messages as any[];
-                    const lastMsg = msgs && msgs.length > 0 ? msgs[msgs.length - 1] : null; // naive last message
-                    // Wait, the order in nested select is not guaranteed unless specified.
-                    // For MVP let's just show conversation handle.
-
-                    return (
-                        <Link key={conv.id} href={`/panel/chat/${conv.id}`}>
-                            <div className="p-4 glass rounded-lg border border-white/5 hover:bg-white/10 transition-colors flex items-center justify-between cursor-pointer">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white/10 p-3 rounded-full">
-                                        {conv.channel === 'whatsapp'
-                                            ? <MessageCircle className="text-green-500" />
-                                            : <Instagram className="text-pink-500" />
-                                        }
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-lg">{conv.customer_handle || conv.external_thread_id}</div>
-                                        <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
-                                            {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
-                                            {lastMsg ? (lastMsg.text || 'Görsel/Medya') : 'Konuşma başlatıldı'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                    {new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </Link>
-                    );
-                })}
-                {conversations?.length === 0 && (
-                    <div className="text-center text-gray-500 mt-24">
-                        Bu filtreded hiç konuşma yok.
-                    </div>
-                )}
-            </div>
+            <ConversationList initialConversations={conversations as any} tenantId={tenantId} />
         </div>
     );
 }
