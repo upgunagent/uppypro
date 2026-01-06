@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode } from "@/app/actions/chat";
 import { Send, Bot, User } from "lucide-react";
 import { clsx } from "clsx";
+import { WavRecorder } from "@/lib/audio/wav-recorder";
 
 interface Message {
     id: string;
@@ -36,10 +37,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     // Audio Recording State
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const audioChunksRef = useRef<Blob[]>([]);
+    const wavRecorderRef = useRef<WavRecorder | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const recordingMimeTypeRef = useRef<string>("audio/webm");
 
     // Format seconds to MM:SS
     const formatTime = (seconds: number) => {
@@ -50,40 +49,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Instantiate and start WAV recorder
+            const recorder = new WavRecorder();
+            await recorder.start();
+            wavRecorderRef.current = recorder;
 
-            // Check for supported mime types
-            // detailed order: 
-            // 1. WebM (Robustly supported by Chrome/Firefox and handled by our backend fallback)
-            // 2. MP4 (Safari)
-            const mimeTypes = [
-                'audio/webm;codecs=opus',
-                'audio/webm',
-                'audio/mp4',
-                'audio/aac',
-            ];
-
-            let selectedType = 'audio/webm';
-            for (const type of mimeTypes) {
-                if (MediaRecorder.isTypeSupported(type)) {
-                    selectedType = type;
-                    break;
-                }
-            }
-            recordingMimeTypeRef.current = selectedType;
-            console.log("Recording with mimeType:", selectedType);
-
-            const mediaRecorder = new MediaRecorder(stream, { mimeType: selectedType });
-            mediaRecorderRef.current = mediaRecorder;
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data);
-                }
-            };
-
-            mediaRecorder.start();
             setIsRecording(true);
             setRecordingTime(0);
 
@@ -97,86 +67,71 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     };
 
-    const stopAndSendRecording = () => {
-        if (!mediaRecorderRef.current) return;
+    const stopAndSendRecording = async () => {
+        if (!wavRecorderRef.current) return;
 
         // Stop timer
         if (timerRef.current) clearInterval(timerRef.current);
 
-        mediaRecorderRef.current.onstop = async () => {
-            const mimeType = recordingMimeTypeRef.current;
-            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-
-            // Determine extension based on mimeType
-            let ext = "webm";
-            if (mimeType.includes("mp4") || mimeType.includes("aac")) ext = "m4a";
-            else if (mimeType.includes("ogg")) ext = "ogg";
-
-            console.log(`[Audio] Mime: ${mimeType}, Ext: ${ext}`);
-
-            const fileName = `voice_message.${ext}`;
-            const audioFile = new File([audioBlob], fileName, { type: mimeType });
-
-            // Clean up stream tracks
-            mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
-
+        try {
             setIsRecording(false);
             setRecordingTime(0);
+            setSending(true);
+
+            // Stop recording and get WAV blob
+            const audioBlob = await wavRecorderRef.current.stop();
+            const fileName = `voice_message_${Date.now()}.wav`;
+            const audioFile = new File([audioBlob], fileName, { type: 'audio/wav' });
 
             // Upload Logic
-            setSending(true);
-            try {
-                const supabase = createClient();
-                const storagePath = `${conversationId}/${Date.now()}_${fileName}`;
+            const supabase = createClient();
+            const storagePath = `${conversationId}/${fileName}`;
 
-                const { error: uploadError } = await supabase
-                    .storage
-                    .from('chat-media')
-                    .upload(storagePath, audioFile);
+            const { error: uploadError } = await supabase
+                .storage
+                .from('chat-media')
+                .upload(storagePath, audioFile);
 
-                if (uploadError) throw uploadError;
+            if (uploadError) throw uploadError;
 
-                const { data: { publicUrl } } = supabase
-                    .storage
-                    .from('chat-media')
-                    .getPublicUrl(storagePath);
+            const { data: { publicUrl } } = supabase
+                .storage
+                .from('chat-media')
+                .getPublicUrl(storagePath);
 
-                // Send
-                // Optimistic Update
-                const optimisticMsg: Message = {
-                    id: "temp-" + Date.now(),
-                    text: "",
-                    sender: "HUMAN",
-                    created_at: new Date().toISOString(),
-                    message_type: 'audio',
-                    media_url: publicUrl
-                };
-                setMessages((prev) => [...prev, optimisticMsg]);
+            // Send
+            // Optimistic Update
+            const optimisticMsg: Message = {
+                id: "temp-" + Date.now(),
+                text: "",
+                sender: "HUMAN",
+                created_at: new Date().toISOString(),
+                message_type: 'audio',
+                media_url: publicUrl
+            };
+            setMessages((prev) => [...prev, optimisticMsg]);
 
-                await sendMessage(conversationId, "", publicUrl, 'audio', fileName);
+            await sendMessage(conversationId, "", publicUrl, 'audio', fileName);
 
-            } catch (err: any) {
-                console.error("Audio upload failed:", err);
-                alert("Ses gönderilemedi: " + err.message);
-            } finally {
-                setSending(false);
-            }
-        };
-
-        mediaRecorderRef.current.stop();
+        } catch (err: any) {
+            console.error("Audio upload/send failed:", err);
+            alert("Ses gönderilemedi: " + err.message);
+        } finally {
+            setSending(false);
+            wavRecorderRef.current = null;
+        }
     };
 
     const cancelRecording = () => {
-        if (!mediaRecorderRef.current) return;
+        if (!wavRecorderRef.current) return;
 
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        wavRecorderRef.current.cancel();
 
         if (timerRef.current) clearInterval(timerRef.current);
 
         setIsRecording(false);
         setRecordingTime(0);
-        audioChunksRef.current = [];
+        wavRecorderRef.current = null;
     };
 
     // Scroll to bottom on load/new message
