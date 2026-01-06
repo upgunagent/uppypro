@@ -49,7 +49,7 @@ export async function sendToChannel(
             // Instagram primarily supports media via nested 'attachment' logic or specific endpoints?
             // Actually, Graph API for IG Send Message allows 'attachment' payload.
 
-            url = `https://graph.facebook.com/v21.0/me/messages?access_token=${accessToken}`;
+            url = `https://graph.facebook.com/v25.0/me/messages?access_token=${accessToken}`;
 
             if (type === 'text') {
                 body = {
@@ -204,7 +204,7 @@ export async function processIncomingMedia(
 
         if (channel === 'whatsapp') {
             // 1. Get Media URL using ID
-            const metaUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+            const metaUrl = `https://graph.facebook.com/v25.0/${mediaId}`;
             const metaRes = await fetch(metaUrl, {
                 headers: { "Authorization": `Bearer ${accessToken}` }
             });
@@ -321,7 +321,7 @@ export async function editMessageInChannel(
 
         if (!phoneNumberId) return { success: false, error: "Phone Number ID missing" };
 
-        const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+        const url = `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`;
 
         // 3. Prepare Payload for EDIT (Using Protocol Message Structure)
         // Hypothethical Payload based on 'protocol' type:
