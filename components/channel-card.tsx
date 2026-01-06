@@ -45,6 +45,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 throw new Error(result?.error || "Bilinmeyen bir hata oluştu.");
             }
             setDialogOpen(false);
+            router.refresh(); // Refresh server components to show new state
         } catch (error) {
             console.error(error);
             console.error(error);
