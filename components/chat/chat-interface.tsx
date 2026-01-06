@@ -381,9 +381,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
 
                         <div className="absolute bottom-full left-0 z-50 mb-2 ml-4 shadow-2xl rounded-xl overflow-hidden border border-white/10">
-                            import EmojiPicker, {EmojiStyle, Theme} from 'emoji-picker-react';
 
-                            // ... (existing code)
 
                             <EmojiPicker
                                 onEmojiClick={(emojiData) => {
