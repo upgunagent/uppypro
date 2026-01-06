@@ -6,9 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode } from "@/app/actions/chat";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
+import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 
 interface Message {
     id: string;
@@ -32,6 +33,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Audio Recording State
@@ -211,6 +213,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         };
         setMessages((prev) => [...prev, optimisticMsg]);
         setInput("");
+        setShowEmojiPicker(false);
 
         try {
             await sendMessage(conversationId, optimisticMsg.text);
@@ -370,138 +373,178 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSend} className="p-4 bg-white/5 border-t border-white/10 rounded-b-xl flex gap-2 items-center">
-                {/* File Upload Button */}
-                <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-
-                        if (file.size > 50 * 1024 * 1024) {
-                            alert("Dosya boyutu 50MB'dan küçük olmalı");
-                            return;
-                        }
-
-                        setSending(true);
-                        try {
-                            // 1. Determine Type
-                            let msgType = 'document';
-                            if (file.type.startsWith('image/')) msgType = 'image';
-                            else if (file.type.startsWith('video/')) msgType = 'video';
-                            else if (file.type.startsWith('audio/')) msgType = 'audio';
-
-                            // 2. Upload to Supabase Storage
-                            const supabase = createClient();
-                            const ext = file.name.split('.').pop();
-                            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-                            const filePath = `${conversationId}/${fileName}`;
-
-                            const { data: uploadData, error: uploadError } = await supabase
-                                .storage
-                                .from('chat-media') // Ensure this bucket exists!
-                                .upload(filePath, file);
-
-                            if (uploadError) throw uploadError;
-
-                            // 3. Get Public URL
-                            const { data: { publicUrl } } = supabase
-                                .storage
-                                .from('chat-media')
-                                .getPublicUrl(filePath);
-
-                            // 4. Send Message via Server Action
-                            // Use file name as text/caption if inputs is empty
-                            const textToSend = input.trim() || file.name;
-
-                            // Optimistic Update
-                            const optimisticMsg: Message = {
-                                id: "temp-" + Date.now(),
-                                text: textToSend,
-                                sender: "HUMAN",
-                                created_at: new Date().toISOString(),
-                                message_type: msgType,
-                                media_url: publicUrl
-                            };
-                            setMessages((prev) => [...prev, optimisticMsg]);
-
-                            // If we used the input as text, clear it
-                            if (input.trim()) setInput("");
-
-                            await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
-
-                        } catch (err: any) {
-                            console.error("Upload failed", err);
-                            alert("Yükleme hatası: " + err.message);
-                        } finally {
-                            setSending(false);
-                            // Reset input
-                            e.target.value = '';
-                        }
-                    }}
-                />
-                <button
-                    type="button"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                    disabled={sending}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                </button>
-
-                {/* RECORDING UI */}
-                {isRecording ? (
-                    <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-4 py-2 border border-red-500/20 animate-pulse">
-                        <div className="flex items-center gap-2 text-red-500 font-mono font-medium">
-                            <div className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                            {formatTime(recordingTime)}
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={cancelRecording}
-                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors font-medium text-xs"
-                            >
-                                İptal
-                            </button>
-                            <button
-                                type="button"
-                                onClick={stopAndSendRecording}
-                                className="p-2 bg-primary hover:bg-primary/90 text-white rounded-full transition-colors shadow-lg shadow-primary/20"
-                            >
-                                <Send className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                ) : (
+            <div className="relative">
+                {/* Emoji Picker Popover */}
+                {showEmojiPicker && (
                     <>
-                        <Input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
-                            className="flex-1 bg-black/20 border-white/10"
-                        />
-                        {/* MIC BUTTON (Only show if input is empty) */}
-                        {!input.trim() && (
-                            <button
-                                type="button"
-                                onClick={startRecording}
-                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                            </button>
-                        )}
-                        {/* Send Button (Only show if input has text) */}
-                        {input.trim() && (
-                            <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
-                                <Send className="w-4 h-4" />
-                            </Button>
-                        )}
+                        {/* Backdrop to close on click outside */}
+                        <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+
+                        <div className="absolute bottom-full left-0 z-50 mb-2 ml-4 shadow-2xl rounded-xl overflow-hidden border border-white/10">
+                            <EmojiPicker
+                                onEmojiClick={(emojiData) => {
+                                    setInput(prev => prev + emojiData.emoji);
+                                    // Keep picker open or close? Typically toggled manually.
+                                    // setShowEmojiPicker(false); 
+                                }}
+                                theme="dark" // Matches dark mode
+                                width={300}
+                                height={400}
+                                lazyLoadEmojis={true}
+                                emojiStyle={EmojiStyle.NATIVE} // Native IOS/Android emojis look better
+                            />
+                        </div>
                     </>
                 )}
-            </form>
+
+                <form onSubmit={handleSend} className="p-4 bg-white/5 border-t border-white/10 rounded-b-xl flex gap-2 items-center">
+                    {/* File Upload Button (Previous Logic) */}
+                    <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            if (file.size > 50 * 1024 * 1024) {
+                                alert("Dosya boyutu 50MB'dan küçük olmalı");
+                                return;
+                            }
+
+                            setSending(true);
+                            try {
+                                // 1. Determine Type
+                                let msgType = 'document';
+                                if (file.type.startsWith('image/')) msgType = 'image';
+                                else if (file.type.startsWith('video/')) msgType = 'video';
+                                else if (file.type.startsWith('audio/')) msgType = 'audio';
+
+                                // 2. Upload to Supabase Storage
+                                const supabase = createClient();
+                                const ext = file.name.split('.').pop();
+                                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+                                const filePath = `${conversationId}/${fileName}`;
+
+                                const { data: uploadData, error: uploadError } = await supabase
+                                    .storage
+                                    .from('chat-media') // Ensure this bucket exists!
+                                    .upload(filePath, file);
+
+                                if (uploadError) throw uploadError;
+
+                                // 3. Get Public URL
+                                const { data: { publicUrl } } = supabase
+                                    .storage
+                                    .from('chat-media')
+                                    .getPublicUrl(filePath);
+
+                                // 4. Send Message via Server Action
+                                // Use file name as text/caption if inputs is empty
+                                const textToSend = input.trim() || file.name;
+
+                                // Optimistic Update
+                                const optimisticMsg: Message = {
+                                    id: "temp-" + Date.now(),
+                                    text: textToSend,
+                                    sender: "HUMAN",
+                                    created_at: new Date().toISOString(),
+                                    message_type: msgType,
+                                    media_url: publicUrl
+                                };
+                                setMessages((prev) => [...prev, optimisticMsg]);
+
+                                // If we used the input as text, clear it
+                                if (input.trim()) setInput("");
+
+                                await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
+
+                            } catch (err: any) {
+                                console.error("Upload failed", err);
+                                alert("Yükleme hatası: " + err.message);
+                            } finally {
+                                setSending(false);
+                                // Reset input
+                                e.target.value = '';
+                            }
+                        }}
+                    />
+
+                    {/* Action Buttons Container */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                            disabled={sending}
+                        >
+                            <Paperclip className="w-5 h-5" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className={clsx(
+                                "p-2 rounded-full transition-colors",
+                                showEmojiPicker ? "text-yellow-400 bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/10"
+                            )}
+                        >
+                            <Smile className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {/* RECORDING UI */}
+                    {isRecording ? (
+                        <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-4 py-2 border border-red-500/20 animate-pulse">
+                            <div className="flex items-center gap-2 text-red-500 font-mono font-medium">
+                                <div className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                                {formatTime(recordingTime)}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={cancelRecording}
+                                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors font-medium text-xs"
+                                >
+                                    İptal
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={stopAndSendRecording}
+                                    className="p-2 bg-primary hover:bg-primary/90 text-white rounded-full transition-colors shadow-lg shadow-primary/20"
+                                >
+                                    <Send className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <Input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
+                                className="flex-1 bg-black/20 border-white/10"
+                            />
+                            {/* MIC BUTTON (Only show if input is empty) */}
+                            {!input.trim() && (
+                                <button
+                                    type="button"
+                                    onClick={startRecording}
+                                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                                </button>
+                            )}
+                            {/* Send Button (Only show if input has text) */}
+                            {input.trim() && (
+                                <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
+                                    <Send className="w-4 h-4" />
+                                </Button>
+                            )}
+                        </>
+                    )}
+                </form>
+            </div>
             {conversationMode === 'BOT' && (
                 <div className="text-center text-xs text-purple-400 mt-2">
                     ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
