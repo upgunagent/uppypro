@@ -38,7 +38,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [recordingTime, setRecordingTime] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+    const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const recordingMimeTypeRef = useRef<string>("audio/webm");
 
     // Format seconds to MM:SS
     const formatTime = (seconds: number) => {
@@ -50,7 +52,26 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
+
+            // Check for supported mime types for WhatsApp compatibility
+            const mimeTypes = [
+                'audio/mp4', // Best for WhatsApp
+                'audio/aac',
+                'audio/webm;codecs=opus', // Good for modern browsers
+                'audio/webm', // Fallback
+            ];
+
+            let selectedType = 'audio/webm';
+            for (const type of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(type)) {
+                    selectedType = type;
+                    break;
+                }
+            }
+            recordingMimeTypeRef.current = selectedType;
+            console.log("Recording with mimeType:", selectedType);
+
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: selectedType });
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
 
@@ -81,8 +102,16 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         if (timerRef.current) clearInterval(timerRef.current);
 
         mediaRecorderRef.current.onstop = async () => {
-            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-            const audioFile = new File([audioBlob], "voice_message.ogg", { type: 'audio/ogg' });
+            const mimeType = recordingMimeTypeRef.current;
+            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+
+            // Determine extension based on mimeType
+            let ext = "webm";
+            if (mimeType.includes("mp4") || mimeType.includes("aac")) ext = "m4a";
+            else if (mimeType.includes("ogg")) ext = "ogg";
+
+            const fileName = `voice_message.${ext}`;
+            const audioFile = new File([audioBlob], fileName, { type: mimeType });
 
             // Clean up stream tracks
             mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
@@ -94,19 +123,19 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             setSending(true);
             try {
                 const supabase = createClient();
-                const fileName = `${conversationId}/voice_${Date.now()}.ogg`;
+                const storagePath = `${conversationId}/${Date.now()}_${fileName}`;
 
                 const { error: uploadError } = await supabase
                     .storage
                     .from('chat-media')
-                    .upload(fileName, audioFile);
+                    .upload(storagePath, audioFile);
 
                 if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase
                     .storage
                     .from('chat-media')
-                    .getPublicUrl(fileName);
+                    .getPublicUrl(storagePath);
 
                 // Send
                 // Optimistic Update
