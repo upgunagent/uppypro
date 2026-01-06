@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendToChannel } from "@/lib/meta";
 
 export async function sendMessage(conversationId: string, text: string) {
     const supabase = await createClient();
@@ -13,8 +14,8 @@ export async function sendMessage(conversationId: string, text: string) {
     // RLS should handle this, but let's be explicit if needed.
     // Actually, just inserting into 'messages' with 'HUMAN' sender
 
-    // 1. Get conversation to know tenant_id
-    const { data: conv } = await supabase.from("conversations").select("tenant_id").eq("id", conversationId).single();
+    // 1. Get conversation to know tenant_id and channel details
+    const { data: conv } = await supabase.from("conversations").select("tenant_id, channel, external_thread_id").eq("id", conversationId).single();
     if (!conv) throw new Error("Konuşma bulunamadı");
 
     // 2. Insert Message
@@ -29,12 +30,15 @@ export async function sendMessage(conversationId: string, text: string) {
     if (error) throw new Error(error.message);
 
     // 3. Trigger Outbound API (Meta Send)
-    // For MVP, if MOCK_META_SEND is true, we just skip or log.
-    // In real app, we call our own API route or function to dispatch to Meta.
-    // We'll call the API route via fetch (or directly invoke logic if refactored).
-    // Let's call the API route to keep it decoupled.
-    // Actually, calling an API route from Server Action adds latency. Better to invoke service function.
-    // For MVP, just DB insert is enough visually. The actual sending logic is in API section.
+    if (process.env.MOCK_META_SEND !== "true") {
+        try {
+            await sendToChannel(conv.tenant_id, conv.channel, conv.external_thread_id, text);
+        } catch (e) {
+            console.error("Failed to send to Meta:", e);
+            // We don't throw here to avoid rolling back the DB insert, 
+            // but in a real app we might want to mark message status as 'failed'
+        }
+    }
 
     revalidatePath(`/panel/chat/${conversationId}`);
 }
