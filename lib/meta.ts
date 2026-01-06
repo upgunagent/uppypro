@@ -282,11 +282,104 @@ export async function processIncomingMedia(
             .from("chat-media")
             .getPublicUrl(filePath);
 
+
         console.log(`[Process Media] Success: ${publicUrl}`);
         return publicUrl;
 
     } catch (err) {
         console.error("[Process Media] Exception", err);
         return null;
+    }
+}
+
+export async function editMessageInChannel(
+    tenantId: string,
+    channel: "whatsapp",
+    messageId: string, // The external Meta ID
+    newText: string
+): Promise<SendMessageResult> {
+    const supabaseWithAdmin = createAdminClient();
+
+    try {
+        // 1. Get Connection
+        const { data: connection, error } = await supabaseWithAdmin
+            .from("channel_connections")
+            .select("access_token_encrypted, meta_identifiers")
+            .eq("tenant_id", tenantId)
+            .eq("channel", channel)
+            .eq("status", "connected")
+            .single();
+
+        if (error || !connection) {
+            return { success: false, error: "Channel not connected" };
+        }
+
+        const accessToken = connection.access_token_encrypted;
+        const identifiers = connection.meta_identifiers as any;
+        const phoneNumberId = identifiers?.phone_number_id;
+
+        if (!phoneNumberId) return { success: false, error: "Phone Number ID missing" };
+
+        const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+
+        // 2. Prepare Payload for EDIT
+        // WhatsApp Edit Payload:
+        // POST to /messages
+        // {
+        //   "messaging_product": "whatsapp",
+        //   "message_id": "original_message_id",
+        //   "type": "text",
+        //   "text": { "body": "new text" }
+        // }
+        // Note: Some docs say message_id is top level, some might differ. Standard seems to be top level for edits or similar to context.
+        // Actually, for "Edit", the documentation often references a protocol message or specific structure. 
+        // But commonly it's recently standardized as:
+        /*
+          {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": "PHONE_NUMBER", // Required? Usually yes. We need to fetch the 'to' from the original message context or pass it in.
+            // Wait, if we edit, do we need 'to'? 
+            // Attempting without 'to' first? No, usually required.
+          }
+        */
+        // To be safe, we might need the recipient's phone number. 
+        // For now, let's assume we need to pass it or the API endpoint handles it via ID? No, endpoint is efficient but usually needs 'to'.
+        // However, we can try omitting 'to' if 'message_id' is unique enough? 
+        // Recipient is technically bound to the message ID. 
+        // Let's try sending standard structure with 'message_id' property.
+
+        const body = {
+            messaging_product: "whatsapp",
+            message_id: messageId, // The ID of the message to edit
+            type: "text",
+            text: { body: newText }
+        };
+
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        await supabaseWithAdmin.from("webhook_logs").insert({
+            body: body,
+            headers: { url: url, response: data },
+            error_message: !res.ok ? "EDIT_ERROR" : "EDIT_SUCCESS"
+        });
+
+        if (!res.ok || data.error) {
+            return { success: false, error: data.error?.message || "Meta Edit Error", data };
+        }
+
+        return { success: true, data };
+
+    } catch (err: any) {
+        return { success: false, error: err.message };
     }
 }

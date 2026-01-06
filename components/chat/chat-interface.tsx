@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendMessage, toggleMode } from "@/app/actions/chat";
-import { Send, Bot, User, Smile, Paperclip } from "lucide-react";
+import { sendMessage, toggleMode, editMessage } from "@/app/actions/chat";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -35,6 +35,32 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Edit State
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState("");
+    const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+    const handleEditSave = async () => {
+        if (!editingId || !editValue.trim()) return;
+        const currentId = editingId;
+        const newVal = editValue;
+
+        // Close UI
+        setEditingId(null);
+        setMenuOpenId(null);
+
+        // Optimistic Update
+        setMessages(prev => prev.map(m => m.id === currentId ? { ...m, text: newVal } : m));
+
+        try {
+            await editMessage(currentId, newVal, conversationId);
+        } catch (err: any) {
+            console.error("Edit failed", err);
+            alert("Düzenleme başarısız: " + err.message);
+            // Optionally revert here
+        }
+    };
 
     // Audio Recording State
     const [isRecording, setIsRecording] = useState(false);
@@ -290,6 +316,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 {messages.map((msg) => {
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
+                    const isEditing = editingId === msg.id;
+                    const canEdit = isMe && platform === 'whatsapp' && (!msg.message_type || msg.message_type === 'text');
+
                     return (
                         <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
                             {/* Sender Label */}
@@ -320,7 +349,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             className="max-w-[240px] rounded-2xl block hover:opacity-90 transition-opacity"
                                             onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
                                         />
-                                        {/* Timestamp Overlay for Image */}
                                         <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
@@ -342,7 +370,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                             </div>
                                         </div>
-                                        {/* Timestamp Overlay for Video */}
                                         <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
@@ -357,15 +384,72 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     </div>
                                 ) : null}
 
-                                {/* TEXT CONTENT - Hide if media type is image/video/audio */}
+                                {/* TEXT CONTENT */}
                                 {msg.text && !['image', 'video', 'audio'].includes(msg.message_type || '') && (
-                                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                                    isEditing ? (
+                                        <div className="flex flex-col gap-2 min-w-[200px]">
+                                            <textarea
+                                                value={editValue}
+                                                onChange={e => setEditValue(e.target.value)}
+                                                className="bg-black/20 rounded p-2 text-white w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-white/30"
+                                                rows={3}
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => setEditingId(null)} className="p-1 hover:bg-white/10 rounded">
+                                                    <X size={14} />
+                                                </button>
+                                                <button onClick={handleEditSave} className="p-1 hover:bg-white/10 rounded text-green-400">
+                                                    <Check size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="whitespace-pre-wrap pr-6 relative">
+                                            {msg.text}
+                                            {/* Edit Menu Trigger */}
+                                            {canEdit && (
+                                                <div className="absolute top-0 right-[-10px] sm:right-[-12px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setMenuOpenId(menuOpenId === msg.id ? null : msg.id);
+                                                        }}
+                                                        className="p-1 hover:bg-black/20 rounded-full"
+                                                    >
+                                                        <MoreVertical size={14} className="text-white/70" />
+                                                    </button>
+                                                    {/* Dropdown */}
+                                                    {menuOpenId === msg.id && (
+                                                        <div className="absolute right-0 top-6 z-50 bg-[#1a1a1a] border border-white/10 rounded-md shadow-xl py-1 w-24 overflow-hidden">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingId(msg.id);
+                                                                    setEditValue(msg.text);
+                                                                    setMenuOpenId(null);
+                                                                }}
+                                                                className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 flex items-center gap-2 text-white"
+                                                            >
+                                                                <Edit2 size={12} /> Düzenle
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {/* Backdrop for menu */}
+                                                    {menuOpenId === msg.id && (
+                                                        <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); }}></div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
                                 )}
                             </div>
 
                             {/* Time */}
                             <span className="text-[10px] text-gray-600 mt-1 mr-1">
                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {msg.created_at !== msg.created_at && " (Düzenlendi)"}
+                                {/* Note: Real edited status check depends on backend updated_at field or separate edited_at */}
                             </span>
                         </div>
                     );
