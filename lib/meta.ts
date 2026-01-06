@@ -91,6 +91,13 @@ export async function sendToChannel(
 
         const data = await res.json();
 
+        // LOG TO DB (Debugging)
+        await supabaseWithAdmin.from("webhook_logs").insert({
+            body: body, // Outgoing body
+            headers: { url: url, response: data }, // URL and Response
+            error_message: !res.ok ? "OUTBOUND_ERROR" : "OUTBOUND_SUCCESS"
+        });
+
         if (!res.ok || data.error) {
             console.error(`[Meta Send Error] ${JSON.stringify(data.error)}`);
             return { success: false, error: data.error?.message || "Meta API Error", data: data };
@@ -100,6 +107,13 @@ export async function sendToChannel(
 
     } catch (err: any) {
         console.error("[Meta Send Exception]", err);
+        // Log exception too
+        try {
+            await supabaseWithAdmin.from("webhook_logs").insert({
+                body: { error: err.message },
+                error_message: "OUTBOUND_EXCEPTION"
+            });
+        } catch { } // ignore logging error
         return { success: false, error: err.message };
     }
 }
