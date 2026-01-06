@@ -328,9 +328,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                             {/* Bubble */}
                             <div className={clsx(
-                                "rounded-2xl text-sm overflow-hidden relative group",
+                                "rounded-2xl text-sm relative group",
                                 (msg.message_type === 'image' || msg.message_type === 'video')
-                                    ? "p-0 bg-transparent" // Media: No padding, transparent
+                                    ? "p-0 bg-transparent overflow-hidden" // Media: Keep overflow hidden for corners
                                     : [
                                         "px-4 py-2", // Text/Doc/Audio: Standard padding
                                         isMe
@@ -408,15 +408,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             {msg.text}
                                             {/* Edit Menu Trigger */}
                                             {canEdit && (
-                                                <div className="absolute top-0 right-[-10px] sm:right-[-12px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="absolute top-0 right-[-10px] sm:right-[-12px]">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setMenuOpenId(menuOpenId === msg.id ? null : msg.id);
                                                         }}
-                                                        className="p-1 hover:bg-black/20 rounded-full"
+                                                        className="p-1 bg-black/50 hover:bg-black/70 rounded-full shadow-sm backdrop-blur-sm transition-colors"
                                                     >
-                                                        <MoreVertical size={14} className="text-white/70" />
+                                                        <MoreVertical size={12} className="text-white" />
                                                     </button>
                                                     {/* Dropdown */}
                                                     {menuOpenId === msg.id && (
