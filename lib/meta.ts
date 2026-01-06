@@ -109,8 +109,11 @@ export async function sendToChannel(
 
                 // SPECIAL HANDLER: WhatsApp does not support .webm audio messages.
                 // If we are sending an audio but it is .webm, we MUST send it as a document to ensure delivery.
-                if (type === 'audio' && mediaUrl.includes('.webm')) {
-                    console.log("[Meta Send] Converting WebM Audio to Document for WhatsApp compatibility.");
+                // We check both mediaUrl and filename to be sure.
+                const isWebM = (mediaUrl && mediaUrl.includes('.webm')) || (filename && filename.endsWith('.webm'));
+
+                if (type === 'audio' && isWebM) {
+                    console.log("[Meta Send] Detected WebM Audio. Forcing 'document' type for WhatsApp compatibility.");
                     waType = 'document';
                     if (!filename) filename = "voice_message.webm";
                 }
@@ -129,8 +132,10 @@ export async function sendToChannel(
 
                 // If we forced it to be a document (or it was already), ensure filename is set
                 if (waType === 'document' && body.document) {
-                    body.document.filename = filename || "file";
+                    body.document.filename = filename || "voice_note.bin"; // Fallback filename
                 }
+
+                console.log(`[Meta Send] WhatsApp Payload: Type=${waType}, Filename=${filename}`);
             } else {
                 body = {
                     messaging_product: "whatsapp",
