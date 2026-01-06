@@ -23,9 +23,10 @@ interface ChatInterfaceProps {
     initialMessages: Message[];
     conversationMode: "BOT" | "HUMAN";
     aiOperational: boolean;
+    platform: string;
 }
 
-export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational }: ChatInterfaceProps) {
+export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform }: ChatInterfaceProps) {
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
