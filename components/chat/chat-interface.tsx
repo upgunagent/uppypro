@@ -29,6 +29,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
+    const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Scroll to bottom on load/new message
@@ -128,7 +129,39 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)]">
+        <div className="flex flex-col h-[calc(100vh-8rem)] relative">
+            {/* LIGHTBOX OVERLAY */}
+            {lightboxMedia && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+                    onClick={() => setLightboxMedia(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 text-white/50 hover:text-white p-2"
+                        onClick={() => setLightboxMedia(null)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                    </button>
+
+                    <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                        {lightboxMedia.type === 'image' ? (
+                            <img
+                                src={lightboxMedia.url}
+                                className="max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl"
+                                alt="Full View"
+                            />
+                        ) : (
+                            <video
+                                src={lightboxMedia.url}
+                                controls
+                                autoPlay
+                                className="max-w-full max-h-[85vh] rounded-md shadow-2xl"
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Header / Toolbar */}
             <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 rounded-t-xl">
                 <div className="flex items-center gap-2">
