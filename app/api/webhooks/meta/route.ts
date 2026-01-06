@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
         for (const entry of body.entry || []) {
             const changes = entry.changes?.[0]?.value;
-            const messaging = entry.messaging?.[0];
+            const messaging = entry.messaging?.[0] || entry.standby?.[0];
             // ... rest of the code ...
 
             let eventData = null;
