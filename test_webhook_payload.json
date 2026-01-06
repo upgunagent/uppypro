@@ -1,0 +1,39 @@
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1694179448207545",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551643077",
+                            "phone_number_id": "985852897939461"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Test User"
+                                },
+                                "wa_id": "905332076252"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "905332076252",
+                                "id": "wamid.TEST_MSG_ID_123",
+                                "timestamp": "1704556800",
+                                "text": {
+                                    "body": "ANTIGRAVITY TEST MESAJI"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}

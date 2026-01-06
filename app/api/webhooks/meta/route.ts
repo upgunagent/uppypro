@@ -22,13 +22,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    let body;
+    const supabaseAdmin = createAdminClient();
+
     try {
-        const body = await request.json();
-        const supabaseAdmin = createAdminClient();
+        body = await request.json();
+
+        // LOG RAW WEBHOOK TO DB
+        await supabaseAdmin.from("webhook_logs").insert({
+            body: body,
+            headers: {} // valid json
+        });
 
         for (const entry of body.entry || []) {
             const changes = entry.changes?.[0]?.value;
             const messaging = entry.messaging?.[0];
+            // ... rest of the code ...
 
             let eventData = null;
             let channel: 'whatsapp' | 'instagram' = 'whatsapp';
