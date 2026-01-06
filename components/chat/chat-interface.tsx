@@ -31,7 +31,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
-    const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Audio Recording State
