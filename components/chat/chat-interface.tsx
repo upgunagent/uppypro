@@ -345,7 +345,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
                     const isEditing = editingId === msg.id;
-                    const canEdit = isMe && platform === 'whatsapp' && (!msg.message_type || msg.message_type === 'text');
+                    // WhatsApp Cloud API currently does NOT support editing via the public API (as of v25.0).
+                    // The previous attempts (POST/PUT/PROTOCOL) all failed with explicit "unsupported" errors.
+                    // We are disabling it to prevent user confusion.
+                    // const canEdit = message.sender === 'HUMAN' && platform === 'whatsapp' && isEditable;
+                    const canEdit = false; // Temporarily disabled until Meta allows text edits via APIssage_type || msg.message_type === 'text');
 
                     return (
                         <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
