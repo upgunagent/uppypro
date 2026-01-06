@@ -81,8 +81,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         if (timerRef.current) clearInterval(timerRef.current);
 
         mediaRecorderRef.current.onstop = async () => {
-            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); // webm is standard for MediaRecorder
-            const audioFile = new File([audioBlob], "voice_message.webm", { type: 'audio/webm' });
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const audioFile = new File([audioBlob], "voice_message.ogg", { type: 'audio/ogg' });
 
             // Clean up stream tracks
             mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
@@ -94,7 +94,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             setSending(true);
             try {
                 const supabase = createClient();
-                const fileName = `${conversationId}/voice_${Date.now()}.webm`;
+                const fileName = `${conversationId}/voice_${Date.now()}.ogg`;
 
                 const { error: uploadError } = await supabase
                     .storage
