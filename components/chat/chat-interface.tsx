@@ -42,9 +42,26 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
     // Sync state with server-side props (Important for replacing optimistic IDs with real IDs)
+    // Sync state with server-side props AND fetch fresh to ensure external_message_id presence
     useEffect(() => {
+        // optimistically set from props first
         setMessages(initialMessages);
-    }, [initialMessages]);
+
+        // Then fetch fresh to ensure we have latest fields (like external_message_id)
+        const fetchFreshKeys = async () => {
+            const supabase = createClient();
+            const { data } = await supabase
+                .from("messages")
+                .select("*")
+                .eq("conversation_id", conversationId)
+                .order("created_at", { ascending: true });
+
+            if (data) {
+                setMessages(data);
+            }
+        };
+        fetchFreshKeys();
+    }, [initialMessages, conversationId]);
 
     const handleEditSave = async () => {
         if (!editingId || !editValue.trim()) return;
