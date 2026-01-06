@@ -32,6 +32,10 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
         Array.isArray(initialConversations) ? initialConversations : []
     );
 
+    // DIAGNOSTIC STATE
+    const [lastPoll, setLastPoll] = useState<string>("Not started");
+    const [debugError, setDebugError] = useState<string | null>(null);
+
     // Helper for safe rendering
     const safeString = (val: any): string => {
         if (typeof val === 'string') return val;
@@ -132,25 +136,34 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
         };
     }, [tenantId]);
 
-    // TURBO HYBRID MODE: Polling every 1.5s ensures "almost realtime" feeling even if sockets fail
+    // TURBO HYBRID MODE with VISIBLE DIAGNOSTICS
     useEffect(() => {
         const interval = setInterval(() => {
-            const supabase = createClient();
+            const time = new Date().toLocaleTimeString();
+            setLastPoll(time);
 
+            if (!tenantId) {
+                setDebugError("Tenant ID is MISSING!");
+                return;
+            }
+
+            const supabase = createClient();
             supabase
                 .from('conversations')
                 .select(`*, messages(text, created_at, message_type, media_url)`)
                 .eq('tenant_id', tenantId)
                 .order('updated_at', { ascending: false })
-                .limit(15) // Fetch slightly more
-                .then(({ data }) => {
-                    if (data) {
+                .limit(15)
+                .then(({ data, error }) => {
+                    if (error) {
+                        setDebugError(error.message);
+                    } else if (data) {
+                        setDebugError(null); // Clear previous errors
                         setConversations(prev => {
                             const newDataSig = JSON.stringify(data.map((c: any) => c.id + c.updated_at));
                             const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => c.id + c.updated_at));
 
                             if (newDataSig !== prevDataSig) {
-                                // Update detected!
                                 return data.map((d: any) => ({
                                     ...d,
                                     messages: d.messages || []
@@ -160,22 +173,25 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                         });
                     }
                 });
-        }, 2000); // 2 seconds is a good balance between load and "instant" feel
+        }, 2000);
 
         return () => clearInterval(interval);
     }, [tenantId]);
 
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
-            <div className="flex justify-between items-center px-2 py-1 text-xs text-gray-500">
-                <span>Live: <span className="text-green-400">● v1.3 (NoFilter)</span> ID: {tenantId?.slice(0, 8)}</span>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="hover:text-white underline"
-                >
-                    Manuel Yenile
-                </button>
+            {/* CRITICAL DEBUG PANEL */}
+            <div className="bg-red-900/80 border border-red-500 p-3 rounded mb-2 text-xs font-mono text-red-100">
+                <div className="flex justify-between font-bold text-lg mb-1">
+                    <span>⚠️ DEBUG MODE v2.0</span>
+                    <button onClick={() => window.location.reload()} className="bg-white text-red-900 px-2 rounded">REFRESH</button>
+                </div>
+                <div>Tenant ID: {tenantId || "UNDEFINED"}</div>
+                <div>Last Poll: {lastPoll}</div>
+                <div>Conv Count: {conversations.length}</div>
+                {debugError && <div className="text-yellow-300 font-bold">ERROR: {debugError}</div>}
             </div>
+
             {conversations.map((conv) => {
                 const msgs = Array.isArray(conv.messages) ? conv.messages : [];
                 const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
