@@ -70,6 +70,29 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         };
     }, [conversationId]);
 
+    // TURBO POLLING FALLBACK (Chat): Updates messages every 2s if realtime fails
+    useEffect(() => {
+        if (!conversationId) return;
+        const interval = setInterval(() => {
+            const supabase = createClient();
+            supabase
+                .from('messages')
+                .select('*')
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: true })
+                .then(({ data }) => {
+                    if (data) {
+                        setMessages(prev => {
+                            if (data.length !== prev.length) return data;
+                            // optimistically assume equal length means no change for speed
+                            return prev;
+                        });
+                    }
+                });
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [conversationId]);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || sending) return;

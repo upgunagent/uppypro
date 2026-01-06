@@ -132,6 +132,39 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
         };
     }, [tenantId]);
 
+    // TURBO HYBRID MODE: Polling every 1.5s ensures "almost realtime" feeling even if sockets fail
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const supabase = createClient();
+
+            supabase
+                .from('conversations')
+                .select(`*, messages(text, created_at, message_type, media_url)`)
+                .eq('tenant_id', tenantId)
+                .order('updated_at', { ascending: false })
+                .limit(15) // Fetch slightly more
+                .then(({ data }) => {
+                    if (data) {
+                        setConversations(prev => {
+                            const newDataSig = JSON.stringify(data.map((c: any) => c.id + c.updated_at));
+                            const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => c.id + c.updated_at));
+
+                            if (newDataSig !== prevDataSig) {
+                                // Update detected!
+                                return data.map((d: any) => ({
+                                    ...d,
+                                    messages: d.messages || []
+                                }));
+                            }
+                            return prev;
+                        });
+                    }
+                });
+        }, 2000); // 2 seconds is a good balance between load and "instant" feel
+
+        return () => clearInterval(interval);
+    }, [tenantId]);
+
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
             <div className="flex justify-between items-center px-2 py-1 text-xs text-gray-500">
