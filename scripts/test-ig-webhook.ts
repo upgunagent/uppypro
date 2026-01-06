@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from 'url';
+
+// Fix for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load .env.local
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
@@ -63,7 +68,7 @@ async function run() {
                         timestamp: Date.now(),
                         message: {
                             mid: "mid_" + Date.now(),
-                            text: "Merhaba! Bu bir test mesajıdır. 🚀"
+                            text: "Merhaba! Bu bir SIMULASYON mesajıdır. 🚀"
                         }
                     }
                 ]
@@ -71,10 +76,10 @@ async function run() {
         ]
     };
 
-    console.log("🚀 Sending Simulated Webhook to http://localhost:3000/api/webhooks/meta ...");
+    console.log("🚀 Sending Simulated Webhook to https://uppypro.vercel.app/api/webhooks/meta ...");
 
     try {
-        const response = await fetch("http://localhost:3000/api/webhooks/meta", {
+        const response = await fetch("https://uppypro.vercel.app/api/webhooks/meta", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

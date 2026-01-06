@@ -44,7 +44,8 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
             setDialogOpen(false);
         } catch (error) {
             console.error(error);
-            alert("Bağlantı hatası!");
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Bağlantı hatası!");
         } finally {
             setLoading(false);
         }
