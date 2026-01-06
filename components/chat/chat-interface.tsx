@@ -38,6 +38,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     // Realtime Subscription
     useEffect(() => {
+        console.log("Setting up Realtime subscription for conversation:", conversationId);
         const supabase = createClient();
         const channel = supabase
             .channel(`chat:${conversationId}`)
@@ -50,6 +51,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     filter: `conversation_id=eq.${conversationId}`
                 },
                 (payload) => {
+                    console.log("Realtime Payload Received:", payload);
                     const newMsg = payload.new as Message;
                     setMessages((prev) => {
                         // Prevent duplicates (simple check by ID)
@@ -58,9 +60,12 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     });
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+                console.log(`Realtime Subscription Status: ${status}`, err);
+            });
 
         return () => {
+            console.log("Cleaning up Realtime subscription");
             supabase.removeChannel(channel);
         };
     }, [conversationId]);
