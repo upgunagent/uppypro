@@ -49,6 +49,7 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
         console.log("Subscribing to inbox-list for tenant:", tenantId);
 
         // Subscribe to NEW messages
+        // REMOVED FILTER: Relying on RLS to filter for us.
         const channel = supabase
             .channel(`inbox-list:${tenantId}`)
             .on(
@@ -56,12 +57,14 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                 {
                     event: 'INSERT',
                     schema: 'public',
-                    table: 'messages',
-                    filter: `tenant_id=eq.${tenantId}`
+                    table: 'messages'
                 },
                 async (payload) => {
                     const newMsg = payload.new;
-                    console.log("Inbox Realtime Update:", newMsg);
+                    console.log("Inbox Realtime Update (No Filter):", newMsg);
+
+                    // Double check tenant_id just in case RLS leaked (shouldn't happen)
+                    if (newMsg.tenant_id !== tenantId) return;
 
                     setConversations((prev) => {
                         const existingIdx = prev.findIndex(c => c.id === newMsg.conversation_id);
@@ -90,8 +93,6 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                             // NEW CONVERSATION: Fetch it!
                             console.log("New conversation detected, fetching:", newMsg.conversation_id);
 
-                            // We need to fetch the conversation details to add it to the list
-                            // Ideally create a specific API or use supabase client to fetch 'conversations' table
                             supabase
                                 .from('conversations')
                                 .select('*')
@@ -100,7 +101,6 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                 .then(({ data: newConvData, error }) => {
                                     if (newConvData && !error) {
                                         setConversations(current => {
-                                            // Double check if it wasn't added in the meantime
                                             if (current.some(c => c.id === newConvData.id)) return current;
 
                                             const newConv: Conversation = {
@@ -114,12 +114,10 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                             };
                                             return [newConv, ...current];
                                         });
-                                    } else {
-                                        console.error("Failed to fetch new conversation:", error);
                                     }
                                 });
 
-                            return prev; // Return current state, update will happen in .then()
+                            return prev;
                         }
                     });
                 }
@@ -129,6 +127,7 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
             });
 
         return () => {
+            console.log("Unsubscribing from inbox-list");
             supabase.removeChannel(channel);
         };
     }, [tenantId]);
@@ -136,7 +135,7 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
             <div className="flex justify-between items-center px-2 py-1 text-xs text-gray-500">
-                <span>Live Status: <span className="text-green-400">● Active (v1.2)</span></span>
+                <span>Live: <span className="text-green-400">● v1.3 (NoFilter)</span> ID: {tenantId?.slice(0, 8)}</span>
                 <button
                     onClick={() => window.location.reload()}
                     className="hover:text-white underline"
@@ -170,7 +169,6 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                     </div>
                                     <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                         {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
-                                        {/* SAFE RENDER: Ensure text is string */}
                                         {/* SAFE RENDER: Ensure text is string */}
                                         {(() => {
                                             const txt = safeString(lastMsg?.text);
