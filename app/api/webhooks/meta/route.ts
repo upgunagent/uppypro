@@ -64,7 +64,8 @@ export async function POST(request: Request) {
             let tenantId = null;
 
             if (channel === 'instagram') {
-                // Priority: Match by ig_user_id (OAuth method)
+                // ... instagram logic ...
+                // Keep existing logic but add logs if needed
                 const { data: conn } = await supabaseAdmin
                     .from("channel_connections")
                     .select("tenant_id")
@@ -73,28 +74,35 @@ export async function POST(request: Request) {
                     .maybeSingle();
 
                 if (conn) tenantId = conn.tenant_id;
-                else {
-                    // Fallback: Match by legacy page_id (if event has page info or we stored page_id in legacy flow)
-                    // Note: Recipient ID in IG Graph API webhook IS the IG Account ID, not the Page ID.
-                    // But if legacy stored 'mock_id' or 'page_id' confusingly, we might miss it.
-                    // For legacy MVP, we might have stored page_id as mock_id. Let's try that.
-                    const { data: legacyConn } = await supabaseAdmin
-                        .from("channel_connections")
-                        .select("tenant_id")
-                        .eq("channel", "instagram")
-                        .contains("meta_identifiers", { mock_id: recipientId })
-                        .maybeSingle();
-                    if (legacyConn) tenantId = legacyConn.tenant_id;
-                }
             } else {
                 // WhatsApp
-                const { data: connection } = await supabaseAdmin
+                console.log("[Meta Webhook] Searching for tenant with phone_id:", recipientId);
+
+                // Try finding by exact phone_number_id
+                let { data: connection } = await supabaseAdmin
                     .from("channel_connections")
                     .select("tenant_id")
-                    .contains("meta_identifiers", { phone_number_id: recipientId }) // Real prod key
-                    // OR .contains("meta_identifiers", { mock_id: recipientId }) // Demo key
+                    .eq("channel", "whatsapp")
+                    .contains("meta_identifiers", { phone_number_id: recipientId })
                     .maybeSingle();
-                if (connection) tenantId = connection.tenant_id;
+
+                // If not found, try 'mock_id' (legacy/fallback)
+                if (!connection) {
+                    const { data: connection2 } = await supabaseAdmin
+                        .from("channel_connections")
+                        .select("tenant_id")
+                        .eq("channel", "whatsapp")
+                        .contains("meta_identifiers", { mock_id: recipientId })
+                        .maybeSingle();
+                    connection = connection2;
+                }
+
+                if (connection) {
+                    tenantId = connection.tenant_id;
+                    console.log("[Meta Webhook] Found tenant:", tenantId);
+                } else {
+                    console.log("[Meta Webhook] Tenant NOT found for phone_id:", recipientId);
+                }
             }
 
             if (!tenantId) {
