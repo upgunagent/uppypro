@@ -58,6 +58,7 @@ export async function POST(request: Request) {
                 external_msg_id: '',
                 text: '',
                 sender_id: '',
+                sender_name: null as string | null,
                 timestamp: '',
                 type: 'text',
                 media_url: null as string | null,
@@ -78,6 +79,14 @@ export async function POST(request: Request) {
                 eventData.external_msg_id = msg.id;
                 eventData.sender_id = msg.from;
                 eventData.timestamp = msg.timestamp;
+
+                // WhatsApp Contact Name
+                if (changes.contacts) {
+                    const contact = changes.contacts.find((c: any) => c.wa_id === msg.from);
+                    if (contact?.profile?.name) {
+                        eventData.sender_name = contact.profile.name;
+                    }
+                }
 
                 // ... (existing message parsing)
                 // Determine Type
@@ -171,6 +180,20 @@ export async function POST(request: Request) {
                 if (conn) {
                     tenantId = conn.tenant_id;
                     accessToken = conn.access_token_encrypted;
+
+                    // FETCH PROFILE
+                    if (accessToken && eventData.sender_id) {
+                        try {
+                            const igProfileUrl = `https://graph.facebook.com/v21.0/${eventData.sender_id}?fields=username,name&access_token=${accessToken}`;
+                            const profileRes = await fetch(igProfileUrl);
+                            const profileData = await profileRes.json();
+                            if (profileData.username) {
+                                eventData.sender_name = profileData.username; // Prefer username for IG
+                            }
+                        } catch (e) {
+                            console.error("Failed to fetch IG profile:", e);
+                        }
+                    }
                 }
             } else {
                 // WhatsApp
@@ -236,6 +259,9 @@ export async function POST(request: Request) {
                 .match({ tenant_id: tenantId, channel: channel, external_thread_id: eventData.sender_id })
                 .maybeSingle();
 
+            // Decided Handle Name
+            const handleToUse = eventData.sender_name || eventData.sender_id;
+
             if (!conversation) {
                 const { data: newConv } = await supabaseAdmin
                     .from("conversations")
@@ -243,12 +269,22 @@ export async function POST(request: Request) {
                         tenant_id: tenantId,
                         channel: channel,
                         external_thread_id: eventData.sender_id,
-                        customer_handle: eventData.sender_id,
+                        customer_handle: handleToUse,
                         mode: 'HUMAN'
                     })
                     .select()
                     .single();
                 conversation = newConv;
+            } else {
+                // UPDATE if name is better (and wasn't set before or was just ID)
+                // We check if current handle is just the ID, or if we want to enable syncing always.
+                // Usually syncing always is fine as long as name isn't null.
+                if (eventData.sender_name && conversation.customer_handle !== eventData.sender_name) {
+                    await supabaseAdmin
+                        .from("conversations")
+                        .update({ customer_handle: eventData.sender_name })
+                        .eq("id", conversation.id);
+                }
             }
 
             // 3. Insert Message
