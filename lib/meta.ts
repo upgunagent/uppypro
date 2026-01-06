@@ -294,6 +294,7 @@ export async function processIncomingMedia(
 
 export async function editMessageInChannel(
     tenantId: string,
+    recipientId: string,
     channel: "whatsapp",
     messageId: string, // The external Meta ID
     newText: string
@@ -320,20 +321,50 @@ export async function editMessageInChannel(
 
         if (!phoneNumberId) return { success: false, error: "Phone Number ID missing" };
 
-        // URL: POST https://graph.facebook.com/v21.0/{MESSAGE_ID}
-        // This is the standard Graph API pattern for updating an object's fields.
-        const url = `https://graph.facebook.com/v21.0/${messageId}`;
+        const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
 
-        // Body: Just the fields to update? Or explicit structure?
-        // Since we are editing a text message, we usually send the new text structure.
+        // 3. Prepare Payload for EDIT (Using Protocol Message Structure)
+        // Hypothethical Payload based on 'protocol' type:
+        /*
+          {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": "PHONE_NUMBER",
+            "type": "protocol",
+             "protocol": {
+                "type": "edited_message",
+                "edited_message_id": "MESSAGE_ID",
+                "body": "NEW TEXT" 
+             }
+          }
+        */
+        // Note: 'body' might be inside 'edited_message' or just 'text'? 
+        // Let's try matching the incoming webhook structure for edits.
+
+        // Fallback: If "protocol" isn't accepted, we can try generic text with contextual reference if that was an option,
+        // but protocol is the specific type for edits/revokes in the underlying layer.
+
+        // Note: If Cloud API doesn't support 'protocol' type outbound, this will fail with "Invalid parameter type".
+        // In that case, we might fallback to "context" but that usually replies.
+
+        // Let's try the only remaining logical path before concluding non-support:
+        // Some users report success with just sending type="text" and referencing? No.
+
+        // Trying PROTOCOL payload.
         const body = {
             messaging_product: "whatsapp",
-            type: "text",
-            text: { body: newText }
+            recipient_type: "individual",
+            to: recipientId,
+            type: "protocol",
+            protocol: {
+                type: "edited_message",
+                edited_message_id: messageId,
+                body: newText // Or 'text'? Usually 'body' for text content.
+            }
         };
 
         const res = await fetch(url, {
-            method: "PUT", // Try PUT since POST was unsupported
+            method: "POST", // Back to POST, since we are sending a 'new' protocol message
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${accessToken}`

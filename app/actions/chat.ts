@@ -131,6 +131,7 @@ export async function editMessage(messageId: string, newText: string, conversati
                 if (process.env.MOCK_META_SEND !== "true") {
                     const result = await editMessageInChannel(
                         conv.tenant_id,
+                        conv.external_thread_id, // Pass recipient (phone number)
                         'whatsapp',
                         msg.external_message_id,
                         newText
