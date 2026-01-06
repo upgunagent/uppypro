@@ -260,7 +260,12 @@ export async function POST(request: Request) {
                 .maybeSingle();
 
             // Decided Handle Name
-            const handleToUse = eventData.sender_name || eventData.sender_id;
+            let handleToUse = eventData.sender_name || eventData.sender_id;
+
+            // WhatsApp Formatting: Name (Number)
+            if (channel === 'whatsapp' && eventData.sender_name) {
+                handleToUse = `${eventData.sender_name} (+${eventData.sender_id})`;
+            }
 
             if (!conversation) {
                 const { data: newConv } = await supabaseAdmin
@@ -279,11 +284,19 @@ export async function POST(request: Request) {
                 // UPDATE if name is better (and wasn't set before or was just ID)
                 // We check if current handle is just the ID, or if we want to enable syncing always.
                 // Usually syncing always is fine as long as name isn't null.
-                if (eventData.sender_name && conversation.customer_handle !== eventData.sender_name) {
-                    await supabaseAdmin
-                        .from("conversations")
-                        .update({ customer_handle: eventData.sender_name })
-                        .eq("id", conversation.id);
+                if (eventData.sender_name) {
+                    // Re-calculate desired handle to ensure it matches current format preference
+                    let desiredHandle = eventData.sender_name;
+                    if (channel === 'whatsapp') {
+                        desiredHandle = `${eventData.sender_name} (+${eventData.sender_id})`;
+                    }
+
+                    if (conversation.customer_handle !== desiredHandle) {
+                        await supabaseAdmin
+                            .from("conversations")
+                            .update({ customer_handle: desiredHandle })
+                            .eq("id", conversation.id);
+                    }
                 }
             }
 
