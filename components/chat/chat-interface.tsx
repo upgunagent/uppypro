@@ -1,6 +1,8 @@
 "use client";
 
+
 import { useState, useRef, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode } from "@/app/actions/chat";
@@ -33,6 +35,35 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    // Realtime Subscription
+    useEffect(() => {
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`chat:${conversationId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `conversation_id=eq.${conversationId}`
+                },
+                (payload) => {
+                    const newMsg = payload.new as Message;
+                    setMessages((prev) => {
+                        // Prevent duplicates (simple check by ID)
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [conversationId]);
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
