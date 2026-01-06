@@ -175,3 +175,103 @@ export async function sendToChannel(
         return { success: false, error: err.message };
     }
 }
+
+export async function processIncomingMedia(
+    tenantId: string,
+    mediaId: string,
+    channel: 'whatsapp' | 'instagram',
+    accessToken: string
+): Promise<string | null> {
+    const supabaseWithAdmin = createAdminClient();
+
+    try {
+        let downloadUrl = "";
+
+        if (channel === 'whatsapp') {
+            // 1. Get Media URL using ID
+            const metaUrl = `https://graph.facebook.com/v21.0/${mediaId}`;
+            const metaRes = await fetch(metaUrl, {
+                headers: { "Authorization": `Bearer ${accessToken}` }
+            });
+            const metaData = await metaRes.json();
+
+            if (!metaData.url) {
+                console.error("[Process Media] Failed to get media URL", metaData);
+                return null;
+            }
+            downloadUrl = metaData.url;
+
+        } else if (channel === 'instagram') {
+            // For Instagram, the media_url in the webhook is usually public (CDN) for a short time
+            // But sometimes it requires auth? Usually CDN urls are directly accessible.
+            // If we passed the CDN url as mediaId effectively (logic in webhook might need adjustment), we just use it.
+            // BUT, if we are passing an ID, we gotta fetch it.
+            // Instagram Graphic API usually gives a CDN URL directly in the webhook 'attachments' payload.
+            // So this function might just accept the URL for IG.
+            // Let's assume for IG we might be passed a URL directly or an ID.
+            // If it starts with http, treat as URL.
+            if (mediaId.startsWith('http')) {
+                downloadUrl = mediaId;
+            } else {
+                // It is an ID? (Usually not the case for IG Webhook attachments, they give payload.url)
+                console.warn("[Process Media] Unexpected IG Media ID format:", mediaId);
+                return null;
+            }
+        }
+
+        console.log(`[Process Media] Downloading from: ${downloadUrl}`);
+
+        // 2. Download Content
+        const fileRes = await fetch(downloadUrl, {
+            headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+
+        if (!fileRes.ok) {
+            console.error(`[Process Media] Download failed: ${fileRes.status}`);
+            return null;
+        }
+
+        const buffer = await fileRes.arrayBuffer();
+        const contentType = fileRes.headers.get("content-type") || "application/octet-stream";
+
+        // 3. Determine Extension
+        let ext = "bin";
+        if (contentType.includes("image/jpeg")) ext = "jpg";
+        else if (contentType.includes("image/png")) ext = "png";
+        else if (contentType.includes("video/mp4")) ext = "mp4";
+        else if (contentType.includes("application/pdf")) ext = "pdf";
+        else if (contentType.includes("audio/ogg")) ext = "ogg";
+        else if (contentType.includes("audio/mpeg")) ext = "mp3";
+
+        // 4. Upload to Supabase Storage
+        const fileName = `${channel}/${mediaId}_${Date.now()}.${ext}`;
+        // Store in a dedicated 'incoming-media' folder or similar in existing bucket
+        const filePath = `incoming/${fileName}`;
+
+        const { error: uploadError } = await supabaseWithAdmin
+            .storage
+            .from("chat-media")
+            .upload(filePath, buffer, {
+                contentType: contentType,
+                upsert: true
+            });
+
+        if (uploadError) {
+            console.error("[Process Media] Upload to Supabase failed", uploadError);
+            return null;
+        }
+
+        // 5. Get Public URL
+        const { data: { publicUrl } } = supabaseWithAdmin
+            .storage
+            .from("chat-media")
+            .getPublicUrl(filePath);
+
+        console.log(`[Process Media] Success: ${publicUrl}`);
+        return publicUrl;
+
+    } catch (err) {
+        console.error("[Process Media] Exception", err);
+        return null;
+    }
+}

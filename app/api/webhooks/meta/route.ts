@@ -154,20 +154,24 @@ export async function POST(request: Request) {
                 continue;
             }
 
-            // 1. Find Tenant
+            // 1. Find Tenant (AND Get Access Token)
             let tenantId = null;
+            let accessToken = null;
 
             if (channel === 'instagram') {
                 // ... instagram logic ...
                 // Keep existing logic but add logs if needed
                 const { data: conn } = await supabaseAdmin
                     .from("channel_connections")
-                    .select("tenant_id")
+                    .select("tenant_id, access_token_encrypted")
                     .eq("channel", "instagram")
                     .contains("meta_identifiers", { ig_user_id: recipientId })
                     .maybeSingle();
 
-                if (conn) tenantId = conn.tenant_id;
+                if (conn) {
+                    tenantId = conn.tenant_id;
+                    accessToken = conn.access_token_encrypted;
+                }
             } else {
                 // WhatsApp
                 console.log("[Meta Webhook] Searching for tenant with phone_id:", recipientId);
@@ -175,7 +179,7 @@ export async function POST(request: Request) {
                 // Try finding by exact phone_number_id
                 let { data: connection } = await supabaseAdmin
                     .from("channel_connections")
-                    .select("tenant_id")
+                    .select("tenant_id, access_token_encrypted")
                     .eq("channel", "whatsapp")
                     .contains("meta_identifiers", { phone_number_id: recipientId })
                     .maybeSingle();
@@ -184,7 +188,7 @@ export async function POST(request: Request) {
                 if (!connection) {
                     const { data: connection2 } = await supabaseAdmin
                         .from("channel_connections")
-                        .select("tenant_id")
+                        .select("tenant_id, access_token_encrypted")
                         .eq("channel", "whatsapp")
                         .contains("meta_identifiers", { mock_id: recipientId })
                         .maybeSingle();
@@ -193,6 +197,7 @@ export async function POST(request: Request) {
 
                 if (connection) {
                     tenantId = connection.tenant_id;
+                    accessToken = connection.access_token_encrypted;
                     console.log("[Meta Webhook] Found tenant:", tenantId);
                 } else {
                     console.log("[Meta Webhook] Tenant NOT found for phone_id:", recipientId);
@@ -203,6 +208,26 @@ export async function POST(request: Request) {
                 console.log("Tenant not found for recipient:", recipientId);
                 continue;
             }
+
+            // --- PROCESS MEDIA IF NEEDED ---
+            if (eventData.media_url && accessToken) {
+                // For WhatsApp: media_url is currently an ID.
+                // For Instagram: media_url is currently a URL (CDN).
+                // Our utility handles both, but knows that WA needs fetching.
+
+                // Import lazily or use the one imported at top if I update imports
+                const { processIncomingMedia } = await import("@/lib/meta"); // Dynamic import to avoid circular dep issues if any
+
+                const permanentUrl = await processIncomingMedia(tenantId, eventData.media_url, channel as 'whatsapp' | 'instagram', accessToken);
+
+                if (permanentUrl) {
+                    console.log(`[Meta Webhook] Replaced raw media with permanent URL: ${permanentUrl}`);
+                    eventData.media_url = permanentUrl;
+                } else {
+                    console.warn("[Meta Webhook] Failed to process media, falling back to raw (likely broken for WA)");
+                }
+            }
+
 
             // 2. Find/Create Conversation
             let { data: conversation } = await supabaseAdmin
