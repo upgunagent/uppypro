@@ -107,15 +107,16 @@ export async function sendToChannel(
 
                 let waType = type === 'document' ? 'document' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'image';
 
-                // SPECIAL HANDLER: WhatsApp does not support .webm audio messages.
-                // If we are sending an audio but it is .webm, we MUST send it as a document to ensure delivery.
+                // SPECIAL HANDLER: WhatsApp does not support .webm or .ogg audio messages natively in all contexts.
+                // If we are sending an audio but it is .webm/.ogg (browser recording), we MUST send it as a document to ensure delivery.
                 // We check both mediaUrl and filename to be sure.
-                const isWebM = (mediaUrl && mediaUrl.includes('.webm')) || (filename && filename.endsWith('.webm'));
+                const isBrowserAudio = (mediaUrl && (mediaUrl.includes('.webm') || mediaUrl.includes('.ogg'))) ||
+                    (filename && (filename.endsWith('.webm') || filename.endsWith('.ogg')));
 
-                if (type === 'audio' && isWebM) {
-                    console.log("[Meta Send] Detected WebM Audio. Forcing 'document' type for WhatsApp compatibility.");
+                if (type === 'audio' && isBrowserAudio) {
+                    console.log("[Meta Send] Detected Browser Audio (WebM/OGG). Forcing 'document' type for WhatsApp compatibility.");
                     waType = 'document';
-                    if (!filename) filename = "voice_message.webm";
+                    if (!filename) filename = "voice_message.webm"; // Default fallback
                 }
 
                 body = {

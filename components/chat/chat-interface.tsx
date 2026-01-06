@@ -109,6 +109,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             if (mimeType.includes("mp4") || mimeType.includes("aac")) ext = "m4a";
             else if (mimeType.includes("ogg")) ext = "ogg";
 
+            console.log(`[Audio] Mime: ${mimeType}, Ext: ${ext}`);
+
             const fileName = `voice_message.${ext}`;
             const audioFile = new File([audioBlob], fileName, { type: mimeType });
 
