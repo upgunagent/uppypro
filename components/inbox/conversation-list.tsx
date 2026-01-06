@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 interface Message {
     text: string;
     created_at: string;
+    message_type?: string;
+    media_url?: string;
 }
 
 interface Conversation {
@@ -72,7 +74,9 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                             // Safe create object
                             const msgObj = {
                                 text: safeString(newMsg.text),
-                                created_at: safeString(newMsg.created_at)
+                                created_at: safeString(newMsg.created_at),
+                                message_type: newMsg.message_type,
+                                media_url: newMsg.media_url
                             };
 
                             // Naively append
@@ -83,8 +87,39 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                             newList.splice(existingIdx, 1);
                             return [updatedConv, ...newList];
                         } else {
-                            // New conversation logic omitted for MVP
-                            return prev;
+                            // NEW CONVERSATION: Fetch it!
+                            console.log("New conversation detected, fetching:", newMsg.conversation_id);
+
+                            // We need to fetch the conversation details to add it to the list
+                            // Ideally create a specific API or use supabase client to fetch 'conversations' table
+                            supabase
+                                .from('conversations')
+                                .select('*')
+                                .eq('id', newMsg.conversation_id)
+                                .single()
+                                .then(({ data: newConvData, error }) => {
+                                    if (newConvData && !error) {
+                                        setConversations(current => {
+                                            // Double check if it wasn't added in the meantime
+                                            if (current.some(c => c.id === newConvData.id)) return current;
+
+                                            const newConv: Conversation = {
+                                                ...newConvData,
+                                                messages: [{
+                                                    text: safeString(newMsg.text),
+                                                    created_at: safeString(newMsg.created_at),
+                                                    message_type: newMsg.message_type,
+                                                    media_url: newMsg.media_url
+                                                }]
+                                            };
+                                            return [newConv, ...current];
+                                        });
+                                    } else {
+                                        console.error("Failed to fetch new conversation:", error);
+                                    }
+                                });
+
+                            return prev; // Return current state, update will happen in .then()
                         }
                     });
                 }
@@ -127,10 +162,18 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
                                     <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                         {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
                                         {/* SAFE RENDER: Ensure text is string */}
-                                        {lastMsg
-                                            ? (safeString(lastMsg.text) || 'Görsel/Medya')
-                                            : 'Konuşma başlatıldı'
-                                        }
+                                        {/* SAFE RENDER: Ensure text is string */}
+                                        {(() => {
+                                            const txt = safeString(lastMsg?.text);
+                                            // Check for known media markers or types
+                                            if (txt === '[Photo]' || txt === '[Media]' || lastMsg?.message_type === 'image') return '📷 Fotoğraf';
+                                            if (txt === '[Video]' || lastMsg?.message_type === 'video') return '🎥 Video';
+                                            if (txt === '[Audio]' || lastMsg?.message_type === 'audio') return '🎤 Ses';
+                                            if (txt === '[Document]' || lastMsg?.message_type === 'document') return '📄 Belge';
+
+                                            // Fallback to text or generic
+                                            return lastMsg ? (txt || 'Görsel/Medya') : 'Konuşma başlatıldı';
+                                        })()}
                                     </div>
                                 </div>
                             </div>
