@@ -135,6 +135,15 @@ export function ConversationList({ initialConversations, tenantId }: Conversatio
 
     return (
         <div className="flex-1 overflow-y-auto space-y-2">
+            <div className="flex justify-between items-center px-2 py-1 text-xs text-gray-500">
+                <span>Live Status: <span className="text-green-400">● Active (v1.2)</span></span>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="hover:text-white underline"
+                >
+                    Manuel Yenile
+                </button>
+            </div>
             {conversations.map((conv) => {
                 const msgs = Array.isArray(conv.messages) ? conv.messages : [];
                 const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
