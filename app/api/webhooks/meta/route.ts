@@ -54,30 +54,76 @@ export async function POST(request: Request) {
             const messaging = entry.messaging?.[0] || entry.standby?.[0];
             // ... rest of the code ...
 
-            let eventData = null;
+            let eventData = {
+                external_msg_id: '',
+                text: '',
+                sender_id: '',
+                timestamp: '',
+                type: 'text',
+                media_url: null as string | null,
+                media_type: null as string | null
+            };
             let channel: 'whatsapp' | 'instagram' = 'whatsapp';
             let recipientId = null; // To find tenant
 
             if (changes?.messages) {
                 // WhatsApp
                 const msg = changes.messages[0];
-                eventData = {
-                    external_msg_id: msg.id,
-                    text: msg.text?.body || "[Media/Other]",
-                    sender_id: msg.from,
-                    timestamp: msg.timestamp
-                };
+                eventData.external_msg_id = msg.id;
+                eventData.sender_id = msg.from;
+                eventData.timestamp = msg.timestamp;
+
+                // Determine Type
+                const msgType = msg.type; // text, image, video, audio, document...
+                if (msgType === 'text') {
+                    eventData.text = msg.text?.body || "";
+                    eventData.type = 'text';
+                } else if (msgType === 'image') {
+                    eventData.type = 'image';
+                    eventData.media_url = msg.image?.id; // Store ID for WA
+                    eventData.media_type = msg.image?.mime_type;
+                    eventData.text = msg.image?.caption || "[Photo]";
+                } else if (msgType === 'video') {
+                    eventData.type = 'video';
+                    eventData.media_url = msg.video?.id;
+                    eventData.media_type = msg.video?.mime_type;
+                    eventData.text = msg.video?.caption || "[Video]";
+                } else if (msgType === 'document') {
+                    eventData.type = 'document';
+                    eventData.media_url = msg.document?.id;
+                    eventData.media_type = msg.document?.mime_type;
+                    eventData.text = msg.document?.caption || msg.document?.filename || "[Document]";
+                } else if (msgType === 'audio' || msgType === 'voice') {
+                    eventData.type = 'audio';
+                    eventData.media_url = (msg.audio || msg.voice)?.id;
+                    eventData.media_type = (msg.audio || msg.voice)?.mime_type;
+                    eventData.text = "[Audio]";
+                } else {
+                    eventData.text = `[${msgType}]`;
+                    eventData.type = 'text'; // Fallback
+                }
+
                 recipientId = changes.metadata?.phone_number_id;
                 channel = 'whatsapp';
             } else if (messaging) {
                 // Instagram
                 // messaging.recipient.id is the Instagram Account ID (Scoped)
-                eventData = {
-                    external_msg_id: messaging.message?.mid,
-                    text: messaging.message?.text || "[Media/Other]",
-                    sender_id: messaging.sender?.id, // Customer's scoped ID
-                    timestamp: messaging.timestamp
-                };
+                eventData.external_msg_id = messaging.message?.mid;
+                eventData.sender_id = messaging.sender?.id;
+                eventData.timestamp = messaging.timestamp;
+
+                // Check attachments
+                const attachments = messaging.message?.attachments;
+                if (attachments && attachments.length > 0) {
+                    const att = attachments[0];
+                    eventData.type = att.type; // image, video, audio
+                    eventData.media_url = att.payload?.url; // IG gives URL!
+                    eventData.text = "[Media]";
+                } else {
+                    eventData.text = messaging.message?.text || "";
+                    eventData.type = 'text';
+                }
+
                 recipientId = messaging.recipient?.id; // OUR Instagram Account ID
                 channel = 'instagram';
             }
@@ -165,7 +211,10 @@ export async function POST(request: Request) {
                     direction: 'IN',
                     sender: 'CUSTOMER',
                     text: eventData.text,
-                    external_message_id: eventData.external_msg_id
+                    external_message_id: eventData.external_msg_id,
+                    message_type: eventData.type,
+                    media_url: eventData.media_url,
+                    media_type: eventData.media_type
                 });
 
             if (msgError && msgError.code !== '23505') {
