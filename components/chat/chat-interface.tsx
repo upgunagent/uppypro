@@ -336,48 +336,52 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                             {/* Bubble */}
                             <div className={clsx(
-                                "px-4 py-2 rounded-2xl text-sm overflow-hidden",
-                                isMe
-                                    ? "bg-primary text-white rounded-br-none"
-                                    : isBot
-                                        ? "bg-purple-600/20 border border-purple-500/30 text-purple-100 rounded-bl-none"
-                                        : "bg-white/10 text-gray-200 rounded-bl-none"
+                                "rounded-2xl text-sm overflow-hidden relative group",
+                                (msg.message_type === 'image' || msg.message_type === 'video')
+                                    ? "p-0 bg-transparent" // Media: No padding, transparent
+                                    : [
+                                        "px-4 py-2", // Text/Doc/Audio: Standard padding
+                                        isMe
+                                            ? "bg-primary text-white rounded-br-none"
+                                            : isBot
+                                                ? "bg-purple-600/20 border border-purple-500/30 text-purple-100 rounded-bl-none"
+                                                : "bg-white/10 text-gray-200 rounded-bl-none"
+                                    ]
                             )}>
                                 {/* MEDIA CONTENT */}
                                 {msg.message_type === 'image' && msg.media_url ? (
-                                    <div className="-mx-2 -mt-2 mb-2">
-                                        <div
-                                            className="relative group cursor-pointer"
-                                            onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}
-                                        >
-                                            <img
-                                                src={msg.media_url}
-                                                alt="Gelen Fotoğraf"
-                                                className="max-w-[240px] rounded-lg transition-opacity hover:opacity-90"
-                                                onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
-                                            />
+                                    <div className="cursor-pointer" onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}>
+                                        <img
+                                            src={msg.media_url}
+                                            alt="Gelen Fotoğraf"
+                                            className="max-w-[240px] rounded-2xl block hover:opacity-90 transition-opacity"
+                                            onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
+                                        />
+                                        {/* Timestamp Overlay for Image */}
+                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                 ) : msg.message_type === 'video' && msg.media_url ? (
-                                    <div className="-mx-2 -mt-2 mb-2">
-                                        <div
-                                            className="relative group cursor-pointer max-w-[240px]"
-                                            onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'video' })}
-                                        >
-                                            {/* Video Thumbnail / Preview - Muted & AutoPlay for preview effect */}
-                                            <video
-                                                src={msg.media_url}
-                                                className="w-full rounded-lg pointer-events-none"
-                                                onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
-                                                muted
-                                                preload="metadata"
-                                            />
-                                            {/* Play Button Overlay */}
-                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition-colors">
-                                                <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/50">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                                                </div>
+                                    <div
+                                        className="cursor-pointer max-w-[240px] relative"
+                                        onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'video' })}
+                                    >
+                                        <video
+                                            src={msg.media_url}
+                                            className="w-full rounded-2xl pointer-events-none block"
+                                            onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
+                                            muted
+                                            preload="metadata"
+                                        />
+                                        <div className="absolute inset-0 bg-black/10 flex items-center justify-center hover:bg-black/20 transition-colors rounded-2xl">
+                                            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                             </div>
+                                        </div>
+                                        {/* Timestamp Overlay for Video */}
+                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                 ) : msg.message_type === 'audio' && msg.media_url ? (
@@ -390,8 +394,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     </div>
                                 ) : null}
 
-                                {/* TEXT CONTENT */}
-                                {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+                                {/* TEXT CONTENT - Hide if media type is image/video/audio */}
+                                {msg.text && !['image', 'video', 'audio'].includes(msg.message_type || '') && (
+                                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                                )}
                             </div>
 
                             {/* Time */}
