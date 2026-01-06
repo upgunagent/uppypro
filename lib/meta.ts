@@ -105,7 +105,15 @@ export async function sendToChannel(
                 // WhatsApp Media Types: image, video, audio, document
                 // Note: 'voice' is also a type but 'audio' is safer for general files.
 
-                const waType = type === 'document' ? 'document' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'image';
+                let waType = type === 'document' ? 'document' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'image';
+
+                // SPECIAL HANDLER: WhatsApp does not support .webm audio messages.
+                // If we are sending an audio but it is .webm, we MUST send it as a document to ensure delivery.
+                if (type === 'audio' && mediaUrl.includes('.webm')) {
+                    console.log("[Meta Send] Converting WebM Audio to Document for WhatsApp compatibility.");
+                    waType = 'document';
+                    if (!filename) filename = "voice_message.webm";
+                }
 
                 body = {
                     messaging_product: "whatsapp",
@@ -119,8 +127,9 @@ export async function sendToChannel(
                     }
                 };
 
-                if (waType === 'document' && body.document && filename) {
-                    body.document.filename = filename;
+                // If we forced it to be a document (or it was already), ensure filename is set
+                if (waType === 'document' && body.document) {
+                    body.document.filename = filename || "file";
                 }
             } else {
                 body = {
