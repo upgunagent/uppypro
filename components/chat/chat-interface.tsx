@@ -477,8 +477,19 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             {/* Input Area */}
             <div className="relative bg-slate-900 border-t border-white/10">
                 {conversationMode === 'BOT' && (
-                    <div className="absolute bottom-full w-full bg-purple-900/80 backdrop-blur-sm text-purple-200 text-xs py-1 text-center border-t border-purple-500/30">
-                        ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
+                    <div className="absolute bottom-full w-full h-8 flex items-center justify-center overflow-hidden z-10">
+                        {/* Hazard Stripes Background */}
+                        <div
+                            className="absolute inset-0 w-full h-full"
+                            style={{
+                                backgroundImage: "repeating-linear-gradient(45deg, #fbbf24 0, #fbbf24 20px, #1a1a1a 20px, #1a1a1a 40px)",
+                                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                            }}
+                        />
+                        {/* Text Badge */}
+                        <div className="relative z-10 px-4 py-1 bg-black/90 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded border border-yellow-500/30 shadow-lg flex items-center gap-2">
+                            ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
+                        </div>
                     </div>
                 )}
 
