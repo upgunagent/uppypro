@@ -1,23 +1,44 @@
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin"; // Use Admin Client for Super Admin View
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { Settings, ShieldAlert } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function TenantListPage() {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    // RLS allows agency_admin to see all tenants?
-    // Our RLS policy "Members can view their own tenant" might block seeing ALL tenants if agency_admin is not a member of ALL tenants?
-    // Correct. The current RLS only allows viewing tenants you are a member of.
-    // Agency Admin needs to view ALL tenants.
-    // We should prob update RLS or use Service Role here?
-    // Ideally Agency Admin should use a specific query or we adjust RLS.
-    // For MVP speed, let's use the standard client. If RLS blocks, we fix RLS.
-    // Actually, I put "Agency admins might all tenants (TODO)" in RLS comment.
-    // Let's assume for MVP agency admin IS added to tenants or we need to fix RLS.
-    // Fix RLS in next step if needed. For now let's try to fetch.
+    if (!user) redirect("/login");
 
-    const { data: tenants, error } = await supabase
+    // 1. Verify Agency Admin Role
+    // We check tenant_members for THIS user to see if they have 'agency_admin' role in ANY tenant? 
+    // Or is there a specific 'admin' tenant? 
+    // For this system, we assume if they have 'agency_admin' role in the record related to the user, they are super admin.
+    // Let's check the first membership record for role.
+    const { data: membership } = await supabase
+        .from("tenant_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "agency_admin") // Strict check
+        .maybeSingle();
+
+    if (!membership) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-red-500 gap-4">
+                <ShieldAlert size={48} />
+                <h1 className="text-2xl font-bold">Yetkisiz Erişim</h1>
+                <p className="text-gray-400">Bu sayfayı görüntülemek için "Süper Yönetici" yetkisine sahip olmalısınız.</p>
+                <Link href="/panel/inbox">
+                    <Button variant="outline">Panele Dön</Button>
+                </Link>
+            </div>
+        );
+    }
+
+    // 2. Fetch ALL Tenants (Bypassing RLS with Admin Client)
+    const adminDb = createAdminClient();
+    const { data: tenants, error } = await adminDb
         .from("tenants")
         .select("*, subscriptions(*)");
 

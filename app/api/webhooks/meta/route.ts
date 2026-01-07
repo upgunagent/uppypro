@@ -268,6 +268,15 @@ export async function POST(request: Request) {
             }
 
             if (!conversation) {
+                // Fetch settings to determine initial mode
+                const { data: settings } = await supabaseAdmin
+                    .from("agent_settings")
+                    .select("ai_operational_enabled")
+                    .eq("tenant_id", tenantId)
+                    .single();
+
+                const initialMode = settings?.ai_operational_enabled ? 'BOT' : 'HUMAN';
+
                 const { data: newConv } = await supabaseAdmin
                     .from("conversations")
                     .insert({
@@ -275,7 +284,7 @@ export async function POST(request: Request) {
                         channel: channel,
                         external_thread_id: eventData.sender_id,
                         customer_handle: handleToUse,
-                        mode: 'HUMAN'
+                        mode: initialMode
                     })
                     .select()
                     .single();

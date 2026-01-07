@@ -1,23 +1,44 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { updateAiSettings } from "@/app/actions/admin";
-import { Check, Info } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Check, Info } from "lucide-react";
 
-export default async function AiSettingsPage({ params }: { params: { tenantId: string } }) {
-    const supabase = await createClient();
-    const { data: settings } = await supabase
-        .from("agent_settings")
-        .select("*")
-        .eq("tenant_id", params.tenantId)
-        .single();
+export default async function AiSettingsPage({ params: paramsPromise }: { params: Promise<{ tenantId: string }> }) {
+    // Await params for Next.js 15+
+    const params = await paramsPromise;
+    const { tenantId } = params;
 
-    const updateAction = updateAiSettings.bind(null, params.tenantId);
+    // Use Admin Client to bypass RLS (since Agency Admin might not be a direct member of this tenant)
+    const supabase = createAdminClient();
+
+    // Fetch Settings and Tenant Info in parallel
+    const [settingsRes, tenantRes] = await Promise.all([
+        supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).single(),
+        supabase.from("tenants").select("name").eq("id", tenantId).single()
+    ]);
+
+    const settings = settingsRes.data;
+    const tenantName = tenantRes.data?.name || "Bilinmeyen İşletme";
+
+    const updateAction = updateAiSettings.bind(null, tenantId);
 
     return (
-        <div className="max-w-2xl space-y-8">
+        <div className="max-w-2xl space-y-8 p-8">
+            <Link
+                href="/admin/tenants"
+                className="flex items-center text-gray-400 hover:text-white transition-colors mb-4 group"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                İşletmelere Dön
+            </Link>
+
             <div>
-                <h1 className="text-3xl font-bold">AI Ayarları</h1>
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                    AI Ayarları
+                    <span className="text-gray-500 font-normal text-2xl">({tenantName})</span>
+                </h1>
                 <p className="text-gray-400">Bu işletme için n8n workflow ve AI durumunu yönetin.</p>
             </div>
 

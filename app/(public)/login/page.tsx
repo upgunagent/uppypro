@@ -26,8 +26,25 @@ export default async function LoginPage({
             return redirect("/login?message=Could not authenticate user");
         }
 
-        // Role check logic would typically happen here or in a middleware
-        // For now redirect to generic panel
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            // Check for agency_admin role
+            const { createAdminClient } = await import("@/lib/supabase/admin"); // Dynamic import to avoid build cycle if any
+            const adminDb = createAdminClient();
+
+            const { data: membership } = await adminDb
+                .from("tenant_members")
+                .select("role")
+                .eq("user_id", user.id)
+                .eq("role", "agency_admin")
+                .maybeSingle();
+
+            if (membership) {
+                return redirect("/admin/tenants");
+            }
+        }
+
         return redirect("/panel/inbox");
     };
 

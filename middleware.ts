@@ -47,6 +47,18 @@ export async function middleware(request: NextRequest) {
     // Auth Redirect (if logged in, don't show login)
     if (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") {
         if (user) {
+            // Check Role for Redirection
+            const { data: membership } = await supabase
+                .from("tenant_members")
+                .select("role")
+                .eq("user_id", user.id)
+                .eq("role", "agency_admin")
+                .maybeSingle();
+
+            if (membership) {
+                return NextResponse.redirect(new URL("/admin/tenants", request.url));
+            }
+
             return NextResponse.redirect(new URL("/panel/inbox", request.url));
         }
     }
