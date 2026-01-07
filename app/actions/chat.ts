@@ -165,14 +165,24 @@ export async function editMessage(messageId: string, newText: string, conversati
 export async function markConversationAsRead(conversationId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return; // Silent fail
 
-    await supabase
+    console.log(`markConversationAsRead called for conversation: ${conversationId}, User: ${user?.id}`);
+
+    if (!user) return;
+
+    const { error, count } = await supabase
         .from("messages")
         .update({ is_read: true })
         .eq("conversation_id", conversationId)
         .eq("direction", "IN")
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .select();
+
+    if (error) {
+        console.error("markConversationAsRead Error:", error);
+    } else {
+        console.log(`markConversationAsRead Success. Updated ${count} messages.`);
+    }
 
     // We don't necessarily need to revalidate path here unless we show unread count INSIDE the chat view, 
     // but sidebar updates via realtime subscription anyway.

@@ -216,7 +216,9 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
             {/* Debug removed: System Stable */}
 
             {conversations.map((conv) => {
-                const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+                const msgs = Array.isArray(conv.messages) ? [...conv.messages] : [];
+                // Sort by created_at to ensure correct order
+                msgs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
                 const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
                 const isSelected = selectedChatId === conv.id;
 
