@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendMessage, toggleMode, editMessage } from "@/app/actions/chat";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check } from "lucide-react";
+import { sendMessage, toggleMode, editMessage, markConversationAsRead } from "@/app/actions/chat";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -26,9 +26,10 @@ interface ChatInterfaceProps {
     conversationMode: "BOT" | "HUMAN";
     aiOperational: boolean;
     platform: string;
+    customerName: string;
 }
 
-export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform }: ChatInterfaceProps) {
+export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName }: ChatInterfaceProps) {
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -46,6 +47,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     useEffect(() => {
         // optimistically set from props first
         setMessages(initialMessages);
+
+        // Mark as READ
+        markConversationAsRead(conversationId);
 
         // Then fetch fresh to ensure we have latest fields (like external_message_id)
         const fetchFreshKeys = async () => {
@@ -213,6 +217,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 },
                 (payload) => {
                     console.log("Realtime Payload Received:", payload);
+                    // Mark read immediately if we are here
+                    markConversationAsRead(conversationId);
+
                     const newMsg = payload.new as Message;
                     setMessages((prev) => {
                         // Prevent duplicates (simple check by ID)
@@ -288,7 +295,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)] relative">
+        <div className="flex flex-col h-full relative">
             {/* LIGHTBOX OVERLAY */}
             {lightboxMedia && (
                 <div
@@ -322,54 +329,66 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             )}
 
             {/* Header / Toolbar */}
-            <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 rounded-t-xl">
+            <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 bg-slate-900">
                 <div className="flex items-center gap-2">
-                    <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-purple-500 shadow-purple-500/50 shadow-lg" : "bg-blue-500")}></div>
-                    <span className="font-bold text-sm">{conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}</span>
+                    <span className="font-bold text-lg">{customerName}</span>
+                    {platform === 'whatsapp' && <MessageCircle className="w-5 h-5 text-green-500" />}
+                    {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
                 </div>
 
-                <Button
-                    variant={conversationMode === "BOT" ? "secondary" : "default"}
-                    size="sm"
-                    onClick={handleToggle}
-                    disabled={!aiOperational}
-                    className={clsx(!aiOperational && "opacity-50 cursor-not-allowed")}
-                >
-                    {conversationMode === "BOT" ? <><User className="mr-2 w-4 h-4" />Devral (Human)</> : <><Bot className="mr-2 w-4 h-4" />AI'ya Devret</>}
-                </Button>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-purple-500 shadow-purple-500/50 shadow-lg" : "bg-blue-500")}></div>
+                        <span className="font-bold text-sm text-gray-400">
+                            {conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
+                        </span>
+                    </div>
+
+                    <Button
+                        variant={conversationMode === "BOT" ? "secondary" : "default"}
+                        size="sm"
+                        onClick={handleToggle}
+                        disabled={!aiOperational}
+                        className={clsx(!aiOperational && "opacity-50 cursor-not-allowed")}
+                    >
+                        {conversationMode === "BOT" ? <><User className="mr-2 w-4 h-4" />Devral (Human)</> : <><Bot className="mr-2 w-4 h-4" />AI'ya Devret</>}
+                    </Button>
+                </div>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20" ref={scrollRef}>
+            <div
+                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7dd]"
+                ref={scrollRef}
+                style={{
+                    backgroundImage: "linear-gradient(rgba(239, 231, 221, 0.9), rgba(239, 231, 221, 0.9)), url('/chat-final-bg.png')",
+                    backgroundRepeat: 'repeat',
+                    backgroundSize: '600px',
+                }}
+            >
                 {messages.map((msg) => {
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
                     const isEditing = editingId === msg.id;
-                    // WhatsApp Cloud API currently does NOT support editing via the public API (as of v25.0).
-                    // The previous attempts (POST/PUT/PROTOCOL) all failed with explicit "unsupported" errors.
-                    // We are disabling it to prevent user confusion.
-                    // const canEdit = message.sender === 'HUMAN' && platform === 'whatsapp' && isEditable;
-                    const canEdit = false; // Temporarily disabled until Meta allows text edits via API
+                    const canEdit = false;
 
                     return (
                         <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
                             {/* Sender Label */}
-                            <span className="text-xs text-gray-500 mb-1 ml-1">
+                            <span className="text-xs text-gray-600 mb-1 ml-1 font-medium">
                                 {isMe ? "Siz" : isBot ? "AI Bot" : "Müşteri"}
                             </span>
 
                             {/* Bubble */}
                             <div className={clsx(
-                                "rounded-2xl text-sm relative group",
+                                "rounded-lg text-sm relative group shadow-sm",
                                 (msg.message_type === 'image' || msg.message_type === 'video')
-                                    ? "p-0 bg-transparent overflow-hidden" // Media: Keep overflow hidden for corners
+                                    ? "p-1 bg-white overflow-hidden"
                                     : [
-                                        "px-4 py-2", // Text/Doc/Audio: Standard padding
+                                        "px-2 py-1.5 min-w-[120px]",
                                         isMe
-                                            ? "bg-primary text-white rounded-br-none"
-                                            : isBot
-                                                ? "bg-purple-600/20 border border-purple-500/30 text-purple-100 rounded-bl-none"
-                                                : "bg-white/10 text-gray-200 rounded-bl-none"
+                                            ? "bg-[#d9fdd3] text-gray-900 rounded-tr-none"
+                                            : "bg-white text-gray-900 rounded-tl-none"
                                     ]
                             )}>
                                 {/* MEDIA CONTENT */}
@@ -378,11 +397,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                         <img
                                             src={msg.media_url}
                                             alt="Gelen Fotoğraf"
-                                            className="max-w-[240px] rounded-2xl block hover:opacity-90 transition-opacity"
+                                            className="max-w-[240px] rounded block hover:opacity-90 transition-opacity"
                                             onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
                                         />
                                         <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {formatTime(new Date(msg.created_at).getTime() / 1000).replace(':', '')}
                                         </div>
                                     </div>
                                 ) : msg.message_type === 'video' && msg.media_url ? (
@@ -392,22 +411,20 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     >
                                         <video
                                             src={msg.media_url}
-                                            className="w-full rounded-2xl pointer-events-none block"
+                                            className="w-full rounded pointer-events-none block"
                                             onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
                                             muted
                                             preload="metadata"
                                         />
-                                        <div className="absolute inset-0 bg-black/10 flex items-center justify-center hover:bg-black/20 transition-colors rounded-2xl">
+                                        <div className="absolute inset-0 bg-black/10 flex items-center justify-center hover:bg-black/20 transition-colors rounded">
                                             <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                             </div>
                                         </div>
-                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
                                     </div>
                                 ) : msg.message_type === 'audio' && msg.media_url ? (
-                                    <div className="mb-1 min-w-[200px]">
+                                    <div className="mb-1 min-w-[200px] flex items-center">
+                                        {/* Custom audio player could go here, for now standard */}
                                         <audio
                                             src={msg.media_url}
                                             controls
@@ -423,100 +440,66 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             <textarea
                                                 value={editValue}
                                                 onChange={e => setEditValue(e.target.value)}
-                                                className="bg-black/20 rounded p-2 text-white w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-white/30"
+                                                className="bg-white border border-gray-300 rounded p-2 text-gray-900 w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-green-500"
                                                 rows={3}
                                             />
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => setEditingId(null)} className="p-1 hover:bg-white/10 rounded">
+                                                <button onClick={() => setEditingId(null)} className="p-1 hover:bg-gray-100 rounded text-gray-500">
                                                     <X size={14} />
                                                 </button>
-                                                <button onClick={handleEditSave} className="p-1 hover:bg-white/10 rounded text-green-400">
+                                                <button onClick={handleEditSave} className="p-1 hover:bg-gray-100 rounded text-green-600">
                                                     <Check size={14} />
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className={clsx("whitespace-pre-wrap relative", canEdit ? "pr-6" : "")}>
+                                        <div className={clsx("whitespace-pre-wrap relative text-sm leading-relaxed", canEdit ? "pr-6" : "")}>
                                             {msg.text}
-                                            {/* Edit Menu Trigger */}
-                                            {canEdit && (
-                                                <div className="absolute top-0 right-[-10px] sm:right-[-12px]">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setMenuOpenId(menuOpenId === msg.id ? null : msg.id);
-                                                        }}
-                                                        className="p-1 bg-black/50 hover:bg-black/70 rounded-full shadow-sm backdrop-blur-sm transition-colors"
-                                                    >
-                                                        <MoreVertical size={12} className="text-white" />
-                                                    </button>
-                                                    {/* Dropdown */}
-                                                    {menuOpenId === msg.id && (
-                                                        <div className="absolute right-0 top-6 z-50 bg-[#1a1a1a] border border-white/10 rounded-md shadow-xl py-1 w-24 overflow-hidden">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setEditingId(msg.id);
-                                                                    setEditValue(msg.text);
-                                                                    setMenuOpenId(null);
-                                                                }}
-                                                                className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 flex items-center gap-2 text-white"
-                                                            >
-                                                                <Edit2 size={12} /> Düzenle
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                    {/* Backdrop for menu */}
-                                                    {menuOpenId === msg.id && (
-                                                        <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); }}></div>
-                                                    )}
-                                                </div>
-                                            )}
+                                            {/* Time in Bubble (Right Bottom) */}
+                                            <div className="float-right ml-2 mt-2 flex items-center gap-1">
+                                                <span className="text-[10px] text-gray-500">
+                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {isMe && <Check size={12} className="text-blue-500" />}
+                                            </div>
                                         </div>
                                     )
                                 )}
                             </div>
-
-                            {/* Time */}
-                            <span className="text-[10px] text-gray-600 mt-1 mr-1">
-                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                {msg.created_at !== msg.created_at && " (Düzenlendi)"}
-                                {/* Note: Real edited status check depends on backend updated_at field or separate edited_at */}
-                            </span>
                         </div>
                     );
                 })}
             </div>
 
             {/* Input Area */}
-            <div className="relative">
+            <div className="relative bg-slate-900 border-t border-white/10">
+                {conversationMode === 'BOT' && (
+                    <div className="absolute bottom-full w-full bg-purple-900/80 backdrop-blur-sm text-purple-200 text-xs py-1 text-center border-t border-purple-500/30">
+                        ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
+                    </div>
+                )}
+
                 {/* Emoji Picker Popover */}
                 {showEmojiPicker && (
                     <>
-                        {/* Backdrop to close on click outside */}
                         <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-
                         <div className="absolute bottom-full left-0 z-50 mb-2 ml-4 shadow-2xl rounded-xl overflow-hidden border border-white/10">
-
-
                             <EmojiPicker
                                 onEmojiClick={(emojiData) => {
                                     setInput(prev => prev + emojiData.emoji);
-                                    // Keep picker open or close? Typically toggled manually.
-                                    // setShowEmojiPicker(false); 
                                 }}
-                                theme={Theme.DARK} // Matches dark mode
+                                theme={Theme.DARK}
                                 width={300}
                                 height={400}
                                 lazyLoadEmojis={true}
-                                emojiStyle={EmojiStyle.NATIVE} // Native IOS/Android emojis look better
+                                emojiStyle={EmojiStyle.NATIVE}
                             />
                         </div>
                     </>
                 )}
 
-                <form onSubmit={handleSend} className="p-4 bg-white/5 border-t border-white/10 rounded-b-xl flex gap-2 items-center">
-                    {/* File Upload Button (Previous Logic) */}
+                <form onSubmit={handleSend} className="p-4 flex gap-2 items-center bg-slate-900">
+                    {/* File Upload Button */}
                     <input
                         type="file"
                         id="file-upload"
@@ -558,7 +541,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     .getPublicUrl(filePath);
 
                                 // 4. Send Message via Server Action
-                                // Use file name as text/caption if inputs is empty
                                 const textToSend = input.trim() || file.name;
 
                                 // Optimistic Update
@@ -572,7 +554,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 };
                                 setMessages((prev) => [...prev, optimisticMsg]);
 
-                                // If we used the input as text, clear it
                                 if (input.trim()) setInput("");
 
                                 await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
@@ -582,13 +563,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 alert("Yükleme hatası: " + err.message);
                             } finally {
                                 setSending(false);
-                                // Reset input
                                 e.target.value = '';
                             }
                         }}
                     />
 
-                    {/* Action Buttons Container */}
                     <div className="flex items-center gap-1">
                         <button
                             type="button"
@@ -611,7 +590,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         </button>
                     </div>
 
-                    {/* RECORDING UI */}
                     {isRecording ? (
                         <div className="flex-1 flex items-center justify-between bg-red-500/10 rounded-lg px-4 py-2 border border-red-500/20 animate-pulse">
                             <div className="flex items-center gap-2 text-red-500 font-mono font-medium">
@@ -641,9 +619,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
-                                className="flex-1 bg-black/20 border-white/10"
+                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500"
                             />
-                            {/* MIC BUTTON (Only show if input is empty) */}
                             {!input.trim() && (
                                 <button
                                     type="button"
@@ -653,7 +630,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
                                 </button>
                             )}
-                            {/* Send Button (Only show if input has text) */}
                             {input.trim() && (
                                 <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
                                     <Send className="w-4 h-4" />
@@ -663,11 +639,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     )}
                 </form>
             </div>
-            {conversationMode === 'BOT' && (
-                <div className="text-center text-xs text-purple-400 mt-2">
-                    ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
-                </div>
-            )}
         </div>
     );
 }

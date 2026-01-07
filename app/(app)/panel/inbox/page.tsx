@@ -2,12 +2,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
-import { MessageCircle, Instagram, AlertTriangle } from "lucide-react";
+import { MessageCircle, Instagram, AlertTriangle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ConversationList } from "@/components/inbox/conversation-list";
+import ChatInterface from "@/components/chat/chat-interface";
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string }> }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return <div>Giriş yapmanız gerekiyor</div>;
@@ -63,8 +64,9 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
 
     const resolvedParams = await searchParams;
     const tab = resolvedParams?.tab || "all"; // all, whatsapp, instagram
+    const chatId = resolvedParams?.chatId;
 
-    // Fetch Conversations
+    // Fetch Conversations List
     let query = supabase
         .from("conversations")
         .select("*, messages(text, created_at)")
@@ -77,28 +79,82 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
 
     const { data: conversations } = await query;
 
-    // Process conversations to get last message
-    // Note: Supabase join query might return array of messages. Ideally we sort them or limit 1.
-    // For MVP: We fetch messages and take the last one. (Inefficient for production, needs separate view or limit)
-    // Or better: `messages` is just for show, but `conversations` should have `last_message` column or we compute it.
-    // The schema didn't have `last_message`, so I'll just pick from the joined `messages`.
+    // Fetch Selected Chat Data (if any)
+    let selectedConversation = null;
+    let selectedMessages: any[] = [];
+    let agentSettings = null;
 
-    // Actually, standard `.select('*, messages(text) ...')` returns all messages.
-    // Let's use `messages` table mostly for chat view. The `conversations` table should update `updated_at`.
-    // I will just fetch conversations for now, assuming I can show "Click to view" if no message snippet properly fetched.
+    if (chatId) {
+        // Fetch Conversation Details
+        const { data: convData } = await supabase
+            .from("conversations")
+            .select("*")
+            .eq("id", chatId)
+            .maybeSingle(); // Use maybeSingle to avoid error if deleted/not found
+
+        selectedConversation = convData;
+
+        if (selectedConversation) {
+            // Fetch Messages
+            const { data: msgData } = await supabase
+                .from("messages")
+                .select("*")
+                .eq("conversation_id", chatId)
+                .order("created_at", { ascending: true });
+            selectedMessages = msgData || [];
+
+            // Fetch Agent Settings
+            const { data: settingsData } = await supabase
+                .from("agent_settings")
+                .select("ai_operational_enabled")
+                .eq("tenant_id", selectedConversation.tenant_id)
+                .single();
+            agentSettings = settingsData;
+        }
+    }
 
     return (
-        <div className="h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Inbox</h1>
-                <div className="flex gap-2">
-                    <Link href="/panel/inbox?tab=all"><Button variant={tab === 'all' ? 'default' : 'ghost'} size="sm">Tümü</Button></Link>
-                    <Link href="/panel/inbox?tab=whatsapp"><Button variant={tab === 'whatsapp' ? 'default' : 'ghost'} size="sm">WhatsApp</Button></Link>
-                    <Link href="/panel/inbox?tab=instagram"><Button variant={tab === 'instagram' ? 'default' : 'ghost'} size="sm">Instagram</Button></Link>
+        <div className="flex h-screen w-full overflow-hidden bg-slate-950">
+            {/* Left Pane: Conversation List */}
+            <div className="w-[675px] flex flex-col border-r border-white/10 bg-slate-950">
+                <div className="h-16 flex items-center px-4 border-b border-white/10 shrink-0">
+                    <h1 className="text-xl font-bold">
+                        {tab === 'all' && 'Tüm Mesajlar'}
+                        {tab === 'whatsapp' && 'WhatsApp'}
+                        {tab === 'instagram' && 'Instagram'}
+                    </h1>
                 </div>
+
+                <ConversationList
+                    initialConversations={conversations as any}
+                    tenantId={tenantId}
+                    currentTab={tab}
+                    selectedChatId={chatId}
+                />
             </div>
 
-            <ConversationList initialConversations={conversations as any} tenantId={tenantId} />
+            {/* Right Pane: Chat Area */}
+            <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
+                {selectedConversation ? (
+                    <div className="h-full w-full">
+                        <ChatInterface
+                            conversationId={selectedConversation.id}
+                            initialMessages={selectedMessages}
+                            conversationMode={selectedConversation.mode}
+                            aiOperational={agentSettings?.ai_operational_enabled || false}
+                            platform={selectedConversation.channel || 'whatsapp'}
+                            customerName={selectedConversation.customer_handle || selectedConversation.external_thread_id || 'Bilinmeyen Kullanıcı'}
+                        />
+                    </div>
+                ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                        <div className="bg-white/5 p-6 rounded-full">
+                            <MessageSquare size={48} className="opacity-50" />
+                        </div>
+                        <p className="text-lg">Görüntülemek için bir konuşma seçin</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

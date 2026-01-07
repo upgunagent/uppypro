@@ -161,3 +161,20 @@ export async function editMessage(messageId: string, newText: string, conversati
         return { success: false, error: "Sunucu hatası: " + (err.message || "Bilinmeyen hata") };
     }
 }
+
+export async function markConversationAsRead(conversationId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return; // Silent fail
+
+    await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", conversationId)
+        .eq("direction", "IN")
+        .eq("is_read", false);
+
+    // We don't necessarily need to revalidate path here unless we show unread count INSIDE the chat view, 
+    // but sidebar updates via realtime subscription anyway.
+    revalidatePath("/panel/inbox");
+}

@@ -59,7 +59,7 @@ export default async function SettingsPage() {
 
 
     return (
-        <div className="max-w-5xl space-y-8">
+        <div className="max-w-5xl space-y-8 p-8">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">İşletme Ayarları</h1>
