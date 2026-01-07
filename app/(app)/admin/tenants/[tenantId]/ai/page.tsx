@@ -11,12 +11,18 @@ export default async function AiSettingsPage({ params: paramsPromise }: { params
     const { tenantId } = params;
 
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceKey) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    if (!serviceKey || !url) {
         return (
-            <div className="p-8 text-red-500 border border-red-500 rounded bg-red-50">
-                <h1 className="text-xl font-bold">Yapılandırma Hatası</h1>
-                <p><code>SUPABASE_SERVICE_ROLE_KEY</code> ortam değişkeni Vercel'de bulunamadı.</p>
-                <p className="mt-2 text-sm text-gray-700">Lütfen Vercel Ayarlarından bu değişkeni eklediğinizden ve <b>Redeploy</b> yaptığınızdan emin olun.</p>
+            <div className="p-8 text-red-500 border border-red-500 rounded bg-red-50 font-mono">
+                <h1 className="text-xl font-bold">Yapılandırma Hatası (v1.1)</h1>
+                <p>Ortam değişkenleri eksik:</p>
+                <ul className="list-disc ml-5 mt-2">
+                    {!serviceKey && <li><code>SUPABASE_SERVICE_ROLE_KEY</code> yok</li>}
+                    {!url && <li><code>NEXT_PUBLIC_SUPABASE_URL</code> yok</li>}
+                </ul>
+                <p className="mt-4 text-sm text-gray-700">Lütfen Vercel Ayarlarından bu değişkenleri kontrol edip <b>Redeploy</b> yapın.</p>
             </div>
         );
     }
