@@ -248,7 +248,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                 ? "bg-white/10 border-primary/50"
                                 : "glass border-white/5 hover:bg-white/10"
                         )}>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="bg-white/10 p-3 rounded-full">
                                     {conv.channel === 'whatsapp'
                                         ? <MessageCircle className="text-green-500" />
