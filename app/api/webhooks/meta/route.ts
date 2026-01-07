@@ -234,13 +234,7 @@ export async function POST(request: Request) {
 
             // --- PROCESS MEDIA IF NEEDED ---
             if (eventData.media_url && accessToken) {
-                // For WhatsApp: media_url is currently an ID.
-                // For Instagram: media_url is currently a URL (CDN).
-                // Our utility handles both, but knows that WA needs fetching.
-
-                // Import lazily or use the one imported at top if I update imports
                 const { processIncomingMedia } = await import("@/lib/meta"); // Dynamic import to avoid circular dep issues if any
-
                 const permanentUrl = await processIncomingMedia(tenantId, eventData.media_url, channel as 'whatsapp' | 'instagram', accessToken);
 
                 if (permanentUrl) {
@@ -290,11 +284,7 @@ export async function POST(request: Request) {
                     .single();
                 conversation = newConv;
             } else {
-                // UPDATE if name is better (and wasn't set before or was just ID)
-                // We check if current handle is just the ID, or if we want to enable syncing always.
-                // Usually syncing always is fine as long as name isn't null.
                 if (eventData.sender_name) {
-                    // Re-calculate desired handle to ensure it matches current format preference
                     let desiredHandle = eventData.sender_name;
                     if (channel === 'whatsapp') {
                         desiredHandle = `${eventData.sender_name} (+${eventData.sender_id})`;
@@ -365,6 +355,46 @@ export async function POST(request: Request) {
 
                     if (response.ok) {
                         n8nStatus = "SUCCESS";
+
+                        // --- HANDLE n8n RESPONSE ---
+                        try {
+                            const resJson = await response.json();
+                            let replyText = "";
+
+                            if (Array.isArray(resJson)) {
+                                replyText = resJson[0]?.output || resJson[0]?.text || resJson[0]?.message;
+                            } else {
+                                replyText = resJson.output || resJson.text || resJson.message;
+                            }
+
+                            if (replyText) {
+                                console.log(`[n8n] Received Reply: ${replyText.substring(0, 50)}...`);
+
+                                // Insert BOT Message to DB
+                                await supabaseAdmin
+                                    .from("messages")
+                                    .insert({
+                                        tenant_id: tenantId,
+                                        conversation_id: conversation.id,
+                                        direction: 'OUT',
+                                        sender: 'BOT',
+                                        text: replyText,
+                                        message_type: 'text',
+                                        is_read: true
+                                    });
+
+                                // Send to Channel (Meta)
+                                const { sendToChannel } = await import("@/lib/meta");
+                                await sendToChannel(
+                                    tenantId,
+                                    channel as "whatsapp" | "instagram",
+                                    eventData.sender_id, // Reply to SENDER
+                                    replyText
+                                );
+                            }
+                        } catch (parseError) {
+                            console.warn("[n8n] Could not parse response JSON (maybe empty?)", parseError);
+                        }
                     } else {
                         n8nStatus = `FAILED (${response.status})`;
                         console.error(`[n8n] Webhook failed with status: ${response.status}`);
@@ -377,23 +407,17 @@ export async function POST(request: Request) {
                 n8nStatus = `SKIPPED: ${skipReason}`;
             }
 
-            // Update Log if we captured the ID (Need to change L42 to return ID first)
-            // Since L42 doesn't return ID currently, let's just do a fire-and-forget log update for debugging
-            // For now, I will just log to console as Vercel logs are the primary source for the user if they check.
-            // But to be helpful, I'll insert a NEW log specifically for n8n attempt if it fails.
-
-            if (n8nStatus !== "SUCCESS") {
-                await supabaseAdmin.from("webhook_logs").insert({
-                    body: {
-                        event: "n8n_trigger_attempt",
-                        status: n8nStatus,
-                        tenant_id: tenantId,
-                        settings: settings,
-                        conversation_mode: conversation?.mode
-                    },
-                    error_message: n8nStatus
-                });
-            }
+            // Always log attempt
+            await supabaseAdmin.from("webhook_logs").insert({
+                body: {
+                    event: "n8n_trigger_attempt",
+                    status: n8nStatus,
+                    tenant_id: tenantId,
+                    settings: settings,
+                    conversation_mode: conversation?.mode
+                },
+                error_message: n8nStatus
+            });
         }
 
         return NextResponse.json({ success: true });
