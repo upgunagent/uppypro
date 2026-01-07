@@ -52,7 +52,6 @@ export async function POST(request: Request) {
         for (const entry of body.entry || []) {
             const changes = entry.changes?.[0]?.value;
             const messaging = entry.messaging?.[0] || entry.standby?.[0];
-            // ... rest of the code ...
 
             let eventData = {
                 external_msg_id: '',
@@ -88,7 +87,6 @@ export async function POST(request: Request) {
                     }
                 }
 
-                // ... (existing message parsing)
                 // Determine Type
                 const msgType = msg.type;
                 if (msgType === 'text') {
@@ -157,7 +155,7 @@ export async function POST(request: Request) {
                 channel = 'instagram';
             }
 
-            // FINAL SAFETY CHECK: Don't insert empty junk
+            // FINAL SAFETY CHECK
             if (!eventData || !recipientId || (!eventData.text && !eventData.media_url)) {
                 console.log("Skipping invalid/empty event payload");
                 continue;
@@ -168,8 +166,6 @@ export async function POST(request: Request) {
             let accessToken = null;
 
             if (channel === 'instagram') {
-                // ... instagram logic ...
-                // Keep existing logic but add logs if needed
                 const { data: conn } = await supabaseAdmin
                     .from("channel_connections")
                     .select("tenant_id, access_token_encrypted")
@@ -181,14 +177,13 @@ export async function POST(request: Request) {
                     tenantId = conn.tenant_id;
                     accessToken = conn.access_token_encrypted;
 
-                    // FETCH PROFILE
                     if (accessToken && eventData.sender_id) {
                         try {
                             const igProfileUrl = `https://graph.facebook.com/v21.0/${eventData.sender_id}?fields=username,name&access_token=${accessToken}`;
                             const profileRes = await fetch(igProfileUrl);
                             const profileData = await profileRes.json();
                             if (profileData.username) {
-                                eventData.sender_name = profileData.username; // Prefer username for IG
+                                eventData.sender_name = profileData.username;
                             }
                         } catch (e) {
                             console.error("Failed to fetch IG profile:", e);
@@ -196,10 +191,6 @@ export async function POST(request: Request) {
                     }
                 }
             } else {
-                // WhatsApp
-                console.log("[Meta Webhook] Searching for tenant with phone_id:", recipientId);
-
-                // Try finding by exact phone_number_id
                 let { data: connection } = await supabaseAdmin
                     .from("channel_connections")
                     .select("tenant_id, access_token_encrypted")
@@ -207,7 +198,6 @@ export async function POST(request: Request) {
                     .contains("meta_identifiers", { phone_number_id: recipientId })
                     .maybeSingle();
 
-                // If not found, try 'mock_id' (legacy/fallback)
                 if (!connection) {
                     const { data: connection2 } = await supabaseAdmin
                         .from("channel_connections")
@@ -221,9 +211,6 @@ export async function POST(request: Request) {
                 if (connection) {
                     tenantId = connection.tenant_id;
                     accessToken = connection.access_token_encrypted;
-                    console.log("[Meta Webhook] Found tenant:", tenantId);
-                } else {
-                    console.log("[Meta Webhook] Tenant NOT found for phone_id:", recipientId);
                 }
             }
 
@@ -234,17 +221,13 @@ export async function POST(request: Request) {
 
             // --- PROCESS MEDIA IF NEEDED ---
             if (eventData.media_url && accessToken) {
-                const { processIncomingMedia } = await import("@/lib/meta"); // Dynamic import to avoid circular dep issues if any
+                const { processIncomingMedia } = await import("@/lib/meta");
                 const permanentUrl = await processIncomingMedia(tenantId, eventData.media_url, channel as 'whatsapp' | 'instagram', accessToken);
 
                 if (permanentUrl) {
-                    console.log(`[Meta Webhook] Replaced raw media with permanent URL: ${permanentUrl}`);
                     eventData.media_url = permanentUrl;
-                } else {
-                    console.warn("[Meta Webhook] Failed to process media, falling back to raw (likely broken for WA)");
                 }
             }
-
 
             // 2. Find/Create Conversation
             let { data: conversation } = await supabaseAdmin
@@ -253,16 +236,12 @@ export async function POST(request: Request) {
                 .match({ tenant_id: tenantId, channel: channel, external_thread_id: eventData.sender_id })
                 .maybeSingle();
 
-            // Decided Handle Name
             let handleToUse = eventData.sender_name || eventData.sender_id;
-
-            // WhatsApp Formatting: Name (Number)
             if (channel === 'whatsapp' && eventData.sender_name) {
                 handleToUse = `${eventData.sender_name} (+${eventData.sender_id})`;
             }
 
             if (!conversation) {
-                // Fetch settings to determine initial mode
                 const { data: settings } = await supabaseAdmin
                     .from("agent_settings")
                     .select("ai_operational_enabled")
@@ -289,7 +268,6 @@ export async function POST(request: Request) {
                     if (channel === 'whatsapp') {
                         desiredHandle = `${eventData.sender_name} (+${eventData.sender_id})`;
                     }
-
                     if (conversation.customer_handle !== desiredHandle) {
                         await supabaseAdmin
                             .from("conversations")
@@ -299,7 +277,7 @@ export async function POST(request: Request) {
                 }
             }
 
-            // 3. Insert Message
+            // 3. Insert USER Message
             const { error: msgError } = await supabaseAdmin
                 .from("messages")
                 .insert({
@@ -318,7 +296,6 @@ export async function POST(request: Request) {
                 console.error("Message insert error", msgError);
             }
 
-            // 3.5 Update Conversation 'updated_at' to bring it to top
             await supabaseAdmin
                 .from("conversations")
                 .update({ updated_at: new Date().toISOString() })
@@ -334,13 +311,12 @@ export async function POST(request: Request) {
             let n8nStatus = "SKIPPED";
             let skipReason = "";
 
-            if (!settings?.ai_operational_enabled) skipReason = "AI Disabled in Settings";
+            if (!settings?.ai_operational_enabled) skipReason = "AI Disabled";
             else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
-            else if (conversation?.mode !== 'BOT') skipReason = `Conversation Mode is ${conversation?.mode}`;
+            else if (conversation?.mode !== 'BOT') skipReason = `Mode is ${conversation?.mode}`;
 
             if (!skipReason) {
                 try {
-                    console.log(`[n8n] Triggering webhook: ${settings.n8n_webhook_url}`);
                     const response = await fetch(settings.n8n_webhook_url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -367,10 +343,10 @@ export async function POST(request: Request) {
                                 replyText = resJson.output || resJson.text || resJson.message;
                             }
 
-                            if (replyText) {
+                            // CHECK FOR SPAM / DEFAULT RESPONSE
+                            if (replyText && replyText !== "Workflow was started") {
                                 console.log(`[n8n] Received Reply: ${replyText.substring(0, 50)}...`);
 
-                                // Insert BOT Message to DB
                                 await supabaseAdmin
                                     .from("messages")
                                     .insert({
@@ -378,36 +354,35 @@ export async function POST(request: Request) {
                                         conversation_id: conversation.id,
                                         direction: 'OUT',
                                         sender: 'BOT',
-                                        text: replyText,
+                                        text: replyText, // Verified content
                                         message_type: 'text',
                                         is_read: true
                                     });
 
-                                // Send to Channel (Meta)
                                 const { sendToChannel } = await import("@/lib/meta");
                                 await sendToChannel(
                                     tenantId,
                                     channel as "whatsapp" | "instagram",
-                                    eventData.sender_id, // Reply to SENDER
+                                    eventData.sender_id,
                                     replyText
                                 );
+                            } else if (replyText === "Workflow was started") {
+                                console.warn("[n8n] Workflow returned default 'Workflow was started' message. Ignoring.");
+                                n8nStatus = "SUCCESS_BUT_NO_OUTPUT_CONFIGURED";
                             }
                         } catch (parseError) {
-                            console.warn("[n8n] Could not parse response JSON (maybe empty?)", parseError);
+                            console.warn("[n8n] Could not parse response JSON", parseError);
                         }
                     } else {
                         n8nStatus = `FAILED (${response.status})`;
-                        console.error(`[n8n] Webhook failed with status: ${response.status}`);
                     }
                 } catch (e: any) {
-                    console.error("n8n Trigger Failed", e);
                     n8nStatus = `ERROR: ${e.message}`;
                 }
             } else {
                 n8nStatus = `SKIPPED: ${skipReason}`;
             }
 
-            // Always log attempt
             await supabaseAdmin.from("webhook_logs").insert({
                 body: {
                     event: "n8n_trigger_attempt",
@@ -422,7 +397,6 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error("Webhook Error", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 200 });
     }
 }
