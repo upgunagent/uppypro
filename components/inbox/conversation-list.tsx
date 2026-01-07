@@ -12,6 +12,8 @@ interface Message {
     created_at: string;
     message_type?: string;
     media_url?: string;
+    is_read?: boolean;
+    direction?: 'IN' | 'OUT';
 }
 
 interface Conversation {
@@ -266,6 +268,34 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Read/Unread Status Badges */}
+                            <div className="flex flex-col items-end gap-1 px-2">
+                                {(() => {
+                                    const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+                                    const unreadCount = msgs.filter(m => m.direction === 'IN' && !m.is_read).length;
+
+                                    if (unreadCount > 0) {
+                                        return (
+                                            <div className="flex items-center gap-2">
+                                                <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded font-medium">
+                                                    Okunmadı
+                                                </span>
+                                                <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-black text-xs font-bold rounded-full">
+                                                    {unreadCount}
+                                                </span>
+                                            </div>
+                                        );
+                                    } else {
+                                        return (
+                                            <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded font-medium">
+                                                Okundu
+                                            </span>
+                                        );
+                                    }
+                                })()}
+                            </div>
+
                             <div className="flex flex-col items-end gap-2 shrink-0">
                                 <span className="text-xs text-gray-500">{timeStr}</span>
                             </div>
