@@ -345,11 +345,14 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     </div>
 
                     <Button
-                        variant={conversationMode === "BOT" ? "secondary" : "default"}
+                        variant={conversationMode === "BOT" ? "destructive" : "default"}
                         size="sm"
                         onClick={handleToggle}
                         disabled={!aiOperational}
-                        className={clsx(!aiOperational && "opacity-50 cursor-not-allowed")}
+                        className={clsx(
+                            !aiOperational && "opacity-50 cursor-not-allowed",
+                            conversationMode === "BOT" && "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-500/20"
+                        )}
                     >
                         {conversationMode === "BOT" ? <><User className="mr-2 w-4 h-4" />Devral (Human)</> : <><Bot className="mr-2 w-4 h-4" />AI'ya Devret</>}
                     </Button>
