@@ -292,7 +292,11 @@ export async function POST(request: Request) {
                     media_type: eventData.media_type
                 });
 
-            if (msgError && msgError.code !== '23505') {
+            if (msgError) {
+                if (msgError.code === '23505') {
+                    console.log(`[Webhook] Duplicate message ID ${eventData.external_msg_id}, skipping AI trigger.`);
+                    continue; // Skip n8n and rest of loop for this entry
+                }
                 console.error("Message insert error", msgError);
             }
 
