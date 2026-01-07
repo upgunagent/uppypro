@@ -43,6 +43,7 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
                 conversationMode={conversation.mode}
                 aiOperational={settings?.ai_operational_enabled || false}
                 platform={conversation.channel || 'whatsapp'} // Default to whatsapp if null, or handle as needed
+                customerName={conversation.customer_handle || conversation.external_thread_id}
             />
         </div>
     );
