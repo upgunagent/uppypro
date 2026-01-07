@@ -1,54 +1,112 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { updateAiSettings } from "@/app/actions/admin";
+import Link from "next/link";
+import { ArrowLeft, Info } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AiSettingsPage({ params: paramsPromise }: { params: Promise<{ tenantId: string }> }) {
+    // Await params for Next.js 15+
     const params = await paramsPromise;
     const { tenantId } = params;
 
-    let debugStatus = "Başlangıç";
-    let settingsData = null;
+    let settings;
+    let tenantName = "Bilinmeyen";
     let errorMsg = null;
 
     try {
-        debugStatus = "Admin Client Init...";
         const supabase = createAdminClient();
 
-        debugStatus = "Fetching agent_settings...";
-        const { data, error } = await supabase
-            .from("agent_settings")
-            .select("*")
-            .eq("tenant_id", tenantId)
-            .maybeSingle();
+        // Fetch Settings and Tenant Info in parallel
+        const [settingsRes, tenantRes] = await Promise.all([
+            supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
+            supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle()
+        ]);
 
-        if (error) throw error;
+        if (settingsRes.error) throw settingsRes.error;
+        if (tenantRes.error) throw tenantRes.error;
 
-        settingsData = data;
-        debugStatus = "Veri Çekme Başarılı";
+        settings = settingsRes.data;
+        tenantName = tenantRes.data?.name || "Bilinmeyen İşletme";
 
     } catch (e: any) {
-        debugStatus = "HATA OLUŞTU";
-        errorMsg = e.message || JSON.stringify(e);
+        console.error("Page Load Error:", e);
+        errorMsg = e.message;
     }
 
+    if (errorMsg) {
+        return (
+            <div className="p-8 text-red-500">
+                <h1 className="text-xl font-bold">Hata Oluştu</h1>
+                <p>Veriler yüklenirken bir sorun çıktı: {errorMsg}</p>
+                <Link href="/admin/tenants" className="underline mt-4 block">Geri Dön</Link>
+            </div>
+        );
+    }
+
+    const updateAction = updateAiSettings.bind(null, tenantId);
+
     return (
-        <div className="p-8 space-y-4">
-            <Link href="/admin/tenants" className="flex items-center text-gray-400 mb-4">
-                <ArrowLeft className="mr-2" /> Geri Dön
+        <div className="max-w-2xl space-y-8 p-8">
+            <Link
+                href="/admin/tenants"
+                className="flex items-center text-gray-400 hover:text-white transition-colors mb-4 group"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                İşletmelere Dön
             </Link>
-            <h1 className="text-xl font-bold">Debug Modu v5 (Agent Settings)</h1>
 
-            <div className={`p-4 border rounded ${errorMsg ? 'border-red-500 bg-red-900/20' : 'border-green-500 bg-green-900/20'}`}>
-                <p><strong>Durum:</strong> {debugStatus}</p>
-                {errorMsg && <p className="text-red-400 mt-2">{errorMsg}</p>}
+            <div>
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                    AI Ayarları
+                    <span className="text-gray-500 font-normal text-2xl">({tenantName})</span>
+                </h1>
+                <p className="text-gray-400">Bu işletme için n8n workflow ve AI durumunu yönetin.</p>
             </div>
 
-            <div className="bg-gray-900 p-4 rounded text-xs font-mono overflow-auto border border-gray-700">
-                <h3 className="text-gray-400 mb-2">Çekilen Veri (agent_settings):</h3>
-                <pre>{JSON.stringify(settingsData, null, 2)}</pre>
+            <div className="p-6 border border-primary/20 bg-primary/5 rounded-xl">
+                <div className="flex items-start gap-4">
+                    <Info className="text-primary mt-1" />
+                    <div className="text-sm text-gray-300">
+                        Bu ayarlar sadece Ajans Yöneticisi tarafından değiştirilebilir. <br />
+                        Müşteri "AI operational" açık olsa bile konuşmayı manuel moda alabilir.
+                    </div>
+                </div>
             </div>
+
+            <form action={updateAction} className="space-y-6 glass p-8 rounded-xl border border-white/10">
+                <div className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5">
+                    <label htmlFor="ai_operational_enabled" className="font-medium cursor-pointer select-none">
+                        AI Aktif (Operational)
+                        <div className="text-xs text-gray-400 font-normal">
+                            Açık olduğunda gelen mesajlar n8n webhook'una iletilecektir.
+                        </div>
+                    </label>
+                    <input
+                        type="checkbox"
+                        name="ai_operational_enabled"
+                        id="ai_operational_enabled"
+                        className="h-5 w-5 accent-primary"
+                        defaultChecked={settings?.ai_operational_enabled}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="font-medium">n8n Webhook URL</label>
+                    <Input
+                        name="n8n_webhook_url"
+                        placeholder="https://your-n8n-instance.com/webhook/..."
+                        defaultValue={settings?.n8n_webhook_url || ""}
+                    />
+                    <p className="text-xs text-gray-500">Müşteriye özel oluşturulan n8n workflow webhook adresi.</p>
+                </div>
+
+                <div className="pt-4 border-t border-white/10">
+                    <Button type="submit">Ayarları Kaydet</Button>
+                </div>
+            </form>
         </div>
     );
 }
