@@ -289,7 +289,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                         return (
                                             <div className="flex items-center gap-2">
                                                 <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded font-medium">
-                                                    Okunmadı
+                                                    Yeni mesaj
                                                 </span>
                                                 <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-black text-xs font-bold rounded-full">
                                                     {unreadCount}
