@@ -168,9 +168,12 @@ export async function markConversationAsRead(conversationId: string) {
 
     console.log(`markConversationAsRead called for conversation: ${conversationId}, User: ${user?.id}`);
 
-    if (!user) return;
+    if (!user) return; // Silent fail
 
-    const { error, count } = await supabase
+    // Use Admin Client to bypass RLS issues for UPDATE
+    const adminDb = createAdminClient();
+
+    const { error, count } = await adminDb
         .from("messages")
         .update({ is_read: true })
         .eq("conversation_id", conversationId)
@@ -184,7 +187,5 @@ export async function markConversationAsRead(conversationId: string) {
         console.log(`markConversationAsRead Success. Updated ${count} messages.`);
     }
 
-    // We don't necessarily need to revalidate path here unless we show unread count INSIDE the chat view, 
-    // but sidebar updates via realtime subscription anyway.
     revalidatePath("/panel/inbox");
 }
