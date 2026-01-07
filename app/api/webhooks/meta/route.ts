@@ -334,16 +334,24 @@ export async function POST(request: Request) {
                 .update({ updated_at: new Date().toISOString() })
                 .eq("id", conversation.id);
 
-            // 4. n8n Trigger Logic (unchanged)
+            // 4. n8n Trigger Logic
             const { data: settings } = await supabaseAdmin
                 .from("agent_settings")
                 .select("*")
                 .eq("tenant_id", tenantId)
                 .single();
 
-            if (settings?.ai_operational_enabled && settings?.n8n_webhook_url && conversation?.mode === 'BOT') {
+            let n8nStatus = "SKIPPED";
+            let skipReason = "";
+
+            if (!settings?.ai_operational_enabled) skipReason = "AI Disabled in Settings";
+            else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
+            else if (conversation?.mode !== 'BOT') skipReason = `Conversation Mode is ${conversation?.mode}`;
+
+            if (!skipReason) {
                 try {
-                    await fetch(settings.n8n_webhook_url, {
+                    console.log(`[n8n] Triggering webhook: ${settings.n8n_webhook_url}`);
+                    const response = await fetch(settings.n8n_webhook_url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -354,9 +362,37 @@ export async function POST(request: Request) {
                             channel: channel
                         })
                     });
-                } catch (e) {
+
+                    if (response.ok) {
+                        n8nStatus = "SUCCESS";
+                    } else {
+                        n8nStatus = `FAILED (${response.status})`;
+                        console.error(`[n8n] Webhook failed with status: ${response.status}`);
+                    }
+                } catch (e: any) {
                     console.error("n8n Trigger Failed", e);
+                    n8nStatus = `ERROR: ${e.message}`;
                 }
+            } else {
+                n8nStatus = `SKIPPED: ${skipReason}`;
+            }
+
+            // Update Log if we captured the ID (Need to change L42 to return ID first)
+            // Since L42 doesn't return ID currently, let's just do a fire-and-forget log update for debugging
+            // For now, I will just log to console as Vercel logs are the primary source for the user if they check.
+            // But to be helpful, I'll insert a NEW log specifically for n8n attempt if it fails.
+
+            if (n8nStatus !== "SUCCESS") {
+                await supabaseAdmin.from("webhook_logs").insert({
+                    body: {
+                        event: "n8n_trigger_attempt",
+                        status: n8nStatus,
+                        tenant_id: tenantId,
+                        settings: settings,
+                        conversation_mode: conversation?.mode
+                    },
+                    error_message: n8nStatus
+                });
             }
         }
 
