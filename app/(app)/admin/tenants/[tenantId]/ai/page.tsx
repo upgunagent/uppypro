@@ -6,23 +6,51 @@ import Link from "next/link";
 import { ArrowLeft, Check, Info } from "lucide-react";
 
 export default async function AiSettingsPage({ params: paramsPromise }: { params: Promise<{ tenantId: string }> }) {
-    // Await params for Next.js 15+
-    const params = await paramsPromise;
-    const { tenantId } = params;
+    let errorMsg = null;
+    let settings = null;
+    let tenantName = "Bilinmeyen İşletme";
+    let tenantId = "";
 
-    // Use Admin Client to bypass RLS (since Agency Admin might not be a direct member of this tenant)
-    const supabase = createAdminClient();
+    try {
+        // Await params for Next.js 15+
+        const params = await paramsPromise;
+        tenantId = params.tenantId;
 
-    // Fetch Settings and Tenant Info in parallel
-    const [settingsRes, tenantRes] = await Promise.all([
-        supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).single(),
-        supabase.from("tenants").select("name").eq("id", tenantId).single()
-    ]);
+        // Use Admin Client to bypass RLS (since Agency Admin might not be a direct member of this tenant)
+        const supabase = createAdminClient();
 
-    const settings = settingsRes.data;
-    const tenantName = tenantRes.data?.name || "Bilinmeyen İşletme";
+        // Fetch Settings and Tenant Info in parallel
+        // Use maybeSingle() to avoid throwing on empty results
+        const [settingsRes, tenantRes] = await Promise.all([
+            supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
+            supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle()
+        ]);
+
+        if (settingsRes.error) throw new Error("Settings fetch error: " + settingsRes.error.message);
+        if (tenantRes.error) throw new Error("Tenant fetch error: " + tenantRes.error.message);
+
+        settings = settingsRes.data;
+        if (tenantRes.data?.name) {
+            tenantName = tenantRes.data.name;
+        }
+
+    } catch (e: any) {
+        console.error("AI Page Load Error:", e);
+        errorMsg = e.message || "Bilinmeyen sunucu hatası";
+    }
 
     const updateAction = updateAiSettings.bind(null, tenantId);
+
+    if (errorMsg) {
+        return (
+            <div className="p-8 text-red-500">
+                <h1 className="text-xl font-bold">Bir Hata Oluştu</h1>
+                <p>Hata Detayı: {errorMsg}</p>
+                <p className="text-sm text-gray-500 mt-4">Lütfen "SUPABASE_SERVICE_ROLE_KEY" ayarının Vercel'de doğru tanımlandığından emin olun.</p>
+                <Link href="/admin/tenants" className="text-blue-500 underline mt-4 block">Geri Dön</Link>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-2xl space-y-8 p-8">
