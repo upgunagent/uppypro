@@ -262,7 +262,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                     <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                         {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
                                         {/* SAFE RENDER: Ensure text is string */}
-                                        <span className="block truncate">
+                                        <span className="block truncate flex-1">
                                             {(() => {
                                                 const txt = safeString(lastMsg?.text);
                                                 // Check for known media markers or types
