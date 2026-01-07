@@ -319,6 +319,12 @@ export async function POST(request: Request) {
                 console.error("Message insert error", msgError);
             }
 
+            // 3.5 Update Conversation 'updated_at' to bring it to top
+            await supabaseAdmin
+                .from("conversations")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", conversation.id);
+
             // 4. n8n Trigger Logic (unchanged)
             const { data: settings } = await supabaseAdmin
                 .from("agent_settings")

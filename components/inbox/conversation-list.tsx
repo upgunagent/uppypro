@@ -172,9 +172,10 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
             const supabase = createClient();
             let query = supabase
                 .from('conversations')
-                .select(`*, messages(text, created_at, message_type, media_url)`)
+                .select(`*, messages(*)`) // Select all from messages to ensure we get created_at
                 .eq('tenant_id', tenantId)
                 .order('updated_at', { ascending: false })
+                .order('created_at', { foreignTable: 'messages', ascending: true }) // Explicit Sort
                 .limit(15);
 
             if (currentTab !== 'all') {

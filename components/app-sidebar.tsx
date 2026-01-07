@@ -76,8 +76,13 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
             )
             .subscribe();
 
+
+        // Polling Fallback specifically for unread counts (every 10s)
+        const interval = setInterval(fetchCounts, 10000);
+
         return () => {
             supabase.removeChannel(channel);
+            clearInterval(interval);
         };
     }, [tenantId]);
 
