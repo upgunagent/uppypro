@@ -10,24 +10,49 @@ export default async function AiSettingsPage({ params: paramsPromise }: { params
     const params = await paramsPromise;
     const { tenantId } = params;
 
-    // Use Admin Client to bypass RLS (since Agency Admin might not be a direct member of this tenant)
-    const supabase = createAdminClient();
-
-    // Check Env Var Explicitly
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Kritik: SUPABASE_SERVICE_ROLE_KEY bulunamadı! Lütfen Vercel ayarlarını kontrol edin.");
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) {
+        return (
+            <div className="p-8 text-red-500 border border-red-500 rounded bg-red-50">
+                <h1 className="text-xl font-bold">Yapılandırma Hatası</h1>
+                <p><code>SUPABASE_SERVICE_ROLE_KEY</code> ortam değişkeni Vercel'de bulunamadı.</p>
+                <p className="mt-2 text-sm text-gray-700">Lütfen Vercel Ayarlarından bu değişkeni eklediğinizden ve <b>Redeploy</b> yaptığınızdan emin olun.</p>
+            </div>
+        );
     }
 
-    // Fetch Settings and Tenant Info in parallel
-    const [settingsRes, tenantRes] = await Promise.all([
-        supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
-        supabase.from("tenants").select("name").eq("id", tenantId).single()
-    ]);
+    let settings;
+    let tenantName = "Bilinmeyen İşletme";
 
-    if (settingsRes.error) throw new Error("Ayar verisi çekilemedi: " + settingsRes.error.message);
+    try {
+        // Use Admin Client to bypass RLS
+        const supabase = createAdminClient();
 
-    const settings = settingsRes.data;
-    const tenantName = tenantRes.data?.name || "Bilinmeyen İşletme";
+        // Fetch Settings and Tenant Info in parallel
+        const [settingsRes, tenantRes] = await Promise.all([
+            supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
+            supabase.from("tenants").select("name").eq("id", tenantId).single()
+        ]);
+
+        if (settingsRes.error) {
+            return <div className="p-8 text-red-500">Ayar verisi çekme hatası: {settingsRes.error.message} (Code: {settingsRes.error.code})</div>;
+        }
+        if (tenantRes.error) {
+            return <div className="p-8 text-red-500">Tenant verisi çekme hatası: {tenantRes.error.message}</div>;
+        }
+
+        settings = settingsRes.data;
+        tenantName = tenantRes.data?.name || "Bilinmeyen İşletme";
+
+    } catch (e: any) {
+        return (
+            <div className="p-8 text-red-500">
+                <h1 className="text-xl font-bold">Beklenmeyen Hata</h1>
+                <p>{e.message}</p>
+                <pre className="mt-4 p-2 bg-gray-900 text-white rounded text-xs overflow-auto">{JSON.stringify(e, null, 2)}</pre>
+            </div>
+        );
+    }
 
     const updateAction = updateAiSettings.bind(null, tenantId);
 
