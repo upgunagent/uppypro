@@ -1,14 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateAiSettings } from "@/app/actions/admin";
 import Link from "next/link";
 import { ArrowLeft, Info } from "lucide-react";
+import { AiSettingsForm } from "@/components/admin/ai-settings-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function AiSettingsPage({ params: paramsPromise }: { params: Promise<{ tenantId: string }> }) {
-    // Await params for Next.js 15+
     const params = await paramsPromise;
     const { tenantId } = params;
 
@@ -19,7 +16,6 @@ export default async function AiSettingsPage({ params: paramsPromise }: { params
     try {
         const supabase = createAdminClient();
 
-        // Fetch Settings and Tenant Info in parallel
         const [settingsRes, tenantRes] = await Promise.all([
             supabase.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
             supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle()
@@ -45,8 +41,6 @@ export default async function AiSettingsPage({ params: paramsPromise }: { params
             </div>
         );
     }
-
-    const updateAction = updateAiSettings.bind(null, tenantId);
 
     return (
         <div className="max-w-2xl space-y-8 p-8">
@@ -76,37 +70,7 @@ export default async function AiSettingsPage({ params: paramsPromise }: { params
                 </div>
             </div>
 
-            <form action={updateAction} className="space-y-6 glass p-8 rounded-xl border border-white/10">
-                <div className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5">
-                    <label htmlFor="ai_operational_enabled" className="font-medium cursor-pointer select-none">
-                        AI Aktif (Operational)
-                        <div className="text-xs text-gray-400 font-normal">
-                            Açık olduğunda gelen mesajlar n8n webhook'una iletilecektir.
-                        </div>
-                    </label>
-                    <input
-                        type="checkbox"
-                        name="ai_operational_enabled"
-                        id="ai_operational_enabled"
-                        className="h-5 w-5 accent-primary"
-                        defaultChecked={settings?.ai_operational_enabled}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="font-medium">n8n Webhook URL</label>
-                    <Input
-                        name="n8n_webhook_url"
-                        placeholder="https://your-n8n-instance.com/webhook/..."
-                        defaultValue={settings?.n8n_webhook_url || ""}
-                    />
-                    <p className="text-xs text-gray-500">Müşteriye özel oluşturulan n8n workflow webhook adresi.</p>
-                </div>
-
-                <div className="pt-4 border-t border-white/10">
-                    <Button type="submit">Ayarları Kaydet</Button>
-                </div>
-            </form>
+            <AiSettingsForm tenantId={tenantId} initialSettings={settings} />
         </div>
     );
 }
