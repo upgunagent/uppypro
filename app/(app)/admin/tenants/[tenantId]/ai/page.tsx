@@ -5,6 +5,8 @@ import { updateAiSettings } from "@/app/actions/admin";
 import Link from "next/link";
 import { ArrowLeft, Check, Info } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AiSettingsPage({ params: paramsPromise }: { params: Promise<{ tenantId: string }> }) {
     // Await params for Next.js 15+
     const params = await paramsPromise;
