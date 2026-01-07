@@ -190,8 +190,18 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                 } else if (data) {
                     setDebugError(null); // Clear previous errors
                     setConversations(prev => {
-                        const newDataSig = JSON.stringify(data.map((c: any) => c.id + c.updated_at));
-                        const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => c.id + c.updated_at));
+                        // Create a deeper signature that includes message read status
+                        const newDataSig = JSON.stringify(data.map((c: any) => {
+                            const msgs = c.messages || [];
+                            const unread = msgs.filter((m: any) => m.direction === 'IN' && !m.is_read).length;
+                            return c.id + c.updated_at + unread; // Include unread count in signature
+                        }));
+
+                        const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => {
+                            const msgs = c.messages || [];
+                            const unread = msgs.filter((m) => m.direction === 'IN' && !m.is_read).length;
+                            return c.id + c.updated_at + unread;
+                        }));
 
                         if (newDataSig !== prevDataSig) {
                             return data.map((d: any) => ({

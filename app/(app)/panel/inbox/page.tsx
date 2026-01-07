@@ -69,7 +69,7 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
     // Fetch Conversations List
     let query = supabase
         .from("conversations")
-        .select("*, messages(text, created_at)")
+        .select("*, messages(*)")
         .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
 
