@@ -34,15 +34,16 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
     return (
         <div className="max-w-4xl mx-auto h-full flex flex-col">
             <div className="mb-4 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-white/5 border border-white/10">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-white/5 border border-white/10 relative">
                     {conversation.channel === 'whatsapp' ? (
                         <MessageCircle className="text-green-500 w-6 h-6" />
                     ) : (
-                        conversation.profile_pic ? (
+                        (conversation.profile_pic) ? (
                             <img
                                 src={conversation.profile_pic}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
                             />
                         ) : (
                             <Instagram className="text-pink-500 w-6 h-6" />
@@ -50,11 +51,8 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
                     )}
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold flex items-center gap-2">
+                    <h1 className="text-xl font-bold">
                         {conversation.customer_handle || conversation.external_thread_id}
-                        {conversation.channel === 'instagram' && (
-                            <Instagram className="w-4 h-4 text-pink-500" />
-                        )}
                     </h1>
                     <p className="text-sm text-gray-500 font-mono text-xs">{conversation.id}</p>
                 </div>
