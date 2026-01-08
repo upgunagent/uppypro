@@ -297,45 +297,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     return (
         <div className="flex flex-col h-full relative">
-            {/* CHAT HEADER - MOVED FROM PAGE TO CLIENT FOR INTERACTIVITY */}
-            <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-black/20 backdrop-blur-sm z-10 shrink-0">
-                <div
-                    className="relative cursor-pointer group"
-                    onClick={() => profilePic && setLightboxMedia({ url: profilePic, type: 'image' })}
-                >
-                    {/* Signal Animation */}
-                    {profilePic && (
-                        <div className="absolute -inset-1 bg-green-500/30 rounded-full animate-ping opacity-75 duration-[2000ms]" />
-                    )}
 
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-white/5 border border-white/10 relative z-10">
-                        {platform === 'whatsapp' ? (
-                            <MessageCircle className="text-green-500 w-6 h-6" />
-                        ) : (
-                            profilePic ? (
-                                <img
-                                    src={profilePic}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                />
-                            ) : (
-                                <Instagram className="text-pink-500 w-6 h-6" />
-                            )
-                        )}
-                    </div>
-                </div>
-
-                <div>
-                    <h1 className="text-xl font-bold flex items-center gap-2">
-                        {customerName}
-                        {platform === 'instagram' && (
-                            <Instagram className="w-5 h-5 text-pink-500" />
-                        )}
-                    </h1>
-                    <p className="text-sm text-gray-500 font-mono text-xs">{conversationId}</p>
-                </div>
-            </div>
             {/* LIGHTBOX OVERLAY */}
             {lightboxMedia && (
                 <div
@@ -370,10 +332,39 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
             {/* Header / Toolbar */}
             <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 bg-slate-900">
-                <div className="flex items-center gap-2">
-                    <span className="font-bold text-lg">{customerName}</span>
-                    {platform === 'whatsapp' && <MessageCircle className="w-5 h-5 text-green-500" />}
-                    {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
+                <div className="flex items-center gap-3">
+                    {/* AVATAR + SIGNAL */}
+                    <div
+                        className="relative cursor-pointer group shrink-0"
+                        onClick={() => profilePic && setLightboxMedia({ url: profilePic, type: 'image' })}
+                    >
+                        {/* Signal Animation */}
+                        {profilePic && (
+                            <div className="absolute -inset-1 bg-green-500/30 rounded-full animate-ping opacity-75 duration-[2000ms]" />
+                        )}
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white/5 border border-white/10 relative z-10">
+                            {platform === 'whatsapp' ? (
+                                <MessageCircle className="text-green-500 w-5 h-5" />
+                            ) : (
+                                profilePic ? (
+                                    <img
+                                        src={profilePic}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                ) : (
+                                    <Instagram className="text-pink-500 w-5 h-5" />
+                                )
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg">{customerName}</span>
+                        {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
+                        {platform === 'whatsapp' && <MessageCircle className="w-5 h-5 text-green-500" />}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
