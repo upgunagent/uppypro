@@ -279,8 +279,11 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                             )}
                                         </div>
                                         <div className="min-w-0">
-                                            <div className="font-bold text-lg truncate">
-                                                {safeString(conv.customer_handle || conv.external_thread_id)}
+                                            <div className="flex items-center gap-1.5 font-bold text-lg">
+                                                <span className="truncate">{safeString(conv.customer_handle || conv.external_thread_id)}</span>
+                                                {conv.channel === 'instagram' && (
+                                                    <Instagram size={16} className="text-pink-500 shrink-0" />
+                                                )}
                                             </div>
                                             <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
                                                 {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
@@ -301,70 +304,73 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Read/Unread Status Badges */}
-                                    <div className="flex flex-col items-end gap-1 px-2">
-                                        {(() => {
-                                            const msgs = Array.isArray(conv.messages) ? conv.messages : [];
-                                            const unreadCount = msgs.filter(m => m.direction === 'IN' && !m.is_read).length;
-
-                                            if (unreadCount > 0) {
-                                                return (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded font-medium">
-                                                            Yeni mesaj
-                                                        </span>
-                                                        <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-black text-xs font-bold rounded-full">
-                                                            {unreadCount}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            } else {
-                                                return (
-                                                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded font-medium">
-                                                        Okundu
-                                                    </span>
-                                                );
-                                            }
-                                        })()}
-                                    </div>
-
-                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <span className="text-xs text-gray-500">{timeStr}</span>
-                                    </div>
                                 </div>
 
-                                {/* Delete Button - Visible on Hover (or always on mobile, but group-hover is good for desktop) */}
-                                <button
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-red-500/10 hover:bg-red-500/80 text-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
-                                    onClick={async (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        if (confirm("Bu konuşmayı ve tüm mesajları silmek istediğinize emin misiniz?")) {
-                                            try {
-                                                // Optimistic Update
-                                                setConversations(prev => prev.filter(c => c.id !== conv.id));
-                                                await deleteConversation(conv.id);
-                                            } catch (err) {
-                                                console.error("Delete failed", err);
-                                                alert("Silinirken hata oluştu");
-                                                // Revert optionally or just let SWR/Realtime fix it
-                                            }
+                                {/* Read/Unread Status Badges */}
+                                <div className="flex flex-col items-end gap-1 px-2">
+                                    {(() => {
+                                        const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+                                        const unreadCount = msgs.filter(m => m.direction === 'IN' && !m.is_read).length;
+
+                                        if (unreadCount > 0) {
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded font-medium">
+                                                        Yeni mesaj
+                                                    </span>
+                                                    <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-black text-xs font-bold rounded-full">
+                                                        {unreadCount}
+                                                    </span>
+                                                </div>
+                                            );
+                                        } else {
+                                            return (
+                                                <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded font-medium">
+                                                    Okundu
+                                                </span>
+                                            );
                                         }
-                                    }}
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </Link>
+                                    })()}
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    <span className="text-xs text-gray-500">{timeStr}</span>
+                                </div>
+                            </div>
+
+                            {/* Delete Button - Visible on Hover (or always on mobile, but group-hover is good for desktop) */}
+                            <button
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-red-500/10 hover:bg-red-500/80 text-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (confirm("Bu konuşmayı ve tüm mesajları silmek istediğinize emin misiniz?")) {
+                                        try {
+                                            // Optimistic Update
+                                            setConversations(prev => prev.filter(c => c.id !== conv.id));
+                                            await deleteConversation(conv.id);
+                                        } catch (err) {
+                                            console.error("Delete failed", err);
+                                            alert("Silinirken hata oluştu");
+                                            // Revert optionally or just let SWR/Realtime fix it
+                                        }
+                                    }
+                                }}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </Link>
                         </motion.div>
-                    );
+            );
                 })}
-            </AnimatePresence>
-            {conversations.length === 0 && (
-                <div className="text-center text-gray-500 mt-24">
-                    Bu filtrede hiç konuşma yok.
-                </div>
-            )}
-        </div>
+        </AnimatePresence>
+            {
+        conversations.length === 0 && (
+            <div className="text-center text-gray-500 mt-24">
+                Bu filtrede hiç konuşma yok.
+            </div>
+        )
+    }
+        </div >
     );
 }
