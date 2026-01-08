@@ -330,17 +330,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     </Button>
                 </div>
 
-                <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
 
-                {/* DANGER ZONE */}
-                <div className="space-y-2 mb-8">
-                    <Button variant="ghost" onClick={handleClearChat} disabled={loading} className="w-full justify-start text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                        <Eraser className="mr-3 w-4 h-4" /> Sohbeti Temizle
-                    </Button>
-                    <Button variant="ghost" onClick={handleDeleteChat} disabled={loading} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <Trash2 className="mr-3 w-4 h-4" /> Sohbeti Sil
-                    </Button>
-                </div>
 
                 {/* NOTES HISTORY (ACCORDION) */}
                 {notesList.length > 0 && (
