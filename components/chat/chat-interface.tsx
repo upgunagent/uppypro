@@ -2,10 +2,11 @@
 
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendMessage, toggleMode, editMessage, markConversationAsRead } from "@/app/actions/chat";
+import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
 import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser } from "lucide-react";
 import { clsx } from "clsx";
