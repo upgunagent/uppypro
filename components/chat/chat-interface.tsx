@@ -42,31 +42,46 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState("");
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+    const [activeProfilePic, setActiveProfilePic] = useState<string | undefined>(profilePic);
 
     // Sync state with server-side props (Important for replacing optimistic IDs with real IDs)
     // Sync state with server-side props AND fetch fresh to ensure external_message_id presence
     useEffect(() => {
         // optimistically set from props first
         setMessages(initialMessages);
+        if (profilePic) setActiveProfilePic(profilePic);
 
         // Mark as READ
         markConversationAsRead(conversationId);
 
-        // Then fetch fresh to ensure we have latest fields (like external_message_id)
+        // Then fetch fresh to ensure we have latest fields (like external_message_id) AND profile_pic (fallback)
         const fetchFreshKeys = async () => {
             const supabase = createClient();
-            const { data } = await supabase
+
+            // 1. Messages
+            const { data: msgs } = await supabase
                 .from("messages")
                 .select("*")
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
 
-            if (data) {
-                setMessages(data);
+            if (msgs) {
+                setMessages(msgs);
+            }
+
+            // 2. Profile Pic (Force Client Fetch)
+            const { data: conv } = await supabase
+                .from("conversations")
+                .select("profile_pic")
+                .eq("id", conversationId)
+                .single();
+
+            if (conv?.profile_pic) {
+                setActiveProfilePic(conv.profile_pic);
             }
         };
         fetchFreshKeys();
-    }, [initialMessages, conversationId]);
+    }, [initialMessages, conversationId, profilePic]);
 
     const handleEditSave = async () => {
         if (!editingId || !editValue.trim()) return;
@@ -336,19 +351,19 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     {/* AVATAR + SIGNAL */}
                     <div
                         className="relative cursor-pointer group shrink-0"
-                        onClick={() => profilePic && setLightboxMedia({ url: profilePic, type: 'image' })}
+                        onClick={() => activeProfilePic && setLightboxMedia({ url: activeProfilePic, type: 'image' })}
                     >
                         {/* Signal Animation */}
-                        {profilePic && (
-                            <div className="absolute -inset-1 bg-green-500/30 rounded-full animate-ping opacity-75 duration-[2000ms]" />
+                        {activeProfilePic && (
+                            <div className="absolute -inset-1 bg-green-500/50 rounded-full animate-ping opacity-75 duration-[2000ms]" />
                         )}
                         <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white/5 border border-white/10 relative z-10">
                             {platform === 'whatsapp' ? (
                                 <MessageCircle className="text-green-500 w-5 h-5" />
                             ) : (
-                                profilePic ? (
+                                activeProfilePic ? (
                                     <img
-                                        src={profilePic}
+                                        src={activeProfilePic}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
                                         referrerPolicy="no-referrer"
