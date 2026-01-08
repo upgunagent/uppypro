@@ -586,19 +586,14 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             <div className="relative bg-white border-t border-slate-200 h-[72px]">
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
-                        <div
-                            className="absolute inset-0 w-full h-full opacity-90"
-                            style={{
-                                background: "linear-gradient(90deg, #dc2626 0%, #ffffff 50%, #dc2626 100%)"
-                            }}
-                        />
+                        <div className="absolute inset-0 w-full h-full bg-red-600" />
                         <button
                             onClick={handleToggle}
                             disabled={!aiOperational}
                             className="relative z-10 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-bold tracking-wide rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
                         >
                             <span className="animate-pulse">⚠️</span>
-                            Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
+                            Digital Asistanınız yanıtlıyor. Müdehale etmek için "Human" moduna geçin.
                             <div className="ml-2 bg-white/20 p-1 rounded-full">
                                 <User className="w-4 h-4" />
                             </div>
