@@ -349,13 +349,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 bg-slate-900">
                 <div className="flex items-center gap-3">
                     {/* AVATAR + SIGNAL */}
-                    <div
-                        className="relative cursor-pointer group shrink-0"
-                        onClick={() => activeProfilePic && setLightboxMedia({ url: activeProfilePic, type: 'image' })}
-                    >
-                        {/* Signal Animation */}
+                    <div className="relative shrink-0">
+                        {/* Signal Animation: Thin Ripples */}
                         {activeProfilePic && (
-                            <div className="absolute -inset-1 bg-green-500/50 rounded-full animate-ping opacity-75 duration-[2000ms]" />
+                            <div className="absolute -inset-2 border-2 border-green-500/60 rounded-full animate-ping duration-[2000ms]" />
                         )}
                         <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white/5 border border-white/10 relative z-10">
                             {platform === 'whatsapp' ? (
