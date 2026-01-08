@@ -692,7 +692,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         <button
                             type="button"
                             onClick={() => document.getElementById('file-upload')?.click()}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                            className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition-all duration-200 hover:scale-110"
                             disabled={sending}
                         >
                             <Paperclip className="w-5 h-5" />
@@ -702,8 +702,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                             type="button"
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             className={clsx(
-                                "p-2 rounded-full transition-colors",
-                                showEmojiPicker ? "text-yellow-400 bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/10"
+                                "p-2 rounded-full transition-all duration-200 hover:scale-110",
+                                showEmojiPicker ? "text-yellow-500 bg-yellow-50" : "text-gray-500 hover:text-yellow-500 hover:bg-yellow-50"
                             )}
                         >
                             <Smile className="w-5 h-5" />
@@ -720,7 +720,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 <button
                                     type="button"
                                     onClick={cancelRecording}
-                                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors font-medium text-xs"
+                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors font-medium text-xs"
                                 >
                                     İptal
                                 </button>
@@ -745,7 +745,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 <button
                                     type="button"
                                     onClick={startRecording}
-                                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
                                 </button>
