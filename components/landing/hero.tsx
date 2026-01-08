@@ -77,14 +77,18 @@ export function HeroSection() {
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute -left-4 lg:-left-12 bottom-10 lg:bottom-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[4000ms] z-0">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                    <Instagram size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-slate-800">+24 DM</div>
-                                    <div className="text-xs text-pink-500">Instagram</div>
+                        <div className="absolute -left-4 lg:-left-12 bottom-10 lg:bottom-20 z-0">
+                            <div className="animate-bounce duration-[4000ms]">
+                                <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100 -rotate-[5deg]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+                                            <Instagram size={20} />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-800">+24 DM</div>
+                                            <div className="text-xs text-pink-500">Instagram</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
