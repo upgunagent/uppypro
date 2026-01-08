@@ -255,7 +255,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                         >
                             <Link href={getConversationUrl(conv.id)} className="block relative group">
                                 <div className={clsx(
-                                    "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg duration-200",
+                                    "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] duration-200",
                                     conv.channel === 'instagram'
                                         ? "bg-gradient-to-r from-red-500 via-red-700 to-rose-900 border-transparent shadow-red-500/20 text-white"
                                         : conv.channel === 'whatsapp'
