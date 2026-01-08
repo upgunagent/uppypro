@@ -485,10 +485,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     const canEdit = false;
 
                     return (
-                        <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
+                        <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", (isMe || isBot) ? "ml-auto items-end" : "mr-auto items-start")}>
                             {/* Sender Label */}
                             <span className="text-xs text-gray-600 mb-1 ml-1 font-medium">
-                                {isMe ? "Siz" : isBot ? "AI Bot" : "Müşteri"}
+                                {isMe ? "Siz" : isBot ? "Dijital Asistan" : "Müşteri"}
                             </span>
 
                             {/* Bubble */}
@@ -498,9 +498,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     ? "p-1 bg-white overflow-hidden"
                                     : [
                                         "px-2 py-1.5 min-w-[120px]",
-                                        isMe
-                                            ? "bg-[#d9fdd3] text-gray-900 rounded-tr-none"
-                                            : "bg-white text-gray-900 rounded-tl-none"
+                                        isBot
+                                            ? "bg-yellow-50 text-gray-900 rounded-tr-none"
+                                            : isMe
+                                                ? "bg-[#d9fdd3] text-gray-900 rounded-tr-none"
+                                                : "bg-white text-gray-900 rounded-tl-none"
                                     ]
                             )}>
                                 {msg.message_type === 'image' && msg.media_url ? (
