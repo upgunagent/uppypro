@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead } from "@/app/actions/chat";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown } from "lucide-react";
+import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -48,6 +49,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [showScrollButton, setShowScrollButton] = useState(false);
     const isAtBottomRef = useRef(true);
     const prevMessageCountRef = useRef(initialMessages.length);
+
+    // CRM UI State
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [contactSheetOpen, setContactSheetOpen] = useState(false);
 
     const handleScroll = () => {
         if (!scrollRef.current) return;
@@ -744,6 +749,14 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     )}
                 </form>
             </div>
+            <ContactInfoSheet
+                isOpen={contactSheetOpen}
+                onClose={() => setContactSheetOpen(false)}
+                conversationId={conversationId}
+                customerHandle={customerName}
+                platform={platform}
+                initialProfilePic={activeProfilePic}
+            />
         </div>
     );
 }
