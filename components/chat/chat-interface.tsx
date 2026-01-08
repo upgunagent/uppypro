@@ -410,20 +410,22 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-purple-500 shadow-purple-500/50 shadow-lg" : "bg-blue-500")}></div>
+                        <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
                         <span className="font-bold text-sm text-slate-600">
                             {conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
                         </span>
                     </div>
 
                     <Button
-                        variant={conversationMode === "BOT" ? "destructive" : "default"}
+                        variant="default"
                         size="sm"
                         onClick={handleToggle}
                         disabled={!aiOperational}
                         className={clsx(
                             !aiOperational && "opacity-50 cursor-not-allowed",
-                            conversationMode === "BOT" && "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-500/20"
+                            conversationMode === "BOT"
+                                ? "bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg shadow-green-500/20"
+                                : "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-500/20"
                         )}
                     >
                         {conversationMode === "BOT" ? <><User className="mr-2 w-4 h-4" />Devral (Human)</> : <><Bot className="mr-2 w-4 h-4" />AI'ya Devret</>}
