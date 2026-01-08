@@ -98,40 +98,63 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/tenants", label: "İşletmeler", icon: Users },
     ];
 
+    // Helper for Sidebar Items
+    const SidebarItem = ({ href, icon: Icon, label, isActive, count, colorClass = "text-slate-500", activeColorClass = "text-primary bg-primary/10", countColorClass = "bg-red-500 text-white" }: any) => (
+        <Link
+            href={href}
+            className={clsx(
+                "group relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
+                isActive
+                    ? activeColorClass
+                    : "hover:bg-slate-100 text-slate-500"
+            )}
+        >
+            <Icon size={24} strokeWidth={1.5} className={clsx("transition-transform group-hover:scale-110", isActive && "text-primary")} />
+
+            {/* Notification Badge */}
+            {count > 0 && (
+                <span className={clsx("absolute top-2 right-2 flex h-2.5 w-2.5 items-center justify-center rounded-full ring-2 ring-white", countColorClass)}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                </span>
+            )}
+
+            {/* Hover Tooltip */}
+            <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                {label}
+                {/* Triangle */}
+                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
+            </div>
+        </Link>
+    );
+
     // Agency Admin View
     if (role === "agency_admin") {
         return (
-            <div className="w-64 border-r border-white/10 bg-slate-950 flex flex-col h-screen fixed left-0 top-0">
-                <div className="h-16 flex items-center px-6 border-b border-white/10">
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-white">
-                        UppyPro
-                    </span>
-                    <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded">ADMIN</span>
+            <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+                <div className="mb-8 p-2 rounded-xl bg-primary/5 text-primary">
+                    <LayoutDashboard size={24} />
                 </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 space-y-4 w-full flex flex-col items-center">
                     {adminLinks.map((link) => (
-                        <Link
+                        <SidebarItem
                             key={link.href}
                             href={link.href}
-                            className={clsx(
-                                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                                pathname.startsWith(link.href)
-                                    ? "bg-primary/10 text-primary border border-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            <link.icon size={18} />
-                            {link.label}
-                        </Link>
+                            icon={link.icon}
+                            label={link.label}
+                            isActive={pathname.startsWith(link.href)}
+                        />
                     ))}
                 </nav>
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-slate-100 w-full flex justify-center">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 w-full rounded-lg transition-colors"
+                        className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                     >
-                        <LogOut size={18} />
-                        Çıkış Yap
+                        <LogOut size={20} />
+                        <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                            Çıkış Yap
+                            <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -140,124 +163,62 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Tenant/User View
     return (
-        <div className="w-64 border-r border-white/10 bg-slate-950 flex flex-col h-screen fixed left-0 top-0">
-            <div className="h-16 flex items-center px-6 border-b border-white/10">
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-white">
-                    UppyPro
-                </span>
+        <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+            <div className="mb-8 p-2 rounded-xl bg-primary/5 text-primary">
+                {/* Logo or Brand Icon */}
+                <span className="font-bold text-xl">UP</span>
             </div>
 
-            <div className="flex-1 p-4 space-y-6">
-                {/* Inbox Section */}
-                <div>
-                    <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        INBOX
-                    </h3>
-                    <div className="space-y-1">
-                        <Link
-                            href="/panel/inbox?tab=all"
-                            className={clsx(
-                                "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                (pathname.includes('/inbox') && currentTab === 'all')
-                                    ? "bg-primary/10 text-primary border border-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <MessageSquare size={18} />
-                                Tüm Mesajlar
-                            </div>
-                            {counts.all > 0 && (
-                                <span className={clsx(
-                                    "px-2 py-0.5 rounded-full text-xs font-bold",
-                                    (pathname.includes('/inbox') && currentTab === 'all')
-                                        ? "bg-primary text-white"
-                                        : "bg-white/10 text-gray-200"
-                                )}>
-                                    {counts.all}
-                                </span>
-                            )}
-                        </Link>
-                        <Link
-                            href="/panel/inbox?tab=whatsapp"
-                            className={clsx(
-                                "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                (pathname.includes('/inbox') && currentTab === 'whatsapp')
-                                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <MessageCircle size={18} />
-                                WhatsApp
-                            </div>
-                            {counts.whatsapp > 0 && (
-                                <span className={clsx(
-                                    "px-2 py-0.5 rounded-full text-xs font-bold",
-                                    (pathname.includes('/inbox') && currentTab === 'whatsapp')
-                                        ? "bg-green-500 text-black"
-                                        : "bg-green-500/20 text-green-400"
-                                )}>
-                                    {counts.whatsapp}
-                                </span>
-                            )}
-                        </Link>
-                        <Link
-                            href="/panel/inbox?tab=instagram"
-                            className={clsx(
-                                "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                (pathname.includes('/inbox') && currentTab === 'instagram')
-                                    ? "bg-pink-500/10 text-pink-400 border border-pink-500/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Instagram size={18} />
-                                Instagram
-                            </div>
-                            {counts.instagram > 0 && (
-                                <span className={clsx(
-                                    "px-2 py-0.5 rounded-full text-xs font-bold",
-                                    (pathname.includes('/inbox') && currentTab === 'instagram')
-                                        ? "bg-pink-500 text-white"
-                                        : "bg-pink-500/20 text-pink-400"
-                                )}>
-                                    {counts.instagram}
-                                </span>
-                            )}
-                        </Link>
-                    </div>
+            <div className="flex-1 w-full space-y-6 flex flex-col items-center">
+                {/* Main Navigation */}
+                <div className="space-y-4 flex flex-col items-center w-full">
+                    <SidebarItem
+                        href="/panel/inbox?tab=all"
+                        icon={MessageSquare}
+                        label="Tüm Mesajlar"
+                        isActive={pathname.includes('/inbox') && currentTab === 'all'}
+                        count={counts.all}
+                    />
+                    <SidebarItem
+                        href="/panel/inbox?tab=whatsapp"
+                        icon={MessageCircle}
+                        label="WhatsApp"
+                        isActive={pathname.includes('/inbox') && currentTab === 'whatsapp'}
+                        activeColorClass="text-green-600 bg-green-50"
+                        count={counts.whatsapp}
+                        countColorClass="bg-green-500"
+                    />
+                    <SidebarItem
+                        href="/panel/inbox?tab=instagram"
+                        icon={Instagram}
+                        label="Instagram"
+                        isActive={pathname.includes('/inbox') && currentTab === 'instagram'}
+                        activeColorClass="text-pink-600 bg-pink-50"
+                        count={counts.instagram}
+                        countColorClass="bg-pink-500"
+                    />
                 </div>
             </div>
 
-            <div className="p-4 border-t border-white/10 space-y-1">
-                <Link
+            <div className="p-4 border-t border-slate-100 w-full space-y-2 flex flex-col items-center">
+                <SidebarItem
                     href="/panel/settings"
-                    className={clsx(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                        pathname.startsWith("/panel/settings")
-                            ? "bg-primary/10 text-primary border border-primary/20"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                    )}
-                >
-                    <Settings size={18} />
-                    Ayarlar
-                </Link>
-                <Link
-                    href="#" // Placeholder for profile, maybe /panel/profile if it exists
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                >
-                    <UserCircle size={18} />
-                    Profilim
-                </Link>
+                    icon={Settings}
+                    label="Ayarlar"
+                    isActive={pathname.startsWith("/panel/settings")}
+                />
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 w-full rounded-lg transition-colors"
+                    className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                 >
-                    <LogOut size={18} />
-                    Çıkış Yap
+                    <LogOut size={20} />
+                    <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                        Çıkış Yap
+                        <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
+                    </div>
                 </button>
             </div>
         </div>
     );
 }
+```
