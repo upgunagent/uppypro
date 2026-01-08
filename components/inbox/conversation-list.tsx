@@ -226,7 +226,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
     };
 
     return (
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar">
             {/* Debug removed: System Stable */}
 
             <AnimatePresence initial={false} mode='popLayout'>
