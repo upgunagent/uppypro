@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead } from "@/app/actions/chat";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -43,6 +43,22 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [editValue, setEditValue] = useState("");
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [activeProfilePic, setActiveProfilePic] = useState<string | undefined>(profilePic);
+
+    // Scroll Logic State
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const isAtBottomRef = useRef(true);
+
+    const handleScroll = () => {
+        if (!scrollRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        // User is at bottom if they are within 100px of the end
+        const isBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 100;
+        isAtBottomRef.current = isBottom;
+
+        if (isBottom) {
+            setShowScrollButton(false);
+        }
+    };
 
     // Sync state with server-side props (Important for replacing optimistic IDs with real IDs)
     // Sync state with server-side props AND fetch fresh to ensure external_message_id presence
@@ -209,12 +225,22 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         wavRecorderRef.current = null;
     };
 
-    // Scroll to bottom on load/new message
+    // Smart Scroll: Auto-scroll only if already at bottom
+    useEffect(() => {
+        if (isAtBottomRef.current && scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        } else {
+            setShowScrollButton(true);
+        }
+    }, [messages]);
+
+    // Initial Load Scroll
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            isAtBottomRef.current = true;
         }
-    }, [messages]);
+    }, []);
 
     // Realtime Subscription
     useEffect(() => {
@@ -374,7 +400,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-lg">{customerName}</span>
                         {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
-                        {platform === 'whatsapp' && <MessageCircle className="w-5 h-5 text-green-500" />}
                     </div>
                 </div>
 
@@ -403,8 +428,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
             {/* Messages Area */}
             <div
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7dd]"
+                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7dd] relative scroll-smooth"
                 ref={scrollRef}
+                onScroll={handleScroll}
                 style={{
                     backgroundImage: "linear-gradient(rgba(239, 231, 221, 0.9), rgba(239, 231, 221, 0.9)), url('/chat-final-bg.png')",
                     backgroundRepeat: 'repeat',
@@ -515,6 +541,23 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     );
                 })}
             </div>
+
+            {/* Scroll Down Button */}
+            {showScrollButton && (
+                <button
+                    onClick={() => {
+                        if (scrollRef.current) {
+                            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+                            setShowScrollButton(false);
+                            isAtBottomRef.current = true;
+                        }
+                    }}
+                    className="absolute bottom-24 right-1/2 translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 z-20 text-sm font-bold animate-in fade-in slide-in-from-bottom-4 border border-white/20"
+                >
+                    <ArrowDown className="w-4 h-4" />
+                    Yeni Mesaj
+                </button>
+            )}
 
             {/* Input Area */}
             <div className="relative bg-slate-900 border-t border-white/10 h-[72px]">
