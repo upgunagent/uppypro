@@ -76,7 +76,13 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
 
     const Icon = type === "whatsapp" ? MessageCircle : Instagram;
     const colorClass = type === "whatsapp" ? "text-[#25D366]" : "text-[#E1306C]";
-    const bgClass = type === "whatsapp" ? "bg-[#25D366] hover:bg-[#20bd5a]" : "bg-gradient-to-r from-[#f09433] to-[#bc1888] hover:opacity-90";
+    const cardClass = type === "whatsapp"
+        ? "bg-gradient-to-br from-green-500 to-emerald-700 text-white shadow-xl shadow-green-900/20 border-green-400/20"
+        : "bg-gradient-to-br from-red-500 via-rose-600 to-rose-800 text-white shadow-xl shadow-red-900/20 border-red-400/20";
+
+    const buttonClass = type === "whatsapp"
+        ? "bg-white text-emerald-700 hover:bg-emerald-50"
+        : "bg-white text-rose-700 hover:bg-rose-50";
 
     // For Instagram, show username if connected via OAuth
     const displayIdentifier = type === "instagram" && connection?.meta_identifiers?.username
@@ -85,53 +91,63 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
 
     return (
         <>
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between h-56 shadow-sm">
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                        <Icon className={clsx("w-8 h-8", colorClass)} />
+            <div className={clsx("p-6 rounded-2xl border flex flex-col justify-between h-60 relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]", cardClass)}>
+
+                {/* Decorative Pattern */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+                <div className="flex justify-between items-start z-10 relative">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/10">
+                            <Icon className="w-8 h-8 text-white" />
+                        </div>
                         <div>
-                            <h4 className="font-bold capitalize text-slate-900">{type}</h4>
-                            <p className="text-xs text-slate-500">{type === "whatsapp" ? "Business API" : "DM Automation"}</p>
+                            <h4 className="font-bold text-xl tracking-tight capitalize">{type}</h4>
+                            <div className="flex items-center gap-1.5 opacity-90">
+                                <span className={clsx("w-2 h-2 rounded-full animate-pulse", isConnected ? "bg-white" : "bg-white/40")} />
+                                <p className="text-xs font-medium">{isConnected ? "Sistem Aktif" : "Bağlantı Yok"}</p>
+                            </div>
                         </div>
                     </div>
-                    {isConnected ? <CheckCircle className="text-green-500 w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-slate-300" />}
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-6 z-10 relative">
                     {isConnected ? (
-                        <>
-                            <p className="text-xs text-green-600 mb-3 font-medium">
-                                ● Aktif • {displayIdentifier}
-                            </p>
-                            <Button variant="destructive" size="sm" onClick={handleDisconnect} className="w-full h-8 text-xs" disabled={loading}>
-                                {loading ? "İşleniyor..." : "Bağlantıyı Kes"}
+                        <div className="space-y-4">
+                            <div className="px-4 py-2 bg-black/10 rounded-lg border border-white/10 backdrop-blur-sm">
+                                <p className="text-xs text-white/80 uppercase tracking-wider font-bold mb-0.5">Bağlı Hesap</p>
+                                <p className="text-sm font-semibold truncate text-white">
+                                    {displayIdentifier}
+                                </p>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={handleDisconnect} className="w-full h-9 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20" disabled={loading}>
+                                {loading ? "İşleniyor..." : "Bağlantıyı Sonlandır"}
                             </Button>
-                        </>
+                        </div>
                     ) : (
-                        <>
-                            <p className="text-xs text-slate-500 mb-3">Bağlı değil</p>
+                        <div className="space-y-3">
+                            <p className="text-sm text-white/80 leading-relaxed">
+                                {type === 'whatsapp'
+                                    ? "Müşterilerinizle WhatsApp üzerinden otomatik iletişim kurun."
+                                    : "Instagram DM kutunuzu CRM sisteminize entegre edin."}
+                            </p>
+
                             {type === 'instagram' ? (
-                                <Button size="sm" onClick={handleOAuthLogin} className={clsx("w-full h-8 text-xs text-white font-bold shadow-sm", bgClass)} disabled={loading}>
+                                <Button size="sm" onClick={handleOAuthLogin} className={clsx("w-full h-10 font-bold shadow-lg border-2 border-transparent", buttonClass)} disabled={loading}>
                                     {loading ? "Yönlendiriliyor..." : "Instagram ile Bağlan"}
                                 </Button>
                             ) : (
-                                <Button size="sm" onClick={() => setDialogOpen(true)} className={clsx("w-full h-8 text-xs text-white font-bold shadow-sm", bgClass)}>
-                                    Bağla
+                                <Button size="sm" onClick={() => setDialogOpen(true)} className={clsx("w-full h-10 font-bold shadow-lg border-2 border-transparent", buttonClass)}>
+                                    Hemen Bağla
                                 </Button>
                             )}
-
-                            {/* Legacy Link for Instagram */}
-                            {type === 'instagram' && (
-                                <div className="mt-2 text-center">
-                                    <button onClick={() => setDialogOpen(true)} className="text-[10px] text-slate-400 hover:text-slate-700 underline transition-colors">
-                                        Gelişmiş Seçenekler
-                                    </button>
-                                </div>
-                            )}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
+
+            {/* Legacy Link for Instagram (Floating outside or hidden?) */}
+            {/* Keeping it minimal inside dialog or just plain text below if needed. Removing from card face for cleaner look. */}
 
             {/* Connect Dialog */}
             <SimpleDialog
@@ -140,7 +156,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 title={`${type === "whatsapp" ? "WhatsApp" : "Instagram (Manuel)"} Bağla`}
             >
                 <form onSubmit={handleConnectLegacy} className="space-y-4">
-                    <p className="text-sm text-gray-400 mb-4">
+                    <p className="text-sm text-gray-500 mb-4">
                         {type === 'instagram'
                             ? "Eski yöntem (Facebook Page ID). Normalde 'Instagram ile Bağlan' önerilir."
                             : "Lütfen Meta Developer Portal'dan aldığınız bilgileri giriniz."}
