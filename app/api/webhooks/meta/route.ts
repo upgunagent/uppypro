@@ -179,11 +179,15 @@ export async function POST(request: Request) {
 
                     if (accessToken && eventData.sender_id) {
                         try {
-                            const igProfileUrl = `https://graph.facebook.com/v21.0/${eventData.sender_id}?fields=username,name&access_token=${accessToken}`;
+                            const igProfileUrl = `https://graph.facebook.com/v21.0/${eventData.sender_id}?fields=username,name,profile_pic&access_token=${accessToken}`;
                             const profileRes = await fetch(igProfileUrl);
                             const profileData = await profileRes.json();
                             if (profileData.username) {
                                 eventData.sender_name = profileData.username;
+                            }
+                            // Store profile pic temporarily in eventData to use during conversation create/update
+                            if (profileData.profile_pic) {
+                                (eventData as any).profile_pic = profileData.profile_pic;
                             }
                         } catch (e) {
                             console.error("Failed to fetch IG profile:", e);
@@ -241,6 +245,8 @@ export async function POST(request: Request) {
                 handleToUse = `${eventData.sender_name} (+${eventData.sender_id})`;
             }
 
+            const currentProfilePic = (eventData as any).profile_pic || null;
+
             if (!conversation) {
                 const { data: settings } = await supabaseAdmin
                     .from("agent_settings")
@@ -257,23 +263,37 @@ export async function POST(request: Request) {
                         channel: channel,
                         external_thread_id: eventData.sender_id,
                         customer_handle: handleToUse,
-                        mode: initialMode
+                        mode: initialMode,
+                        profile_pic: currentProfilePic
                     })
                     .select()
                     .single();
                 conversation = newConv;
             } else {
+                const updates: any = {};
+                let needsUpdate = false;
+
                 if (eventData.sender_name) {
                     let desiredHandle = eventData.sender_name;
                     if (channel === 'whatsapp') {
                         desiredHandle = `${eventData.sender_name} (+${eventData.sender_id})`;
                     }
                     if (conversation.customer_handle !== desiredHandle) {
-                        await supabaseAdmin
-                            .from("conversations")
-                            .update({ customer_handle: desiredHandle })
-                            .eq("id", conversation.id);
+                        updates.customer_handle = desiredHandle;
+                        needsUpdate = true;
                     }
+                }
+
+                if (currentProfilePic && conversation.profile_pic !== currentProfilePic) {
+                    updates.profile_pic = currentProfilePic;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    await supabaseAdmin
+                        .from("conversations")
+                        .update(updates)
+                        .eq("id", conversation.id);
                 }
             }
 

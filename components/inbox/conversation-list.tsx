@@ -25,6 +25,7 @@ interface Conversation {
     mode: string;
     updated_at: string;
     messages: Message[];
+    profile_pic?: string;
 }
 
 interface ConversationListProps {
@@ -195,13 +196,13 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                         const newDataSig = JSON.stringify(data.map((c: any) => {
                             const msgs = c.messages || [];
                             const unread = msgs.filter((m: any) => m.direction === 'IN' && !m.is_read).length;
-                            return c.id + c.updated_at + unread; // Include unread count in signature
+                            return c.id + c.updated_at + unread + (c.profile_pic || ''); // Include profile_pic update in signature
                         }));
 
                         const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => {
                             const msgs = c.messages || [];
                             const unread = msgs.filter((m) => m.direction === 'IN' && !m.is_read).length;
-                            return c.id + c.updated_at + unread;
+                            return c.id + c.updated_at + unread + (c.profile_pic || '');
                         }));
 
                         if (newDataSig !== prevDataSig) {
@@ -259,11 +260,20 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                         : "glass border-white/5 hover:bg-white/10"
                                 )}>
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                                        <div className="bg-white/10 p-3 rounded-full">
-                                            {conv.channel === 'whatsapp'
-                                                ? <MessageCircle className="text-green-500" />
-                                                : <Instagram className="text-pink-500" />
-                                            }
+                                        <div className="bg-white/10 p-3 rounded-full relative overflow-hidden flex items-center justify-center w-12 h-12">
+                                            {conv.channel === 'whatsapp' ? (
+                                                <MessageCircle className="text-green-500 w-6 h-6" />
+                                            ) : (
+                                                conv.profile_pic ? (
+                                                    <img
+                                                        src={conv.profile_pic}
+                                                        alt="Profile"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Instagram className="text-pink-500 w-6 h-6" />
+                                                )
+                                            )}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="font-bold text-lg truncate">
