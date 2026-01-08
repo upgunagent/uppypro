@@ -586,7 +586,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             <div className="relative bg-white border-t border-slate-200 h-[72px]">
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 w-full h-full bg-red-600" />
+                        <div className="absolute inset-0 w-full h-full bg-red-600/90" />
                         <button
                             onClick={handleToggle}
                             disabled={!aiOperational}
