@@ -62,10 +62,10 @@ export default async function SettingsPage() {
         <div className="max-w-5xl space-y-8 p-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">İşletme Ayarları</h1>
-                    <p className="text-gray-400">İşletme bilgilerinizi ve bağlantılarınızı yönetin.</p>
+                    <h1 className="text-3xl font-bold text-slate-900">İşletme Ayarları</h1>
+                    <p className="text-slate-500">İşletme bilgilerinizi ve bağlantılarınızı yönetin.</p>
                 </div>
-                <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10 text-sm">
+                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm shadow-sm text-slate-700">
                     Paket: <span className="text-primary font-bold">Pro</span>
                 </div>
             </div>
@@ -73,36 +73,36 @@ export default async function SettingsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Sol Kolon: İşletme Bilgileri */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="p-6 glass rounded-xl border border-white/10">
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-primary/20 rounded-lg">
+                            <div className="p-2 bg-blue-50 rounded-lg">
                                 <Store className="text-primary w-5 h-5" />
                             </div>
-                            <h3 className="font-bold text-lg">Genel Bilgiler</h3>
+                            <h3 className="font-bold text-lg text-slate-900">Genel Bilgiler</h3>
                         </div>
 
                         <form action={updateBusinessInfo} className="space-y-4">
                             <div className="space-y-2">
-                                <label htmlFor="tenantName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">İşletme Adı</label>
+                                <label htmlFor="tenantName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-700">İşletme Adı</label>
                                 <div className="relative">
-                                    <Store className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+                                    <Store className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                                     <Input
                                         name="tenantName"
                                         defaultValue={tenant?.name}
-                                        className="pl-9 bg-black/20 border-white/10"
+                                        className="pl-9 bg-white border-slate-200 text-slate-900"
                                         placeholder="İşletme Adı"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label htmlFor="fullName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Yetkili Ad Soyad</label>
+                                <label htmlFor="fullName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-700">Yetkili Ad Soyad</label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+                                    <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                                     <Input
                                         name="fullName"
                                         defaultValue={profile?.full_name || ""}
-                                        className="pl-9 bg-black/20 border-white/10"
+                                        className="pl-9 bg-white border-slate-200 text-slate-900"
                                         placeholder="Ad Soyad"
                                     />
                                 </div>
@@ -110,7 +110,7 @@ export default async function SettingsPage() {
 
                             {/* Phone is in metadata usually, for MVP we skip or display static if not in DB */}
 
-                            <Button type="submit" className="w-full bg-white/10 hover:bg-white/20">
+                            <Button type="submit" className="w-full">
                                 <Save className="w-4 h-4 mr-2" />
                                 Kaydet
                             </Button>
@@ -120,12 +120,12 @@ export default async function SettingsPage() {
 
                 {/* Sağ Kolon: Kanal Bağlantıları */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="p-6 glass rounded-xl border border-white/10">
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-green-500/20 rounded-lg">
-                                <MessageCircle className="text-green-500 w-5 h-5" />
+                            <div className="p-2 bg-green-50 rounded-lg">
+                                <MessageCircle className="text-green-600 w-5 h-5" />
                             </div>
-                            <h3 className="font-bold text-lg">İletişim Kanalları</h3>
+                            <h3 className="font-bold text-lg text-slate-900">İletişim Kanalları</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

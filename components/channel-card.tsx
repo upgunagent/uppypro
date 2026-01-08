@@ -85,22 +85,22 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
 
     return (
         <>
-            <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col justify-between h-56">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between h-56 shadow-sm">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                         <Icon className={clsx("w-8 h-8", colorClass)} />
                         <div>
-                            <h4 className="font-bold capitalize">{type}</h4>
-                            <p className="text-xs text-gray-400">{type === "whatsapp" ? "Business API" : "DM Automation"}</p>
+                            <h4 className="font-bold capitalize text-slate-900">{type}</h4>
+                            <p className="text-xs text-slate-500">{type === "whatsapp" ? "Business API" : "DM Automation"}</p>
                         </div>
                     </div>
-                    {isConnected ? <CheckCircle className="text-green-500 w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-gray-600" />}
+                    {isConnected ? <CheckCircle className="text-green-500 w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-slate-300" />}
                 </div>
 
                 <div className="mt-4">
                     {isConnected ? (
                         <>
-                            <p className="text-xs text-green-400 mb-3">
+                            <p className="text-xs text-green-600 mb-3 font-medium">
                                 ● Aktif • {displayIdentifier}
                             </p>
                             <Button variant="destructive" size="sm" onClick={handleDisconnect} className="w-full h-8 text-xs" disabled={loading}>
@@ -109,13 +109,13 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                         </>
                     ) : (
                         <>
-                            <p className="text-xs text-gray-500 mb-3">Bağlı değil</p>
+                            <p className="text-xs text-slate-500 mb-3">Bağlı değil</p>
                             {type === 'instagram' ? (
-                                <Button size="sm" onClick={handleOAuthLogin} className={clsx("w-full h-8 text-xs text-white font-bold", bgClass)} disabled={loading}>
+                                <Button size="sm" onClick={handleOAuthLogin} className={clsx("w-full h-8 text-xs text-white font-bold shadow-sm", bgClass)} disabled={loading}>
                                     {loading ? "Yönlendiriliyor..." : "Instagram ile Bağlan"}
                                 </Button>
                             ) : (
-                                <Button size="sm" onClick={() => setDialogOpen(true)} className={clsx("w-full h-8 text-xs text-white font-bold", bgClass)}>
+                                <Button size="sm" onClick={() => setDialogOpen(true)} className={clsx("w-full h-8 text-xs text-white font-bold shadow-sm", bgClass)}>
                                     Bağla
                                 </Button>
                             )}
@@ -123,7 +123,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                             {/* Legacy Link for Instagram */}
                             {type === 'instagram' && (
                                 <div className="mt-2 text-center">
-                                    <button onClick={() => setDialogOpen(true)} className="text-[10px] text-gray-500 hover:text-white underline">
+                                    <button onClick={() => setDialogOpen(true)} className="text-[10px] text-slate-400 hover:text-slate-700 underline transition-colors">
                                         Gelişmiş Seçenekler
                                     </button>
                                 </div>
