@@ -12,7 +12,7 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
     // Fetch Conversation, Messages, and Settings (for AI status)
     const { data: conversation } = await supabase
         .from("conversations")
-        .select("*")
+        .select("*, profile_pic") // Explicitly fetch profile_pic to ensure it's included
         .eq("id", resolvedParams.conversationId)
         .single();
 
