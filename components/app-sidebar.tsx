@@ -99,30 +99,29 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     ];
 
     // Helper for Sidebar Items
-    const SidebarItem = ({ href, icon: Icon, label, isActive, count, colorClass = "text-slate-500", activeColorClass = "text-primary bg-primary/10", countColorClass = "bg-red-500 text-white" }: any) => (
+    // Helper for Sidebar Items
+    const SidebarItem = ({ href, icon: Icon, label, isActive, count, gradient = "bg-slate-100", iconColor = "text-slate-600" }: any) => (
         <Link
             href={href}
             className={clsx(
-                "group relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
-                isActive
-                    ? activeColorClass
-                    : "hover:bg-slate-100 text-slate-500"
+                "group relative flex flex-col items-center justify-center w-[54px] h-[54px] rounded-[20px] transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95",
+                gradient,
+                isActive ? "ring-[3px] ring-offset-2 ring-slate-200 scale-105" : "opacity-90 hover:opacity-100"
             )}
         >
-            <Icon size={24} strokeWidth={1.5} className={clsx("transition-transform group-hover:scale-110", isActive && "text-primary")} />
+            <Icon size={28} strokeWidth={2.5} className={clsx("transition-transform", iconColor)} />
 
             {/* Notification Badge */}
             {count > 0 && (
-                <span className={clsx("absolute top-2 right-2 flex h-2.5 w-2.5 items-center justify-center rounded-full ring-2 ring-white", countColorClass)}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                </span>
+                <div className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[22px] h-[22px] px-1 bg-red-600 border-[2px] border-white text-white text-[11px] font-bold rounded-full shadow-lg z-10 animate-in zoom-in">
+                    {count > 99 ? '99+' : count}
+                </div>
             )}
 
             {/* Hover Tooltip */}
-            <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+            <div className="absolute left-[64px] px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-lg opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
                 {label}
-                {/* Triangle */}
-                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
+                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-900 border-b-[4px] border-b-transparent"></div>
             </div>
         </Link>
     );
@@ -171,12 +170,14 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
             <div className="flex-1 w-full space-y-6 flex flex-col items-center">
                 {/* Main Navigation */}
-                <div className="space-y-4 flex flex-col items-center w-full">
+                <div className="space-y-6 flex flex-col items-center w-full">
                     <SidebarItem
                         href="/panel/inbox?tab=all"
                         icon={MessageSquare}
                         label="Tüm Mesajlar"
                         isActive={pathname.includes('/inbox') && currentTab === 'all'}
+                        gradient="bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/20"
+                        iconColor="text-white"
                         count={counts.all}
                     />
                     <SidebarItem
@@ -184,18 +185,18 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         icon={MessageCircle}
                         label="WhatsApp"
                         isActive={pathname.includes('/inbox') && currentTab === 'whatsapp'}
-                        activeColorClass="text-green-600 bg-green-50"
+                        gradient="bg-gradient-to-tr from-green-500 to-emerald-600 shadow-green-500/20"
+                        iconColor="text-white"
                         count={counts.whatsapp}
-                        countColorClass="bg-green-500"
                     />
                     <SidebarItem
                         href="/panel/inbox?tab=instagram"
                         icon={Instagram}
                         label="Instagram"
                         isActive={pathname.includes('/inbox') && currentTab === 'instagram'}
-                        activeColorClass="text-pink-600 bg-pink-50"
+                        gradient="bg-gradient-to-tr from-rose-500 via-red-500 to-orange-500 shadow-orange-500/20"
+                        iconColor="text-white"
                         count={counts.instagram}
-                        countColorClass="bg-pink-500"
                     />
                 </div>
             </div>
