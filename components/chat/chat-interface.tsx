@@ -378,13 +378,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             )}
 
             {/* Header / Toolbar */}
-            <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 bg-slate-900">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white shadow-sm z-10">
                 <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                         {activeProfilePic && (
                             <div className="absolute -inset-2 border-2 border-green-500/60 rounded-full animate-ping duration-[2000ms]" />
                         )}
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white/5 border border-white/10 relative z-10">
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 border border-slate-200 relative z-10">
                             {platform === 'whatsapp' ? (
                                 <MessageCircle className="text-green-500 w-5 h-5" />
                             ) : (

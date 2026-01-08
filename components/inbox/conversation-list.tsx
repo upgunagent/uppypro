@@ -254,15 +254,15 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                         >
                             <Link href={getConversationUrl(conv.id)} className="block relative group">
                                 <div className={clsx(
-                                    "p-4 rounded-lg border transition-colors flex items-center justify-between cursor-pointer pr-12",
+                                    "p-4 rounded-lg border transition-all flex items-center justify-between cursor-pointer pr-12",
                                     isSelected
-                                        ? "bg-white/10 border-primary/50"
-                                        : "glass border-white/5 hover:bg-white/10"
+                                        ? "bg-primary/5 border-primary ring-1 ring-primary/20"
+                                        : "bg-white border-slate-200 hover:border-primary/30 hover:shadow-md"
                                 )}>
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
                                         <div className={clsx(
-                                            "rounded-full flex items-center justify-center shrink-0 w-12 h-12",
-                                            (conv.channel === 'instagram' && conv.profile_pic) ? "p-0 overflow-hidden" : "p-3 bg-white/10"
+                                            "rounded-full flex items-center justify-center shrink-0 w-12 h-12 border",
+                                            (conv.channel === 'instagram' && conv.profile_pic) ? "p-0 overflow-hidden border-transparent" : "p-3 bg-slate-50 border-slate-100"
                                         )}>
                                             {conv.channel === 'whatsapp' ? (
                                                 <MessageCircle className="text-green-500 w-full h-full" />

@@ -114,10 +114,10 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
     }
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-slate-950">
+        <div className="flex h-screen w-full overflow-hidden bg-background">
             {/* Left Pane: Conversation List */}
-            <div className="w-[675px] flex flex-col border-r border-white/10 bg-slate-950">
-                <div className="h-16 flex items-center px-4 border-b border-white/10 shrink-0">
+            <div className="w-[675px] flex flex-col border-r border-slate-200 bg-white">
+                <div className="h-16 flex items-center px-4 border-b border-slate-200 shrink-0">
                     <h1 className="text-xl font-bold">
                         {tab === 'all' && 'Tüm Mesajlar'}
                         {tab === 'whatsapp' && 'WhatsApp'}
@@ -134,7 +134,7 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
             </div>
 
             {/* Right Pane: Chat Area */}
-            <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
                 {selectedConversation ? (
                     <div className="h-full w-full">
                         <ChatInterface
