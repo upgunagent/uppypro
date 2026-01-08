@@ -257,7 +257,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                 <div className={clsx(
                                     "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg duration-200",
                                     conv.channel === 'instagram'
-                                        ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 border-transparent shadow-pink-500/20 text-white"
+                                        ? "bg-gradient-to-r from-red-500 via-red-700 to-rose-900 border-transparent shadow-red-500/20 text-white"
                                         : conv.channel === 'whatsapp'
                                             ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 border-transparent shadow-green-500/20 text-white"
                                             : (isSelected ? "bg-slate-50 border-primary ring-1 ring-primary/20 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300")
