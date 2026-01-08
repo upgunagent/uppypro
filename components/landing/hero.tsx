@@ -64,7 +64,7 @@ export function HeroSection() {
                         {/* Floating Elements (Background) */}
                         <div className="absolute -left-4 lg:-left-12 bottom-48 lg:bottom-60 z-0">
                             <div className="animate-bounce duration-[3000ms]">
-                                <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100 -rotate-[30deg]">
+                                <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100 rotate-[15deg]">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                             <MessageCircle size={20} />
