@@ -434,6 +434,37 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     >
                         {conversationMode === "BOT" ? <><User className="mr-2 w-4 h-4" />Devral (Human)</> : <><Bot className="mr-2 w-4 h-4" />AI'ya Devret</>}
                     </Button>
+
+                    {/* NEW CRM MENU */}
+                    <div className="relative z-50 ml-2">
+                        <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white rounded-full h-8 w-8" onClick={() => setMenuOpen(!menuOpen)}>
+                            <MoreVertical className="w-5 h-5" />
+                        </Button>
+
+                        {menuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                                <div className="absolute right-0 top-10 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right text-slate-900 dark:text-slate-100">
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium"
+                                        onClick={() => { setContactSheetOpen(true); setMenuOpen(false); }}
+                                    >
+                                        <User className="w-4 h-4 text-slate-500" /> Kişi bilgisi
+                                    </div>
+                                    <div className="border-b border-slate-100 dark:border-slate-800 my-1" />
+                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400">
+                                        <Eraser className="w-4 h-4" /> Sohbeti Temizle
+                                    </div>
+                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10">
+                                        <Ban className="w-4 h-4" /> Engelle
+                                    </div>
+                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10">
+                                        <Trash2 className="w-4 h-4" /> Sohbeti Sil
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
