@@ -260,9 +260,12 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                         : "glass border-white/5 hover:bg-white/10"
                                 )}>
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                                        <div className="bg-white/10 p-3 rounded-full relative overflow-hidden flex items-center justify-center w-12 h-12">
+                                        <div className={clsx(
+                                            "rounded-full flex items-center justify-center shrink-0 w-12 h-12",
+                                            (conv.channel === 'instagram' && conv.profile_pic) ? "p-0 overflow-hidden" : "p-3 bg-white/10"
+                                        )}>
                                             {conv.channel === 'whatsapp' ? (
-                                                <MessageCircle className="text-green-500 w-6 h-6" />
+                                                <MessageCircle className="text-green-500 w-full h-full" />
                                             ) : (
                                                 conv.profile_pic ? (
                                                     <img
@@ -271,7 +274,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
-                                                    <Instagram className="text-pink-500 w-6 h-6" />
+                                                    <Instagram className="text-pink-500 w-full h-full" />
                                                 )
                                             )}
                                         </div>
