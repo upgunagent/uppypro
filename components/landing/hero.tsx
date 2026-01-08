@@ -59,8 +59,34 @@ export function HeroSection() {
                     </div>
 
                     {/* Visual Content (Mockup) */}
-                    <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none">
-                        <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-700 ease-out">
+                    <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex justify-center lg:justify-end">
+
+                        {/* Floating Elements (Background) */}
+                        <div className="absolute -right-4 lg:-right-12 top-10 lg:top-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[3000ms] z-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                    <MessageCircle size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-800">+128 Mesaj</div>
+                                    <div className="text-xs text-green-600">WhatsApp Business</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute -left-4 lg:-left-12 bottom-10 lg:bottom-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[4000ms] z-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+                                    <Instagram size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-800">+24 DM</div>
+                                    <div className="text-xs text-pink-500">Instagram</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Card (Foreground) */}
+                        <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-700 ease-out max-w-lg w-full">
                             {/* Fake Browser Header */}
                             <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2">
                                 <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -117,29 +143,7 @@ export function HeroSection() {
                             </div>
                         </div>
 
-                        {/* Floating Elements */}
-                        <div className="absolute -right-8 top-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[3000ms]">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                    <MessageCircle size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-slate-800">+128 Mesaj</div>
-                                    <div className="text-xs text-green-600">WhatsApp Business</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="absolute -left-8 bottom-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[4000ms]">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                    <Instagram size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-slate-800">+24 DM</div>
-                                    <div className="text-xs text-pink-500">Instagram</div>
-                                </div>
-                            </div>
-                        </div>
+
 
                     </div>
                 </div>
