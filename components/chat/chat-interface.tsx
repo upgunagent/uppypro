@@ -61,21 +61,21 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     };
 
-    // Sync state with server-side props (Important for replacing optimistic IDs with real IDs)
-    // Sync state with server-side props AND fetch fresh to ensure external_message_id presence
+    // 1. Message Prop Sync
     useEffect(() => {
-        // optimistically set from props first
         setMessages(initialMessages);
-        setActiveProfilePic(profilePic);
+    }, [initialMessages]);
 
-        // Mark as READ
+    // 2. Conversation Init (Profile Pic + Fresh Fetch)
+    useEffect(() => {
+        // Reset to prop immediately on switch
+        setActiveProfilePic(profilePic);
         markConversationAsRead(conversationId);
 
-        // Then fetch fresh to ensure we have latest fields (like external_message_id) AND profile_pic (fallback)
         const fetchFreshKeys = async () => {
             const supabase = createClient();
 
-            // 1. Messages
+            // 1. Messages (Fetch fresh to get correct IDs etc)
             const { data: msgs } = await supabase
                 .from("messages")
                 .select("*")
@@ -83,6 +83,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .order("created_at", { ascending: true });
 
             if (msgs) {
+                // Note: This might overwrite 'initialMessages' state, which is good.
                 setMessages(msgs);
             }
 
@@ -93,11 +94,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .eq("id", conversationId)
                 .single();
 
-            // Always update to current truth, preventing stale images from previous chats
             setActiveProfilePic(conv?.profile_pic ?? undefined);
         };
         fetchFreshKeys();
-    }, [initialMessages, conversationId, profilePic]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conversationId]);
 
     const handleEditSave = async () => {
         if (!editingId || !editValue.trim()) return;
