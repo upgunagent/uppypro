@@ -251,44 +251,54 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
+                            className="mb-2"
                         >
                             <Link href={getConversationUrl(conv.id)} className="block relative group">
                                 <div className={clsx(
-                                    "p-4 rounded-lg border transition-all flex items-center justify-between cursor-pointer pr-12",
-                                    isSelected
-                                        ? "bg-primary/5 border-primary ring-1 ring-primary/20"
-                                        : "bg-white border-slate-200 hover:border-primary/30 hover:shadow-md"
+                                    "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg duration-200",
+                                    conv.channel === 'instagram'
+                                        ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 border-transparent shadow-pink-500/20 text-white"
+                                        : conv.channel === 'whatsapp'
+                                            ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 border-transparent shadow-green-500/20 text-white"
+                                            : (isSelected ? "bg-slate-50 border-primary ring-1 ring-primary/20 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300")
                                 )}>
+
+                                    {/* Selection Ring for Gradient Cards */}
+                                    {isSelected && (conv.channel === 'instagram' || conv.channel === 'whatsapp') && (
+                                        <div className="absolute inset-0 border-[3px] border-white/40 rounded-xl pointer-events-none" />
+                                    )}
+
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
                                         <div className={clsx(
-                                            "rounded-full flex items-center justify-center shrink-0 w-12 h-12 border",
-                                            (conv.channel === 'instagram' && conv.profile_pic) ? "p-0 overflow-hidden border-transparent" : "p-3 bg-slate-50 border-slate-100"
+                                            "rounded-full flex items-center justify-center shrink-0 w-12 h-12 border shadow-sm backdrop-blur-sm",
+                                            (conv.channel === 'instagram' || conv.channel === 'whatsapp')
+                                                ? "bg-white/20 border-white/30"
+                                                : "bg-slate-50 border-slate-200"
                                         )}>
                                             {conv.channel === 'whatsapp' ? (
-                                                <MessageCircle className="text-green-500 w-full h-full" />
+                                                <MessageCircle className={clsx("w-6 h-6", (conv.channel === 'whatsapp') ? "text-white" : "text-green-600")} />
                                             ) : (
                                                 conv.profile_pic ? (
                                                     <img
                                                         src={conv.profile_pic}
                                                         alt="Profile"
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover rounded-full"
                                                     />
                                                 ) : (
-                                                    <Instagram className="text-pink-500 w-full h-full" />
+                                                    <Instagram className={clsx("w-6 h-6", (conv.channel === 'instagram') ? "text-white" : "text-pink-600")} />
                                                 )
                                             )}
                                         </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-1.5 font-bold text-lg">
+                                        <div className="min-w-0 flex-1">
+                                            <div className={clsx("flex items-center gap-1.5 font-bold text-lg", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white" : "text-slate-800")}>
                                                 <span className="truncate">{safeString(conv.customer_handle || conv.external_thread_id)}</span>
                                                 {conv.channel === 'instagram' && (
-                                                    <Instagram size={16} className="text-pink-500 shrink-0" />
+                                                    <Instagram size={16} className="text-white/90 shrink-0" />
                                                 )}
                                             </div>
-                                            <div className="text-sm text-slate-500 capitalize flex items-center gap-2">
-                                                {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
-                                                {/* SAFE RENDER: Ensure text is string */}
-                                                <span className="block truncate flex-1">
+                                            <div className={clsx("text-sm capitalize flex items-center gap-2", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white/90" : "text-slate-500")}>
+                                                {conv.mode === 'BOT' && <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md uppercase tracking-wide font-bold">BOT</span>}
+                                                <span className="block truncate flex-1 font-medium opacity-90">
                                                     {(() => {
                                                         const txt = safeString(lastMsg?.text);
                                                         // Check for known media markers or types
@@ -310,48 +320,43 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                         {(() => {
                                             const msgs = Array.isArray(conv.messages) ? conv.messages : [];
                                             const unreadCount = msgs.filter(m => m.direction === 'IN' && !m.is_read).length;
+                                            const isColored = conv.channel === 'instagram' || conv.channel === 'whatsapp';
 
                                             if (unreadCount > 0) {
                                                 return (
                                                     <div className="flex items-center gap-2">
-                                                        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded font-medium">
-                                                            Yeni mesaj
+                                                        <span className={clsx("text-xs px-2 py-0.5 rounded font-bold shadow-sm", isColored ? "bg-white text-black" : "bg-green-100 text-green-700")}>
+                                                            Yeni
                                                         </span>
-                                                        <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-black text-xs font-bold rounded-full">
+                                                        <span className={clsx("flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full shadow-sm", isColored ? "bg-black/20 text-white border border-white/20" : "bg-green-500 text-white")}>
                                                             {unreadCount}
                                                         </span>
                                                     </div>
                                                 );
                                             } else {
                                                 return (
-                                                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded font-medium">
+                                                    <span className={clsx("text-xs px-2 py-0.5 rounded font-medium", isColored ? "bg-black/10 text-white/90" : "bg-slate-100 text-slate-500")}>
                                                         Okundu
                                                     </span>
                                                 );
                                             }
                                         })()}
-                                    </div>
-
-                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <span className="text-xs text-gray-500">{timeStr}</span>
+                                        <span className={clsx("text-xs font-medium", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white/80" : "text-slate-400")}>{timeStr}</span>
                                     </div>
                                 </div>
 
-                                {/* Delete Button - Visible on Hover (or always on mobile, but group-hover is good for desktop) */}
+                                {/* Delete Button */}
                                 <button
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-red-500/10 hover:bg-red-500/80 text-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-red-500 hover:bg-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg scale-90 hover:scale-100"
                                     onClick={async (e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         if (confirm("Bu konuşmayı ve tüm mesajları silmek istediğinize emin misiniz?")) {
                                             try {
-                                                // Optimistic Update
                                                 setConversations(prev => prev.filter(c => c.id !== conv.id));
                                                 await deleteConversation(conv.id);
                                             } catch (err) {
                                                 console.error("Delete failed", err);
-                                                alert("Silinirken hata oluştu");
-                                                // Revert optionally or just let SWR/Realtime fix it
                                             }
                                         }
                                     }}
