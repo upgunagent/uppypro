@@ -221,4 +221,3 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         </div>
     );
 }
-```
