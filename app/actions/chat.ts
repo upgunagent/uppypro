@@ -83,11 +83,23 @@ export async function deleteConversation(conversationId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Yetkisiz Erişim");
 
+    // 1. Verify ownership/access via RLS
+    const { data: conv, error: fetchError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .single();
+
+    if (fetchError || !conv) throw new Error("Konuşma bulunamadı veya erişim yok.");
+
+    // 2. Perform Admin Delete (Bypass RLS deletion constraints)
+    const adminDb = createAdminClient();
+
     // Explicit Delete: Messages first (if no cascade)
-    await supabase.from("messages").delete().eq("conversation_id", conversationId);
+    await adminDb.from("messages").delete().eq("conversation_id", conversationId);
 
     // Delete Conversation
-    const { error } = await supabase
+    const { error } = await adminDb
         .from("conversations")
         .delete()
         .eq("id", conversationId);
@@ -105,8 +117,20 @@ export async function clearConversationMessages(conversationId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Yetkisiz Erişim");
 
+    // 1. Verify access
+    const { data: conv, error: fetchError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .single();
+
+    if (fetchError || !conv) throw new Error("Erişim reddedildi.");
+
+    // 2. Admin Delete
+    const adminDb = createAdminClient();
+
     // Delete all messages for this conversation
-    const { error } = await supabase
+    const { error } = await adminDb
         .from("messages")
         .delete()
         .eq("conversation_id", conversationId);
