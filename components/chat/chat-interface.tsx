@@ -488,7 +488,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", (isMe || isBot) ? "ml-auto items-end" : "mr-auto items-start")}>
                             {/* Sender Label */}
                             <span className="text-xs text-gray-600 mb-1 ml-1 font-medium">
-                                {isMe ? "Siz" : isBot ? "Dijital Asistan" : "Müşteri"}
+                                {isMe ? "Siz" : isBot ? "Dijital Asistan" : customerName}
                             </span>
 
                             {/* Bubble */}
