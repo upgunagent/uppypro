@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle } from "lucide-react";
+import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { deleteConversation, clearConversationMessages } from "@/app/actions/chat";
+import { clsx } from "clsx";
 
 interface ContactInfoSheetProps {
     isOpen: boolean;
@@ -19,23 +20,37 @@ interface ContactInfoSheetProps {
     triggerRef?: React.RefObject<HTMLButtonElement>;
 }
 
+interface Note {
+    id: string;
+    note: string;
+    created_at: string;
+}
+
 export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHandle, platform, initialProfilePic }: ContactInfoSheetProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [noteLoading, setNoteLoading] = useState(false);
+
+    // Profile Data
     const [formData, setFormData] = useState({
         full_name: "",
         company_name: "",
         phone: "",
         email: "",
-        notes: ""
     });
+
+    // Notes Data
+    const [newNote, setNewNote] = useState("");
+    const [notesList, setNotesList] = useState<Note[]>([]);
+    const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+
     const [customerId, setCustomerId] = useState<string | null>(null);
 
     // Initial Data Fetch
     useEffect(() => {
         if (!isOpen) return;
 
-        const fetchCustomer = async () => {
+        const fetchCustomerAndNotes = async () => {
             setLoading(true);
             const supabase = createClient();
 
@@ -61,8 +76,16 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: customer.company_name || "",
                         phone: customer.phone || "",
                         email: customer.email || "",
-                        notes: customer.notes || ""
                     });
+
+                    // Fetch Notes
+                    const { data: notes } = await supabase
+                        .from("customer_notes")
+                        .select("*")
+                        .eq("customer_id", customer.id)
+                        .order("created_at", { ascending: false });
+
+                    if (notes) setNotesList(notes);
                 }
             } else {
                 // Pre-fill defaults
@@ -72,23 +95,21 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     phone: platform === 'whatsapp' ? customerHandle : "",
                     full_name: "", // Leave blank for manual entry
                 }));
+                setNotesList([]);
             }
             setLoading(false);
         };
 
-        fetchCustomer();
+        fetchCustomerAndNotes();
     }, [isOpen, conversationId, customerHandle, platform]);
 
-    const handleSave = async () => {
+    const handleSaveProfile = async () => {
         setLoading(true);
         const supabase = createClient();
 
         try {
-            // Get Tenant ID first (usually from context, but fetching from conversation for safety)
             const { data: conv } = await supabase.from("conversations").select("tenant_id, customer_id").eq("id", conversationId).single();
             if (!conv) throw new Error("Conversation not found");
-
-            let targetCustomerId = customerId;
 
             if (customerId) {
                 // UPDATE
@@ -99,7 +120,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: formData.company_name,
                         phone: formData.phone,
                         email: formData.email,
-                        notes: formData.notes,
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", customerId);
@@ -115,14 +135,12 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: formData.company_name,
                         phone: formData.phone,
                         email: formData.email,
-                        notes: formData.notes,
-                        profile_pic: initialProfilePic // Save initial pic
+                        profile_pic: initialProfilePic
                     })
                     .select("id")
                     .single();
 
                 if (error) throw error;
-                targetCustomerId = newCustomer.id;
 
                 // LINK
                 await supabase
@@ -141,6 +159,37 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
             setLoading(false);
         }
     };
+
+    const handleSaveNote = async () => {
+        if (!newNote.trim()) return;
+        if (!customerId) {
+            alert("Önce kişi bilgilerini kaydederek müşteriyi oluşturmalısınız.");
+            return;
+        }
+
+        setNoteLoading(true);
+        const supabase = createClient();
+        try {
+            const { data: noteData, error } = await supabase
+                .from("customer_notes")
+                .insert({
+                    customer_id: customerId,
+                    note: newNote.trim()
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            setNotesList(prev => [noteData, ...prev]);
+            setNewNote("");
+            // alert("Not kaydedildi."); // User asked for it to just show up below
+        } catch (error: any) {
+            alert("Not kaydedilirken hata: " + error.message);
+        } finally {
+            setNoteLoading(false);
+        }
+    }
 
     const handleClearChat = async () => {
         if (!confirm("Bu sohbetin tüm mesajlarını silmek istediğinize emin misiniz?")) return;
@@ -161,7 +210,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
             setLoading(true);
             await deleteConversation(conversationId);
             alert("Sohbet silindi.");
-            router.push('/panel/inbox'); // Redirect
+            router.push('/panel/inbox');
             onClose();
         } catch (e: any) {
             alert("Hata: " + e.message);
@@ -202,8 +251,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     </p>
                 </div>
 
-                {/* FORM */}
-                <div className="space-y-4">
+                {/* PROFILE FORM */}
+                <div className="space-y-4 mb-8">
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-slate-500">Ad Soyad</label>
                         <div className="relative">
@@ -256,25 +305,31 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">Görüşme Notları</label>
-                        <Textarea
-                            value={formData.notes}
-                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                            className="min-h-[120px] resize-none text-slate-900 dark:text-slate-100"
-                            placeholder="Müşteri ile ilgili notlar..."
-                        />
-                    </div>
-
-                    <Button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button onClick={handleSaveProfile} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                         {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
                     </Button>
                 </div>
 
-                <div className="my-8 border-t border-slate-200 dark:border-slate-800" />
+                <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
 
-                {/* DANGER ZONE (Updated) */}
-                <div className="space-y-2">
+                {/* NOTE ENTRY */}
+                <div className="space-y-3 mb-8">
+                    <label className="text-xs font-semibold uppercase text-slate-500">Yeni Görüşme Notu</label>
+                    <Textarea
+                        value={newNote}
+                        onChange={e => setNewNote(e.target.value)}
+                        className="min-h-[100px] resize-none text-slate-900 dark:text-slate-100"
+                        placeholder="Notunuzu buraya yazın..."
+                    />
+                    <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                        {noteLoading ? "Ekleniyor..." : <><Plus className="mr-2 w-4 h-4" /> Notu Kaydet</>}
+                    </Button>
+                </div>
+
+                <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
+
+                {/* DANGER ZONE */}
+                <div className="space-y-2 mb-8">
                     <Button variant="ghost" onClick={handleClearChat} disabled={loading} className="w-full justify-start text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                         <Eraser className="mr-3 w-4 h-4" /> Sohbeti Temizle
                     </Button>
@@ -282,6 +337,32 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <Trash2 className="mr-3 w-4 h-4" /> Sohbeti Sil
                     </Button>
                 </div>
+
+                {/* NOTES HISTORY (ACCORDION) */}
+                {notesList.length > 0 && (
+                    <div className="space-y-2 pb-10">
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase mb-3">Geçmiş Görüşme Notları</h3>
+                        {notesList.map((note) => (
+                            <div key={note.id} className="border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden">
+                                <button
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
+                                >
+                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        {new Date(note.created_at).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <ChevronDown className={clsx("w-4 h-4 text-slate-400 transition-transform duration-200", expandedNoteId === note.id && "rotate-180")} />
+                                </button>
+
+                                {expandedNoteId === note.id && (
+                                    <div className="p-3 bg-white dark:bg-black text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-1">
+                                        {note.note}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
             </SheetContent>
         </Sheet>
