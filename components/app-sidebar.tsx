@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 import {
@@ -163,9 +164,15 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     // Tenant/User View
     return (
         <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
-            <div className="mb-8 p-2 rounded-xl bg-primary/5 text-primary">
-                {/* Logo or Brand Icon */}
-                <span className="font-bold text-xl">UP</span>
+            <div className="mb-8 hover:scale-105 transition-transform duration-300">
+                <Image
+                    src="/brand-logo.png"
+                    alt="UP"
+                    width={60}
+                    height={60}
+                    className="w-[60px] h-[60px] object-contain drop-shadow-sm"
+                    priority
+                />
             </div>
 
             <div className="flex-1 w-full space-y-6 flex flex-col items-center">
