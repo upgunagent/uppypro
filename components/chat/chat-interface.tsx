@@ -473,7 +473,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 ref={scrollRef}
                 onScroll={handleScroll}
                 style={{
-                    backgroundImage: "linear-gradient(rgba(239, 231, 221, 0.9), rgba(239, 231, 221, 0.9)), url('/chatbox_bg_uu.png')",
+                    backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/chatbox_bg_uu.png')",
                     backgroundRepeat: 'repeat',
                     backgroundSize: '600px',
                 }}
