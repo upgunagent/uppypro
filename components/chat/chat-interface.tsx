@@ -609,12 +609,12 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 {showEmojiPicker && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                        <div className="absolute bottom-full left-0 z-50 mb-2 ml-4 shadow-2xl rounded-xl overflow-hidden border border-white/10">
+                        <div className="absolute bottom-full left-0 z-50 mb-2 ml-4 shadow-2xl rounded-xl overflow-hidden border border-slate-200">
                             <EmojiPicker
                                 onEmojiClick={(emojiData) => {
                                     setInput(prev => prev + emojiData.emoji);
                                 }}
-                                theme={Theme.DARK}
+                                theme={Theme.LIGHT}
                                 width={300}
                                 height={400}
                                 lazyLoadEmojis={true}
