@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -431,8 +431,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                     {/* NEW CRM MENU */}
                     <div className="relative z-50 ml-2">
-                        <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white rounded-full h-8 w-8" onClick={() => setMenuOpen(!menuOpen)}>
-                            <MoreVertical className="w-5 h-5" />
+                        <Button variant="ghost" size="icon" className="hover:bg-slate-100 text-slate-900 rounded-full h-9 w-9 border-2 border-slate-900 flex items-center justify-center transition-colors" onClick={() => setMenuOpen(!menuOpen)}>
+                            <Menu className="w-5 h-5 stroke-[2.5]" />
                         </Button>
 
                         {menuOpen && (
