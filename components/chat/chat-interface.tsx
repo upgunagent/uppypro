@@ -452,9 +452,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     >
                                         <Eraser className="w-4 h-4" /> Sohbeti Temizle
                                     </div>
-                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10" onClick={() => alert("Engelleme özelliği şu an aktif değil.")}>
-                                        <Ban className="w-4 h-4" /> Engelle
-                                    </div>
                                     <div
                                         className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
                                         onClick={handleDeleteChat}
