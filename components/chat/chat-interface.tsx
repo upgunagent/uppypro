@@ -411,7 +411,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-purple-500 shadow-purple-500/50 shadow-lg" : "bg-blue-500")}></div>
-                        <span className="font-bold text-sm text-gray-400">
+                        <span className="font-bold text-sm text-slate-600">
                             {conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
                         </span>
                     </div>

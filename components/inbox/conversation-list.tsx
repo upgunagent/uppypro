@@ -285,7 +285,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     <Instagram size={16} className="text-pink-500 shrink-0" />
                                                 )}
                                             </div>
-                                            <div className="text-sm text-gray-400 capitalize flex items-center gap-2">
+                                            <div className="text-sm text-slate-500 capitalize flex items-center gap-2">
                                                 {conv.mode === 'BOT' && <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded">BOT</span>}
                                                 {/* SAFE RENDER: Ensure text is string */}
                                                 <span className="block truncate flex-1">
