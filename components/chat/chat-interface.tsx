@@ -49,7 +49,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     useEffect(() => {
         // optimistically set from props first
         setMessages(initialMessages);
-        if (profilePic) setActiveProfilePic(profilePic);
+        setActiveProfilePic(profilePic);
 
         // Mark as READ
         markConversationAsRead(conversationId);
@@ -76,9 +76,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .eq("id", conversationId)
                 .single();
 
-            if (conv?.profile_pic) {
-                setActiveProfilePic(conv.profile_pic);
-            }
+            // Always update to current truth, preventing stale images from previous chats
+            setActiveProfilePic(conv?.profile_pic ?? undefined);
         };
         fetchFreshKeys();
     }, [initialMessages, conversationId, profilePic]);
