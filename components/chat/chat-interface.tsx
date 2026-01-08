@@ -47,12 +47,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     // Scroll Logic State
     const [showScrollButton, setShowScrollButton] = useState(false);
     const isAtBottomRef = useRef(true);
+    const prevMessageCountRef = useRef(initialMessages.length);
 
     const handleScroll = () => {
         if (!scrollRef.current) return;
         const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-        // User is at bottom if they are within 100px of the end
-        const isBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 100;
+        // User is at bottom if they are within 150px of the end
+        const isBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 150;
         isAtBottomRef.current = isBottom;
 
         if (isBottom) {
@@ -227,9 +228,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     // Smart Scroll: Auto-scroll only if already at bottom
     useEffect(() => {
+        const hasNewMessages = messages.length > prevMessageCountRef.current;
+        prevMessageCountRef.current = messages.length;
+
         if (isAtBottomRef.current && scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        } else {
+            setShowScrollButton(false);
+        } else if (hasNewMessages) {
             setShowScrollButton(true);
         }
     }, [messages]);
