@@ -62,7 +62,7 @@ export function HeroSection() {
                     <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex justify-center lg:justify-end">
 
                         {/* Floating Elements (Background) */}
-                        <div className="absolute -right-4 lg:-right-12 top-10 lg:top-20 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[3000ms] z-0">
+                        <div className="absolute -left-4 lg:-left-12 bottom-44 lg:bottom-52 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 animate-bounce duration-[3000ms] z-0">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                     <MessageCircle size={20} />
