@@ -1,14 +1,13 @@
-"use client";
-
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser } from "lucide-react";
+import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-// import { toast } from "sonner";
+import { deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 
 interface ContactInfoSheetProps {
     isOpen: boolean;
@@ -21,6 +20,7 @@ interface ContactInfoSheetProps {
 }
 
 export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHandle, platform, initialProfilePic }: ContactInfoSheetProps) {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         full_name: "",
@@ -142,6 +142,34 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
         }
     };
 
+    const handleClearChat = async () => {
+        if (!confirm("Bu sohbetin tüm mesajlarını silmek istediğinize emin misiniz?")) return;
+        try {
+            setLoading(true);
+            await clearConversationMessages(conversationId);
+            alert("Sohbet temizlendi.");
+        } catch (e: any) {
+            alert("Hata: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteChat = async () => {
+        if (!confirm("Bu sohbeti tamamen silmek istediğinize emin misiniz?")) return;
+        try {
+            setLoading(true);
+            await deleteConversation(conversationId);
+            alert("Sohbet silindi.");
+            router.push('/panel/inbox'); // Redirect
+            onClose();
+        } catch (e: any) {
+            alert("Hata: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
@@ -153,10 +181,18 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 {/* HEADER PROFILE */}
                 <div className="flex flex-col items-center mb-8">
                     <Avatar className="w-24 h-24 mb-4 border-4 border-white dark:border-slate-800 shadow-xl">
-                        <AvatarImage src={initialProfilePic} className="object-cover" />
-                        <AvatarFallback className="text-2xl bg-slate-200 dark:bg-slate-800">
-                            {customerHandle.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
+                        {platform === 'whatsapp' ? (
+                            <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <MessageCircle className="w-12 h-12 text-green-500" />
+                            </div>
+                        ) : (
+                            <>
+                                <AvatarImage src={initialProfilePic} className="object-cover" />
+                                <AvatarFallback className="text-2xl bg-slate-200 dark:bg-slate-800">
+                                    {customerHandle.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </>
+                        )}
                     </Avatar>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                         {formData.full_name || customerHandle}
@@ -225,7 +261,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <Textarea
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                            className="min-h-[120px] resize-none"
+                            className="min-h-[120px] resize-none text-slate-900 dark:text-slate-100"
                             placeholder="Müşteri ile ilgili notlar..."
                         />
                     </div>
@@ -237,15 +273,12 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
                 <div className="my-8 border-t border-slate-200 dark:border-slate-800" />
 
-                {/* DANGER ZONE (Mock Actions) */}
+                {/* DANGER ZONE (Updated) */}
                 <div className="space-y-2">
-                    <Button variant="ghost" className="w-full justify-start text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                    <Button variant="ghost" onClick={handleClearChat} disabled={loading} className="w-full justify-start text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                         <Eraser className="mr-3 w-4 h-4" /> Sohbeti Temizle
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <Ban className="mr-3 w-4 h-4" /> Engelle
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <Button variant="ghost" onClick={handleDeleteChat} disabled={loading} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
                         <Trash2 className="mr-3 w-4 h-4" /> Sohbeti Sil
                     </Button>
                 </div>

@@ -32,6 +32,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic }: ChatInterfaceProps) {
+    const router = useRouter();
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);

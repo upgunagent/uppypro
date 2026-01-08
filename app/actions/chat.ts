@@ -100,6 +100,25 @@ export async function deleteConversation(conversationId: string) {
     revalidatePath("/panel/inbox");
 }
 
+export async function clearConversationMessages(conversationId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Yetkisiz Erişim");
+
+    // Delete all messages for this conversation
+    const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("conversation_id", conversationId);
+
+    if (error) {
+        console.error("Clear conversation error:", error);
+        throw new Error("Mesajlar temizlenemedi");
+    }
+
+    revalidatePath(`/panel/chat/${conversationId}`);
+}
+
 export async function editMessage(messageId: string, newText: string, conversationId: string) {
     try {
         const supabase = await createClient();
