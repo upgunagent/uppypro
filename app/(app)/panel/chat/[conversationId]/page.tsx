@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import ChatInterface from "@/components/chat/chat-interface";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ChatPage({ params }: { params: Promise<{ conversationId: string }> }) {
     const supabase = await createClient();
     const resolvedParams = await params;
