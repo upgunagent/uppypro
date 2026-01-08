@@ -187,7 +187,16 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                         <Input required type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="EAAG..." />
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button
+                        type="submit"
+                        className={clsx(
+                            "w-full text-white font-bold shadow-md transition-all h-11",
+                            type === "whatsapp"
+                                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-lg"
+                                : "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 hover:shadow-lg"
+                        )}
+                        disabled={loading}
+                    >
                         {loading ? "Bağlanıyor..." : "Kaydet ve Bağla"}
                     </Button>
                 </form>
