@@ -24,11 +24,11 @@ export function SimpleDialog({ isOpen, onClose, title, children }: SimpleDialogP
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-[#1c1c1c] border border-white/10 p-6 rounded-xl w-full max-w-md relative shadow-2xl">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">{title}</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-md relative shadow-2xl text-slate-900 animate-in zoom-in-95 duration-200">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold tracking-tight">{title}</h3>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
