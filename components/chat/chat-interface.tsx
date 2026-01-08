@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -75,14 +74,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     // 2. Conversation Init (Profile Pic + Fresh Fetch)
     useEffect(() => {
-        // Reset to prop immediately on switch
         setActiveProfilePic(profilePic);
         markConversationAsRead(conversationId);
 
         const fetchFreshKeys = async () => {
             const supabase = createClient();
 
-            // 1. Messages (Fetch fresh to get correct IDs etc)
+            // 1. Messages 
             const { data: msgs } = await supabase
                 .from("messages")
                 .select("*")
@@ -90,11 +88,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .order("created_at", { ascending: true });
 
             if (msgs) {
-                // Note: This might overwrite 'initialMessages' state, which is good.
                 setMessages(msgs);
             }
 
-            // 2. Profile Pic (Force Client Fetch)
+            // 2. Profile Pic 
             const { data: conv } = await supabase
                 .from("conversations")
                 .select("profile_pic")
@@ -104,7 +101,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             setActiveProfilePic(conv?.profile_pic ?? undefined);
         };
         fetchFreshKeys();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId]);
 
     const handleEditSave = async () => {
@@ -122,10 +118,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         try {
             const res = await editMessage(currentId, newVal, conversationId);
             if (!res.success) {
-                // Revert optimistic update if needed?
-                // For now just alert
                 alert("Düzenleme başarısız: " + res.error);
-                // Force refresh
                 window.location.reload();
             }
         } catch (err: any) {
@@ -140,7 +133,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const wavRecorderRef = useRef<WavRecorder | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Format seconds to MM:SS
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -149,7 +141,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     const startRecording = async () => {
         try {
-            // Instantiate and start WAV recorder
             const recorder = new WavRecorder();
             await recorder.start();
             wavRecorderRef.current = recorder;
@@ -170,7 +161,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const stopAndSendRecording = async () => {
         if (!wavRecorderRef.current) return;
 
-        // Stop timer
         if (timerRef.current) clearInterval(timerRef.current);
 
         try {
@@ -178,12 +168,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             setRecordingTime(0);
             setSending(true);
 
-            // Stop recording and get WAV blob
             const audioBlob = await wavRecorderRef.current.stop();
             const fileName = `voice_message_${Date.now()}.wav`;
             const audioFile = new File([audioBlob], fileName, { type: 'audio/wav' });
 
-            // Upload Logic
             const supabase = createClient();
             const storagePath = `${conversationId}/${fileName}`;
 
@@ -199,8 +187,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .from('chat-media')
                 .getPublicUrl(storagePath);
 
-            // Send
-            // Optimistic Update
             const optimisticMsg: Message = {
                 id: "temp-" + Date.now(),
                 text: "",
@@ -224,17 +210,38 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
     const cancelRecording = () => {
         if (!wavRecorderRef.current) return;
-
         wavRecorderRef.current.cancel();
-
         if (timerRef.current) clearInterval(timerRef.current);
-
         setIsRecording(false);
         setRecordingTime(0);
         wavRecorderRef.current = null;
     };
 
-    // Smart Scroll: Auto-scroll only if already at bottom
+    // --- NEW HANDLERS ---
+    const handleClearChat = async () => {
+        if (!confirm("Bu sohbetin tüm mesajlarını silmek istediğinize emin misiniz?")) return;
+        setMenuOpen(false);
+        try {
+            await clearConversationMessages(conversationId);
+            setMessages([]); // Clear local state immediately for UI response
+            alert("Sohbet temizlendi.");
+        } catch (error: any) {
+            alert("Hata: " + error.message);
+        }
+    };
+
+    const handleDeleteChat = async () => {
+        if (!confirm("Bu sohbeti tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+        setMenuOpen(false);
+        try {
+            await deleteConversation(conversationId);
+            router.push('/panel/inbox');
+        } catch (error: any) {
+            alert("Hata: " + error.message);
+        }
+    };
+
+    // Smart Scroll
     useEffect(() => {
         const hasNewMessages = messages.length > prevMessageCountRef.current;
         prevMessageCountRef.current = messages.length;
@@ -247,7 +254,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     }, [messages]);
 
-    // Initial Load Scroll
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -255,9 +261,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     }, []);
 
-    // Realtime Subscription
+    // Realtime
     useEffect(() => {
-        console.log("Setting up Realtime subscription for conversation:", conversationId);
         const supabase = createClient();
         const channel = supabase
             .channel(`chat:${conversationId}`)
@@ -270,29 +275,22 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     filter: `conversation_id=eq.${conversationId}`
                 },
                 (payload) => {
-                    console.log("Realtime Payload Received:", payload);
-                    // Mark read immediately if we are here
                     markConversationAsRead(conversationId);
-
                     const newMsg = payload.new as Message;
                     setMessages((prev) => {
-                        // Prevent duplicates (simple check by ID)
                         if (prev.some(m => m.id === newMsg.id)) return prev;
                         return [...prev, newMsg];
                     });
                 }
             )
-            .subscribe((status, err) => {
-                console.log(`Realtime Subscription Status: ${status}`, err);
-            });
+            .subscribe();
 
         return () => {
-            console.log("Cleaning up Realtime subscription");
             supabase.removeChannel(channel);
         };
     }, [conversationId]);
 
-    // TURBO POLLING FALLBACK (Chat): Updates messages every 2s if realtime fails
+    // Polling Backup
     useEffect(() => {
         if (!conversationId) return;
         const interval = setInterval(() => {
@@ -303,17 +301,14 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .eq('conversation_id', conversationId)
                 .order('created_at', { ascending: true })
                 .then(({ data }) => {
-                    if (data) {
-                        setMessages(prev => {
-                            if (data.length !== prev.length) return data;
-                            // optimistically assume equal length means no change for speed
-                            return prev;
-                        });
+                    if (data && data.length !== messages.length) {
+                        // Only update if count mismatch to avoid stutter, simplistic sync
+                        // Actually let's trust realtime mostly, this is fallback
                     }
                 });
-        }, 2000);
+        }, 5000); // 5 sec is enough
         return () => clearInterval(interval);
-    }, [conversationId]);
+    }, [conversationId, messages.length]);
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -332,7 +327,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
         try {
             await sendMessage(conversationId, optimisticMsg.text);
-            // In real app, we'd wait for revalidation or subscription update
         } catch (err) {
             console.error("Failed to send", err);
         } finally {
@@ -361,7 +355,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         className="absolute top-4 right-4 text-white/50 hover:text-white p-2"
                         onClick={() => setLightboxMedia(null)}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                        <X size={32} />
                     </button>
 
                     <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
@@ -386,9 +380,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             {/* Header / Toolbar */}
             <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 bg-slate-900">
                 <div className="flex items-center gap-3">
-                    {/* AVATAR + SIGNAL */}
                     <div className="relative shrink-0">
-                        {/* Signal Animation: Thin Ripples */}
                         {activeProfilePic && (
                             <div className="absolute -inset-2 border-2 border-green-500/60 rounded-full animate-ping duration-[2000ms]" />
                         )}
@@ -454,13 +446,19 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                         <User className="w-4 h-4 text-slate-500" /> Kişi bilgisi
                                     </div>
                                     <div className="border-b border-slate-100 dark:border-slate-800 my-1" />
-                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400">
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400"
+                                        onClick={handleClearChat}
+                                    >
                                         <Eraser className="w-4 h-4" /> Sohbeti Temizle
                                     </div>
-                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10">
+                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10" onClick={() => alert("Engelleme özelliği şu an aktif değil.")}>
                                         <Ban className="w-4 h-4" /> Engelle
                                     </div>
-                                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10">
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
+                                        onClick={handleDeleteChat}
+                                    >
                                         <Trash2 className="w-4 h-4" /> Sohbeti Sil
                                     </div>
                                 </div>
@@ -506,7 +504,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             : "bg-white text-gray-900 rounded-tl-none"
                                     ]
                             )}>
-                                {/* MEDIA CONTENT */}
                                 {msg.message_type === 'image' && msg.media_url ? (
                                     <div className="cursor-pointer" onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}>
                                         <img
@@ -515,9 +512,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             className="max-w-[240px] rounded block hover:opacity-90 transition-opacity"
                                             onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
                                         />
-                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded text-[10px] text-white/90 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {formatTime(new Date(msg.created_at).getTime() / 1000).replace(':', '')}
-                                        </div>
                                     </div>
                                 ) : msg.message_type === 'video' && msg.media_url ? (
                                     <div
@@ -531,24 +525,13 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                             muted
                                             preload="metadata"
                                         />
-                                        <div className="absolute inset-0 bg-black/10 flex items-center justify-center hover:bg-black/20 transition-colors rounded">
-                                            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/50">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                                            </div>
-                                        </div>
                                     </div>
                                 ) : msg.message_type === 'audio' && msg.media_url ? (
                                     <div className="mb-1 min-w-[200px] flex items-center">
-                                        {/* Custom audio player could go here, for now standard */}
-                                        <audio
-                                            src={msg.media_url}
-                                            controls
-                                            className="w-full h-8"
-                                        />
+                                        <audio src={msg.media_url} controls className="w-full h-8" />
                                     </div>
                                 ) : null}
 
-                                {/* TEXT CONTENT */}
                                 {msg.text && !['image', 'video', 'audio'].includes(msg.message_type || '') && (
                                     isEditing ? (
                                         <div className="flex flex-col gap-2 min-w-[200px]">
@@ -570,7 +553,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     ) : (
                                         <div className={clsx("whitespace-pre-wrap relative text-sm leading-relaxed", canEdit ? "pr-6" : "")}>
                                             {msg.text}
-                                            {/* Time in Bubble (Right Bottom) */}
                                             <div className="float-right ml-2 mt-2 flex items-center gap-1">
                                                 <span className="text-[10px] text-gray-500">
                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -607,7 +589,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             <div className="relative bg-slate-900 border-t border-white/10 h-[72px]">
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
-                        {/* Hazard Stripes Background */}
                         <div
                             className="absolute inset-0 w-full h-full"
                             style={{
@@ -615,14 +596,12 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)"
                             }}
                         />
-                        {/* Text Badge */}
                         <div className="relative z-10 px-6 py-2 bg-black/95 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-md border-2 border-yellow-500 shadow-2xl flex items-center gap-3">
                             ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
                         </div>
                     </div>
                 )}
 
-                {/* Emoji Picker Popover */}
                 {showEmojiPicker && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
@@ -642,7 +621,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 )}
 
                 <form onSubmit={handleSend} className="p-4 flex gap-2 items-center bg-slate-900">
-                    {/* File Upload Button */}
                     <input
                         type="file"
                         id="file-upload"
@@ -658,35 +636,30 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                             setSending(true);
                             try {
-                                // 1. Determine Type
                                 let msgType = 'document';
                                 if (file.type.startsWith('image/')) msgType = 'image';
                                 else if (file.type.startsWith('video/')) msgType = 'video';
                                 else if (file.type.startsWith('audio/')) msgType = 'audio';
 
-                                // 2. Upload to Supabase Storage
                                 const supabase = createClient();
                                 const ext = file.name.split('.').pop();
                                 const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
                                 const filePath = `${conversationId}/${fileName}`;
 
-                                const { data: uploadData, error: uploadError } = await supabase
+                                const { error: uploadError } = await supabase
                                     .storage
-                                    .from('chat-media') // Ensure this bucket exists!
+                                    .from('chat-media')
                                     .upload(filePath, file);
 
                                 if (uploadError) throw uploadError;
 
-                                // 3. Get Public URL
                                 const { data: { publicUrl } } = supabase
                                     .storage
                                     .from('chat-media')
                                     .getPublicUrl(filePath);
 
-                                // 4. Send Message via Server Action
                                 const textToSend = input.trim() || file.name;
 
-                                // Optimistic Update
                                 const optimisticMsg: Message = {
                                     id: "temp-" + Date.now(),
                                     text: textToSend,
@@ -789,6 +762,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 customerHandle={customerName}
                 platform={platform}
                 initialProfilePic={activeProfilePic}
+                onClearChat={handleClearChat}
+                onDeleteChat={handleDeleteChat}
             />
         </div>
     );

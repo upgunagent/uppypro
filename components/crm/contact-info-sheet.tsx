@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { clsx } from "clsx";
 
 interface ContactInfoSheetProps {
@@ -18,6 +17,8 @@ interface ContactInfoSheetProps {
     platform: string;
     initialProfilePic?: string;
     triggerRef?: React.RefObject<HTMLButtonElement>;
+    onClearChat?: () => void;
+    onDeleteChat?: () => void;
 }
 
 interface Note {
@@ -26,7 +27,7 @@ interface Note {
     created_at: string;
 }
 
-export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHandle, platform, initialProfilePic }: ContactInfoSheetProps) {
+export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHandle, platform, initialProfilePic, onClearChat, onDeleteChat }: ContactInfoSheetProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [noteLoading, setNoteLoading] = useState(false);
@@ -205,31 +206,21 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
     };
 
     const handleClearChat = async () => {
-        if (!confirm("Bu sohbetin tüm mesajlarını silmek istediğinize emin misiniz?")) return;
-        try {
-            setLoading(true);
-            await clearConversationMessages(conversationId);
-            alert("Sohbet temizlendi.");
-        } catch (e: any) {
-            alert("Hata: " + e.message);
-        } finally {
-            setLoading(false);
+        if (onClearChat) {
+            onClearChat();
+            return;
         }
+        if (!confirm("Bu sohbetin tüm mesajlarını silmek istediğinize emin misiniz?")) return;
+        alert("Bu işlem ana ekrandan yapılmalıdır.");
     };
 
     const handleDeleteChat = async () => {
-        if (!confirm("Bu sohbeti tamamen silmek istediğinize emin misiniz?")) return;
-        try {
-            setLoading(true);
-            await deleteConversation(conversationId);
-            alert("Sohbet silindi.");
-            router.push('/panel/inbox');
-            onClose();
-        } catch (e: any) {
-            alert("Hata: " + e.message);
-        } finally {
-            setLoading(false);
+        if (onDeleteChat) {
+            onDeleteChat();
+            return;
         }
+        if (!confirm("Bu sohbeti tamamen silmek istediğinize emin misiniz?")) return;
+        alert("Bu işlem ana ekrandan yapılmalıdır.");
     };
 
     return (
