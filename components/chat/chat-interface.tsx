@@ -587,15 +587,22 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
                         <div
-                            className="absolute inset-0 w-full h-full"
+                            className="absolute inset-0 w-full h-full opacity-90"
                             style={{
-                                backgroundImage: "repeating-linear-gradient(45deg, #fbbf24 0, #fbbf24 20px, #1a1a1a 20px, #1a1a1a 40px)",
-                                boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)"
+                                background: "linear-gradient(90deg, #dc2626 0%, #ffffff 50%, #dc2626 100%)"
                             }}
                         />
-                        <div className="relative z-10 px-6 py-2 bg-black/95 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-md border-2 border-yellow-500 shadow-2xl flex items-center gap-3">
-                            ⚠️ Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
-                        </div>
+                        <button
+                            onClick={handleToggle}
+                            disabled={!aiOperational}
+                            className="relative z-10 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-bold tracking-wide rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                        >
+                            <span className="animate-pulse">⚠️</span>
+                            Şu an AI yanıtlıyor. Müdahale etmek için "Human" moduna geçin.
+                            <div className="ml-2 bg-white/20 p-1 rounded-full">
+                                <User className="w-4 h-4" />
+                            </div>
+                        </button>
                     </div>
                 )}
 
