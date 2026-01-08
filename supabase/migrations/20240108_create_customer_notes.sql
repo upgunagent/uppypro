@@ -15,7 +15,7 @@ create policy "Users can view notes of their tenant"
       select 1 from public.customers
       where customers.id = customer_notes.customer_id
       and customers.tenant_id in (
-        select tenant_id from public.tenant_members where user_id = auth.uid()
+        select tenant_id::text from public.tenant_members where user_id = auth.uid()
       )
     )
   );
@@ -27,7 +27,7 @@ create policy "Users can insert notes for their tenant"
       select 1 from public.customers
       where customers.id = customer_notes.customer_id
       and customers.tenant_id in (
-        select tenant_id from public.tenant_members where user_id = auth.uid()
+        select tenant_id::text from public.tenant_members where user_id = auth.uid()
       )
     )
   );
@@ -39,7 +39,7 @@ create policy "Users can delete notes of their tenant"
       select 1 from public.customers
       where customers.id = customer_notes.customer_id
       and customers.tenant_id in (
-        select tenant_id from public.tenant_members where user_id = auth.uid()
+        select tenant_id::text from public.tenant_members where user_id = auth.uid()
       )
     )
   );
