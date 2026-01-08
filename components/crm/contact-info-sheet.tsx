@@ -225,7 +225,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
+            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800" overlayClassName="bg-transparent backdrop-blur-none">
                 <SheetHeader className="mb-6">
                     <SheetTitle>Kişi Bilgisi</SheetTitle>
                     <SheetDescription></SheetDescription>

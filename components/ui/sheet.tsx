@@ -17,24 +17,45 @@ export const Sheet = ({ children, open, onOpenChange }: { children: React.ReactN
     )
 }
 
-export const SheetContent = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+export const SheetContent = ({ children, className, overlayClassName }: { children: React.ReactNode, className?: string, overlayClassName?: string }) => {
     const context = React.useContext(SheetContext)
-    if (!context?.open) return null;
+    const [shouldRender, setShouldRender] = React.useState(false)
+    const [isClosing, setIsClosing] = React.useState(false)
+
+    React.useEffect(() => {
+        if (context?.open) {
+            setShouldRender(true)
+            setIsClosing(false)
+        } else {
+            setIsClosing(true)
+            const timer = setTimeout(() => {
+                setShouldRender(false)
+            }, 300)
+            return () => clearTimeout(timer)
+        }
+    }, [context?.open])
+
+    if (!shouldRender) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
-                onClick={() => context.onOpenChange(false)}
+                className={cn(
+                    "fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto",
+                    isClosing ? "opacity-0" : "opacity-100",
+                    overlayClassName
+                )}
+                onClick={() => context?.onOpenChange(false)}
             />
             {/* Panel */}
             <div className={cn(
-                "relative z-50 h-full w-full max-w-sm border-l bg-white p-6 shadow-2xl transition-transform duration-300 ease-in-out animate-in slide-in-from-right",
+                "relative z-50 h-full w-full max-w-sm border-l bg-white p-6 shadow-2xl transition-transform duration-300 ease-in-out pointer-events-auto",
+                isClosing ? "translate-x-full" : "translate-x-0 animate-in slide-in-from-right duration-300",
                 className
             )}>
                 <div className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100 dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-slate-800">
-                    <X className="h-4 w-4 cursor-pointer" onClick={() => context.onOpenChange(false)} />
+                    <X className="h-4 w-4 cursor-pointer" onClick={() => context?.onOpenChange(false)} />
                 </div>
                 {children}
             </div>
