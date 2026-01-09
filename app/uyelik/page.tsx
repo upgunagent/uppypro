@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
     StepSummary,
@@ -14,7 +14,7 @@ import {
 } from "@/components/wizard/steps";
 import { clsx } from "clsx";
 
-export default function MembershipWizard() {
+function MembershipWizardContent() {
     const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
 
@@ -98,5 +98,20 @@ export default function MembershipWizard() {
                 © 2024 UPGUN AI Güvenli Ödeme Altyapısı
             </div>
         </div>
+    );
+}
+
+export default function MembershipWizard() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <img src="/brand-logo-text.png" alt="UPGUN AI" className="h-8 opacity-50" />
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                </div>
+            </div>
+        }>
+            <MembershipWizardContent />
+        </Suspense>
     );
 }
