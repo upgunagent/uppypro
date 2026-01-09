@@ -354,7 +354,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                             className="h-12 w-12 rounded-xl text-pink-600 border-slate-200 hover:bg-pink-50"
                                             onClick={handleFetchProfile}
                                             disabled={fetchLoading || !formData.instagram_username}
-                                            title="Herkese açık olan profil hesaplarının profil fotoğrafını müşteri kartınıza eklemek için tıklayın."
+                                            title="Herkese açık olan Instagram hesaplarının profil fotoğrafını müşteri kartınıza eklemek için tıklayın."
                                         >
                                             {fetchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
                                         </Button>
