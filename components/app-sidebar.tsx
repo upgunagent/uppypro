@@ -208,7 +208,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                 </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 w-full space-y-2 flex flex-col items-center">
+            <div className="p-4 border-t border-slate-100 w-full space-y-4 flex flex-col items-center">
                 <SidebarItem
                     href="/panel/customers"
                     icon={Users}
