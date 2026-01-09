@@ -173,7 +173,7 @@ export default async function LoginPage({
                     <ArrowLeft size={16} />
                 </Link>
 
-                <div className="w-full max-w-[400px] space-y-8">
+                <div className="w-full max-w-[480px] space-y-8 bg-white p-10 rounded-3xl border-4 border-orange-500 shadow-2xl shadow-gray-400">
                     <div className="text-center space-y-2 lg:text-left">
                         <img
                             src="/brand-logo-text.png"

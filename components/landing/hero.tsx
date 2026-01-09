@@ -28,8 +28,13 @@ export function HeroSection() {
 
                         <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                             Instagram + WhatsApp <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
-                                Tek Panelde.
+                            <span className="relative inline-block">
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
+                                    Tek Panelde.
+                                </span>
+                                <span className="absolute inset-0 text-transparent bg-clip-text bg-[linear-gradient(90deg,transparent_45%,rgba(255,255,255,0.8)_50%,transparent_55%)] bg-[length:200%_auto] bg-no-repeat animate-shine pointer-events-none" aria-hidden="true">
+                                    Tek Panelde.
+                                </span>
                             </span>
                         </h1>
 
