@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Instagram } from "lucide-react";
+import { MessageCircle, Instagram, Settings, Send, Paperclip, Smile } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -34,7 +34,7 @@ export function HeroSection() {
                         </h1>
 
                         <p className="text-xl text-slate-500 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                            Tüm DM’ler tek bir inbox’ta. AI asistan yanıtlasın; siz istediğiniz an tek tıkla devralın, sonra tekrar AI’ye bırakın.
+                            Tüm mesajlarınız tek bir inbox’ta. Yapay Zeka Dijital Asistan'ın yanıtlasın; siz istediğiniz an tek tıkla devralın, sonra tekrar Yapay Zeka'ya devredin.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -105,17 +105,36 @@ export function HeroSection() {
                             {/* Mock UI Content */}
                             <div className="relative aspect-[4/3] bg-slate-50 p-4 flex gap-4">
                                 {/* Sidebar */}
-                                <div className="w-16 flex flex-col items-center gap-4 py-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">U</div>
-                                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600"><MessageCircle size={20} /></div>
-                                    <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600"><Instagram size={20} /></div>
+                                <div className="w-16 flex flex-col items-center justify-between gap-4 py-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center overflow-hidden">
+                                            <img src="/uppy-logo-small.png" alt="Uppy" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 relative">
+                                            <MessageCircle size={20} />
+                                            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                                                <span className="text-[10px] font-bold text-white">25</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 relative">
+                                            <Instagram size={20} />
+                                            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                                                <span className="text-[10px] font-bold text-white">46</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer transition-colors">
+                                        <Settings size={20} />
+                                    </div>
                                 </div>
 
                                 {/* Chat Area */}
                                 <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="h-14 border-b border-slate-100 flex items-center justify-between px-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-slate-200" />
+                                            <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                                                <img src="/profile-woman.png" alt="User" className="w-full h-full object-cover" />
+                                            </div>
                                             <div className="space-y-1">
                                                 <div className="h-2 w-24 bg-slate-200 rounded" />
                                                 <div className="h-2 w-16 bg-slate-100 rounded" />
@@ -125,8 +144,8 @@ export function HeroSection() {
                                             <div className="px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full border border-green-100 animate-pulse">
                                                 AI Modu Aktif
                                             </div>
-                                            <div className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg shadow-red-500/30 cursor-pointer hover:scale-105 transition-transform">
-                                                Devral (Human)
+                                            <div className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg shadow-red-500/30 cursor-pointer hover:scale-105 transition-transform w-fit whitespace-nowrap">
+                                                Konuşmayı Devral
                                             </div>
                                         </div>
                                     </div>
@@ -145,6 +164,19 @@ export function HeroSection() {
                                         {/* Toast Notification Simulation */}
                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-2 rounded-full shadow-xl flex items-center gap-2 opacity-0 animate-in fade-in slide-in-from-bottom-2 delay-1000 fill-mode-forwards">
                                             <span>⚡</span> AI yanıtladı • 2sn önce
+                                        </div>
+                                    </div>
+
+                                    {/* Input Area */}
+                                    <div className="h-16 bg-white border-t border-slate-100 flex items-center px-4 gap-3">
+                                        <div className="flex gap-2 text-slate-400">
+                                            <Paperclip size={18} />
+                                        </div>
+                                        <div className="flex-1 bg-slate-50 h-10 rounded-full flex items-center px-4 text-xs text-slate-400">
+                                            Mesajınızı yazın...
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+                                            <Send size={18} />
                                         </div>
                                     </div>
                                 </div>

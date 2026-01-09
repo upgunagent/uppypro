@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Check, Loader2, CreditCard, Building2, User } from "lucide-react";
+import { Loader2, CreditCard, Building2, User } from "lucide-react";
 import { clsx } from "clsx";
 import Link from "next/link";
 
@@ -180,9 +180,32 @@ export function StepBillingType({ data, updateData, onNext, onBack }: StepProps)
 }
 
 // 4. Billing Details
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { TURKEY_LOCATIONS } from "@/lib/locations";
+
 export function StepBillingDetails({ data, updateData, onNext, onBack }: StepProps) {
     const isCorporate = data.billingType === "corporate";
     const isValid = data.address && data.city && data.district && (isCorporate ? (data.companyName && data.taxOffice && data.taxNumber) : (data.tcKn && data.fullName));
+
+    // State for combobox open status
+    const [openCity, setOpenCity] = useState(false);
+    const [openDistrict, setOpenDistrict] = useState(false);
+
+    // Get districts for selected city
+    const districts = data.city ? TURKEY_LOCATIONS.find(l => l.city === data.city)?.districts || [] : [];
+
+    const handleCitySelect = (currentValue: string) => {
+        updateData("city", currentValue === data.city ? "" : currentValue);
+        updateData("district", ""); // Reset district when city changes
+        setOpenCity(false);
+    };
+
+    const handleDistrictSelect = (currentValue: string) => {
+        updateData("district", currentValue === data.district ? "" : currentValue);
+        setOpenDistrict(false);
+    }
 
     return (
         <div className="space-y-6">
@@ -223,13 +246,92 @@ export function StepBillingDetails({ data, updateData, onNext, onBack }: StepPro
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex flex-col">
                         <Label>İl</Label>
-                        <Input value={data.city || ""} onChange={(e) => updateData("city", e.target.value)} />
+                        <Popover open={openCity} onOpenChange={setOpenCity}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openCity}
+                                    className="justify-between"
+                                >
+                                    {data.city
+                                        ? TURKEY_LOCATIONS.find((l) => l.city === data.city)?.city
+                                        : "İl Seçiniz..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                                <Command>
+                                    <CommandInput placeholder="İl ara..." />
+                                    <CommandList>
+                                        <CommandEmpty>İl bulunamadı.</CommandEmpty>
+                                        <CommandGroup>
+                                            {TURKEY_LOCATIONS.map((l) => (
+                                                <CommandItem
+                                                    key={l.city}
+                                                    value={l.city}
+                                                    onSelect={() => handleCitySelect(l.city)}
+                                                >
+                                                    <Check
+                                                        className={clsx(
+                                                            "mr-2 h-4 w-4",
+                                                            data.city === l.city ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {l.city}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex flex-col">
                         <Label>İlçe</Label>
-                        <Input value={data.district || ""} onChange={(e) => updateData("district", e.target.value)} />
+                        <Popover open={openDistrict} onOpenChange={setOpenDistrict}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openDistrict}
+                                    className="justify-between"
+                                    disabled={!data.city}
+                                >
+                                    {data.district
+                                        ? districts.find((d) => d === data.district)
+                                        : "İlçe Seçiniz..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                                <Command>
+                                    <CommandInput placeholder="İlçe ara..." />
+                                    <CommandList>
+                                        <CommandEmpty>İlçe bulunamadı.</CommandEmpty>
+                                        <CommandGroup>
+                                            {districts.map((d) => (
+                                                <CommandItem
+                                                    key={d}
+                                                    value={d}
+                                                    onSelect={() => handleDistrictSelect(d)}
+                                                >
+                                                    <Check
+                                                        className={clsx(
+                                                            "mr-2 h-4 w-4",
+                                                            data.district === d ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {d}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
                 <div className="space-y-2">

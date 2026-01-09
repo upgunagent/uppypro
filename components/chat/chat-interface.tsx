@@ -735,7 +735,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
-                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500"
+                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500"
                             />
                             {!input.trim() && (
                                 <button
@@ -747,7 +747,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 </button>
                             )}
                             {input.trim() && (
-                                <Button type="submit" disabled={sending || conversationMode === 'BOT'}>
+                                <Button type="submit" disabled={sending || conversationMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
                                     <Send className="w-4 h-4" />
                                 </Button>
                             )}
