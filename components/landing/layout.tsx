@@ -68,7 +68,7 @@ export function LandingFooter() {
                     <div>
                         <h4 className="font-bold text-gray-900 mb-6 text-lg">Yasal</h4>
                         <ul className="space-y-3 text-sm text-gray-600 font-medium">
-                            <li><Link href="#" className="hover:text-primary transition-colors">Kullanıcı Sözleşmesi</Link></li>
+                            <li><Link href="/kullanici-sozlesmesi" className="hover:text-primary transition-colors">Kullanıcı Sözleşmesi</Link></li>
                             <li><Link href="/gizlilik-politikasi" className="hover:text-primary transition-colors">Gizlilik Politikası</Link></li>
                             <li><Link href="/kvkk-aydinlatma-metni" className="hover:text-primary transition-colors">KVKK Aydınlatma Metni</Link></li>
                         </ul>

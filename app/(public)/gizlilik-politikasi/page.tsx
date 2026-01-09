@@ -20,102 +20,100 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-li:text-slate-600 prose-strong:text-slate-800">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-8">Gizlilik Politikası / Gizlilik Bildirimi</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-8">GİZLİLİK POLİTİKASI (UPPYPRO / UPGUN AI)</h1>
 
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 text-sm text-slate-500">
-                        <p className="mb-0">
-                            Bu gizlilik bildirimi, UPGUN AI tarafından toplanan kişisel veriler hakkında, GDPR ve KVKK başta olmak üzere ilgili mevzuatın gerektirdiği şekilde bilgilendirme amacıyla hazırlanmıştır.
-                        </p>
-                    </div>
+                    <p><strong>Son Güncelleme:</strong> [09/01/2026]</p>
 
-                    <h3>1. Veri Sorumlusu</h3>
                     <p>
-                        UPGUN AI UPGUN PRODÜKSİYON TEKSTİL PAZARLAMA SANAYİ VE TİCARET LİMİTED ŞİRKETİ<br />
-                        <strong>Adres:</strong> UPGUN AI - Office İstanbul, Nisbetiye Mh. Gazi Güçnar Sk. No: 4, Zincirlikuyu, Beşiktaş, İstanbul<br />
-                        <strong>E-posta:</strong> info@upgunai.com
+                        Bu Gizlilik Politikası, UPGUN AI’nın Platform (UppyPro) üzerinden sunduğu hizmetlerde kullanıcı gizliliğine ilişkin esasları açıklar. Kişisel verilerle ilgili detaylı hukuki bilgilendirme için ayrıca KVKK Aydınlatma Metni geçerlidir.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>2. Topladığımız Bilgiler</h3>
+                    <h3>1. Topladığımız Bilgiler</h3>
+                    <p>Platform kullanımı sırasında şu tür veriler işlenebilir:</p>
                     <ul>
-                        <li><strong>2.1. Temel Kimlik ve İletişim Bilgileri:</strong> Ad, soyad, şirket, pozisyon, adres, e-posta, telefon.</li>
-                        <li><strong>2.2. Hesap ve Kullanım Bilgileri:</strong> Kullanıcı adı, şifre, erişim logları, kullanım istatistikleri.</li>
-                        <li><strong>2.3. Hizmet Kapsamındaki İşlem ve İçerik Verileri:</strong> Yüklenen içerikler, otomasyon senaryoları, destek talepleri.</li>
-                        <li><strong>2.4. Aday ve İnsan Kaynakları Verileri:</strong> Özgeçmiş, eğitim ve deneyim bilgileri.</li>
-                        <li><strong>2.5. Teknik ve Çerez Verileri:</strong> IP adresi, tarayıcı tipi, trafik verileri.</li>
+                        <li>Hesap/üyelik bilgileri (ad-soyad, e-posta, şifrelenmiş kimlik doğrulama verileri)</li>
+                        <li>Şirket/fatura bilgileri</li>
+                        <li>Instagram/WhatsApp entegrasyon verileri ve mesajlaşma kayıtları</li>
+                        <li>CRM alanına girilen müşteri kayıtları (Kullanıcı’nın kendi girdiği bilgiler)</li>
+                        <li>Teknik veriler (log, IP, cihaz/oturum bilgileri)</li>
                     </ul>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>3. Topladığımız Bilgileri Nasıl Kullanıyoruz?</h3>
+                    <h3>2. Mesaj İçeriklerinin Saklanması (60 Gün)</h3>
                     <p>
-                        Hizmet sunmak, projeleri yönetmek, güvenliği sağlamak, finansal süreçleri yürütmek, teknik destek sağlamak ve yasal gerekliliklere uymak amacıyla kullanılmaktadır.
+                        Platform üzerinden gelen/giden mesaj içerikleri, hizmetin sunulması amacıyla 60 gün süreyle saklanır. Bu süre, platform içi operasyonel ihtiyaçlar ve hizmetin niteliği gereği belirlenmiştir. Süre sonunda mesaj içerikleri silinebilir/anonimleştirilebilir.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>4. Meşru Menfaat Kapsamında İşleme</h3>
+                    <h3>3. Üçüncü Taraf Hizmetler ve Entegrasyonlar</h3>
+                    <p>Platform aşağıdaki hizmet sağlayıcılarla çalışabilir:</p>
+                    <ul>
+                        <li><strong>Meta (Instagram/WhatsApp):</strong> Mesajlaşma entegrasyonu</li>
+                        <li><strong>Supabase:</strong> Veritabanı ve altyapı barındırma</li>
+                        <li><strong>iyzico:</strong> Ödeme alma altyapısı (kart bilgileri UPGUN AI tarafından saklanmaz)</li>
+                        <li><strong>Natro:</strong> E-posta altyapısı (hesap/abonelik bilgilendirmeleri gibi)</li>
+                    </ul>
+                    <p>Bu sağlayıcıların kendi gizlilik ve güvenlik politikaları da uygulanabilir.</p>
+
+                    <hr className="my-8 border-slate-100" />
+
+                    <h3>4. Ödeme Güvenliği</h3>
                     <p>
-                        Hizmet geliştirme, dolandırıcılığı önleme ve güvenlik gibi amaçlarla meşru menfaatler kapsamında veri işlenebilir.
+                        Ödeme işlemleri iyzico üzerinden yürütülür. Kredi kartı bilgileriniz UPGUN AI tarafından tutulmaz; ödeme sağlayıcısı altyapısı tarafından işlenir. Platform, yalnızca ödeme sonucu/durum bilgisi gibi sınırlı ödeme kayıtlarını tutabilir.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>5. Kişisel Verileri Nasıl İşliyor ve Koruyoruz?</h3>
+                    <h3>5. Bilgi Güvenliği</h3>
                     <p>
-                        Veri aktarımında şifreleme, güçlü kimlik doğrulama, güvenli ağ altyapısı ve personel eğitimleri ile korunmaktadır.
+                        UPGUN AI; erişim kontrolü, yetkilendirme, şifreleme, loglama, ağ güvenliği ve benzeri teknik/idarî tedbirler ile verilerin güvenliğini sağlamayı hedefler. Buna rağmen internet tabanlı sistemlerin doğası gereği %100 güvenlik garanti edilemez.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>6. Verileri Ne Kadar Süre Saklıyoruz?</h3>
+                    <h3>6. Kullanıcının Sorumluluğu (CRM ve Müşteri Verileri)</h3>
+                    <p>Platform üzerinde CRM alanına girilen müşteri verileri, Kullanıcı tarafından sağlanır. Kullanıcı;</p>
+                    <ul>
+                        <li>Kendi müşterilerine ait verileri hukuka uygun şekilde toplamak ve işlemekten,</li>
+                        <li>Gerekli aydınlatma/izin süreçlerini yürütmekten</li>
+                    </ul>
+                    <p>sorumludur.</p>
+
+                    <hr className="my-8 border-slate-100" />
+
+                    <h3>7. Çerezler (Cookies)</h3>
                     <p>
-                        Toplanma amaçları doğrultusunda gerekli olan veya mevzuatta öngörülen zorunlu süreler boyunca saklanır.
+                        Platform, kullanıcı deneyimini geliştirmek ve güvenliği sağlamak için çerezler ve benzeri teknolojiler kullanabilir. Zorunlu çerezler dışında kalan çerezler için ayrıca çerez tercih ekranı ve/veya çerez politikası sunulabilir.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>7. Paylaştığımız Bilgiler</h3>
+                    <h3>8. E-Posta İletişimi</h3>
                     <p>
-                        Verileriniz; tedarikçiler, iş ortakları, kamu kurumları ve kurumsal işlemler kapsamında yetkili kişilerle paylaşılabilir.
+                        Hesap aktivasyonu, ödeme/abonelik bildirimleri ve güvenlik bildirimleri gibi operasyonel e-postalar Natro altyapısı üzerinden iletilebilir. Pazarlama amaçlı e-postalar için (varsa) ayrıca onay mekanizması uygulanır.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>8. Veri Aktarımları (Yurt Dışı)</h3>
+                    <h3>9. Politika Değişiklikleri</h3>
                     <p>
-                        KVKK ve GDPR hükümlerine uygun olarak, gerekli güvenceler sağlanarak yurt dışına aktarım yapılabilir.
+                        Bu politika zaman zaman güncellenebilir. Güncellemeler Platform’da yayımlandığı tarihte yürürlüğe girer.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>9. Veri Sahibi Olarak Haklarınız</h3>
+                    <h3>10. İletişim</h3>
                     <p>
-                        Bilgi alma, düzeltme, silme, itiraz etme ve tazminat talep etme haklarınız bulunmaktadır.
+                        <strong>UPGUN AI UPGUN PRODÜKSİYON TEKSTİL PAZARLAMA SANAYİ VE TİCARET LİMİTED ŞİRKETİ</strong><br />
+                        <strong>Adres:</strong> UPGUN AI - Office İstanbul, Nisbetiye Mh. Gazi Güçnar Sk. No: 4, Zincirlikuyu, Beşiktaş, İstanbul<br />
+                        <strong>E-posta:</strong> <a href="mailto:info@upgunai.com">info@upgunai.com</a><br />
+                        <strong>KEP:</strong> <a href="mailto:upgun@hs01.kep.tr">upgun@hs01.kep.tr</a>
                     </p>
 
-                    <hr className="my-8 border-slate-100" />
-
-                    <h3>10. Haklarınızı Nasıl Kullanabilirsiniz?</h3>
-                    <p>
-                        Taleplerinizi belirtilen fiziksel adrese veya <a href="mailto:info@upgunai.com" className="text-orange-600 hover:text-orange-700 font-medium">info@upgunai.com</a> adresine iletebilirsiniz.
-                    </p>
-
-                    <hr className="my-8 border-slate-100" />
-
-                    <h3>11. Gizlilik Bildiriminde Yapılabilecek Değişiklikler</h3>
-                    <p>
-                        Mevzuat veya faaliyet değişikliklerine göre güncellenebilir.
-                    </p>
-
-                    <hr className="my-8 border-slate-100" />
-
-                    <h3>12. Bize Nasıl Ulaşabilirsiniz?</h3>
-                    <p>
-                        <strong>Veri Gizliliği Sorumlusu:</strong> Hayri Özgür Topkan<br />
-                        <strong>E-posta:</strong> info@upgunai.com
-                    </p>
                 </article>
 
                 <div className="mt-12 mb-8 pt-8 border-t border-slate-100">

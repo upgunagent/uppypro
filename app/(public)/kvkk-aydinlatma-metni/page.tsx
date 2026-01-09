@@ -20,82 +20,145 @@ export default function KVKKPage() {
                 </div>
 
                 <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-li:text-slate-600 prose-strong:text-slate-800">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-8">Kişisel Verilerin İşlenmesi Aydınlatma Metni</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-8">KVKK AYDINLATMA METNİ (UPPYPRO / UPGUN AI)</h1>
 
-                    <p className="font-bold">UPGUN AI UPGUN PRODÜKSİYON TEKSTİL PAZARLAMA SANAYİ VE TİCARET LİMİTED ŞİRKETİ ("UPGUN AI")</p>
-
+                    <p><strong>Son Güncelleme:</strong> [09/01/2026]</p>
                     <p>
-                        İşbu "Aydınlatma Metni" ile, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun ("KVKK") md. 10 uyarınca sizi; kişisel verilerinizin işlenmesi, aktarılması, toplanma yöntemi ve hukuki sebebi ile KVKK md. 11'de sayılan diğer haklarınız hususunda bilgilendirmek ve aydınlatmak isteriz.
+                        <strong>Veri Sorumlusu:</strong> UPGUN AI UPGUN PRODÜKSİYON TEKSTİL PAZARLAMA SANAYİ VE TİCARET LİMİTED ŞİRKETİ (“UPGUN AI”)<br />
+                        <strong>Adres:</strong> UPGUN AI - Office İstanbul, Nisbetiye Mh. Gazi Güçnar Sk. No: 4, Zincirlikuyu, Beşiktaş, İstanbul<br />
+                        <strong>E-posta:</strong> <a href="mailto:info@upgunai.com">info@upgunai.com</a><br />
+                        <strong>KEP:</strong> <a href="mailto:upgun@hs01.kep.tr">upgun@hs01.kep.tr</a>
                     </p>
 
-                    <h3>1. Veri Sorumlusu Sıfatı</h3>
                     <p>
-                        KVKK uyarınca UPGUN AI, "veri sorumlusu" sıfatıyla; kişisel verilerinizi aşağıda belirtilen amaçlar kapsamında, hukuka ve dürüstlük kurallarına uygun şekilde kaydedeceğini, saklayacağını, işleyeceğini, sınıflandıracağını, güncelleyeceğini ve KVKK ile ilgili mevzuatın müsaade ettiği ölçüde ve hallerde, işlendikleri amaca uygun olarak üçüncü kişilere açıklayıp aktarabileceğini bildirir.
+                        Bu Aydınlatma Metni, UPGUN AI tarafından sunulan “UppyPro” Platformu (test ve canlı alan adları ve alt alan adları dahil) üzerinden yürütülen kişisel veri işleme faaliyetleri hakkında 6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) uyarınca hazırlanmıştır.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>2. Kişisel Verilerinizin İşlenme Amacı</h3>
-                    <p>
-                        Kişisel verileriniz, UPGUN AI tarafından sunulan yapay zeka, yazılım geliştirme, otomasyon, entegrasyon ve buna bağlı danışmanlık hizmetlerinden yararlanabilmeniz amacıyla; KVKK ve ilgili mevzuatta düzenlenen temel prensiplere uygun olarak işlenmektedir.
-                    </p>
-                    <p>Bu kapsamda kişisel verileriniz:</p>
+                    <h3>1. İşlenen Kişisel Veri Kategorileri</h3>
+                    <p>Platform’u kullanmanız sırasında aşağıdaki veri kategorileri işlenebilir:</p>
+
+                    <h4>A) Kimlik/İletişim Verileri</h4>
                     <ul>
-                        <li>Müşteri, tedarikçi ve iş ortaklığı ilişkilerinin kurulması ve yürütülmesi</li>
-                        <li>Yapay zeka ve otomasyon projelerinin planlanması, geliştirilmesi, test edilmesi</li>
-                        <li>Dijital platformlar, yazılımlar ve otomasyon sistemleri üzerinden hizmet sağlanması</li>
-                        <li>Sözleşmesel ve ticari ilişkilere ilişkin süreçlerin yürütülmesi</li>
-                        <li>Finans, muhasebe ve faturalama süreçlerinin yönetilmesi</li>
-                        <li>Bilgi güvenliği süreçlerinin yürütülmesi ve erişim yetkilerinin yönetilmesi</li>
-                        <li>Talep ve şikâyetlerinizin alınması, değerlendirilmesi ve sonuçlandırılması</li>
-                        <li>Pazarlama, tanıtım ve bilgilendirme çalışmalarının gerçekleştirilmesi (açık rıza ile)</li>
-                        <li>Hukuki süreçlerin takibi ve mevzuattan doğan yükümlülüklerin yerine getirilmesi</li>
+                        <li>Ad, soyad</li>
+                        <li>E-posta adresi, telefon (varsa)</li>
+                        <li>Şirket unvanı, şirket iletişim bilgileri (iş hesabı bilgileri)</li>
                     </ul>
-                    <p>amaçlarıyla; işlenme amacına uygun süre zarfında, fiziksel ve elektronik ortamda güvenli bir biçimde saklanmaktadır.</p>
 
-                    <hr className="my-8 border-slate-100" />
-
-                    <h3>3. Kişisel Verilerinizin Toplanma Yöntemi ve Hukuki Sebebi</h3>
-                    <p>Kişisel verileriniz, UPGUN AI tarafından aşağıda belirtilen kanallar vasıtasıyla toplanmaktadır:</p>
+                    <h4>B) Müşteri/CRM Verileri (Kullanıcının kendi müşterilerine ilişkin)</h4>
                     <ul>
-                        <li><strong>Tarafınızca doğrudan sağlanan kişisel veriler:</strong> Web sitemiz, iletişim formlarımız, çevrim içi platformlarımız, teklif ve sözleşme süreçleri, telefon, e-posta ve çevrim içi toplantı araçları.</li>
-                        <li><strong>Üçüncü kişilerden toplanan kişisel veriler:</strong> İş ortaklarımız ve hizmet sağlayıcıları, entegrasyon sağladığımız platformlar, resmi kurum ve kuruluşlar.</li>
-                        <li><strong>Çerezler ve benzeri teknolojiler:</strong> Web sitemiz ve dijital platformlarımızı ziyaretiniz sırasında, çerezler (cookies) vasıtasıyla kullanım alışkanlıklarınıza, tercihlerinize ve oturum bilgilerinize ilişkin veriler toplanabilmektedir.</li>
+                        <li>Kullanıcı’nın Platform’a kaydettiği müşteri kayıtları ve notlar</li>
+                        <li>Müşteri etiketleri, müşteri listeleri ve ilişkili işlem kayıtları</li>
                     </ul>
-                    <p>Kişisel verileriniz, KVKK md. 4/2'de öngörülen ilkeler ışığında:</p>
+
+                    <h4>C) Mesajlaşma Verileri</h4>
                     <ul>
-                        <li>Açık rızanızın bulunduğu hallerde açık rızanıza dayanılarak,</li>
-                        <li>KVKK md. 5/2 ve md. 6/3'te öngörülen durumların varlığı halinde açık rızanız aranmaksızın</li>
+                        <li>Instagram/WhatsApp işletme hesaplarına gelen/giden mesaj içerikleri</li>
+                        <li>Mesaj meta verileri (tarih/saat, gönderici/alıcının platform içi kimlikleri vb.)</li>
+                        <li>Sistem içi konuşma akışları ve destek kayıtları</li>
                     </ul>
-                    <p>işlenebilmekte ve aktarılabilmektedir.</p>
+
+                    <h4>D) Hesap/İşlem Güvenliği Verileri</h4>
+                    <ul>
+                        <li>IP adresi, cihaz/oturum bilgileri, log kayıtları</li>
+                        <li>Yetkilendirme, doğrulama, güvenlik olay kayıtları</li>
+                    </ul>
+
+                    <h4>E) Finans/Ödeme Verileri</h4>
+                    <ul>
+                        <li>Abonelik planı, ödeme durum bilgileri, fatura bilgileri</li>
+                        <li>Ödeme işlemlerine ilişkin kayıtlar (kart bilgileri UPGUN AI tarafından saklanmaz; ödeme altyapısı tarafından işlenir)</li>
+                    </ul>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>4. Kişisel Verilerinizin Aktarılması</h3>
+                    <h3>2. Kişisel Verilerin İşlenme Amaçları</h3>
+                    <p>Kişisel verileriniz aşağıdaki amaçlarla işlenir:</p>
+                    <ul>
+                        <li>Üyelik oluşturma, hesabın yönetimi, kimlik doğrulama ve kullanıcı işlemlerinin yürütülmesi</li>
+                        <li>Platform hizmetlerinin sunulması (tek panelden mesaj yönetimi, CRM alanı, raporlama vb.)</li>
+                        <li>Instagram/WhatsApp entegrasyonlarının sağlanması ve mesaj akışının yönetimi</li>
+                        <li>Abonelik/ödeme süreçlerinin yürütülmesi, faturalandırma ve muhasebe süreçleri</li>
+                        <li>Talep/şikâyet yönetimi ve müşteri destek süreçleri</li>
+                        <li>Bilgi güvenliği süreçleri, loglama, suistimal ve yetkisiz erişimin önlenmesi</li>
+                        <li>İlgili mevzuattan kaynaklanan yükümlülüklerin yerine getirilmesi (hukuki taleplere yanıt, saklama yükümlülükleri vb.)</li>
+                    </ul>
+
+                    <hr className="my-8 border-slate-100" />
+
+                    <h3>3. Kişisel Verilerin İşlenmesinin Hukuki Sebepleri</h3>
+                    <p>KVKK m.5 ve ilgili düzenlemeler uyarınca;</p>
+                    <ul>
+                        <li>Sözleşmenin kurulması/ifası (Platform üyeliği ve hizmet sunumu)</li>
+                        <li>Hukuki yükümlülüklerin yerine getirilmesi (fatura, mali kayıtlar, resmi talepler)</li>
+                        <li>Veri sorumlusunun meşru menfaati (güvenlik, altyapı, dolandırıcılık önleme, hizmet kalitesi)</li>
+                        <li>Gerekli hallerde açık rıza (ör. ticari elektronik ileti gönderimi, bazı çerezler, pazarlama)</li>
+                    </ul>
+                    <p>hukuki sebeplerine dayanılarak işlenebilir.</p>
+
+                    <hr className="my-8 border-slate-100" />
+
+                    <h3>4. Kişisel Verilerin Aktarılması (Alıcı Grupları)</h3>
+                    <p>Kişisel verileriniz, amaçlarla sınırlı olarak ve gerekli güvenlik tedbirleri alınarak aşağıdaki alıcılara aktarılabilir:</p>
+                    <ul>
+                        <li><strong>Meta (Instagram / WhatsApp):</strong> Mesajlaşma entegrasyonlarının yürütülmesi amacıyla</li>
+                        <li><strong>Supabase (Veritabanı/altyapı hizmeti):</strong> Platform verilerinin barındırılması ve işletilmesi amacıyla</li>
+                        <li><strong>iyzico (Ödeme hizmet sağlayıcısı):</strong> Ödeme tahsilatı ve ödeme işlemlerinin yürütülmesi amacıyla</li>
+                        <li><strong>Natro (E-posta sunucu/altyapısı):</strong> Platform bildirimleri ve hesap e-postalarının iletilmesi amacıyla</li>
+                        <li><strong>Yetkili kamu kurum ve kuruluşları:</strong> Yasal zorunluluk halinde</li>
+                    </ul>
                     <p>
-                        Şirketimiz, yukarıda sayılan işlenme amaçları kapsamında elde ettiği kişisel verilerinizi: grup şirketlerimiz, hissedarlarımız, iş ortaklarımız, çözüm ortaklarımız, teknoloji tedarikçilerimiz, müşterilerimiz, hukuk büroları ve yetkili kamu kurumları ile KVKK md. 8 ve md. 9'a uygun olarak paylaşabilecektir.
+                        <strong>Yurt dışına aktarım:</strong> Meta ve/veya altyapı sağlayıcıların veri merkezleri yurt dışında bulunabilir. Bu durumda aktarım, KVKK’nın ilgili hükümleri ve Kurul düzenlemeleri çerçevesinde gerekli teknik/idarî tedbirler alınarak yapılır.
                     </p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>5. Yurt Dışına Kişisel Veri Aktarımı</h3>
-                    <p>
-                        Kişisel verileriniz, KVKK md. 9 uyarınca; yeterli korumaya sahip ülkelere veya yeterli korumanın taahhüt edildiği hallerde Kurul izniyle yurt dışına aktarılabilir.
-                    </p>
+                    <h3>5. Saklama Süreleri</h3>
+                    <ul>
+                        <li><strong>Mesajlaşma verileri (Platform içi saklama):</strong> 60 gün saklanır. Süre sonunda sistemden silinebilir/anonim hale getirilebilir.</li>
+                        <li><strong>Faturalandırma ve mali kayıtlar,</strong> ilgili mevzuatta öngörülen süreler boyunca saklanır.</li>
+                        <li><strong>Güvenlik logları ve işlem kayıtları,</strong> amaçla sınırlı ve makul sürelerle saklanır.</li>
+                    </ul>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>6. KVKK Md. 11 Uyarınca Haklarınız</h3>
-                    <p>
-                        Kişisel veri sahibi olarak; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, amacını öğrenme, aktarılan kişileri bilme, düzeltme isteme, silme/yok etme talep etme ve itiraz etme haklarına sahipsiniz.
-                    </p>
+                    <h3>6. Kişisel Verilerin Toplanma Yöntemi</h3>
+                    <p>Kişisel verileriniz;</p>
+                    <ul>
+                        <li>Platform’a kayıt olurken ve kullanım sırasında elektronik ortamda,</li>
+                        <li>Entegrasyonlar üzerinden (Meta API’leri gibi),</li>
+                        <li>Destek talepleri ve iletişim kanalları üzerinden</li>
+                    </ul>
+                    <p>otomatik veya kısmen otomatik yollarla toplanır.</p>
 
                     <hr className="my-8 border-slate-100" />
 
-                    <h3>7. Haklarınızı Kullanma ve Başvuru Yöntemi</h3>
-                    <p>
-                        Taleplerinizi yazılı olarak (Nisbetiye Mah. Gazi Güçnar Sk. Uygur İş Merkezi No: 4 İç Kapı No: 2 Beşiktaş/İstanbul) veya elektronik ortamda (upgun@hs01.kep.tr) iletebilirsiniz.
-                    </p>
+                    <h3>7. KVKK Kapsamındaki Haklarınız (KVKK m.11)</h3>
+                    <p>Kişisel verilerinize ilişkin olarak;</p>
+                    <ul>
+                        <li>İşlenip işlenmediğini öğrenme,</li>
+                        <li>İşlenmişse bilgi talep etme,</li>
+                        <li>Amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+                        <li>Yurt içi/yurt dışı aktarılan üçüncü kişileri bilme,</li>
+                        <li>Eksik/yanlış işlenmişse düzeltilmesini isteme,</li>
+                        <li>Kanuni şartlar çerçevesinde silinmesini/yok edilmesini isteme,</li>
+                        <li>Bu işlemlerin aktarılan üçüncü kişilere bildirilmesini isteme,</li>
+                        <li>Otomatik sistemler ile analiz sonucu aleyhe bir sonuca itiraz etme,</li>
+                        <li>Zarara uğramanız halinde zararın giderilmesini talep etme</li>
+                    </ul>
+                    <p>haklarına sahipsiniz.</p>
+
+                    <hr className="my-8 border-slate-100" />
+
+                    <h3>8. Başvuru Yöntemi</h3>
+                    <p>Haklarınıza ilişkin taleplerinizi, KVKK’ya uygun şekilde:</p>
+                    <ul>
+                        <li><strong>E-posta:</strong> <a href="mailto:info@upgunai.com">info@upgunai.com</a></li>
+                        <li><strong>KEP:</strong> <a href="mailto:upgun@hs01.kep.tr">upgun@hs01.kep.tr</a></li>
+                    </ul>
+                    <p>kanallarından iletebilirsiniz.</p>
+
                 </article>
 
                 <div className="mt-12 mb-8 pt-8 border-t border-slate-100">
