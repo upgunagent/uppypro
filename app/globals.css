@@ -49,3 +49,17 @@ body {
   @apply bg-background text-foreground;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
+
+@keyframes shine {
+  0% {
+    background-position: 150% center;
+  }
+
+  100% {
+    background-position: -50% center;
+  }
+}
+
+.animate-shine {
+  animation: shine 8s linear infinite;
+}

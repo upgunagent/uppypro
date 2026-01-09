@@ -157,7 +157,7 @@ export function PricingSection() {
 
 export function HowItWorks() {
     return (
-        <section className="py-24 bg-white border-b border-gray-50">
+        <section className="py-8 bg-white border-b border-gray-50">
             <div className="container mx-auto px-4">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold text-orange-600 mb-4">Nasıl Çalışır?</h2>

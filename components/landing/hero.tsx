@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 export function HeroSection() {
     return (
-        <section className="relative pt-20 pb-32 overflow-hidden bg-white">
+        <section className="relative pt-20 pb-12 overflow-hidden bg-white">
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-orange-100/50 rounded-full blur-3xl opacity-60" />
