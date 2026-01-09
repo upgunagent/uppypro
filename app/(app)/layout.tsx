@@ -32,7 +32,7 @@ export default async function AppLayout({
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
-            <main className="flex-1 ml-[88px] flex flex-col h-screen overflow-hidden">
+            <main className="flex-1 ml-[88px] flex flex-col h-screen overflow-y-auto">
                 {children}
             </main>
         </div>

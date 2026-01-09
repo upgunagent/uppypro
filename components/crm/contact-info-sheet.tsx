@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus } from "lucide-react";
+import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus, Instagram } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
 
@@ -38,6 +38,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
         company_name: "",
         phone: "",
         email: "",
+        instagram_username: "",
     });
 
     // Notes Data
@@ -77,6 +78,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: customer.company_name || "",
                         phone: customer.phone || "",
                         email: customer.email || "",
+                        instagram_username: customer.instagram_username || "",
                     });
 
                     // Fetch Notes
@@ -94,6 +96,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 setFormData(prev => ({
                     ...prev,
                     phone: platform === 'whatsapp' ? customerHandle : "",
+                    instagram_username: platform === 'instagram' ? customerHandle : "",
                     full_name: "", // Leave blank for manual entry
                 }));
                 setNotesList([]);
@@ -121,6 +124,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: formData.company_name,
                         phone: formData.phone,
                         email: formData.email,
+                        instagram_username: formData.instagram_username,
+                        profile_pic: initialProfilePic || undefined, // Update if new one provided
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", customerId);
@@ -136,6 +141,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         company_name: formData.company_name,
                         phone: formData.phone,
                         email: formData.email,
+                        instagram_username: formData.instagram_username,
                         profile_pic: initialProfilePic
                     })
                     .select("id")
@@ -309,7 +315,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         </div>
                     </div>
 
-                    <Button onClick={handleSaveProfile} disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <Button onClick={handleSaveProfile} disabled={loading} className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg shadow-red-500/20 font-bold border-0">
                         {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
                     </Button>
                 </div>
@@ -325,7 +331,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         className="min-h-[100px] resize-none text-slate-900 dark:text-slate-100"
                         placeholder="Notunuzu buraya yazın..."
                     />
-                    <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 font-bold">
                         {noteLoading ? "Ekleniyor..." : <><Plus className="mr-2 w-4 h-4" /> Notu Kaydet</>}
                     </Button>
                 </div>

@@ -116,15 +116,7 @@ ALTER TABLE tenant_members ENABLE ROW LEVEL SECURITY;`}</pre>
     return (
         <div className="flex h-screen w-full overflow-hidden bg-background">
             {/* Left Pane: Conversation List */}
-            <div className="w-[675px] flex flex-col border-r border-slate-200 bg-slate-50">
-                <div className="h-16 flex items-center px-4 border-b border-slate-200 shrink-0">
-                    <h1 className="text-xl font-bold">
-                        {tab === 'all' && 'Tüm Mesajlar'}
-                        {tab === 'whatsapp' && 'WhatsApp'}
-                        {tab === 'instagram' && 'Instagram'}
-                    </h1>
-                </div>
-
+            <div className="w-[35%] min-w-[350px] max-w-[650px] shrink-0 flex flex-col border-r border-slate-200 bg-slate-50">
                 <ConversationList
                     initialConversations={conversations as any}
                     tenantId={tenantId}

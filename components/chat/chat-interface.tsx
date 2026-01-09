@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
+import { useMemo } from "react";
 
 interface Message {
     id: string;
@@ -39,6 +40,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Message Search State
+    const [messageSearchQuery, setMessageSearchQuery] = useState("");
+
+    const filteredMessages = useMemo(() => {
+        if (!messageSearchQuery.trim()) return messages;
+        const lowerQ = messageSearchQuery.toLowerCase();
+        return messages.filter(m => (m.text || '').toLowerCase().includes(lowerQ));
+    }, [messages, messageSearchQuery]);
 
     // Edit State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -409,6 +419,18 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* Message Search Filter */}
+                    <div className="relative w-48 hidden md:block">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Mesajlarda ara..."
+                            value={messageSearchQuery}
+                            onChange={(e) => setMessageSearchQuery(e.target.value)}
+                            className="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                        />
+                    </div>
+
                     <div className="flex items-center gap-2">
                         <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
                         <span className="font-bold text-sm text-slate-600">
@@ -478,7 +500,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     backgroundSize: '600px',
                 }}
             >
-                {messages.map((msg) => {
+                {filteredMessages.map((msg) => {
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
                     const isEditing = editingId === msg.id;
@@ -567,6 +589,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         </div>
                     );
                 })}
+                {filteredMessages.length === 0 && messageSearchQuery && (
+                    <div className="text-center text-gray-400 text-sm mt-10">
+                        Aranan kriterde mesaj bulunamadı.
+                    </div>
+                )}
             </div>
 
             {/* Scroll Down Button */}
