@@ -69,6 +69,10 @@ async function createAdmin() {
         console.log("✅ UPGUN AI tenant found");
     }
 
+    if (!tenant) {
+        throw new Error("Failed to get or create tenant");
+    }
+
     // 4. Add agency_admin role
     const { error: memberError } = await admin
         .from('tenant_members')
