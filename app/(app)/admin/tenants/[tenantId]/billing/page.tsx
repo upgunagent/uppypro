@@ -7,9 +7,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function BillingPage({ params }: { params: Promise<{ tenantId: string }> }) {
+    const { tenantId } = await params;
     const supabase = await createClient(); // Keep for auth check if needed, but mostly relying on page protection
     const adminDb = createAdminClient();
-    const { tenantId } = await params;
 
     const { data: tenant } = await adminDb.from("tenants").select("name").eq("id", tenantId).single();
 
@@ -42,7 +42,7 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* Subscription Management */}
                 <div className="space-y-6">
-                    <ManageSubscriptionForm tenantId={params.tenantId} subscription={subscription} />
+                    <ManageSubscriptionForm tenantId={tenantId} subscription={subscription} />
                 </div>
 
                 {/* Current Plan Details Read-only View */}
