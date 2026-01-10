@@ -178,12 +178,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Link href={`/panel/inbox?tenantId=${tenantId}`}>
-                        <Button className="bg-green-600 hover:bg-green-700 text-white">
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Inbox'a Git
-                        </Button>
-                    </Link>
+
                     <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm shadow-sm text-slate-700 flex items-center gap-2">
                         Paket:
                         {isEnterprise ? (
