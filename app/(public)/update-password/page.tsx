@@ -18,31 +18,56 @@ export default function UpdatePasswordPage() {
     const supabase = createClient();
 
     useEffect(() => {
+        let mounted = true;
+
         const verifySession = async () => {
-            // First check if we already have a session
-            const { data: { session } } = await supabase.auth.getSession();
+            try {
+                // First check if we already have a session
+                const { data: { session } } = await supabase.auth.getSession();
 
-            if (session) {
-                setVerifyingSession(false);
-                return;
-            }
+                if (mounted && session) {
+                    setVerifyingSession(false);
+                    return;
+                }
 
-            // If no session, wait for onAuthStateChange (handling hash)
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || session) {
+                // If no session, wait for onAuthStateChange
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                    // console.log("Auth Event:", event);
+                    if (mounted) {
+                        if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || (session && event === 'INITIAL_SESSION')) {
+                            setVerifyingSession(false);
+                        } else if (event === 'SIGNED_OUT') {
+                            // User signed out, keep verifying or show error?
+                            // usually stays in verifying until redirect
+                        }
+                    }
+                });
+
+                // Safety timeout: If after 10 seconds we still don't have a session, show error
+                setTimeout(() => {
+                    if (mounted) {
+                        // Check one last time
+                        supabase.auth.getSession().then(({ data }) => {
+                            if (!data.session) {
+                                setError("Bağlantı geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapmayı deneyin.");
+                                setVerifyingSession(false);
+                            }
+                        });
+                    }
+                }, 10000);
+
+                return () => subscription.unsubscribe();
+            } catch (err) {
+                if (mounted) {
+                    setError("Oturum kontrolü sırasında hata oluştu.");
                     setVerifyingSession(false);
                 }
-            });
-
-            // Fallback timeout if session setting hangs
-            setTimeout(() => {
-                setVerifyingSession(false);
-            }, 3000);
-
-            return () => subscription.unsubscribe();
+            }
         };
 
         verifySession();
+
+        return () => { mounted = false; };
     }, [supabase.auth]);
 
     const handleSubmit = async (e: React.FormEvent) => {

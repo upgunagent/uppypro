@@ -32,6 +32,36 @@ async function deleteUser(email: string) {
         return;
     }
 
+    const userId = user.id;
+
+    // 1.5 Find and Delete Owned Tenants (Cascades to Subscriptions)
+    console.log("Checking for owned tenants...");
+    const { data: ownedTenants, error: memberError } = await admin
+        .from('tenant_members')
+        .select('tenant_id')
+        .eq('user_id', userId)
+        .eq('role', 'tenant_owner');
+
+    if (memberError) {
+        console.error("Error fetching members:", memberError);
+    } else if (ownedTenants && ownedTenants.length > 0) {
+        const tenantIds = ownedTenants.map(t => t.tenant_id);
+        console.log(`Found ${tenantIds.length} owned tenant(s). Deleting...`);
+
+        const { error: tenantDeleteError } = await admin
+            .from('tenants')
+            .delete()
+            .in('id', tenantIds);
+
+        if (tenantDeleteError) {
+            console.error("Error deleting tenants:", tenantDeleteError);
+        } else {
+            console.log("Successfully deleted owned tenants.");
+        }
+    } else {
+        console.log("No owned tenants found.");
+    }
+
     // 2. Delete User
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
 
