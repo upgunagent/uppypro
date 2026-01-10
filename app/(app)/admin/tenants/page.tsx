@@ -44,7 +44,9 @@ export default async function TenantListPage() {
     const adminDb = createAdminClient();
     const { data: tenants, error } = await adminDb
         .from("tenants")
-        .select("*, subscriptions(*)");
+        .select("*, subscriptions(*)")
+        .neq("name", "UPGUN AI")
+        .order("created_at", { ascending: false });
 
     if (error) {
         return <div className="text-red-500 bg-red-50 p-4 rounded-lg">Hata: {error.message}</div>;
