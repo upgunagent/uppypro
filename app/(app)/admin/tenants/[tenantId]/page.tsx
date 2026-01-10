@@ -27,7 +27,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
         .from("tenant_members")
         .select("user_id, profiles(*)")
         .eq("tenant_id", tenantId)
-        .eq("role", "owner") // Assuming 'owner' or 'admin' role
+        .eq("role", "tenant_owner") // Fixed: Matches DB enum value
         .limit(1)
         .maybeSingle();
 
