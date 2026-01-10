@@ -77,7 +77,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const actionLink = linkData.properties.action_link;
 
         // 7. Send Email
-        const logoUrl = 'https://upgunai.com/brand-logo-text.png';
+        const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
 
         await resend.emails.send({
             from: EMAIL_FROM,

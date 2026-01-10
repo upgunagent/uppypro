@@ -157,7 +157,7 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
         const planName = data.plan === 'base' ? 'UppyPro Inbox'
             : data.plan.includes('ai') ? 'UppyPro AI' : 'UppyPro';
 
-        const logoUrl = 'https://upgunai.com/brand-logo-text.png';
+        const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
 
         await resend.emails.send({
             from: EMAIL_FROM,
