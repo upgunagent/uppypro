@@ -16,6 +16,17 @@ export async function GET(request: Request) {
         }
     }
 
-    // Return the user to an error page with instructions
+    // Forward error parameters if present
+    const error = searchParams.get("error");
+    const errorCode = searchParams.get("error_code");
+    const errorDescription = searchParams.get("error_description");
+
+    if (error) {
+        return NextResponse.redirect(
+            `${origin}/login?error=${error}&error_code=${errorCode}&error_description=${errorDescription}`
+        );
+    }
+
+    // Return the user to an error page with instructions if no code and no specific error
     return NextResponse.redirect(`${origin}/login?error=auth_callback_error`);
 }

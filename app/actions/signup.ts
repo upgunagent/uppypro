@@ -27,7 +27,7 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
         // 2. Generate Invite/Recovery Link
         // We use 'recovery' type effectively as 'set password'
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: "recovery",
+            type: "magiclink",
             email: data.email,
             options: {
                 redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`
