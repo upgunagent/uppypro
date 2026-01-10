@@ -141,13 +141,28 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
         if (data.billingType === 'corporate') {
             await supabaseAdmin.from("billing_info").upsert({
                 tenant_id: tenant.id,
+                billing_type: 'company',
                 company_name: data.companyName,
                 tax_office: data.taxOffice,
                 tax_number: data.taxNumber,
-                address: data.address,
-                city: data.city,
-                district: data.district,
-                tax_id: data.taxNumber // usually tax_number column calls this
+                address_full: data.address,
+                address_city: data.city,
+                address_district: data.district,
+                contact_email: data.email,
+                contact_phone: data.phone
+            }, { onConflict: 'tenant_id' });
+        } else {
+            // Individual billing
+            await supabaseAdmin.from("billing_info").upsert({
+                tenant_id: tenant.id,
+                billing_type: 'individual',
+                full_name: data.fullName,
+                tckn: data.taxNumber, // TC number for individuals
+                address_full: data.address,
+                address_city: data.city,
+                address_district: data.district,
+                contact_email: data.email,
+                contact_phone: data.phone
             }, { onConflict: 'tenant_id' });
         }
 
