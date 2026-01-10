@@ -11,21 +11,38 @@ export default function UpdatePasswordPage() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [verifyingSession, setVerifyingSession] = useState(true);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const supabase = createClient();
 
     useEffect(() => {
-        // Check if we have a session (handled by auto-confirm of magic link)
-        const checkSession = async () => {
+        const verifySession = async () => {
+            // First check if we already have a session
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                // If accessed directly without link, redirect to login
-                // However, the link exchange happens automatically with Supabase client usually
+
+            if (session) {
+                setVerifyingSession(false);
+                return;
             }
+
+            // If no session, wait for onAuthStateChange (handling hash)
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || session) {
+                    setVerifyingSession(false);
+                }
+            });
+
+            // Fallback timeout if session setting hangs
+            setTimeout(() => {
+                setVerifyingSession(false);
+            }, 3000);
+
+            return () => subscription.unsubscribe();
         };
-        checkSession();
+
+        verifySession();
     }, [supabase.auth]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +57,14 @@ export default function UpdatePasswordPage() {
         setError(null);
 
         try {
+            // Double check session before update
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                setError("Oturum süresi dolmuş veya geçersiz link. Lütfen linke tekrar tıklayın.");
+                setLoading(false);
+                return;
+            }
+
             const { error } = await supabase.auth.updateUser({
                 password: password
             });
@@ -48,7 +73,6 @@ export default function UpdatePasswordPage() {
                 setError(error.message);
             } else {
                 setSuccess(true);
-                // Optionally redirect after a few seconds
                 setTimeout(() => {
                     router.push("/panel/inbox");
                 }, 3000);
@@ -59,6 +83,17 @@ export default function UpdatePasswordPage() {
             setLoading(false);
         }
     };
+
+    if (verifyingSession) {
+        return (
+            <div className="flex min-h-screen w-full items-center justify-center bg-slate-50">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-500">Oturum doğrulanıyor...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 p-4">
