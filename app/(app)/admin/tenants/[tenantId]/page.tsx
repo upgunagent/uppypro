@@ -189,7 +189,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                         {isEnterprise ? (
                             <span className="text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded">Kurumsal</span>
                         ) : isPro ? (
-                            <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">Pro</span>
+                            <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">UppyPro AI</span>
                         ) : (
                             <span className="text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">Inbox</span>
                         )}
