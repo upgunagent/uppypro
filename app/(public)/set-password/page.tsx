@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { validateToken } from "@/app/actions/validate-token";
 import { setUserPassword } from "@/app/actions/set-user-password";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, Lock, AlertCircle } from "lucide-react";
 
-export default function SetPasswordPage() {
+function SetPasswordContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token");
@@ -190,5 +190,20 @@ export default function SetPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-screen w-full items-center justify-center bg-slate-50">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-500">Yükleniyor...</p>
+                </div>
+            </div>
+        }>
+            <SetPasswordContent />
+        </Suspense>
     );
 }
