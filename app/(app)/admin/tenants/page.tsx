@@ -13,6 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { TenantActions } from "./tenant-actions";
 
 export default async function TenantListPage() {
     const supabase = await createClient();
@@ -111,10 +112,7 @@ export default async function TenantListPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Link href={`/admin/tenants/${tenant.id}`}>
-                                                <Button variant="outline" size="sm" className="h-8">Yönet</Button>
-                                            </Link>
-
+                                            <TenantActions tenantId={tenant.id} tenantName={tenant.name} />
                                         </div>
                                     </TableCell>
                                 </TableRow>
