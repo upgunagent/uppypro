@@ -8,7 +8,7 @@ import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import ChatInterface from "@/components/chat/chat-interface";
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string; tenantId?: string }> }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return <div>Giriş yapmanız gerekiyor</div>;
