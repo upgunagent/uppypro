@@ -24,18 +24,16 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
 
         createdUserId = userData.user.id;
 
-        // 2. Generate Invite/Recovery Link
-        // We use 'recovery' type effectively as 'set password'
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: "magiclink",
-            email: data.email,
-            options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`
-            }
-        });
+        // 2. Generate Invite Token
+        const { data: tokenData, error: tokenError } = await supabaseAdmin
+            .from('invite_tokens')
+            .insert({ user_id: createdUserId })
+            .select()
+            .single();
 
-        if (linkError) throw new Error(`Link oluşturma hatası: ${linkError.message}`);
-        const inviteLink = linkData.properties.action_link;
+        if (tokenError) throw new Error(`Token oluşturma hatası: ${tokenError.message}`);
+
+        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${tokenData.token}`;
 
         // 3. Create Tenant
         // Use company name if corporate, else full name
@@ -162,33 +160,37 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
         await resend.emails.send({
             from: EMAIL_FROM,
             to: data.email,
-            subject: 'UppyPro Üyeliğiniz Oluşturuldu - Şifrenizi Belirleyin',
+            subject: 'UppyPro Üyeliğiniz Oluşturuldu',
             html: `
-                <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-                    Hoş geldiniz! Üyeliğiniz başarıyla oluşturuldu, panelinize erişmek için şifrenizi belirleyin.
-                </div>
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    <img src="${logoUrl}" alt="UPGUN AI" style="height: 32px; margin-bottom: 24px;" />
-                    
-                    <h2 style="color: #1e293b; margin-bottom: 16px;">Hoş Geldiniz! 🎉</h2>
-                    <p style="color: #64748b; margin-bottom: 24px;">
-                        <strong>${tenantName}</strong> olarak <strong>${planName}</strong> paketiniz başarıyla oluşturuldu.
-                        Panelinize erişmek için lütfen şifrenizi belirleyin.
-                    </p>
-
-                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
-                        <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Paket: <strong style="color: #0f172a;">${planName}</strong></p>
-                        <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Kullanıcı: <strong style="color: #0f172a;">${data.email}</strong></p>
+                <!DOCTYPE html>
+                <html>
+                <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <img src="${logoUrl}" alt="UPGUN AI" style="height: 32px;" />
                     </div>
-
-                    <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                        Şifremi Belirle ve Giriş Yap
-                    </a>
-
-                    <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">
-                        Bu bağlantı güvenliğiniz için tek kullanımlıktır.
+                    
+                    <h2 style="color: #1e293b;">Hoş Geldiniz! 🎉</h2>
+                    
+                    <p><strong>${tenantName}</strong> için <strong>${planName}</strong> paketiniz hazır.</p>
+                    
+                    <p>Panelinize erişmek için şifrenizi belirleyin:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                            Şifremi Belirle
+                        </a>
+                    </div>
+                    
+                    <p style="color: #64748b; font-size: 14px;">
+                        Paket: ${planName}<br>
+                        E-posta: ${data.email}
                     </p>
-                </div>
+                    
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 40px;">
+                        Bu bağlantı 24 saat geçerlidir ve tek kullanımlıktır.
+                    </p>
+                </body>
+                </html>
             `
         });
 

@@ -2,73 +2,45 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { validateToken } from "@/app/actions/validate-token";
+import { setUserPassword } from "@/app/actions/set-user-password";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle2, Lock } from "lucide-react";
+import { CheckCircle2, Lock, AlertCircle } from "lucide-react";
 
-export default function UpdatePasswordPage() {
+export default function SetPasswordPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const token = searchParams.get("token");
+
+    const [validating, setValidating] = useState(true);
+    const [tokenValid, setTokenValid] = useState(false);
+    const [email, setEmail] = useState("");
+    const [error, setError] = useState<string | null>(null);
+
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [verifyingSession, setVerifyingSession] = useState(true);
     const [success, setSuccess] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
-    const supabase = createClient();
 
     useEffect(() => {
-        let mounted = true;
+        if (!token) {
+            setError("Geçersiz davet linki.");
+            setValidating(false);
+            return;
+        }
 
-        const verifySession = async () => {
-            try {
-                // First check if we already have a session
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (mounted && session) {
-                    setVerifyingSession(false);
-                    return;
-                }
-
-                // If no session, wait for onAuthStateChange
-                const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                    // console.log("Auth Event:", event);
-                    if (mounted) {
-                        if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || (session && event === 'INITIAL_SESSION')) {
-                            setVerifyingSession(false);
-                        } else if (event === 'SIGNED_OUT') {
-                            // User signed out, keep verifying or show error?
-                            // usually stays in verifying until redirect
-                        }
-                    }
-                });
-
-                // Safety timeout: If after 10 seconds we still don't have a session, show error
-                setTimeout(() => {
-                    if (mounted) {
-                        // Check one last time
-                        supabase.auth.getSession().then(({ data }) => {
-                            if (!data.session) {
-                                setError("Bağlantı geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapmayı deneyin.");
-                                setVerifyingSession(false);
-                            }
-                        });
-                    }
-                }, 10000);
-
-                return () => subscription.unsubscribe();
-            } catch (err) {
-                if (mounted) {
-                    setError("Oturum kontrolü sırasında hata oluştu.");
-                    setVerifyingSession(false);
-                }
+        validateToken(token).then((result) => {
+            if (result.valid) {
+                setTokenValid(true);
+                setEmail(result.email || "");
+            } else {
+                setError(result.error || "Token doğrulanamadı.");
             }
-        };
-
-        verifySession();
-
-        return () => { mounted = false; };
-    }, [supabase.auth]);
+            setValidating(false);
+        });
+    }, [token]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,43 +50,63 @@ export default function UpdatePasswordPage() {
             return;
         }
 
+        if (password.length < 6) {
+            setError("Şifre en az 6 karakter olmalıdır");
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
-        try {
-            // Double check session before update
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                setError("Oturum süresi dolmuş veya geçersiz link. Lütfen linke tekrar tıklayın.");
+        const result = await setUserPassword(token!, password);
+
+        if (result.success) {
+            // Auto-login with new credentials
+            const supabase = createClient();
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: result.email!,
+                password: result.password!
+            });
+
+            if (signInError) {
+                setError("Şifre kaydedildi ancak giriş yapılamadı. Lütfen giriş sayfasından tekrar deneyin.");
                 setLoading(false);
                 return;
             }
 
-            const { error } = await supabase.auth.updateUser({
-                password: password
-            });
-
-            if (error) {
-                setError(error.message);
-            } else {
-                setSuccess(true);
-                setTimeout(() => {
-                    router.push("/panel/inbox");
-                }, 3000);
-            }
-        } catch (err) {
-            setError("Bir hata oluştu.");
-        } finally {
+            setSuccess(true);
+            setTimeout(() => {
+                router.push("/panel/inbox");
+            }, 2000);
+        } else {
+            setError(result.error || "Bir hata oluştu");
             setLoading(false);
         }
     };
 
-    if (verifyingSession) {
+    if (validating) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-500">Oturum doğrulanıyor...</p>
+                    <p className="text-slate-500">Davet linki doğrulanıyor...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!tokenValid) {
+        return (
+            <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden text-center p-8">
+                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">Geçersiz Davet</h2>
+                    <p className="text-slate-500 mb-8">{error}</p>
+                    <Button onClick={() => router.push("/")} className="bg-orange-600 hover:bg-orange-700 w-full text-white">
+                        Ana Sayfaya Dön
+                    </Button>
                 </div>
             </div>
         );
@@ -130,9 +122,9 @@ export default function UpdatePasswordPage() {
                                 <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Lock size={20} />
                                 </div>
-                                <h1 className="text-2xl font-bold text-slate-900">Yeni Şifre Belirle</h1>
+                                <h1 className="text-2xl font-bold text-slate-900">Şifre Belirle</h1>
                                 <p className="text-slate-500">
-                                    Lütfen hesabınız için yeni bir güvenli şifre girin.
+                                    {email} için yeni bir güvenli şifre oluşturun.
                                 </p>
                             </div>
 
@@ -179,7 +171,7 @@ export default function UpdatePasswordPage() {
                                     className="w-full h-11 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-lg shadow-orange-500/20 transition-all"
                                     disabled={loading}
                                 >
-                                    {loading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
+                                    {loading ? "Kaydediliyor..." : "Şifreyi Kaydet"}
                                 </Button>
                             </form>
                         </>
@@ -188,13 +180,11 @@ export default function UpdatePasswordPage() {
                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 size={32} />
                             </div>
-                            <h2 className="text-xl font-bold text-slate-900 mb-2">Şifre Güncellendi!</h2>
+                            <h2 className="text-xl font-bold text-slate-900 mb-2">Başarılı!</h2>
                             <p className="text-slate-500 mb-8">
-                                Hesabınızın şifresi başarıyla değiştirildi. Panele yönlendiriliyorsunuz...
+                                Şifreniz kaydedildi. Panelinize yönlendiriliyorsunuz...
                             </p>
-                            <Button disabled className="w-full h-11 opacity-50">
-                                Yönlendiriliyor...
-                            </Button>
+                            <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
                         </div>
                     )}
                 </div>
