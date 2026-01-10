@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resend, EMAIL_FROM } from "@/lib/resend";
 
 type SignupData = {
     email: string;
@@ -73,6 +74,25 @@ export async function signupAction(data: SignupData) {
             });
 
         if (subError) throw new Error(`Abonelik oluşturma hatası: ${subError.message}`);
+
+        // 6. Send Welcome Email
+        try {
+            await resend.emails.send({
+                from: EMAIL_FROM,
+                to: data.email,
+                subject: 'UppyPro\'ya Hoş Geldiniz! 🚀',
+                html: `
+                    <h1>Merhaba ${data.fullName},</h1>
+                    <p>UppyPro'ya hoş geldiniz! Hesabınız başarıyla oluşturuldu.</p>
+                    <p>Şirketiniz: <strong>${data.companyName}</strong></p>
+                    <p>Panelinize giriş yaparak hemen başlayabilirsiniz.</p>
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" style="display:inline-block;padding:10px 20px;background:#ea580c;color:white;text-decoration:none;border-radius:5px;">Panele Git</a>
+                `
+            });
+        } catch (mailErr) {
+            console.error("Welcome email failed:", mailErr);
+            // Don't fail the whole signup for email error
+        }
 
         return { success: true };
 

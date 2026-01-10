@@ -391,39 +391,92 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
 }
 
 // 6. Payment
-export function StepPayment({ onNext, onBack }: { onNext: () => void, onBack: () => void }) {
-    const [loading, setLoading] = useState(false);
+// 6. Payment
+import { completeSignupWithInvite } from "@/app/actions/signup";
+import { useToast } from "@/components/ui/use-toast";
 
-    const handlePay = () => {
+export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext: () => void, onBack: () => void }) {
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    const [cardHolder, setCardHolder] = useState("Demo User");
+    const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
+    const [expiry, setExpiry] = useState("12/30");
+    const [cvc, setCvc] = useState("123");
+
+    const handlePay = async () => {
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+
+        try {
+            // Pass card data alongside wizard data
+            const result = await completeSignupWithInvite(data, {
+                cardHolder,
+                cardNumber: cardNumber.replace(/\s/g, ''),
+                expiry,
+                cvc
+            });
+
+            if (result.error) {
+                toast({
+                    variant: "destructive",
+                    title: "Hata",
+                    description: result.error
+                });
+            } else {
+                onNext();
+            }
+        } catch (e) {
+            toast({
+                variant: "destructive",
+                title: "Hata",
+                description: "Bir hata oluştu."
+            });
+        } finally {
             setLoading(false);
-            onNext();
-        }, 2000);
+        }
     };
 
     return (
         <div className="space-y-6">
             <div className="text-center">
                 <h3 className="text-xl font-semibold mb-2">Ödeme</h3>
-                <p className="text-slate-500 text-sm">Kart bilgilerinizi güvenle girin (Simülasyon).</p>
+                <p className="text-slate-500 text-sm">Kart bilgilerinizi girin (Test Modu Aktif: Rastgele değer girebilirsiniz).</p>
             </div>
 
             <div className="space-y-4">
                 <div className="relative">
                     <CreditCard className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
-                    <Input placeholder="Kart Numarası" className="pl-10 font-mono" />
+                    <Input
+                        placeholder="Kart Numarası"
+                        className="pl-10 font-mono"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(e.target.value)}
+                    />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <Input placeholder="AA/YY" className="font-mono text-center" />
-                    <Input placeholder="CVC" className="font-mono text-center" maxLength={3} />
+                    <Input
+                        placeholder="AA/YY"
+                        className="font-mono text-center"
+                        value={expiry}
+                        onChange={(e) => setExpiry(e.target.value)}
+                    />
+                    <Input
+                        placeholder="CVC"
+                        className="font-mono text-center"
+                        maxLength={3}
+                        value={cvc}
+                        onChange={(e) => setCvc(e.target.value)}
+                    />
                 </div>
-                <Input placeholder="Kart Üzerindeki İsim" />
+                <Input
+                    placeholder="Kart Üzerindeki İsim"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value)}
+                />
             </div>
 
             <Button onClick={handlePay} disabled={loading} className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg">
-                {loading ? <><Loader2 className="animate-spin mr-2" /> İşleniyor...</> : "Ödemeyi Tamamla"}
+                {loading ? <><Loader2 className="animate-spin mr-2" /> İşleniyor...</> : "Ödemeyi Tamamla ve Üye Ol"}
             </Button>
             <Button variant="ghost" onClick={onBack} disabled={loading} className="w-full">Geri Dön</Button>
         </div>
@@ -440,7 +493,10 @@ export function StepSuccess() {
 
             <h2 className="text-3xl font-bold text-slate-900">Tebrikler! 🎉</h2>
             <p className="text-slate-500 max-w-sm mx-auto">
-                Üyeliğiniz başarıyla oluşturuldu. Giriş bilgileri e-posta adresinize gönderildi.
+                Üyeliğiniz başarıyla oluşturuldu. Şifrenizi belirlemeniz için gereken bağlantı e-posta adresinize gönderildi.
+            </p>
+            <p className="text-sm text-slate-400">
+                Lütfen gelen kutunuzu kontrol edin ve gönderilen bağlantıya tıklayarak şifrenizi oluşturun.
             </p>
 
             <Link href="/login">

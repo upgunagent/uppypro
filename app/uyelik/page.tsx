@@ -89,7 +89,7 @@ function MembershipWizardContent() {
                 {step === 3 && <StepBillingType data={data} updateData={updateData} onNext={next} onBack={back} />}
                 {step === 4 && <StepBillingDetails data={data} updateData={updateData} onNext={next} onBack={back} />}
                 {step === 5 && <StepAgreements data={data} updateData={updateData} onNext={next} onBack={back} />}
-                {step === 6 && <StepPayment onNext={next} onBack={back} />}
+                {step === 6 && <StepPayment data={data} onNext={next} onBack={back} />}
                 {step === 7 && <StepSuccess />}
             </div>
 

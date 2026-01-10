@@ -1,87 +1,121 @@
 import { createClient } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/badge"; // I need to create Badge or use simple spans
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"; // Need to create Table or use manual HTML
+import { createAdminClient } from "@/lib/supabase/admin";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ManageSubscriptionForm } from "./manage-subscription-form";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-export default async function BillingPage({ params }: { params: { tenantId: string } }) {
-    const supabase = await createClient();
+export default async function BillingPage({ params }: { params: Promise<{ tenantId: string }> }) {
+    const supabase = await createClient(); // Keep for auth check if needed, but mostly relying on page protection
+    const adminDb = createAdminClient();
+    const { tenantId } = await params;
 
-    const { data: subscription } = await supabase
+    const { data: tenant } = await adminDb.from("tenants").select("name").eq("id", tenantId).single();
+
+    // Fetch latest subscription (bypass RLS)
+    const { data: subscription } = await adminDb
         .from("subscriptions")
         .select("*")
-        .eq("tenant_id", params.tenantId)
-        .single();
+        .eq("tenant_id", tenantId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    const { data: payments } = await supabase
+    const { data: payments } = await adminDb
         .from("payments")
         .select("*")
-        .eq("tenant_id", params.tenantId)
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 p-8 max-w-[1200px] mx-auto">
             <div>
-                <h1 className="text-3xl font-bold">Abonelik ve Fatura</h1>
-                <p className="text-gray-400">Ödeme geçmişi ve mevcut plan durumu.</p>
+                <Link href={`/admin/tenants/${tenantId}`} className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-1 mb-4">
+                    <ArrowLeft size={16} />
+                    İşletme Detayına Dön
+                </Link>
+                <h1 className="text-3xl font-bold text-slate-900">Abonelik ve Fatura</h1>
+                <p className="text-slate-500">{tenant?.name} için ödeme ve paket yönetimi.</p>
             </div>
 
-            {/* Subscription Status Card */}
-            <div className="p-6 glass rounded-xl border border-white/10">
-                <h2 className="text-xl font-bold mb-4">Mevcut Plan</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <div className="text-sm text-gray-400">Ana Paket</div>
-                        <div className="font-medium text-lg capitalize">{subscription?.base_product_key?.replace('_', ' ')}</div>
-                    </div>
-                    <div>
-                        <div className="text-sm text-gray-400">AI Paketi</div>
-                        <div className="font-medium text-lg capitalize">{subscription?.ai_product_key?.replace('_', ' ') || "Yok"}</div>
-                    </div>
-                    <div>
-                        <div className="text-sm text-gray-400">Durum</div>
-                        <div className="font-medium text-lg capitalize text-primary">{subscription?.status}</div>
-                    </div>
-                    <div>
-                        <div className="text-sm text-gray-400">Fatura Dönemi</div>
-                        <div className="font-medium text-lg capitalize">{subscription?.billing_cycle === 'annual' ? 'Yıllık' : 'Aylık'}</div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                {/* Subscription Management */}
+                <div className="space-y-6">
+                    <ManageSubscriptionForm tenantId={params.tenantId} subscription={subscription} />
+                </div>
+
+                {/* Current Plan Details Read-only View */}
+                <div className="space-y-6">
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <h2 className="text-lg font-bold text-slate-900 mb-4">Plan Özeti</h2>
+                        <div className="space-y-4">
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-500">Ana Paket</span>
+                                <span className="font-medium text-slate-900 capitalize">{subscription?.base_product_key?.replace('uppypro_', 'UppyPro ') || "-"}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-500">AI Paketi</span>
+                                <span className="font-medium text-slate-900 capitalize">{subscription?.ai_product_key?.replace('uppypro_', 'UppyPro ') || "Yok"}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-500">Durum</span>
+                                <Badge variant={subscription?.status === 'active' ? 'default' : 'secondary'} className={subscription?.status === 'active' ? 'bg-green-100 text-green-700' : ''}>
+                                    {subscription?.status || "Pasif"}
+                                </Badge>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-500">Fatura Dönemi</span>
+                                <span className="font-medium text-slate-900 capitalize">{subscription?.billing_cycle === 'annual' ? 'Yıllık' : 'Aylık'}</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                                <span className="text-slate-500">Tanımlı Ücret</span>
+                                <span className="font-bold text-slate-900">
+                                    {subscription?.custom_price_try
+                                        ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
+                                        : 'Standart Liste Fiyatı'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Payment History */}
-            <div className="p-6 glass rounded-xl border border-white/10">
-                <h2 className="text-xl font-bold mb-4">Ödeme Geçmişi</h2>
+            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-900 mb-6">Ödeme Geçmişi</h2>
                 <div className="relative w-full overflow-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-gray-400 border-b border-white/10">
-                            <tr>
-                                <th className="py-3">Tarih</th>
-                                <th className="py-3">Tutar</th>
-                                <th className="py-3">Tip</th>
-                                <th className="py-3">Durum</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Tarih</TableHead>
+                                <TableHead>Tutar</TableHead>
+                                <TableHead>Tip</TableHead>
+                                <TableHead>Durum</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {payments?.map((payment) => (
-                                <tr key={payment.id} className="hover:bg-white/5">
-                                    <td className="py-3">
+                                <TableRow key={payment.id}>
+                                    <TableCell className="text-slate-600">
                                         {new Date(payment.created_at).toLocaleDateString("tr-TR")}
-                                    </td>
-                                    <td className="py-3">{(payment.amount_try / 100).toFixed(2)} TL</td>
-                                    <td className="py-3 capitalize">{payment.type?.replace('_', ' ')}</td>
-                                    <td className="py-3">
-                                        <span className={payment.status === 'success' ? 'text-green-400' : 'text-red-400'}>
+                                    </TableCell>
+                                    <TableCell className="font-medium text-slate-900">{(payment.amount_try / 100).toFixed(2)} TL</TableCell>
+                                    <TableCell className="capitalize text-slate-600">{payment.type?.replace('_', ' ')}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={payment.status === 'success' ? 'default' : 'destructive'}>
                                             {payment.status}
-                                        </span>
-                                    </td>
-                                </tr>
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
                             ))}
                             {payments?.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="py-4 text-center text-gray-500">Ödeme kaydı yok.</td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center text-slate-500">Ödeme kaydı bulunamadı.</TableCell>
+                                </TableRow>
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
         </div>

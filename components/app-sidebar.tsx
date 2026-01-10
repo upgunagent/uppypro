@@ -10,6 +10,7 @@ import {
     Settings,
     Users,
     LogOut,
+    Building2,
     Instagram,
     MessageCircle,
     UserCircle
@@ -97,6 +98,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     const adminLinks = [
         { href: "/admin/tenants", label: "İşletmeler", icon: Users },
+        { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
     ];
 
     // Helper for Sidebar Items
