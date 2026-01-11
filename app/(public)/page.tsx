@@ -4,6 +4,8 @@ import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/c
 
 import { createClient } from "@/lib/supabase/client";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingPage() {
     const supabase = createClient();
     const { data: prices } = await supabase

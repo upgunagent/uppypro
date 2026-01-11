@@ -14,7 +14,14 @@ interface Subscription {
     custom_price_try?: number;
 }
 
-export function ManageSubscriptionForm({ tenantId, subscription }: { tenantId: string, subscription: Subscription | null }) {
+interface ManageSubscriptionFormProps {
+    tenantId: string;
+    subscription: Subscription | null;
+    inboxPrice: number;
+    aiPrice: number;
+}
+
+export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiPrice }: ManageSubscriptionFormProps) {
     // Determine current selection
     // simple logic: if enterprise key present -> enterprise
     // else if ai key present -> ai
@@ -62,7 +69,7 @@ export function ManageSubscriptionForm({ tenantId, subscription }: { tenantId: s
                         <input type="radio" name="planType" value="inbox" className="sr-only" checked={plan === 'inbox'} onChange={() => setPlan('inbox')} />
                         {plan === 'inbox' && <Check className="w-4 h-4 text-primary" />}
                     </div>
-                    <span className="text-sm text-slate-500">495 TL/ay</span>
+                    <span className="text-sm text-slate-500">{new Intl.NumberFormat('tr-TR').format(inboxPrice / 100)} TL/ay</span>
                 </label>
 
                 <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'ai' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
@@ -71,7 +78,7 @@ export function ManageSubscriptionForm({ tenantId, subscription }: { tenantId: s
                         <input type="radio" name="planType" value="ai" className="sr-only" checked={plan === 'ai'} onChange={() => setPlan('ai')} />
                         {plan === 'ai' && <Check className="w-4 h-4 text-primary" />}
                     </div>
-                    <span className="text-sm text-slate-500">2.499 TL/ay</span>
+                    <span className="text-sm text-slate-500">{new Intl.NumberFormat('tr-TR').format(aiPrice / 100)} TL/ay</span>
                 </label>
 
                 <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'enterprise' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>

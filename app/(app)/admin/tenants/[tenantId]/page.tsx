@@ -58,6 +58,16 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const wa = channels?.find((c) => c.channel === "whatsapp");
     const ig = channels?.find((c) => c.channel === "instagram");
 
+    // Fetch Standard Pricing for Compare/Display
+    const { data: prices } = await adminDb
+        .from("pricing")
+        .select("*")
+        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
+        .eq("billing_cycle", "monthly");
+
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
+    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+
     // Check Package for Header
     const sub = subscription;
     const isEnterprise = sub?.ai_product_key === 'uppypro_enterprise';
@@ -88,7 +98,12 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const subscriptionTab = (
         <div className="space-y-8">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <ManageSubscriptionForm tenantId={tenantId} subscription={subscription} />
+                <ManageSubscriptionForm
+                    tenantId={tenantId}
+                    subscription={subscription}
+                    inboxPrice={inboxPrice}
+                    aiPrice={aiPrice}
+                />
 
                 {/* Plan Summary Card - Reusing Logic from previous page manually or component */}
                 <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm h-fit">
