@@ -28,15 +28,23 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
-    // Fetch Standard Pricing
+    // Fetch Standard Pricing and Rate
     const { data: prices } = await adminDb
         .from("pricing")
         .select("*")
         .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
+    // Import currency service
+    const { getUsdRate } = await import("@/lib/currency");
+    const usdRate = await getUsdRate();
+
+    const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
+    const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
     const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+
+    const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
+    const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
 
     return (
         <div className="space-y-8 p-8 max-w-[1200px] mx-auto">
@@ -55,8 +63,9 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                     <ManageSubscriptionForm
                         tenantId={tenantId}
                         subscription={subscription}
-                        inboxPrice={inboxPrice}
-                        aiPrice={aiPrice}
+                        inboxPrice={inboxPriceUsd}
+                        aiPrice={aiPriceUsd}
+                        usdRate={usdRate}
                     />
                 </div>
 
@@ -88,7 +97,14 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                                 <span className="font-bold text-slate-900">
                                     {subscription?.custom_price_try
                                         ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
-                                        : `${new Intl.NumberFormat('tr-TR').format((subscription?.ai_product_key === 'uppypro_ai' ? aiPrice : inboxPrice) / 100)} TL`
+                                        : (
+                                            <span className="flex items-center gap-2">
+                                                <span>${subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd}</span>
+                                                <span className="text-xs text-slate-500 font-normal">
+                                                    (≈ {new Intl.NumberFormat('tr-TR').format((subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL)
+                                                </span>
+                                            </span>
+                                        )
                                     }
                                 </span>
                             </div>

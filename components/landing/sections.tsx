@@ -63,10 +63,10 @@ export function FeaturesSection() {
 
 export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, aiPrice?: number }) {
     // Default values if not provided (fallback)
-    const inboxPriceVal = inboxPrice ? inboxPrice / 100 : 495;
-    const aiPriceVal = aiPrice ? aiPrice / 100 : 2499;
+    const inboxPriceVal = inboxPrice || 19;
+    const aiPriceVal = aiPrice || 79;
 
-    const formatPrice = (p: number) => new Intl.NumberFormat('tr-TR').format(p);
+    const formatPrice = (p: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(p);
 
     return (
         <section id="pricing" className="py-24 bg-white relative overflow-hidden">
@@ -91,8 +91,8 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <h3 className="text-xl font-bold text-white mb-2">UppyPro Inbox</h3>
                         <p className="text-slate-100 text-sm mb-6">Küçük işletmeler ve butikler için.</p>
                         <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)} TL</span>
-                            <span className="text-slate-200">/ay</span>
+                            <span className="text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
+                            <span className="text-slate-200">/mo</span>
                         </div>
                         <Link href="/uyelik?plan=base">
                             <Button className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">

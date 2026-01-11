@@ -58,15 +58,23 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const wa = channels?.find((c) => c.channel === "whatsapp");
     const ig = channels?.find((c) => c.channel === "instagram");
 
-    // Fetch Standard Pricing for Compare/Display
+    // Fetch Standard Pricing (USD) and Live Rate
     const { data: prices } = await adminDb
         .from("pricing")
         .select("*")
         .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+    // Import dynamically to avoid top-level await issues if any, though standard import works
+    const { getUsdRate } = await import("@/lib/currency");
+    const usdRate = await getUsdRate();
+
+    const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
+    const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
+
+    // Calculate TL estimate
+    const inboxPrice = Math.round(inboxPriceUsd * usdRate * 100); // in cents
+    const aiPrice = Math.round(aiPriceUsd * usdRate * 100); // in cents
 
     // Check Package for Header
     const sub = subscription;
@@ -101,8 +109,9 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                 <ManageSubscriptionForm
                     tenantId={tenantId}
                     subscription={subscription}
-                    inboxPrice={inboxPrice}
-                    aiPrice={aiPrice}
+                    inboxPrice={inboxPriceUsd}
+                    aiPrice={aiPriceUsd}
+                    usdRate={usdRate}
                 />
 
                 {/* Plan Summary Card - Reusing Logic from previous page manually or component */}
@@ -134,7 +143,14 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                             <span className="font-bold text-lg text-slate-900">
                                 {sub?.custom_price_try
                                     ? <span className="text-purple-600">{(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL (Özel)</span>
-                                    : `${new Intl.NumberFormat('tr-TR').format((isPro ? aiPrice : inboxPrice) / 100)} TL`
+                                    : (
+                                        <div className="flex flex-col items-end">
+                                            <span>${isPro ? aiPriceUsd : inboxPriceUsd}</span>
+                                            <span className="text-xs text-slate-500 font-normal">
+                                                ≈ {new Intl.NumberFormat('tr-TR').format((isPro ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL
+                                            </span>
+                                        </div>
+                                    )
                                 }
                             </span>
                         </div>

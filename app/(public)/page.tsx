@@ -14,8 +14,8 @@ export default async function LandingPage() {
         .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
+    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-orange-100 selection:text-orange-900">

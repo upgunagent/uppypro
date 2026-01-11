@@ -10,12 +10,12 @@ import { Loader2, Tag } from "lucide-react";
 interface PricingFormProps {
     label: string;
     productKey: string;
-    currentPrice: number; // in cents
+    currentPrice: number; // in USD
     description: string;
 }
 
 export function PricingForm({ label, productKey, currentPrice, description }: PricingFormProps) {
-    const [price, setPrice] = useState(currentPrice / 100);
+    const [price, setPrice] = useState(currentPrice); // Direct USD value
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
@@ -55,7 +55,7 @@ export function PricingForm({ label, productKey, currentPrice, description }: Pr
                         onChange={(e) => setPrice(Number(e.target.value))}
                         className="pr-8 font-mono text-right font-bold text-lg"
                     />
-                    <span className="absolute right-3 top-2.5 text-slate-400 font-medium text-sm">TL</span>
+                    <span className="absolute right-3 top-2.5 text-slate-400 font-medium text-sm">USD</span>
                 </div>
                 <Button
                     onClick={handleUpdate}

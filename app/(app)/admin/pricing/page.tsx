@@ -25,14 +25,14 @@ export default async function AdminPricingPage() {
         .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 0;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 0;
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
+    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
 
     return (
         <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiyatlandırma Yönetimi</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiyatlandırma Yönetimi (USD)</h1>
             <p className="text-slate-500 mb-8">
-                Paketlerin aylık ücretlerini güncelleyin. Bu değişiklikler tüm panellerde ve ana sayfada anında görünür.
+                Paketlerin aylık **Dolar ($)** ücretlerini güncelleyin. Sistem tahsilat anında güncel kur ile TL'ye çevirecektir.
             </p>
 
             <div className="grid gap-6">

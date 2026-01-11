@@ -17,11 +17,12 @@ interface Subscription {
 interface ManageSubscriptionFormProps {
     tenantId: string;
     subscription: Subscription | null;
-    inboxPrice: number;
-    aiPrice: number;
+    inboxPrice: number; // USD
+    aiPrice: number;    // USD
+    usdRate: number;
 }
 
-export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiPrice }: ManageSubscriptionFormProps) {
+export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiPrice, usdRate }: ManageSubscriptionFormProps) {
     // Determine current selection
     // simple logic: if enterprise key present -> enterprise
     // else if ai key present -> ai
@@ -69,7 +70,10 @@ export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiP
                         <input type="radio" name="planType" value="inbox" className="sr-only" checked={plan === 'inbox'} onChange={() => setPlan('inbox')} />
                         {plan === 'inbox' && <Check className="w-4 h-4 text-primary" />}
                     </div>
-                    <span className="text-sm text-slate-500">{new Intl.NumberFormat('tr-TR').format(inboxPrice / 100)} TL/ay</span>
+                    <div className="flex flex-col">
+                        <span className="text-sm text-slate-900 font-bold">${inboxPrice}</span>
+                        <span className="text-xs text-slate-500">≈ {new Intl.NumberFormat('tr-TR').format(inboxPrice * usdRate)} TL</span>
+                    </div>
                 </label>
 
                 <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'ai' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
@@ -78,7 +82,10 @@ export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiP
                         <input type="radio" name="planType" value="ai" className="sr-only" checked={plan === 'ai'} onChange={() => setPlan('ai')} />
                         {plan === 'ai' && <Check className="w-4 h-4 text-primary" />}
                     </div>
-                    <span className="text-sm text-slate-500">{new Intl.NumberFormat('tr-TR').format(aiPrice / 100)} TL/ay</span>
+                    <div className="flex flex-col">
+                        <span className="text-sm text-slate-900 font-bold">${aiPrice}</span>
+                        <span className="text-xs text-slate-500">≈ {new Intl.NumberFormat('tr-TR').format(aiPrice * usdRate)} TL</span>
+                    </div>
                 </label>
 
                 <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'enterprise' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
