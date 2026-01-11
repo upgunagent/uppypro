@@ -142,10 +142,6 @@ export default async function LoginPage() {
                         </p>
                     </div>
 
-                    import {Suspense} from "react";
-
-                    // ...
-
                     <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-slate-400">Yükleniyor...</div>}>
                         <LoginForm />
                     </Suspense>
