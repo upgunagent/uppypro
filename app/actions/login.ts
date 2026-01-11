@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function signInAction(formData: FormData) {
+export async function signInAction(prevState: any, formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function signInAction(formData: FormData) {
     });
 
     if (error) {
-        return redirect("/login?message=Kullanıcı adı veya şifre hatalı.");
+        return { error: "Kullanıcı adı veya şifre hatalı." };
     }
 
     const { data: { user } } = await supabase.auth.getUser();
