@@ -14,7 +14,8 @@ import {
     Instagram,
     MessageCircle,
     UserCircle,
-    Tag
+    Tag,
+    Calendar as CalendarIcon
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -214,16 +215,28 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
             <div className="p-4 border-t border-slate-100 w-full space-y-4 flex flex-col items-center">
                 <SidebarItem
+                    href="/panel/calendar"
+                    icon={CalendarIcon}
+                    label="Takvim"
+                    isActive={pathname.startsWith("/panel/calendar")}
+                    gradient="bg-sky-500 shadow-sky-500/20"
+                    iconColor="text-white"
+                />
+                <SidebarItem
                     href="/panel/customers"
                     icon={Users}
                     label="Müşteriler"
                     isActive={pathname.startsWith("/panel/customers")}
+                    gradient="bg-orange-500 shadow-orange-500/20"
+                    iconColor="text-white"
                 />
                 <SidebarItem
                     href="/panel/settings"
                     icon={Settings}
                     label="Ayarlar"
                     isActive={pathname.startsWith("/panel/settings")}
+                    gradient="bg-purple-500 shadow-purple-500/20"
+                    iconColor="text-white"
                 />
                 <button
                     onClick={handleLogout}

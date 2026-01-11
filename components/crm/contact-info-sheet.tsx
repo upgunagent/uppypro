@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus, Instagram } from "lucide-react";
+import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus, Instagram, CalendarIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
+import { EventDialog } from "@/components/calendar/event-dialog"; // Import EventDialog
 
 interface ContactInfoSheetProps {
     isOpen: boolean;
@@ -41,6 +42,11 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
         instagram_username: "",
     });
 
+    const [showEventDialog, setShowEventDialog] = useState(false); // State for Event Dialog
+    const [tenantId, setTenantId] = useState<string>(""); // Need tenant ID for event dialog
+
+    // Notes Data
+
     // Notes Data
     const [newNote, setNewNote] = useState("");
     const [notesList, setNotesList] = useState<Note[]>([]);
@@ -62,6 +68,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 .select("customer_id, tenant_id")
                 .eq("id", conversationId)
                 .single();
+
+            if (conv) setTenantId(conv.tenant_id);
 
             if (conv?.customer_id) {
                 // Fetch Customer Data
@@ -117,6 +125,14 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
             if (customerId) {
                 // UPDATE
+                if (!formData.full_name.trim()) return alert("Lütfen Ad Soyad giriniz.");
+                if (!formData.phone.trim()) return alert("Lütfen telefon numarası giriniz.");
+                // Email might be optional for update? User said "when creating". But for consistency let's make it mandatory if user implies "customer record" requirements.
+                // Actually user said "yeni müşteri kaydı oluştururken". So update might be lax?
+                // But usually consistency is better. Let's enforce for both to be safe or just Insert. 
+                // Let's enforce for both as these are now critical fields.
+                if (!formData.email.trim()) return alert("Lütfen e-posta adresi giriniz.");
+
                 const { error } = await supabase
                     .from("customers")
                     .update({
@@ -133,6 +149,10 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 if (error) throw error;
             } else {
                 // INSERT
+                if (!formData.full_name.trim()) return alert("Lütfen Ad Soyad giriniz.");
+                if (!formData.phone.trim()) return alert("Lütfen telefon numarası giriniz.");
+                if (!formData.email.trim()) return alert("Lütfen e-posta adresi giriniz.");
+
                 const { data: newCustomer, error } = await supabase
                     .from("customers")
                     .insert({
@@ -263,8 +283,20 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
                 {/* PROFILE FORM */}
                 <form className="space-y-4 mb-8" autoComplete="off" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
+
+                    {!customerId && (
+                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-3 text-center mb-4">
+                            <h3 className="text-orange-600 dark:text-orange-400 font-bold text-sm uppercase flex items-center justify-center gap-2">
+                                <User className="w-4 h-4" /> Müşteri Kaydı Oluştur
+                            </h3>
+                            <p className="text-xs text-orange-500/80 mt-1 dark:text-orange-400/70">
+                                Randevu oluşturmak için önce müşteriyi kaydediniz.
+                            </p>
+                        </div>
+                    )}
+
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">Ad Soyad</label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">Ad Soyad (Zorunlu)</label>
                         <div className="relative">
                             <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
@@ -294,7 +326,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">İletişim Numarası</label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">İletişim Numarası (Zorunlu)</label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
@@ -309,7 +341,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">E-posta Adresi</label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">E-posta Adresi (Zorunlu)</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
@@ -326,6 +358,16 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg shadow-red-500/20 font-bold border-0">
                         {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
                     </Button>
+
+                    {customerId && (
+                        <Button
+                            type="button"
+                            onClick={() => setShowEventDialog(true)}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 font-bold border-0 mt-3"
+                        >
+                            <CalendarIcon className="mr-2 w-4 h-4" /> Randevu Oluştur
+                        </Button>
+                    )}
                 </form>
 
                 <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
@@ -383,6 +425,17 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 )}
 
             </SheetContent>
+
+            {/* EVENT DIALOG */}
+            {tenantId && (
+                <EventDialog
+                    isOpen={showEventDialog}
+                    onClose={() => setShowEventDialog(false)}
+                    onSave={() => setShowEventDialog(false)}
+                    tenantId={tenantId}
+                    defaultCustomerId={customerId || undefined}
+                />
+            )}
         </Sheet>
     );
 }

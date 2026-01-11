@@ -108,8 +108,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     };
 
     const handleSave = async () => {
-        if (!formData.full_name && !formData.company_name) {
-            alert("Lütfen en azından bir İsim veya Firma Adı giriniz.");
+        // Mandatory fields check
+        if (!formData.full_name.trim()) {
+            alert("Lütfen Ad Soyad giriniz.");
+            return;
+        }
+        if (!formData.phone.trim()) {
+            alert("Lütfen telefon numarası giriniz.");
+            return;
+        }
+        if (!formData.email.trim()) {
+            alert("Lütfen e-posta adresi giriniz.");
             return;
         }
 
@@ -351,7 +360,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         <CardContent className="space-y-6 pt-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2.5">
-                                    <Label className="text-slate-600 font-medium">Ad Soyad</Label>
+                                    <Label className="text-slate-600 font-medium">Ad Soyad (Zorunlu)</Label>
                                     <Input
                                         value={formData.full_name}
                                         onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -360,7 +369,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                     />
                                 </div>
                                 <div className="space-y-2.5">
-                                    <Label className="text-slate-600 font-medium">Telefon</Label>
+                                    <Label className="text-slate-600 font-medium">Telefon (Zorunlu)</Label>
                                     <Input
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -369,7 +378,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                     />
                                 </div>
                                 <div className="space-y-2.5 md:col-span-2">
-                                    <Label className="text-slate-600 font-medium">E-posta</Label>
+                                    <Label className="text-slate-600 font-medium">E-posta (Zorunlu)</Label>
                                     <Input
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
