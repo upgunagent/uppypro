@@ -1,5 +1,5 @@
 import { LoginForm } from "./login-form";
-
+import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export default async function LoginPage() {
@@ -149,9 +149,4 @@ export default async function LoginPage() {
     );
 }
 
-function Otomatik({ children }: { children: React.ReactNode }) {
-    // Just a helper dummy component to avoid JSX error with Turkish identifier if treated as tag? 
-    // Wait, the original code had CheckCircle2 and then "Otomatik Yanıtlandı".
-    // I missed one import "CheckCircle2".
-    return <>{children}</>;
-}
+
