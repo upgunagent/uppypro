@@ -1,6 +1,7 @@
 import { LoginForm } from "./login-form";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Suspense } from "react";
 
 export default async function LoginPage() {
     return (
