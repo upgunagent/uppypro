@@ -248,6 +248,30 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         }
     };
 
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteCustomer = async () => {
+        if (!confirm("Bu müşteriyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+
+        setIsDeleting(true);
+        const supabase = createClient();
+
+        try {
+            const { error } = await supabase
+                .from('customers')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            alert("Müşteri başarıyla silindi.");
+            router.push('/panel/customers');
+        } catch (error: any) {
+            alert("Silme hatası: " + error.message);
+            setIsDeleting(false);
+        }
+    };
+
     if (loading) {
         return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-slate-400" /></div>;
     }
@@ -269,14 +293,27 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         </p>
                     </div>
                 </div>
-                <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="h-12 px-8 bg-orange-600 hover:bg-orange-700 text-white font-medium text-base shadow-lg shadow-orange-500/20 rounded-xl transition-all hover:-translate-y-0.5"
-                >
-                    {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                    Kaydet
-                </Button>
+                <div className="flex items-center gap-3">
+                    {id !== 'new' && (
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteCustomer}
+                            disabled={isDeleting || saving}
+                            className="h-12 px-6 bg-red-100 hover:bg-red-200 text-red-600 font-medium text-base rounded-xl transition-all"
+                        >
+                            {isDeleting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Trash2 className="w-5 h-5 mr-2" />}
+                            Sil
+                        </Button>
+                    )}
+                    <Button
+                        onClick={handleSave}
+                        disabled={saving || isDeleting}
+                        className="h-12 px-8 bg-orange-600 hover:bg-orange-700 text-white font-medium text-base shadow-lg shadow-orange-500/20 rounded-xl transition-all hover:-translate-y-0.5"
+                    >
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                        Kaydet
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
