@@ -9,10 +9,10 @@ export default async function LandingPage() {
     const { data: prices } = await supabase
         .from("pricing")
         .select("*")
-        .in("product_key", ["inbox", "uppypro_ai"])
+        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "inbox")?.monthly_price_try || 49500;
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
     const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
 
     return (

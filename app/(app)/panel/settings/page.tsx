@@ -47,7 +47,7 @@ export default async function SettingsPage() {
     let pricing = null;
     if (subscription) {
         // If ai_product_key is null, it's the standard Inbox plan
-        const productKey = subscription.ai_product_key || 'inbox';
+        const productKey = subscription.ai_product_key || 'uppypro_inbox';
 
         const { data } = await supabase.from("pricing")
             .select("*")

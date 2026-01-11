@@ -22,10 +22,10 @@ export default async function AdminPricingPage() {
     const { data: prices } = await supabase
         .from("pricing")
         .select("*")
-        .in("product_key", ["inbox", "uppypro_ai"])
+        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "inbox")?.monthly_price_try || 0;
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 0;
     const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 0;
 
     return (
@@ -38,7 +38,7 @@ export default async function AdminPricingPage() {
             <div className="grid gap-6">
                 <PricingForm
                     label="UppyPro Inbox"
-                    productKey="inbox"
+                    productKey="uppypro_inbox"
                     currentPrice={inboxPrice}
                     description="Küçük işletmeler için temel paket."
                 />
