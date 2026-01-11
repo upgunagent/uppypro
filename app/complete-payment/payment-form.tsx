@@ -32,7 +32,7 @@ export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: strin
                 setLoading(false);
             } else {
                 toast({ title: "Başarılı", description: "Ödeme alındı. Şifre ekranına yönlendiriliyorsunuz..." });
-                router.push("/update-password");
+                router.push(res.redirectUrl || "/update-password");
             }
         } catch (e) {
             console.error(e);

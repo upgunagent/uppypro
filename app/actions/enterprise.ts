@@ -137,5 +137,36 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
         }).eq('token', cardData.inviteToken);
     }
 
-    return { success: true };
+    // 4. Generate Auto-Login Link (Recovery Link) for Password Setup
+    // First, find the owner of this tenant
+    const { data: member } = await admin
+        .from("tenant_members")
+        .select("user_id")
+        .eq("tenant_id", tenantId)
+        .eq("role", "owner")
+        .single();
+
+    if (member) {
+        // Generate a recovery link that redirects to /update-password
+        // This effectively logs the user in so they can set their password
+        const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+            type: "recovery",
+            email: await getUserEmail(admin, member.user_id),
+            options: {
+                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/update-password`
+            }
+        });
+
+        if (linkData && !linkError) {
+            return { success: true, redirectUrl: linkData.properties.action_link };
+        }
+    }
+
+    return { success: true, redirectUrl: "/login" };
+}
+
+// Helper to get email properly
+async function getUserEmail(admin: any, userId: string) {
+    const { data: user } = await admin.auth.admin.getUserById(userId);
+    return user?.user?.email;
 }
