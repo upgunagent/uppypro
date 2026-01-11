@@ -124,8 +124,14 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
     }
 
     // 2. Activate Subscription
+    const now = new Date();
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
     const { error } = await admin.from("subscriptions").update({
-        status: 'active'
+        status: 'active',
+        current_period_start: now.toISOString(),
+        current_period_end: nextMonth.toISOString()
     }).eq('tenant_id', tenantId);
 
     if (error) return { error: error.message };

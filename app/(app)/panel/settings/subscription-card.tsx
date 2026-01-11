@@ -17,8 +17,12 @@ export function SubscriptionCard({ subscription, price, customPrice }: { subscri
     const packageName = getPackageName(subscription);
 
     // Format price: 249900 -> 2.499,00 TL
-    const formattedPrice = price
-        ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(price.monthly_price_try / 100)
+    const finalPrice = customPrice
+        ? customPrice / 100
+        : (price ? price.monthly_price_try / 100 : 0);
+
+    const formattedPrice = finalPrice > 0
+        ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice)
         : '-';
 
     return (
