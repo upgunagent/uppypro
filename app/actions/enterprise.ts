@@ -62,23 +62,21 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             custom_price_try: data.monthlyPrice * 100
         });
 
-        // 6. Generate Magic Link
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
-        const redirectUrl = `${baseUrl}/auth/confirm`;
+        // 6. Generate Invite Token (Custom, not Supabase magic link)
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: "magiclink",
+        await supabaseAdmin.from("invite_tokens").insert({
+            token,
+            tenant_id: tenant.id,
             email: data.email,
-            options: {
-                redirectTo: redirectUrl
-            }
+            expires_at: expiresAt.toISOString()
         });
 
-        if (linkError) throw new Error(`Link oluşturulamadı: ${linkError.message}`);
+        // 7. Send Email with invite link
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
+        const inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
 
-        const actionLink = linkData.properties.action_link;
-
-        // 7. Send Email - Ultra minimal to prevent Gmail clipping
         await resend.emails.send({
             from: EMAIL_FROM,
             to: data.email,
@@ -90,7 +88,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 <h2 style="color:#1e293b;margin:0 0 20px">Kurumsal Üyeliğiniz Hazır</h2>
 <p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.fullName}</b>, <b>${data.companyName}</b> için abonelik tanımlandı.</p>
 <p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal<br><b>Aylık:</b> ${data.monthlyPrice.toLocaleString('tr-TR')} TL</p>
-<a href="${actionLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
+<a href="${inviteLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
 </div></body></html>`
         });
 
@@ -102,7 +100,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
     }
 }
 
-export async function activateSubscription(tenantId: string, cardData: { cardHolder: string, cardNumber: string }) {
+export async function activateSubscription(tenantId: string, cardData: { cardHolder: string, cardNumber: string, inviteToken?: string }) {
     const admin = createAdminClient();
 
     // 1. Save Payment Method (Mock)
@@ -131,5 +129,13 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
     }).eq('tenant_id', tenantId);
 
     if (error) return { error: error.message };
+
+    // 3. Mark invite token as used (if provided)
+    if (cardData.inviteToken) {
+        await admin.from("invite_tokens").update({
+            used_at: new Date().toISOString()
+        }).eq('token', cardData.inviteToken);
+    }
+
     return { success: true };
 }

@@ -8,7 +8,7 @@ import { activateSubscription } from "@/app/actions/enterprise";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 
-export function PaymentForm({ tenantId, amount }: { tenantId: string, amount: number }) {
+export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: string, amount: number, inviteToken?: string }) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -23,14 +23,15 @@ export function PaymentForm({ tenantId, amount }: { tenantId: string, amount: nu
             // activateSubscription with card data
             const res = await activateSubscription(tenantId, {
                 cardHolder,
-                cardNumber: cardNumber.replace(/\s/g, '') // Remove spaces
+                cardNumber: cardNumber.replace(/\s/g, ''), // Remove spaces
+                inviteToken // Pass token to mark as used
             });
 
             if (res.error) {
                 toast({ variant: "destructive", title: "Hata", description: res.error });
                 setLoading(false);
             } else {
-                toast({ title: "Başarılı", description: "Ödeme alındı ve kart kaydedildi. Şifre ekranına yönlendiriliyorsunuz..." });
+                toast({ title: "Başarılı", description: "Ödeme alındı. Şifre ekranına yönlendiriliyorsunuz..." });
                 router.push("/update-password");
             }
         } catch (e) {
