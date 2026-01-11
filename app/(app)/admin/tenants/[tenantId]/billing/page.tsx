@@ -88,7 +88,8 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                                 <span className="font-bold text-slate-900">
                                     {subscription?.custom_price_try
                                         ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
-                                        : 'Standart Liste Fiyatı'}
+                                        : `${new Intl.NumberFormat('tr-TR').format((subscription?.ai_product_key === 'uppypro_ai' ? aiPrice : inboxPrice) / 100)} TL`
+                                    }
                                 </span>
                             </div>
                         </div>
