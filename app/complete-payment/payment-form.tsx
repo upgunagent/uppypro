@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: string, amount: number, inviteToken?: string }) {
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState<'payment' | 'password'>('payment');
+    const [step, setStep] = useState<'payment' | 'password' | 'success'>('payment');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -69,8 +69,8 @@ export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: strin
                 toast({ variant: "destructive", title: "Hata", description: res.error });
                 setLoading(false);
             } else {
-                toast({ title: "Hesap Oluşturuldu!", description: "Giriş sayfasına yönlendiriliyorsunuz..." });
-                router.push("/login?verified=true");
+                setLoading(false);
+                setStep('success');
             }
         } catch (e) {
             console.error(e);
@@ -78,6 +78,30 @@ export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: strin
             setLoading(false);
         }
     };
+
+    if (step === 'success') {
+        return (
+            <div className="text-center space-y-6 py-8">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-600 mb-2 animate-in zoom-in duration-300">
+                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                </div>
+
+                <h2 className="text-2xl font-bold text-slate-900">Hesabınız Hazır! 🎉</h2>
+
+                <p className="text-slate-600 max-w-sm mx-auto">
+                    Şifreniz başarıyla oluşturuldu.<br />
+                    Belirlediğiniz şifre ve e-posta adresinizle giriş yaparak UppyPro'yu kullanmaya başlayabilirsiniz.
+                </p>
+
+                <Button
+                    onClick={() => router.push("/login")}
+                    className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg shadow-lg shadow-orange-500/20 mt-4"
+                >
+                    Giriş Yap
+                </Button>
+            </div>
+        );
+    }
 
     if (step === 'password') {
         return (
