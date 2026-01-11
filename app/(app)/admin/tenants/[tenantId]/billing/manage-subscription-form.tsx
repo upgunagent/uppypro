@@ -12,6 +12,7 @@ interface Subscription {
     base_product_key?: string;
     ai_product_key?: string;
     custom_price_try?: number;
+    custom_price_usd?: number;
 }
 
 interface ManageSubscriptionFormProps {
@@ -32,8 +33,18 @@ export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiP
     if (subscription?.ai_product_key === 'uppypro_enterprise') initialPlan = 'enterprise';
     else if (subscription?.ai_product_key === 'uppypro_ai') initialPlan = 'ai';
 
+    // Init price from USD if available, else try fallback (legacy / 100 / rate?) or empty
+    let initialPriceStr = "";
+    if (subscription?.custom_price_usd) {
+        initialPriceStr = subscription.custom_price_usd.toString();
+    } else if (subscription?.custom_price_try) {
+        // Legacy fallback: Convert TR cent to USD roughly or just show 0 to force update
+        // user should update it clearly
+        initialPriceStr = (subscription.custom_price_try / 100 / usdRate).toFixed(2);
+    }
+
     const [plan, setPlan] = useState(initialPlan);
-    const [price, setPrice] = useState(subscription?.custom_price_try ? (subscription.custom_price_try / 100).toString() : "");
+    const [price, setPrice] = useState(initialPriceStr);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -101,19 +112,26 @@ export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiP
             {/* Custom Price Input for Enterprise */}
             {plan === 'enterprise' && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Özel Aylık Ücret (TL)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Özel Aylık Ücret (USD)</label>
                     <div className="relative">
                         <Input
                             type="number"
                             name="customPrice"
-                            placeholder="Örn: 5000"
+                            placeholder="Örn: 1000"
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                             required={plan === 'enterprise'}
                         />
-                        <span className="absolute right-3 top-2.5 text-slate-400 text-sm">TL</span>
+                        <span className="absolute right-3 top-2.5 text-slate-400 text-sm">USD</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">Bu fiyat sadece bu işletme için geçerli olacaktır.</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                        Bu fiyat sadece bu işletme için geçerli olacaktır.
+                        {price && (
+                            <span className="text-orange-600 ml-1 font-bold">
+                                (≈ {new Intl.NumberFormat('tr-TR').format(Number(price) * usdRate)} TL)
+                            </span>
+                        )}
+                    </p>
                 </div>
             )}
 

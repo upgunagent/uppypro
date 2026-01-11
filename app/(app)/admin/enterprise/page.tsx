@@ -67,7 +67,7 @@ export default function EnterpriseInvitePage() {
                     </div>
 
                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg space-y-2">
-                        <Label className="text-orange-900">Aylık Abonelik Ücreti (TL)</Label>
+                        <Label className="text-orange-900">Aylık Abonelik Ücreti (USD)</Label>
                         <Input
                             name="monthlyPrice"
                             type="number"
@@ -75,9 +75,9 @@ export default function EnterpriseInvitePage() {
                             min="0"
                             step="0.01"
                             className="bg-white border-orange-200 focus-visible:ring-orange-500"
-                            placeholder="Örn: 15000"
+                            placeholder="Örn: 1000"
                         />
-                        <p className="text-xs text-orange-700">Bu tutar üzerinden fatura kesilecek ve ödeme alınacaktır.</p>
+                        <p className="text-xs text-orange-700">Bu tutar (USD) üzerinden fatura kesilecek ve ödeme anında kur çevrilecektir.</p>
                     </div>
 
                     <div className="pt-4">

@@ -8,8 +8,9 @@ export type EnterpriseInviteData = {
     companyName: string;
     fullName: string;
     email: string;
+    email: string;
     phone: string;
-    monthlyPrice: number; // In TL
+    monthlyPrice: number; // In USD
 };
 
 export async function createEnterpriseInvite(data: EnterpriseInviteData) {
@@ -51,15 +52,14 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             role: 'tenant_owner'
         });
 
-        // 5. Create Subscription (Pending -> Custom Price)
-        // Storing price in Cent/Kurus (x100)
+        // 5. Create Subscription (Pending -> Custom Price USD)
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
             status: 'pending', // Waiting for payment
             base_product_key: 'uppypro_inbox',
             ai_product_key: 'uppypro_enterprise',
             billing_cycle: 'monthly',
-            custom_price_try: data.monthlyPrice * 100
+            custom_price_usd: data.monthlyPrice
         });
 
         // 6. Generate Invite Token (Custom, not Supabase magic link)
@@ -87,7 +87,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 <div style="max-width:600px;margin:0 auto;padding:30px;background:#fff;border-radius:8px">
 <h2 style="color:#1e293b;margin:0 0 20px">Kurumsal Üyeliğiniz Hazır</h2>
 <p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.fullName}</b>, <b>${data.companyName}</b> için abonelik tanımlandı.</p>
-<p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal<br><b>Aylık:</b> ${data.monthlyPrice.toLocaleString('tr-TR')} TL</p>
+<p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal<br><b>Aylık:</b> $${data.monthlyPrice.toLocaleString('en-US')}</p>
 <a href="${inviteLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
 </div></body></html>`
         });

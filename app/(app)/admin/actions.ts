@@ -40,8 +40,8 @@ export async function updateSubscription(formData: FormData) {
     } else if (planType === 'enterprise') {
         aiProductKey = 'uppypro_enterprise';
         if (customPriceRaw) {
-            // Convert TL to Kurus
-            customPrice = Math.round(parseFloat(customPriceRaw) * 100);
+            // Treat input as USD direct value
+            customPrice = parseFloat(customPriceRaw);
         }
     }
 
@@ -64,7 +64,8 @@ export async function updateSubscription(formData: FormData) {
             .update({
                 base_product_key: baseProductKey,
                 ai_product_key: aiProductKey,
-                custom_price_try: customPrice,
+                custom_price_usd: customPrice,
+                custom_price_try: null, // Clear old TRY price
                 updated_at: new Date().toISOString()
             })
             .eq("id", sub.id);
@@ -79,7 +80,7 @@ export async function updateSubscription(formData: FormData) {
                 status: 'active',
                 base_product_key: baseProductKey,
                 ai_product_key: aiProductKey,
-                custom_price_try: customPrice,
+                custom_price_usd: customPrice,
                 billing_cycle: 'monthly',
                 started_at: new Date().toISOString(),
                 current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 days
