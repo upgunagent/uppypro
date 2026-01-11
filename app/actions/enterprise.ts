@@ -100,14 +100,12 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
     }
 }
 
-export async function activateSubscription(tenantId: string, cardData: { cardHolder: string, cardNumber: string, inviteToken?: string }) {
+export async function activateSubscription(tenantId: string, cardData: { cardHolder: string, cardNumber: string, inviteToken?: string, amount?: number }) {
     const admin = createAdminClient();
 
+    // ... (existing payment method record logic)
     // 1. Save Payment Method (Mock)
     const lastFour = cardData.cardNumber.slice(-4);
-
-    // In a real scenario, we would call Iyzico/Stripe createCard here and get a token.
-    // We simulate getting a token "card_mock_..."
     const { error: pmError } = await admin.from("payment_methods").insert({
         tenant_id: tenantId,
         provider: 'iyzico',
@@ -123,8 +121,22 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
         return { error: "Ödeme yöntemi kaydedilemedi." };
     }
 
+    // 0. Record Payment (The Collection Logic)
+    if (cardData.amount) {
+        await admin.from("payments").insert({
+            tenant_id: tenantId,
+            amount: Math.round(cardData.amount * 100), // Save as cents (TRY)
+            amount_try: Math.round(cardData.amount * 100), // Legacy/Backup
+            currency: 'TRY',
+            status: 'success',
+            type: 'subscription_activation',
+            provider_payment_id: `mock_pay_${Date.now()}`
+        });
+    }
+
     // 2. Activate Subscription
     const now = new Date();
+    // ...
     const nextMonth = new Date(now);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
 

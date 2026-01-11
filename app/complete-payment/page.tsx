@@ -36,7 +36,35 @@ export default async function CompletePaymentPage() {
         return redirect("/panel");
     }
 
-    const price = subscription.custom_price_try ? subscription.custom_price_try / 100 : 0;
+    const { getUsdRate } = await import("@/lib/currency");
+    const usdRate = await getUsdRate();
+
+    // Determine USD Price
+    let priceUsd = 0;
+    if (subscription.custom_price_usd) {
+        priceUsd = Number(subscription.custom_price_usd);
+    } else if (subscription.custom_price_try) {
+        // Legacy fallback
+        priceUsd = subscription.custom_price_try / 100 / 34; // rough est or just hide
+    } else {
+        // Standard Pkg
+        // Assuming subscription has product keys
+        const isAi = subscription.ai_product_key === 'uppypro_ai';
+        const isEnterprise = subscription.ai_product_key === 'uppypro_enterprise';
+
+        // Fetch current pricing from DB or hardcode standard since we know them
+        // For robustness, let's hardcode standard $19 / $79 if not found, 
+        // to avoid another DB call here for simplicity, or fetch properly.
+        // Let's rely on standard values for now or fetch.
+        // Better: Fetch pricing.
+        const { data: prices } = await supabase.from("pricing").select("*").in("product_key", ["uppypro_inbox", "uppypro_ai"]);
+        const inboxUsd = prices?.find(p => p.product_key === 'uppypro_inbox')?.monthly_price_usd || 19;
+        const aiUsd = prices?.find(p => p.product_key === 'uppypro_ai')?.monthly_price_usd || 79;
+
+        priceUsd = isAi || isEnterprise ? aiUsd : inboxUsd;
+    }
+
+    const priceTry = Math.ceil(priceUsd * usdRate); // Round up to be safe/clean
     const packageName = getPackageName(subscription); // Should be UppyPro Kurumsal
 
     return (
@@ -53,14 +81,20 @@ export default async function CompletePaymentPage() {
                 <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 mb-8 flex justify-between items-center">
                     <div>
                         <div className="text-sm text-orange-800 font-medium">Aylık Tutar</div>
-                        <div className="text-2xl font-bold text-orange-900">{price.toLocaleString('tr-TR')} TL</div>
+                        <div className="text-2xl font-bold text-orange-900">
+                            ${priceUsd}
+                            <span className="text-sm font-normal text-orange-700 ml-2">
+                                (≈ {priceTry.toLocaleString('tr-TR')} TL)
+                            </span>
+                        </div>
+                        <div className="text-xs text-orange-600 mt-1">Güncel Kur: {usdRate.toFixed(2)} TL</div>
                     </div>
                     <div className="px-3 py-1 bg-white rounded text-xs font-bold text-orange-600 shadow-sm">
-                        Özel Fiyat
+                        {subscription.custom_price_usd ? "Özel Fiyat" : "Standart Paket"}
                     </div>
                 </div>
 
-                <PaymentForm tenantId={member.tenant_id} amount={price} />
+                <PaymentForm tenantId={member.tenant_id} amount={priceTry} />
 
                 <p className="text-center text-xs text-slate-400 mt-6">
                     © 2024 UPGUN AI Güvenli Ödeme Altyapısı

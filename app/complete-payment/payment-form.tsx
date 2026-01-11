@@ -29,7 +29,8 @@ export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: strin
             const res = await activateSubscription(tenantId, {
                 cardHolder,
                 cardNumber: cardNumber.replace(/\s/g, ''), // Remove spaces
-                inviteToken // Pass token to mark as used
+                inviteToken, // Pass token to mark as used
+                amount // Pass calculated TRY amount
             });
 
             if (res.error) {
