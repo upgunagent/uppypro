@@ -8,7 +8,6 @@ export type EnterpriseInviteData = {
     companyName: string;
     fullName: string;
     email: string;
-    email: string;
     phone: string;
     monthlyPrice: number; // In USD
 };
