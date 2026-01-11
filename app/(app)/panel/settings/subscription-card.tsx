@@ -4,7 +4,21 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Calendar, Package, Tag } from "lucide-react";
 import { getPackageName } from "@/lib/subscription-utils";
 
-export function SubscriptionCard({ subscription, price, customPrice }: { subscription: any, price: any, customPrice?: number }) {
+export function SubscriptionCard({
+    subscription,
+    price,
+    customPriceTry,
+    customPriceUsd,
+    priceUsd,
+    usdRate = 1
+}: {
+    subscription: any,
+    price: any,
+    customPriceTry?: number,
+    customPriceUsd?: number,
+    priceUsd?: number,
+    usdRate?: number
+}) {
     if (!subscription) {
         return (
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center">
@@ -16,14 +30,21 @@ export function SubscriptionCard({ subscription, price, customPrice }: { subscri
     const { status, billing_cycle, current_period_end } = subscription;
     const packageName = getPackageName(subscription);
 
-    // Format price: 249900 -> 2.499,00 TL
-    const finalPrice = customPrice
-        ? customPrice / 100
-        : (price ? price.monthly_price_try / 100 : 0);
+    // Format price: Prioritize USD
+    let formattedPrice = '-';
 
-    const formattedPrice = finalPrice > 0
-        ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice)
-        : '-';
+    if (customPriceUsd) {
+        formattedPrice = `$${customPriceUsd} (≈ ${(customPriceUsd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL)`;
+    } else if (customPriceTry) {
+        // Legacy TRY
+        formattedPrice = `${(customPriceTry / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
+    } else if (priceUsd) {
+        // Standard Plan USD
+        formattedPrice = `$${priceUsd} (≈ ${(priceUsd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL)`;
+    } else if (price?.monthly_price_try) {
+        // Fallback or Legacy Standard
+        formattedPrice = `${(price.monthly_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
+    }
 
     return (
         <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">

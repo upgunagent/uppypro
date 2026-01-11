@@ -79,12 +79,18 @@ export default async function SettingsPage() {
     const profileTab = <BillingForm billingInfo={billingInfo} profile={profile} />;
 
     // 3. Subscription Tab Content
+    const { getUsdRate } = await import("@/lib/currency");
+    const usdRate = await getUsdRate();
+
     const subscriptionTab = (
         <div className="space-y-6">
             <SubscriptionCard
                 subscription={subscription}
                 price={pricing}
-                customPrice={subscription?.custom_price_try}
+                customPriceTry={subscription?.custom_price_try}
+                customPriceUsd={subscription?.custom_price_usd}
+                priceUsd={pricing?.monthly_price_usd}
+                usdRate={usdRate}
             />
             <PaymentMethodsCard methods={paymentMethods || []} />
         </div>
