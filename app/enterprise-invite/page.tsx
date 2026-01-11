@@ -6,9 +6,9 @@ import { PaymentForm } from "@/app/complete-payment/payment-form";
 export default async function EnterpriseInvitePage({
     searchParams,
 }: {
-    searchParams: { token?: string };
+    searchParams: Promise<{ token?: string }>;
 }) {
-    const token = searchParams.token;
+    const { token } = await searchParams;
 
     if (!token) {
         return (

@@ -64,7 +64,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 
         // 6. Generate Invite Token (Custom, not Supabase magic link)
         const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
         await supabaseAdmin.from("enterprise_invite_tokens").insert({
             token,
