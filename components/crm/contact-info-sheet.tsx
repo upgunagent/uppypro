@@ -262,12 +262,14 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 </div>
 
                 {/* PROFILE FORM */}
-                <div className="space-y-4 mb-8">
+                <form className="space-y-4 mb-8" autoComplete="off" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-slate-500">Ad Soyad</label>
                         <div className="relative">
                             <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
+                                name="contact_full_name"
+                                autoComplete="off"
                                 value={formData.full_name}
                                 onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                 className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
@@ -281,6 +283,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <div className="relative">
                             <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
+                                name="contact_company_name"
+                                autoComplete="organization"
                                 value={formData.company_name}
                                 onChange={e => setFormData({ ...formData, company_name: e.target.value })}
                                 className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
@@ -294,6 +298,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <div className="relative">
                             <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
+                                name="contact_phone"
+                                autoComplete="off" // "tel" sometimes triggers aggressive autofill
                                 value={formData.phone}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                 className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
@@ -307,6 +313,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <div className="relative">
                             <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <Input
+                                name="contact_email"
+                                autoComplete="email"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
@@ -315,10 +323,10 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         </div>
                     </div>
 
-                    <Button onClick={handleSaveProfile} disabled={loading} className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg shadow-red-500/20 font-bold border-0">
+                    <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg shadow-red-500/20 font-bold border-0">
                         {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
                     </Button>
-                </div>
+                </form>
 
                 <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
 

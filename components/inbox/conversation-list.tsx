@@ -250,6 +250,9 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     <input
                         type="text"
+                        name="search_conversations"
+                        id="search_conversations"
+                        autoComplete="off"
                         placeholder="Ara (Ad, Telefon)..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
