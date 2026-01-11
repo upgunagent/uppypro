@@ -1,7 +1,6 @@
 import { LoginForm } from "./login-form";
 
-import Link from "next/link";
-// ... other imports
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export default async function LoginPage() {
     return (
@@ -99,7 +98,7 @@ export default async function LoginPage() {
 
                             <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur border border-slate-100 px-3 py-1.5 rounded-full shadow-sm text-[10px] font-medium text-slate-400 flex items-center gap-1.5">
                                 <CheckCircle2 size={12} className="text-green-500" />
-                                <Otomatik>Yanıtlandı</Otomatik>
+                                Otomatik Yanıtlandı
                             </div>
                         </div>
 
