@@ -5,17 +5,13 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ArrowLeft, MessageCircle, Instagram, CheckCircle2 } from "lucide-react";
 
+import { signInAction } from "@/app/actions/login";
+
 export default async function LoginPage({
     searchParams,
 }: {
     searchParams: { message: string };
 }) {
-    // Updated to use external server action to avoid runtime errors
-    const signIn = async (formData: FormData) => {
-        "use server";
-        const { signInAction } = await import("@/app/actions/login");
-        await signInAction(formData);
-    };
 
     return (
         <div className="flex min-h-screen w-full bg-white">
@@ -155,7 +151,7 @@ export default async function LoginPage({
                         </p>
                     </div>
 
-                    <form className="space-y-5" action={signIn}>
+                    <form className="space-y-5" action={signInAction}>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700" htmlFor="email">
                                 E-posta Adresi
