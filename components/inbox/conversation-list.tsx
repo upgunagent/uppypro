@@ -332,7 +332,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     )}
                                                 </div>
                                                 <div className={clsx("text-sm capitalize flex items-center gap-2", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white/90" : "text-slate-500")}>
-                                                    {conv.mode === 'BOT' && <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md uppercase tracking-wide font-bold">Ai</span>}
+                                                    {conv.mode === 'BOT' && <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md uppercase tracking-wide font-bold">AI</span>}
                                                     <span className="block truncate flex-1 font-medium opacity-90">
                                                         {(() => {
                                                             const txt = safeString(lastMsg?.text);
