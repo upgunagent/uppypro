@@ -183,17 +183,16 @@ export async function setPasswordEnterprise(inviteToken: string, password: strin
 
     if (!invite) return { error: "Geçersiz veya süresi dolmuş token." };
 
-    // 2. Find the user (tenant owner)
-    // We assume the invite creates a user with this email
-    // Or we find user linked to tenant
+    // 2. Find the user
+    // We fetch any member of this tenant (since it's a new enterprise, there's only one user)
     const { data: member } = await admin
         .from("tenant_members")
         .select("user_id")
         .eq("tenant_id", invite.tenant_id)
-        .eq("role", "owner")
+        .limit(1)
         .single();
 
-    if (!member) return { error: "Kullanıcı bulunamadı." };
+    if (!member) return { error: "Kullanıcı (Tenant Member) bulunamadı." };
 
     // 3. Update Password
     const { error: updateError } = await admin.auth.admin.updateUserById(
