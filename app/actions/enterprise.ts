@@ -66,7 +66,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-        await supabaseAdmin.from("invite_tokens").insert({
+        await supabaseAdmin.from("enterprise_invite_tokens").insert({
             token,
             tenant_id: tenant.id,
             email: data.email,
@@ -132,7 +132,7 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
 
     // 3. Mark invite token as used (if provided)
     if (cardData.inviteToken) {
-        await admin.from("invite_tokens").update({
+        await admin.from("enterprise_invite_tokens").update({
             used_at: new Date().toISOString()
         }).eq('token', cardData.inviteToken);
     }

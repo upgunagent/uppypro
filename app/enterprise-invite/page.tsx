@@ -24,7 +24,7 @@ export default async function EnterpriseInvitePage({
 
     // Validate token
     const { data: invite } = await adminDb
-        .from("invite_tokens")
+        .from("enterprise_invite_tokens")
         .select("*")
         .eq("token", token)
         .single();
