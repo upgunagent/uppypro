@@ -254,17 +254,22 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         if (!confirm("Bu müşteriyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
 
         setIsDeleting(true);
-        const supabase = createClient();
 
         try {
-            const { error } = await supabase
-                .from('customers')
-                .delete()
-                .eq('id', id);
+            // Import dynamically since we are inside a client component function and the action is in a file with "use server"
+            // Wait, standard import at top is better. I will add import statement in a separate replacement.
+            // But for now, let's just assume I added it or I'll use it if I can.
+            // Actually, I should check if I imported it. I haven't.
+            // I'll add the logic here assuming `deleteCustomerAction` is available, and then I'll add the import.
 
-            if (error) throw error;
+            const { deleteCustomerAction } = await import("@/app/actions/crm");
+            const res = await deleteCustomerAction(id);
 
-            alert("Müşteri başarıyla silindi.");
+            if (!res.success) {
+                throw new Error(res.error);
+            }
+
+            alert("Müşteri başarıyla silindi ve ilişkili sohbetlerin bağlantısı kaldırıldı.");
             router.push('/panel/customers');
         } catch (error: any) {
             alert("Silme hatası: " + error.message);
