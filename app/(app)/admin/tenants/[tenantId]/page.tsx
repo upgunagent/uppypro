@@ -151,7 +151,14 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                                         </div>
                                     )
                                     : sub?.custom_price_try
-                                        ? <span className="text-purple-600">{(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL (Özel)</span>
+                                        ? (
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-purple-600">${(sub.custom_price_try / 100 / usdRate).toLocaleString('en-US', { maximumFractionDigits: 2 })} (TR Bazlı)</span>
+                                                <span className="text-xs text-slate-500 font-normal">
+                                                    = {(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                                                </span>
+                                            </div>
+                                        )
                                         : (
                                             <div className="flex flex-col items-end">
                                                 <span>${isPro ? aiPriceUsd : inboxPriceUsd}</span>

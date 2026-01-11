@@ -101,7 +101,14 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                                             </span>
                                         )
                                         : subscription?.custom_price_try
-                                            ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
+                                            ? (
+                                                <span className="flex flex-col items-end">
+                                                    <span className="text-purple-600">${(subscription.custom_price_try / 100 / usdRate).toLocaleString('en-US', { maximumFractionDigits: 2 })} (TR Bazlı)</span>
+                                                    <span className="text-xs text-slate-500 font-normal">
+                                                        = {(subscription.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                                                    </span>
+                                                </span>
+                                            )
                                             : (
                                                 <span className="flex items-center gap-2">
                                                     <span>${subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd}</span>
