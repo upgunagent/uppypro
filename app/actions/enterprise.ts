@@ -80,37 +80,44 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const actionLink = linkData.properties.action_link;
 
         // 7. Send Email
-        const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
+        const logoUrl = `${baseUrl}/brand-logo-text.png`;
 
         await resend.emails.send({
             from: EMAIL_FROM,
             to: data.email,
             subject: 'UppyPro Kurumsal Abonelik Daveti',
             html: `
-                <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-                    Kurumsal üyeliğiniz oluşturuldu, aboneliği başlatmak için ödeme işlemini tamamlayın.
-                </div>
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    <img src="${logoUrl}" alt="UPGUN AI" style="height: 32px; margin-bottom: 24px;" />
-                    
-                    <h2 style="color: #1e293b; margin-bottom: 16px;">Kurumsal Üyeliğiniz Hazırlandı</h2>
-                    <p style="color: #64748b; margin-bottom: 24px;">
-                        Sayın <strong>${data.fullName}</strong>, <strong>${data.companyName}</strong> için UppyPro Kurumsal abonelik tanımlaması yapılmıştır.
-                    </p>
-
-                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
-                        <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Paket: <strong style="color: #0f172a;">UppyPro Kurumsal</strong></p>
-                        <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Aylık Ücret: <strong style="color: #0f172a;">${data.monthlyPrice.toLocaleString('tr-TR')} TL</strong></p>
-                    </div>
-
-                    <p style="color: #64748b; margin-bottom: 24px;">
-                        Aboneliğinizi başlatmak için aşağıdaki butona tıklayarak ödeme işlemini tamamlayınız.
-                    </p>
-
-                    <a href="${actionLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                        Aboneliği Oluştur
-                    </a>
-                </div>
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="utf-8"></head>
+                <body style="margin: 0; padding: 20px; font-family: sans-serif; background-color: #f8fafc;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                        <tr>
+                            <td style="background: white; padding: 40px; border-radius: 12px; text-align: center;">
+                                <img src="${logoUrl}" alt="UPGUN AI" style="height: 32px; margin-bottom: 24px;" />
+                                <h2 style="color: #1e293b; margin: 0 0 16px 0;">Kurumsal Üyeliğiniz Hazırlandı</h2>
+                                <p style="color: #64748b; margin: 0 0 24px 0;">
+                                    Sayın <strong>${data.fullName}</strong>, <strong>${data.companyName}</strong> için UppyPro Kurumsal abonelik tanımlandı.
+                                </p>
+                                <table width="100%" style="background: #f8fafc; border-radius: 8px; margin-bottom: 24px;">
+                                    <tr>
+                                        <td style="padding: 16px; text-align: left;">
+                                            <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Paket: <strong style="color: #0f172a;">UppyPro Kurumsal</strong></p>
+                                            <p style="margin: 4px 0; font-size: 14px; color: #64748b;">Aylık Ücret: <strong style="color: #0f172a;">${data.monthlyPrice.toLocaleString('tr-TR')} TL</strong></p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <p style="color: #64748b; margin: 0 0 24px 0;">
+                                    Aboneliğinizi başlatmak için aşağıdaki butona tıklayınız.
+                                </p>
+                                <a href="${actionLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                                    Aboneliği Oluştur
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
             `
         });
 
