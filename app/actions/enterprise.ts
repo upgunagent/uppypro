@@ -64,7 +64,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 
         // 6. Generate Magic Link (NOT recovery - that's for password reset)
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
-        const redirectUrl = `${baseUrl}/complete-payment`;
+        const redirectUrl = `${baseUrl}/auth/callback?next=/complete-payment`;
 
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
             type: "magiclink",
