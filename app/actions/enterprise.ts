@@ -63,12 +63,15 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         });
 
         // 6. Generate Magic/Recovery Link
-        // Redirect to /complete-payment page
+        // Redirect to /auth/callback which exchanges code and redirects to /complete-payment
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
+        const redirectUrl = `${baseUrl}/auth/callback?next=/complete-payment`;
+
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
             type: "recovery",
             email: data.email,
             options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment`
+                redirectTo: redirectUrl
             }
         });
 
