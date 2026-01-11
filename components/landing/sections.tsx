@@ -92,7 +92,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <p className="text-slate-100 text-sm mb-6">Küçük işletmeler ve butikler için.</p>
                         <div className="flex items-baseline gap-1 mb-6">
                             <span className="text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
-                            <span className="text-slate-200">/mo</span>
+                            <span className="text-slate-200">/ay</span>
                         </div>
                         <Link href="/uyelik?plan=base">
                             <Button className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
@@ -117,7 +117,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <h3 className="text-xl font-bold text-white mb-2">UppyPro AI</h3>
                         <p className="text-slate-400 text-sm mb-6">Otomasyon isteyen büyüyen markalar.</p>
                         <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)} TL</span>
+                            <span className="text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
                             <span className="text-slate-500">/ay</span>
                         </div>
                         <Link href="/uyelik?plan=ai_starter">
@@ -157,7 +157,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                     * Tüm fiyatlara KDV eklenecektir. Yıllık alımlarda %20 indirim uygulanır.
                 </p>
             </div>
-        </section>
+        </section >
     );
 }
 
