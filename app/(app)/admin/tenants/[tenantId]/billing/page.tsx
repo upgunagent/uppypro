@@ -28,6 +28,16 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
+    // Fetch Standard Pricing
+    const { data: prices } = await adminDb
+        .from("pricing")
+        .select("*")
+        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
+        .eq("billing_cycle", "monthly");
+
+    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 49500;
+    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+
     return (
         <div className="space-y-8 p-8 max-w-[1200px] mx-auto">
             <div>
@@ -42,7 +52,12 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* Subscription Management */}
                 <div className="space-y-6">
-                    <ManageSubscriptionForm tenantId={tenantId} subscription={subscription} />
+                    <ManageSubscriptionForm
+                        tenantId={tenantId}
+                        subscription={subscription}
+                        inboxPrice={inboxPrice}
+                        aiPrice={aiPrice}
+                    />
                 </div>
 
                 {/* Current Plan Details Read-only View */}
