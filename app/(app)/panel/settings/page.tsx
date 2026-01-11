@@ -43,13 +43,16 @@ export default async function SettingsPage() {
     ]);
 
     // Fetch pricing if subscription exists
+    // Fetch pricing if subscription exists
     let pricing = null;
-    if (subscription && subscription.ai_product_key) {
-        // Assuming AI product is the main priced item, or loop through both base and ai
+    if (subscription) {
+        // If ai_product_key is null, it's the standard Inbox plan
+        const productKey = subscription.ai_product_key || 'inbox';
+
         const { data } = await supabase.from("pricing")
             .select("*")
-            .eq("product_key", subscription.ai_product_key)
-            .eq("billing_cycle", subscription.billing_cycle)
+            .eq("product_key", productKey)
+            .eq("billing_cycle", subscription.billing_cycle || 'monthly')
             .limit(1)
             .maybeSingle();
         pricing = data;
