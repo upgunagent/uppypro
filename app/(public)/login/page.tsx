@@ -10,42 +10,11 @@ export default async function LoginPage({
 }: {
     searchParams: { message: string };
 }) {
+    // Updated to use external server action to avoid runtime errors
     const signIn = async (formData: FormData) => {
         "use server";
-
-        const email = formData.get("email") as string;
-        const password = formData.get("password") as string;
-        const supabase = await createClient();
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        if (error) {
-            return redirect("/login?message=Kullanıcı adı veya şifre hatalı.");
-        }
-
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (user) {
-            // Check for agency_admin role
-            const { createAdminClient } = await import("@/lib/supabase/admin"); // Dynamic import to avoid build cycle if any
-            const adminDb = createAdminClient();
-
-            const { data: membership } = await adminDb
-                .from("tenant_members")
-                .select("role")
-                .eq("user_id", user.id)
-                .eq("role", "agency_admin")
-                .maybeSingle();
-
-            if (membership) {
-                return redirect("/admin/tenants");
-            }
-        }
-
-        return redirect("/panel/inbox");
+        const { signInAction } = await import("@/app/actions/login");
+        await signInAction(formData);
     };
 
     return (
