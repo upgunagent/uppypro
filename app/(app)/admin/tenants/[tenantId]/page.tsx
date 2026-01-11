@@ -35,7 +35,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
 
     // 2. Fetch Settings Data
     const { data: channels } = await adminDb.from("channel_connections").select("*").eq("tenant_id", tenantId);
-    const { data: agentSettings } = await adminDb.from("agent_settings").select("*").eq("tenant_id", tenantId).single();
+    const { data: agentSettings } = await adminDb.from("agent_settings").select("*").eq("tenant_id", tenantId).maybeSingle();
     const { data: billingInfo } = await adminDb.from("billing_info").select("*").eq("tenant_id", tenantId).single();
 
     // 3. Fetch Subscription & Payments

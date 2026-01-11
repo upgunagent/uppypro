@@ -11,6 +11,7 @@ import { useState } from "react";
 
 export function AdminAiSettingsForm({ settings, tenantId }: { settings: any, tenantId: string }) {
     const [loading, setLoading] = useState(false);
+    const [enabled, setEnabled] = useState(settings?.ai_operational_enabled || false);
     const { toast } = useToast();
 
     async function handleSubmit(formData: FormData) {
@@ -53,8 +54,15 @@ export function AdminAiSettingsForm({ settings, tenantId }: { settings: any, ten
                         <p className="text-sm text-slate-500">İşletme için AI asistan davranışlarını yapılandırın.</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Label htmlFor="ai-mode" className="text-slate-700">Aktif</Label>
-                        <Switch id="ai-mode" name="aiEnabled" defaultChecked={settings?.ai_operational_enabled} />
+                        <Label htmlFor="ai-mode" className="text-slate-700 min-w-[3rem] text-right">
+                            {enabled ? "Aktif" : "Kapalı"}
+                        </Label>
+                        <Switch
+                            id="ai-mode"
+                            name="aiEnabled"
+                            checked={enabled}
+                            onCheckedChange={setEnabled}
+                        />
                     </div>
                 </div>
 
