@@ -141,16 +141,25 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                         <div className="flex justify-between items-center py-2 pt-4">
                             <span className="text-slate-500">Tanımlı Ücret</span>
                             <span className="font-bold text-lg text-slate-900">
-                                {sub?.custom_price_try
-                                    ? <span className="text-purple-600">{(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL (Özel)</span>
-                                    : (
+                                {sub?.custom_price_usd
+                                    ? (
                                         <div className="flex flex-col items-end">
-                                            <span>${isPro ? aiPriceUsd : inboxPriceUsd}</span>
+                                            <span className="text-purple-600">${sub.custom_price_usd} (Özel)</span>
                                             <span className="text-xs text-slate-500 font-normal">
-                                                ≈ {new Intl.NumberFormat('tr-TR').format((isPro ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL
+                                                ≈ {(sub.custom_price_usd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL
                                             </span>
                                         </div>
                                     )
+                                    : sub?.custom_price_try
+                                        ? <span className="text-purple-600">{(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL (Özel)</span>
+                                        : (
+                                            <div className="flex flex-col items-end">
+                                                <span>${isPro ? aiPriceUsd : inboxPriceUsd}</span>
+                                                <span className="text-xs text-slate-500 font-normal">
+                                                    ≈ {new Intl.NumberFormat('tr-TR').format((isPro ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL
+                                                </span>
+                                            </div>
+                                        )
                                 }
                             </span>
                         </div>

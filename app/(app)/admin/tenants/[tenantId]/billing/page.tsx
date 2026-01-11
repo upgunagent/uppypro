@@ -91,16 +91,25 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                             <div className="flex justify-between py-2">
                                 <span className="text-slate-500">Tanımlı Ücret</span>
                                 <span className="font-bold text-slate-900">
-                                    {subscription?.custom_price_try
-                                        ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
-                                        : (
-                                            <span className="flex items-center gap-2">
-                                                <span>${subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd}</span>
+                                    {subscription?.custom_price_usd
+                                        ? (
+                                            <span className="flex flex-col items-end">
+                                                <span>${subscription.custom_price_usd} (Özel)</span>
                                                 <span className="text-xs text-slate-500 font-normal">
-                                                    (≈ {new Intl.NumberFormat('tr-TR').format((subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL)
+                                                    ≈ {(subscription.custom_price_usd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL
                                                 </span>
                                             </span>
                                         )
+                                        : subscription?.custom_price_try
+                                            ? `${(subscription.custom_price_try / 100).toLocaleString('tr-TR')} TL (Özel)`
+                                            : (
+                                                <span className="flex items-center gap-2">
+                                                    <span>${subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd}</span>
+                                                    <span className="text-xs text-slate-500 font-normal">
+                                                        (≈ {new Intl.NumberFormat('tr-TR').format((subscription?.ai_product_key === 'uppypro_ai' ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL)
+                                                    </span>
+                                                </span>
+                                            )
                                     }
                                 </span>
                             </div>
