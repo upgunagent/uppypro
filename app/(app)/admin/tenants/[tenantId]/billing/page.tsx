@@ -41,10 +41,6 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
 
     const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
     const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
-
-    const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
-    const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
 
     return (
         <div className="space-y-8 p-8 max-w-[1200px] mx-auto">
