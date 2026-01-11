@@ -13,7 +13,8 @@ import {
     Building2,
     Instagram,
     MessageCircle,
-    UserCircle
+    UserCircle,
+    Tag
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -99,6 +100,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const adminLinks = [
         { href: "/admin/tenants", label: "İşletmeler", icon: Users },
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
+        { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
     ];
 
     // Helper for Sidebar Items

@@ -2,7 +2,19 @@ import { LandingHeader, LandingFooter } from "@/components/landing/layout";
 import { HeroSection } from "@/components/landing/hero";
 import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/components/landing/sections";
 
-export default function LandingPage() {
+import { createClient } from "@/lib/supabase/client";
+
+export default async function LandingPage() {
+    const supabase = createClient();
+    const { data: prices } = await supabase
+        .from("pricing")
+        .select("*")
+        .in("product_key", ["inbox", "uppypro_ai"])
+        .eq("billing_cycle", "monthly");
+
+    const inboxPrice = prices?.find(p => p.product_key === "inbox")?.monthly_price_try || 49500;
+    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 249900;
+
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-orange-100 selection:text-orange-900">
             <LandingHeader />
@@ -10,7 +22,7 @@ export default function LandingPage() {
                 <HeroSection />
                 <HowItWorks />
                 <FeaturesSection />
-                <PricingSection />
+                <PricingSection inboxPrice={inboxPrice} aiPrice={aiPrice} />
 
                 {/* FAQ Section */}
                 <section className="py-24 bg-slate-50" id="faq">
