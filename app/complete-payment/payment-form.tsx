@@ -10,12 +10,17 @@ import { useToast } from "@/components/ui/use-toast";
 
 export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: string, amount: number, inviteToken?: string }) {
     const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState<'payment' | 'password'>('payment');
     const router = useRouter();
     const { toast } = useToast();
 
-    // Simple state for inputs
+    // Payment state
     const [cardHolder, setCardHolder] = useState("Kurumsal Üye");
     const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
+
+    // Password state
+    const [password, setPassword] = useState("");
+    const [passwordConfirm, setPasswordConfirm] = useState("");
 
     const handlePay = async () => {
         setLoading(true);
@@ -31,14 +36,87 @@ export function PaymentForm({ tenantId, amount, inviteToken }: { tenantId: strin
                 toast({ variant: "destructive", title: "Hata", description: res.error });
                 setLoading(false);
             } else {
-                toast({ title: "Başarılı", description: "Ödeme alındı. Şifre ekranına yönlendiriliyorsunuz..." });
-                router.push(res.redirectUrl || "/update-password");
+                toast({ title: "Ödeme Başarılı", description: "Lütfen hesabınız için şifre belirleyin." });
+                setLoading(false);
+                setStep('password');
             }
         } catch (e) {
             console.error(e);
             setLoading(false);
         }
     };
+
+    const handleSetPassword = async () => {
+        if (password.length < 6) {
+            toast({ variant: "destructive", title: "Hata", description: "Şifre en az 6 karakter olmalıdır." });
+            return;
+        }
+        if (password !== passwordConfirm) {
+            toast({ variant: "destructive", title: "Hata", description: "Şifreler eşleşmiyor." });
+            return;
+        }
+        if (!inviteToken) {
+            toast({ variant: "destructive", title: "Hata", description: "Token bulunamadı." });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { setPasswordEnterprise } = await import("@/app/actions/enterprise");
+            const res = await setPasswordEnterprise(inviteToken, password);
+
+            if (res.error) {
+                toast({ variant: "destructive", title: "Hata", description: res.error });
+                setLoading(false);
+            } else {
+                toast({ title: "Hesap Oluşturuldu!", description: "Giriş sayfasına yönlendiriliyorsunuz..." });
+                router.push("/login?verified=true");
+            }
+        } catch (e) {
+            console.error(e);
+            toast({ variant: "destructive", title: "Hata", description: "Bir hata oluştu." });
+            setLoading(false);
+        }
+    };
+
+    if (step === 'password') {
+        return (
+            <div className="space-y-6">
+                <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-4">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-900">Ödeme Başarılı!</h2>
+                    <p className="text-sm text-slate-500">Hesabınıza erişmek için son adımı tamamlayın.</p>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Yeni Şifre</label>
+                        <Input
+                            type="password"
+                            placeholder="******"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Şifre Tekrar</label>
+                        <Input
+                            type="password"
+                            placeholder="******"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <Button onClick={handleSetPassword} disabled={loading} className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-lg">
+                    {loading ? <><Loader2 className="animate-spin mr-2" /> Kaydediliyor...</> : "Şifreyi Belirle ve Tamamla"}
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

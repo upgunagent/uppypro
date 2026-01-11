@@ -170,3 +170,41 @@ async function getUserEmail(admin: any, userId: string) {
     const { data: user } = await admin.auth.admin.getUserById(userId);
     return user?.user?.email;
 }
+
+export async function setPasswordEnterprise(inviteToken: string, password: string) {
+    const admin = createAdminClient();
+
+    // 1. Validate Token (again, to be safe)
+    const { data: invite } = await admin
+        .from("enterprise_invite_tokens")
+        .select("*")
+        .eq("token", inviteToken)
+        .single();
+
+    if (!invite) return { error: "Geçersiz veya süresi dolmuş token." };
+
+    // 2. Find the user (tenant owner)
+    // We assume the invite creates a user with this email
+    // Or we find user linked to tenant
+    const { data: member } = await admin
+        .from("tenant_members")
+        .select("user_id")
+        .eq("tenant_id", invite.tenant_id)
+        .eq("role", "owner")
+        .single();
+
+    if (!member) return { error: "Kullanıcı bulunamadı." };
+
+    // 3. Update Password
+    const { error: updateError } = await admin.auth.admin.updateUserById(
+        member.user_id,
+        { password: password }
+    );
+
+    if (updateError) return { error: updateError.message };
+
+    // 4. Ideally, verify email if not verified
+    await admin.auth.admin.updateUserById(member.user_id, { email_confirm: true });
+
+    return { success: true };
+}
