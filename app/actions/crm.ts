@@ -90,56 +90,59 @@ export async function fetchInstagramProfile(username: string): Promise<{ success
         console.error("fetchInstagramProfile Exception:", error);
         return { success: false, error: "Sunucu hatası: " + error.message };
     }
-    export async function deleteCustomerAction(customerId: string): Promise<{ success: boolean; error?: string }> {
-        try {
-            const supabase = await createClient();
-            const { data: { user } } = await supabase.auth.getUser();
+}
+}
 
-            if (!user) {
-                return { success: false, error: "Oturum açmanız gerekiyor." };
-            }
+export async function deleteCustomerAction(customerId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-            // 1. Verify User has access to this customer (via tenant)
-            // Ideally we should rely on RLS, but for actions we often do explicit checks or rely on RLS.
-            // Let's rely on RLS but we need to ensure we handle the FK constraints manually first.
-
-            // 2. Unlink Conversations (Set customer_id = NULL)
-            const { error: convoError } = await supabase
-                .from("conversations")
-                .update({ customer_id: null })
-                .eq("customer_id", customerId);
-
-            if (convoError) {
-                console.error("Error unlinking conversations:", convoError);
-                return { success: false, error: "İlişkili konuşmalar güncellenemedi." };
-            }
-
-            // 3. Delete Customer Notes
-            const { error: noteError } = await supabase
-                .from("customer_notes")
-                .delete()
-                .eq("customer_id", customerId);
-
-            if (noteError) {
-                console.error("Error deleting notes:", noteError);
-                return { success: false, error: "Müşteri notları silinemedi." };
-            }
-
-            // 4. Delete Customer
-            const { error: deleteError } = await supabase
-                .from("customers")
-                .delete()
-                .eq("id", customerId);
-
-            if (deleteError) {
-                console.error("Error deleting customer:", deleteError);
-                return { success: false, error: "Müşteri silinemedi: " + deleteError.message };
-            }
-
-            return { success: true };
-
-        } catch (error: any) {
-            console.error("deleteCustomerAction Error:", error);
-            return { success: false, error: "Bir hata oluştu: " + error.message };
+        if (!user) {
+            return { success: false, error: "Oturum açmanız gerekiyor." };
         }
+
+        // 1. Verify User has access to this customer (via tenant)
+        // Ideally we should rely on RLS, but for actions we often do explicit checks or rely on RLS.
+        // Let's rely on RLS but we need to ensure we handle the FK constraints manually first.
+
+        // 2. Unlink Conversations (Set customer_id = NULL)
+        const { error: convoError } = await supabase
+            .from("conversations")
+            .update({ customer_id: null })
+            .eq("customer_id", customerId);
+
+        if (convoError) {
+            console.error("Error unlinking conversations:", convoError);
+            return { success: false, error: "İlişkili konuşmalar güncellenemedi." };
+        }
+
+        // 3. Delete Customer Notes
+        const { error: noteError } = await supabase
+            .from("customer_notes")
+            .delete()
+            .eq("customer_id", customerId);
+
+        if (noteError) {
+            console.error("Error deleting notes:", noteError);
+            return { success: false, error: "Müşteri notları silinemedi." };
+        }
+
+        // 4. Delete Customer
+        const { error: deleteError } = await supabase
+            .from("customers")
+            .delete()
+            .eq("id", customerId);
+
+        if (deleteError) {
+            console.error("Error deleting customer:", deleteError);
+            return { success: false, error: "Müşteri silinemedi: " + deleteError.message };
+        }
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("deleteCustomerAction Error:", error);
+        return { success: false, error: "Bir hata oluştu: " + error.message };
     }
+}
