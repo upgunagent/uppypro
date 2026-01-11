@@ -91,7 +91,7 @@ export async function fetchInstagramProfile(username: string): Promise<{ success
         return { success: false, error: "Sunucu hatası: " + error.message };
     }
 }
-}
+
 
 export async function deleteCustomerAction(customerId: string): Promise<{ success: boolean; error?: string }> {
     try {
