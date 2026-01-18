@@ -30,6 +30,7 @@ interface Customer {
     full_name: string;
     company_name?: string;
     email?: string;
+    phone?: string;
 }
 
 export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenantId, defaultCustomerId, profile }: EventDialogProps) {
@@ -55,7 +56,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                 const supabase = createClient();
                 const { data } = await supabase
                     .from("customers")
-                    .select("id, full_name, company_name, email")
+                    .select("id, full_name, company_name, email, phone")
                     .eq("tenant_id", tenantId)
                     .order("full_name");
                 if (data) setCustomers(data);
@@ -444,6 +445,24 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                             </PopoverContent>
                         </Popover>
                     </div>
+
+                    {/* Show Selected Customer Info (Read Only) */}
+                    {customerId !== "manual" && (
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-md border border-slate-100">
+                            <div className="space-y-1">
+                                <label className="text-xs uppercase font-semibold text-slate-400">Telefon</label>
+                                <div className="text-sm font-medium text-slate-700">
+                                    {customers.find(c => c.id === customerId)?.phone || "-"}
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs uppercase font-semibold text-slate-400">E-posta</label>
+                                <div className="text-sm font-medium text-slate-700 truncate" title={customers.find(c => c.id === customerId)?.email}>
+                                    {customers.find(c => c.id === customerId)?.email || "-"}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {customerId === "manual" && (
                         <>
