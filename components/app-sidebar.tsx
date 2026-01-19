@@ -102,6 +102,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/tenants", label: "İşletmeler", icon: Users },
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
         { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
+        { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
     ];
 
     // Helper for Sidebar Items
