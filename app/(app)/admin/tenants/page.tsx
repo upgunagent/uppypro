@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { TenantActions } from "./tenant-actions";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function TenantListPage() {
     const supabase = await createClient();
