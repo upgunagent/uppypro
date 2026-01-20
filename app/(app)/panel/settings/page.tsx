@@ -6,6 +6,7 @@ import { BillingForm } from "./billing-form";
 import { AiSettingsForm } from "./ai-settings-form";
 import { SubscriptionCard } from "./subscription-card";
 import { PaymentMethodsCard } from "./payment-methods-card";
+import { PasswordChangeCard } from "./password-change-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
@@ -93,6 +94,7 @@ export default async function SettingsPage() {
                 usdRate={usdRate}
             />
             <PaymentMethodsCard methods={paymentMethods || []} />
+            <PasswordChangeCard />
         </div>
     );
 

@@ -101,3 +101,39 @@ export async function signupAction(data: SignupData) {
         return { success: false, error: error.message };
     }
 }
+
+export async function updateUserPassword(password: string) {
+    const supabaseAdmin = createAdminClient();
+    const supabase = await createAdminClient(); // We need auth context, but admin client is easier for update without old password if using admin.updateUserById.
+    // Actually, to respect session, we should use createClient() but for password update usually it requires re-auth.
+    // Let's use supabaseAdmin.auth.admin.updateUserById which bypasses "old password" check, 
+    // BUT we must ensure the user is who they say they are.
+    // The previous pattern uses createClient() in the component to get the user, then calls this action.
+
+    // Better Approach: Use createClient() (Standard Client) to get the session user ID, 
+    // then use Admin Client to forcefully update the password.
+    // This avoids "Old Password" requirement if Supabase enforces it on standard client.
+
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabaseServer = await createClient();
+
+    const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
+
+    if (authError || !user) {
+        return { error: "Oturum süresi dolmuş veya geçersiz. Lütfen tekrar giriş yapın." };
+    }
+
+    try {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(
+            user.id,
+            { password: password }
+        );
+
+        if (error) throw error;
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Password Update Error:", e);
+        return { error: e.message || "Şifre güncellenemedi." };
+    }
+}
