@@ -1,40 +1,139 @@
 "use client";
 
-import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send } from "lucide-react";
+import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+import { EnterpriseContactModal } from "./enterprise-contact-modal";
 
 export function FeaturesSection() {
+    const [activeFeature, setActiveFeature] = useState<number | null>(null);
+
     const features = [
         {
+            id: 0,
             icon: <MessageSquare className="w-6 h-6 text-white" />,
             color: "bg-blue-500",
             title: "Tek Inbox",
-            desc: "WhatsApp ve Instagram tek bir ekranda. Sekmeler arası kaybolmaya son."
+            desc: "WhatsApp ve Instagram tek bir ekranda. Uygulamalar arasında kaybolmaya son.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Müşterileriniz Her Yerde, Siz Tek Ekranda Olun</h4>
+                    <p>
+                        WhatsApp Business’ta kaybolan mesajlar, Instagram DM kutusunda gözden kaçan siparişler ve sürekli uygulama değiştirmekten yorulan ekibiniz... Bu karmaşa size müşteri kaybettiriyor olabilir. Uppypro Inbox, dağınık mesaj kutularını satış odaklı bir CRM deneyimine dönüştürür.
+                    </p>
+
+                    <h5 className="text-lg font-semibold text-orange-600 mt-4">Uppypro Tek Inbox ile tanışın:</h5>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Tüm Kanallar Tek Merkezde:</strong> WhatsApp ve Instagram mesajlarınızı tek bir panelde birleştirin. Artık hiçbir bildirim gözden kaçmayacak.</li>
+                        <li><strong>Yapay Zeka & İnsan İş Birliği:</strong> Sıradan bir gelen kutusu değil; akıllı bir asistan. Yapay zekanız müşterileri karşılarken, siz kritik anlarda "Devral" butonuyla sohbete dahil olun.</li>
+                        <li><strong>Ekip Yönetimi:</strong> Personeliniz kişisel telefonlarından değil, kurumsal panelinizden güvenle yanıt versin.</li>
+                    </ul>
+                    <p className="font-medium text-slate-900 border-l-4 border-orange-500 pl-4 italic">
+                        Mesaj trafiğini yönetmeyi bırakın, onu satışa dönüştürmeye başlayın.
+                    </p>
+                </div>
+            ),
+            image: "/features/inbox-dashboard.png"
         },
         {
+            id: 1,
+            icon: <Calendar className="w-6 h-6 text-white" />,
+            color: "bg-cyan-500",
+            title: "Takvim Uygulaması",
+            desc: "Müşteri randevularınızı kolayca planlayın ve takip edin. AI entegrasyonu ile randevuları otomatikleştirin.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Randevu Süreçlerinizi Otopilota Alın</h4>
+                    <p>
+                        "Ne zaman müsaitsiniz?" döngüsüne ve unutulan randevulara son verin. Uppypro Takvim, sohbeti saniyeler içinde kesinleşmiş bir randevuya dönüştürür.
+                    </p>
+
+                    <h5 className="text-lg font-semibold text-orange-600 mt-4">Neler Yapabilirsiniz?</h5>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Sohbet İçinde Anında Planlama:</strong> Uygulamadan çıkmadan, müşteriyle konuşurken tek tıkla randevuyu oluşturun.</li>
+                        <li><strong>Otomatik CRM Kaydı:</strong> Randevu oluşturulan her müşteri için sistem otomatik bir "Müşteri Kartı" açar ve veritabanınıza işler. Müşteri listeniz kendiliğinden büyür.</li>
+                        <li><strong>Akıllı Bildirimler:</strong> Randevu kesinleştiğinde onay maili otomatik gider; böylece "gelmedi" (no-show) oranları azalır.</li>
+                        <li><strong>UppyPro AI ve Kurumsal Paket Ayrıcalığı:</strong> Siz uyurken bile randevu alın! Yapay zeka asistanımız, gelen taleplere göre randevu oluşturur, değişiklik yapar ve iptal süreçlerini sizin yerinize, hatasız yönetir.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/calendar-dashboard.png"
+        },
+        {
+            id: 2,
             icon: <Zap className="w-6 h-6 text-white" />,
             color: "bg-orange-500",
             title: "AI Otomasyon",
-            desc: "Standart sorulara saniyeler içinde doğal dilde yanıt verin. 7/24 aktif."
+            desc: "7/24 aktif yapay zeka asistanınız tüm mesajlarınıza anında yanıt versin",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">İşletmenizin Hiç Uyumayan En Çalışkan Personeli</h4>
+                    <p>
+                        Müşterileriniz saat kaçta yazarsa yazsın, onları karşılayan, tanıyan ve satışa yönlendiren bir asistanınız var. UppyPro AI ve Kurumsal paketlere özel geliştirilen Dijital Asistan, işletmenizin operasyonel yükünü sırtlar.
+                    </p>
+
+                    <h5 className="text-lg font-semibold text-orange-600 mt-4">Neler Yapar?</h5>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>7/24 Kesintisiz Hizmet:</strong> Siz ve ekibiniz uyurken, dijital asistanınız Instagram ve WhatsApp’tan gelen soruları saniyeler içinde yanıtlar, potansiyel müşterileri kaçırmaz.</li>
+                        <li><strong>Tam Yetkili Randevu Yönetimi:</strong> Sadece boşluk doldurmaz; randevu oluşturur, değişiklik taleplerini yönetir ve iptalleri takvime işler. Hata yapmaz, çifte rezervasyona izin vermez.</li>
+                        <li><strong>Satış ve CRM Uzmanı:</strong> Müşteriyle sohbet ederken iletişim bilgilerini toplar, otomatik olarak CRM’e kaydeder ve satış hunisine dahil eder.</li>
+                        <li><strong>İşletmenize Özel Eğitim:</strong> Firmanızın kurallarını, fiyatlarını ve dilini öğrenir. Robotik değil, personeliniz gibi doğal konuşur.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/ai-dashboard.png"
         },
         {
+            id: 3,
             icon: <Users className="w-6 h-6 text-white" />,
             color: "bg-green-500",
             title: "Müşteri Kartı",
-            desc: "Müşteri bilgilerini, notlarını ve geçmişini sohbet anında görün."
+            desc: "Mesaj yazan tüm müşterilerinizi kolayca kaydedin, notlar alın.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Müşterinizi Tanıyın, Her Sohbeti Satışa Dönüştürün</h4>
+                    <p>
+                        Anonim mesajlaşmalara son verin. Uppypro, sohbet başladığı anda karşınızdaki kişinin kim olduğunu size gösterir.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Anında Kimlik Tespiti:</strong> Mesaj geldiği an, müşteri kartını chat ekranının yanında tek tıkla oluşturun. Instagram'dan yazıyorsa, profil fotoğrafı ve adı otomatik olarak karta işlenir.</li>
+                        <li><strong>Kurumsal Hafıza:</strong> "Daha önce ne almıştı?" sorusunu düşünmeyin. Müşterinin geçmiş randevularını, satın aldığı hizmetleri, aldığınız notları ve tarihleri anında görün.</li>
+                        <li><strong>Akıllı Notlar & Takip:</strong> Müşteriyle ilgili kritik detayları not alın. Bir sonraki görüşmede ona ismiyle hitap edin ve ihtiyaçlarına özel öneriler sunun.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/crm-dashboard.jpg"
         },
         {
+            id: 4,
             icon: <ShieldCheck className="w-6 h-6 text-white" />,
             color: "bg-purple-500",
             title: "Devral / Devret",
-            desc: "AI ile müşteri arasında tam kontrol. İstediğiniz an sohbete girin."
+            desc: "AI Asistanınız mesajları yanıtlarken istediğinizde araya girin sonra tekrar AI'ye devredin.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Kontrol Sizde, Özgürlük Yapay Zekada</h4>
+                    <p>
+                        Yapay zekanın hızını, insan zekasının tecrübesiyle birleştirin. UppyPro AI ve Kurumsal paketlerle sunulan "Devral/Devret" özelliği, size iletişimde sonsuz bir esneklik sunar.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Canlı İzleme:</strong> Arkanıza yaslanın ve dijital asistanınızın müşterilerle nasıl satış odaklı konuştuğunu canlı olarak izleyin.</li>
+                        <li><strong>Tek Tıkla Müdahale:</strong> Kritik bir soru mu geldi? "Devral" butonuna basarak sohbeti yapay zekadan alın, siz yanıtlayın. İşiniz bitince tekrar "Devret" diyerek asistanınıza bırakın.</li>
+                        <li><strong>Esnek Çalışma Modu:</strong> İsterseniz mesai saatlerinde siz, akşamları asistanınız çalışsın; isterseniz 7/24 asistanınız yönetsin, siz sadece denetleyin.</li>
+                        <li><strong>Akıllı Yönlendirme:</strong> Müşteri ısrarla bir yetkiliyle görüşmek isterse, asistanınız inatlaşmaz; iletişim bilgilerini alır, notunu düşer ve size "Müşteri sizi bekliyor" bildirimi gönderir.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/handover-dashboard.png"
         }
     ];
 
     return (
-        <section id="features" className="py-24 bg-slate-50">
+        <section id="features" className="py-24 bg-slate-50 scroll-mt-20">
             <div className="container mx-auto px-4">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-3xl font-bold text-slate-900 mb-4">Mesaj Yönetimini Satışa Çevirin</h2>
@@ -43,19 +142,105 @@ export function FeaturesSection() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {features.map((f, i) => (
-                        <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow duration-300 group">
-                            <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-6 shadow-lg transform group-hover:scale-110 transition-transform", f.color)}>
+                        <motion.div
+                            key={i}
+                            onClick={() => setActiveFeature(activeFeature === i ? null : i)}
+                            animate={{
+                                scale: activeFeature === i ? 1.05 : 1,
+                                borderColor: activeFeature === i ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                zIndex: activeFeature === i ? 10 : 0
+                            }}
+                            whileHover={{
+                                x: [0, -5, 5, -5, 5, 0],
+                                transition: { duration: 0.5 }
+                            }}
+                            className={clsx(
+                                "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                activeFeature === i
+                                    ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                    : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                            )}
+                        >
+                            <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === i ? "scale-110" : "group-hover:scale-105")}>
                                 {f.icon}
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
-                            <p className="text-slate-500 leading-relaxed text-sm">
+                            <h3 className={clsx("text-lg font-bold mb-2", activeFeature === i ? "text-orange-600" : "text-slate-900")}>
+                                {f.title}
+                            </h3>
+                            <p className="text-slate-500 text-xs leading-relaxed">
                                 {f.desc}
                             </p>
-                        </div>
+
+                            {/* Active Indicator Arrow */}
+                            {activeFeature === i && (
+                                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                            )}
+                        </motion.div>
                     ))}
                 </div>
+
+                {/* Shared Detail Panel */}
+                <AnimatePresence mode="wait">
+                    {activeFeature !== null && (
+                        <motion.div
+                            key="detail-panel"
+                            initial={{ opacity: 0, y: -20, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: "auto" }}
+                            exit={{ opacity: 0, y: -20, height: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden mt-8"
+                        >
+                            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+                                <div className="grid lg:grid-cols-2 gap-0">
+                                    {/* Image Section */}
+                                    <div className="bg-slate-50 p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100">
+                                        <motion.img
+                                            key={features[activeFeature].image}
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ duration: 0.4, delay: 0.1 }}
+                                            src={features[activeFeature].image}
+                                            alt={features[activeFeature].title}
+                                            className="rounded-xl shadow-lg max-h-[300px] w-auto object-contain"
+                                        />
+                                    </div>
+
+                                    {/* Content Section */}
+                                    <div className="p-8 lg:p-12 flex flex-col justify-center">
+                                        <motion.div
+                                            key={features[activeFeature].title}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.4, delay: 0.2 }}
+                                        >
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                    {features[activeFeature].icon}
+                                                </div>
+                                                <h3 className="text-2xl font-bold text-slate-900">
+                                                    {features[activeFeature].title}
+                                                </h3>
+                                            </div>
+
+                                            <div className="text-slate-600 text-lg leading-relaxed mb-8">
+                                                {features[activeFeature].longDesc}
+                                            </div>
+
+                                            <button
+                                                onClick={() => setActiveFeature(null)}
+                                                className="text-sm font-bold text-slate-400 hover:text-orange-600 flex items-center gap-2 transition-colors"
+                                            >
+                                                Kapat <span className="text-xs">✕</span>
+                                            </button>
+                                        </motion.div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </section>
     );
@@ -65,6 +250,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
     // Default values if not provided (fallback)
     const inboxPriceVal = inboxPrice || 19;
     const aiPriceVal = aiPrice || 79;
+    const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
 
     const formatPrice = (p: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(p);
 
@@ -102,8 +288,9 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <ul className="space-y-4 text-sm text-slate-100">
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Temel Müşteri Kartı</li>
-                            <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-slate-300 flex-shrink-0" /> AI Asistan Desteği (Yok)</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı Oluşturma</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Takvim Uygulaması (Randevu oluşturma)</li>
+                            <li className="flex items-center gap-3 text-slate-300"><X className="w-5 h-5 text-red-500 flex-shrink-0" /> AI Asistan Entegrasyonu</li>
                         </ul>
                     </div>
 
@@ -126,8 +313,10 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                             </Button>
                         </Link>
                         <ul className="space-y-4 text-sm text-slate-300">
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Her şey dahil (Inbox)</span></li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Bilgi Veren AI Asistan</span></li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Her şey dahil Inbox Paketi</span></li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">AI Asistan Entegrasyonu</span></li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> AI Takvim Kontrolü</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> AI destekli CRM/ Müşteri Kartı Oluşturma</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> 7/24 Anında Yanıt</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> Devral / Teslim Et Modu</li>
                         </ul>
@@ -141,14 +330,12 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <div className="flex items-baseline gap-1 mb-6">
                             <span className="text-3xl font-bold text-white">Teklif Al</span>
                         </div>
-                        <Button className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
+                        <Button onClick={() => setIsEnterpriseModalOpen(true)} className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
                             İletişime Geç
                         </Button>
                         <ul className="space-y-4 text-sm text-slate-200">
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Sınırsız Mesaj Hacmi</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Özel CRM Entegrasyonu</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Özel AI Eğitimi</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> 7/24 Öncelikli Destek</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> <span className="font-medium">Her şey dahil UppyPro AI Paketi</span></li>
+                            <li className="flex items-start gap-3"><Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" /> <span>Firmanız için özel tasarlanan otomasyon hizmetleri. (Stok Kontrolü, Ürün Satışı, Çoklu Rezervasyon/Randevu vb.)</span></li>
                         </ul>
                     </div>
                 </div>
@@ -157,6 +344,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                     * Tüm fiyatlara KDV eklenecektir. Yıllık alımlarda %20 indirim uygulanır.
                 </p>
             </div>
+            <EnterpriseContactModal open={isEnterpriseModalOpen} onOpenChange={setIsEnterpriseModalOpen} />
         </section >
     );
 }
