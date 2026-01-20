@@ -184,6 +184,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { TURKEY_LOCATIONS } from "@/lib/locations";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { KvkkContent, TermsContent } from "./legal-contents";
 
 export function StepBillingDetails({ data, updateData, onNext, onBack }: StepProps) {
     const isCorporate = data.billingType === "corporate";
@@ -351,6 +360,18 @@ export function StepBillingDetails({ data, updateData, onNext, onBack }: StepPro
 // 5. Agreements
 export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) {
     const isValid = data.kvkk && data.terms;
+    const [showKvkk, setShowKvkk] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
+
+    const handleKvkkAccept = () => {
+        updateData("kvkk", true);
+        setShowKvkk(false);
+    };
+
+    const handleTermsAccept = () => {
+        updateData("terms", true);
+        setShowTerms(false);
+    };
 
     return (
         <div className="space-y-6">
@@ -363,14 +384,30 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 <div className="flex items-start gap-3">
                     <Checkbox id="kvkk" checked={data.kvkk} onCheckedChange={(c) => updateData("kvkk", c === true)} />
                     <Label htmlFor="kvkk" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
-                        <span className="font-bold text-slate-900 underline">KVKK Aydınlatma Metni</span>'ni okudum, anladım ve kişisel verilerimin işlenmesini onaylıyorum.
+                        <span
+                            className="font-bold text-slate-900 underline hover:text-orange-600 transition-colors"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setShowKvkk(true);
+                            }}
+                        >
+                            KVKK Aydınlatma Metni
+                        </span>'ni okudum, anladım ve kişisel verilerimin işlenmesini onaylıyorum.
                     </Label>
                 </div>
                 <hr className="border-slate-200" />
                 <div className="flex items-start gap-3">
                     <Checkbox id="terms" checked={data.terms} onCheckedChange={(c) => updateData("terms", c === true)} />
                     <Label htmlFor="terms" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
-                        <span className="font-bold text-slate-900 underline">Kullanıcı Sözleşmesi</span>'ni okudum ve kabul ediyorum.
+                        <span
+                            className="font-bold text-slate-900 underline hover:text-orange-600 transition-colors"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setShowTerms(true);
+                            }}
+                        >
+                            Kullanıcı Sözleşmesi
+                        </span>'ni okudum ve kabul ediyorum.
                     </Label>
                 </div>
                 <hr className="border-slate-200" />
@@ -381,6 +418,38 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                     </Label>
                 </div>
             </div>
+
+            {/* KVKK Modal */}
+            <Dialog open={showKvkk} onOpenChange={setShowKvkk}>
+                <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>KVKK Aydınlatma Metni</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                        <KvkkContent />
+                    </div>
+                    <DialogFooter className="pt-4 border-t border-slate-100">
+                        <Button variant="outline" onClick={() => setShowKvkk(false)}>Kapat</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleKvkkAccept}>Okudum, Anladım</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Terms Modal */}
+            <Dialog open={showTerms} onOpenChange={setShowTerms}>
+                <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Kullanıcı Sözleşmesi</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                        <TermsContent />
+                    </div>
+                    <DialogFooter className="pt-4 border-t border-slate-100">
+                        <Button variant="outline" onClick={() => setShowTerms(false)}>Kapat</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleTermsAccept}>Okudum, Kabul Ediyorum</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="flex gap-4">
                 <Button variant="outline" onClick={onBack} className="w-full">Geri</Button>

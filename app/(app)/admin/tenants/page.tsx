@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
-import { Settings, ShieldAlert, MoreHorizontal } from "lucide-react";
-import { redirect } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -14,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { TenantActions } from "./tenant-actions";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 export default async function TenantListPage() {
     const supabase = await createClient();
@@ -69,6 +68,7 @@ export default async function TenantListPage() {
                             <TableHead className="w-[300px]">İşletme Adı</TableHead>
                             <TableHead>Paket</TableHead>
                             <TableHead>Durum</TableHead>
+                            <TableHead>Kam. Onay</TableHead>
                             <TableHead>Kayıt Tarihi</TableHead>
                             <TableHead className="text-right">İşlemler</TableHead>
                         </TableRow>
@@ -108,6 +108,15 @@ export default async function TenantListPage() {
                                         <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
                                             {sub?.status === 'active' ? "Aktif" : (sub?.status || "Pasif")}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center justify-center w-8">
+                                            {tenant.marketing_consent ? (
+                                                <CheckCircle2 className="text-green-600 w-5 h-5" />
+                                            ) : (
+                                                <XCircle className="text-red-400 w-5 h-5" />
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-slate-500">
                                         {new Date(tenant.created_at).toLocaleDateString("tr-TR")}

@@ -41,7 +41,10 @@ export async function completeSignupWithInvite(data: WizardData, cardData?: { ca
 
         const { data: tenant, error: tenantError } = await supabaseAdmin
             .from("tenants")
-            .insert({ name: tenantName })
+            .insert({
+                name: tenantName,
+                marketing_consent: data.marketing || false
+            })
             .select()
             .single();
 
