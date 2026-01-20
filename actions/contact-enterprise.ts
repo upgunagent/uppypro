@@ -6,49 +6,49 @@ import { z } from 'zod';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const contactSchema = z.object({
-    fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır"),
-    companyName: z.string().min(2, "Firma Adı en az 2 karakter olmalıdır"),
-    phone: z.string().min(10, "Geçerli bir telefon numarası giriniz"),
-    email: z.string().email("Geçerli bir e-posta adresi giriniz"),
-    description: z.string().min(10, "Lütfen talebinizi biraz daha detaylandırın"),
-    consent: z.boolean().refine((val) => val === true, {
-        message: "KVKK ve Gizlilik Sözleşmesini onaylamanız gerekmektedir",
-    }),
+  fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır"),
+  companyName: z.string().min(2, "Firma Adı en az 2 karakter olmalıdır"),
+  phone: z.string().min(10, "Geçerli bir telefon numarası giriniz"),
+  email: z.string().email("Geçerli bir e-posta adresi giriniz"),
+  description: z.string().min(10, "Lütfen talebinizi biraz daha detaylandırın"),
+  consent: z.boolean().refine((val) => val === true, {
+    message: "KVKK ve Gizlilik Sözleşmesini onaylamanız gerekmektedir",
+  }),
 });
 
 export type ContactState = {
-    success?: boolean;
-    error?: string;
-    errors?: Record<string, string[]>;
+  success?: boolean;
+  error?: string;
+  errors?: Record<string, string[]>;
 }
 
 export async function sendEnterpriseContact(prevState: ContactState, formData: FormData): Promise<ContactState> {
-    const rawData = {
-        fullName: formData.get('fullName'),
-        companyName: formData.get('companyName'),
-        phone: formData.get('phone'),
-        email: formData.get('email'),
-        description: formData.get('description'),
-        consent: formData.get('consent') === 'on',
+  const rawData = {
+    fullName: formData.get('fullName'),
+    companyName: formData.get('companyName'),
+    phone: formData.get('phone'),
+    email: formData.get('email'),
+    description: formData.get('description'),
+    consent: formData.get('consent') === 'on',
+  };
+
+  const validatedFields = contactSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      errors: validatedFields.error.flatten().fieldErrors,
     };
+  }
 
-    const validatedFields = contactSchema.safeParse(rawData);
+  const { fullName, companyName, phone, email, description } = validatedFields.data;
 
-    if (!validatedFields.success) {
-        return {
-            success: false,
-            errors: validatedFields.error.flatten().fieldErrors,
-        };
-    }
-
-    const { fullName, companyName, phone, email, description } = validatedFields.data;
-
-    try {
-        await resend.emails.send({
-            from: 'UppyPro Contact <onboarding@resend.dev>', // Update this if you have a verified domain
-            to: 'info@upgunai.com',
-            subject: `🚀 Yeni Kurumsal Müşteri Talebi: ${companyName}`,
-            html: `
+  try {
+    await resend.emails.send({
+      from: 'UppyPro Contact <onboarding@resend.dev>', // Update this if you have a verified domain
+      to: 'upgunagent@gmail.com',
+      subject: `🚀 Yeni Kurumsal Müşteri Talebi: ${companyName}`,
+      html: `
         <div style="font-family: sans-serif; background-color: #f9fafb; padding: 20px;">
           <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="background-color: #4f46e5; padding: 20px; text-align: center;">
@@ -73,11 +73,11 @@ export async function sendEnterpriseContact(prevState: ContactState, formData: F
           </div>
         </div>
       `,
-        });
+    });
 
-        return { success: true };
-    } catch (error) {
-        console.error('Email sending failed:', error);
-        return { success: false, error: 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.' };
-    }
+    return { success: true };
+  } catch (error) {
+    console.error('Email sending failed:', error);
+    return { success: false, error: 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.' };
+  }
 }
