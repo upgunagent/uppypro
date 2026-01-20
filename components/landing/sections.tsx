@@ -273,7 +273,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                 <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
                     {/* Basic Plan */}
                     {/* Basic Plan */}
-                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all relative group text-white">
+                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-8 rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
                         <h3 className="text-xl font-bold text-white mb-2">UppyPro Inbox</h3>
                         <p className="text-slate-100 text-sm mb-6">Küçük işletmeler ve butikler için.</p>
                         <div className="flex items-baseline gap-1 mb-6">
@@ -295,7 +295,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                     </div>
 
                     {/* AI Plan (Highlighted) */}
-                    <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl ring-4 ring-orange-500/20 relative transform lg:-translate-y-4">
+                    <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl ring-4 ring-orange-500/20 relative transform lg:-translate-y-4 hover:scale-105 duration-300 transition-all">
                         <div className="absolute top-0 right-0 left-0 -mt-4 flex justify-center">
                             <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
                                 En Çok Tercih Edilen
@@ -324,7 +324,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
 
                     {/* Enterprise Plan */}
                     {/* Enterprise Plan */}
-                    <div className="bg-gradient-to-br from-purple-700 to-indigo-900 p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all relative group text-white">
+                    <div className="bg-gradient-to-br from-purple-700 to-indigo-900 p-8 rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
                         <h3 className="text-xl font-bold text-white mb-2">UppyPro Kurumsal</h3>
                         <p className="text-slate-200 text-sm mb-6">Özel çözümler ve yüksek hacimler.</p>
                         <div className="flex items-baseline gap-1 mb-6">
