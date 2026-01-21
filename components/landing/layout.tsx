@@ -96,7 +96,7 @@ export function LandingFooter() {
                             </li>
                         </ul>
                         <div className="flex items-center gap-4 mt-8">
-                            <Link href="#" className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors group">
+                            <Link href="https://www.instagram.com/upgunai/" target="_blank" className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors group">
                                 <Instagram className="w-5 h-5 text-gray-600 group-hover:text-pink-600 transition-colors" />
                             </Link>
                             <Link href="#" className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 transition-colors group">
