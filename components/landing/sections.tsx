@@ -4,10 +4,11 @@ import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, S
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useState, useActionState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { EnterpriseContactModal } from "./enterprise-contact-modal";
+import { sendMeetingRequest } from "@/actions/contact-meeting";
 
 export function FeaturesSection() {
     const [activeFeature, setActiveFeature] = useState<number | null>(null);
@@ -406,6 +407,16 @@ export function HowItWorks() {
 }
 
 export function ContactSection() {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const [state, formAction, isPending] = useActionState(sendMeetingRequest, {});
+    const fileInputRef = useRef<HTMLFormElement>(null);
+
+    // Reset form on success
+    if (state.success && fileInputRef.current) {
+        fileInputRef.current.reset();
+    }
+
     return (
         <section id="contact" className="py-24 bg-white">
             <div className="container mx-auto px-4">
@@ -439,41 +450,78 @@ export function ContactSection() {
 
                     {/* Right Form */}
                     <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                        <form className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700">Ad Soyad *</label>
-                                <input type="text" placeholder="Örn: Ahmet Yılmaz" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                        {state.success ? (
+                            <div className="text-center py-12 space-y-4">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                                    <Check className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900">Talebiniz Alındı!</h3>
+                                <p className="text-slate-500">
+                                    Bilgileriniz bize ulaştı. En kısa sürede sizinle iletişime geçeceğiz.
+                                </p>
+                                <Button
+                                    onClick={() => window.location.reload()}
+                                    className="mt-4 bg-orange-600 hover:bg-orange-700 text-white"
+                                >
+                                    Yeni Form Doldur
+                                </Button>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700">Firma Adı</label>
-                                <input type="text" placeholder="Örn: XYZ Teknoloji" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        ) : (
+                            <form action={formAction} ref={fileInputRef} className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-slate-700">E-posta *</label>
-                                    <input type="email" placeholder="ornek@email.com" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    <label className="text-sm font-bold text-slate-700">Ad Soyad *</label>
+                                    <input name="fullName" type="text" placeholder="Örn: Ahmet Yılmaz" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    {state.errors?.fullName && <p className="text-xs text-red-500">{state.errors.fullName[0]}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-slate-700">Telefon *</label>
-                                    <input type="tel" placeholder="+90 555 123 45 67" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    <label className="text-sm font-bold text-slate-700">Firma Adı</label>
+                                    <input name="companyName" type="text" placeholder="Örn: XYZ Teknoloji" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    {state.errors?.companyName && <p className="text-xs text-red-500">{state.errors.companyName[0]}</p>}
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700">Şu an en çok zorlandığınız süreç nedir? *</label>
-                                <textarea placeholder="Örn: Müşteri mesajlarına geç cevap veriyoruz ve randevu yönetimi çok vakit alıyor..." className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                            </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">E-posta *</label>
+                                        <input name="email" type="email" placeholder="ornek@email.com" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                        {state.errors?.email && <p className="text-xs text-red-500">{state.errors.email[0]}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Telefon *</label>
+                                        <input name="phone" type="tel" placeholder="+90 555 123 45 67" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                        {state.errors?.phone && <p className="text-xs text-red-500">{state.errors.phone[0]}</p>}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Şu an en çok zorlandığınız süreç nedir? *</label>
+                                    <textarea name="description" placeholder="Örn: Müşteri mesajlarına geç cevap veriyoruz ve randevu yönetimi çok vakit alıyor..." required className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    {state.errors?.description && <p className="text-xs text-red-500">{state.errors.description[0]}</p>}
+                                </div>
 
-                            <Button className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20">
-                                <Send className="w-4 h-4 mr-2" />
-                                Görüşme Talep Et
-                            </Button>
-                        </form>
+                                {state.error && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                                        {state.error}
+                                    </div>
+                                )}
+
+                                <Button disabled={isPending} type="submit" className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20">
+                                    {isPending ? (
+                                        <>Gönderiliyor...</>
+                                    ) : (
+                                        <>
+                                            <Send className="w-4 h-4 mr-2" />
+                                            Görüşme Talep Et
+                                        </>
+                                    )}
+                                </Button>
+                            </form>
+                        )}
 
                         <div className="pt-4 text-center space-y-3">
                             <p className="text-xs text-slate-400">Dilerseniz direkt WhatsApp üzerinden de yazabilirsiniz.</p>
-                            <Button variant="outline" className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold h-10 rounded-xl">
-                                <MessageSquare className="w-4 h-4 mr-2" />
-                                WhatsApp'tan Yaz
+                            <Button asChild variant="outline" className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold h-10 rounded-xl cursor-pointer">
+                                <Link href="https://wa.me/905332076252" target="_blank">
+                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                    WhatsApp'tan Yaz
+                                </Link>
                             </Button>
                         </div>
                     </div>
