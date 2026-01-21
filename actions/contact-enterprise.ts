@@ -45,7 +45,7 @@ export async function sendEnterpriseContact(prevState: ContactState, formData: F
 
   try {
     await resend.emails.send({
-      from: 'UppyPro Contact <onboarding@resend.dev>', // Update this if you have a verified domain
+      from: 'UppyPro Enterprise <info@upgunai.com>', // Update this if you have a verified domain
       to: 'upgunagent@gmail.com',
       subject: `🚀 Yeni Kurumsal Müşteri Talebi: ${companyName}`,
       html: `
