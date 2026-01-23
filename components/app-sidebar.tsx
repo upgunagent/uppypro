@@ -169,7 +169,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Tenant/User View
     return (
-        <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+        <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
             <div className="mb-8 hover:scale-105 transition-transform duration-300">
                 <Image
                     src="/brand-logo.png"

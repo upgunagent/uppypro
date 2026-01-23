@@ -32,6 +32,7 @@ export function LandingHeader() {
                             İşletme Girişi
                         </Button>
                     </Link>
+
                 </div>
             </div>
         </header>

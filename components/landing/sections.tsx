@@ -134,7 +134,7 @@ export function FeaturesSection() {
     ];
 
     return (
-        <section id="features" className="py-24 bg-slate-50 scroll-mt-20">
+        <section id="features" className="py-12 md:py-24 bg-slate-50 scroll-mt-20">
             <div className="container mx-auto px-4">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-3xl font-bold text-slate-900 mb-4">Mesaj Yönetimini Satışa Çevirin</h2>
@@ -145,103 +145,141 @@ export function FeaturesSection() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {features.map((f, i) => (
-                        <motion.div
-                            key={i}
-                            onClick={() => setActiveFeature(activeFeature === i ? null : i)}
-                            animate={{
-                                scale: activeFeature === i ? 1.05 : 1,
-                                borderColor: activeFeature === i ? "rgb(251 146 60)" : "rgb(241 245 249)",
-                                zIndex: activeFeature === i ? 10 : 0
-                            }}
-                            whileHover={{
-                                x: [0, -5, 5, -5, 5, 0],
-                                transition: { duration: 0.5 }
-                            }}
-                            className={clsx(
-                                "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
-                                activeFeature === i
-                                    ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
-                                    : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
-                            )}
-                        >
-                            <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === i ? "scale-110" : "group-hover:scale-105")}>
-                                {f.icon}
-                            </div>
-                            <h3 className={clsx("text-lg font-bold mb-2", activeFeature === i ? "text-orange-600" : "text-slate-900")}>
-                                {f.title}
-                            </h3>
-                            <p className="text-slate-500 text-xs leading-relaxed">
-                                {f.desc}
-                            </p>
+                        <div key={i} className="contents md:block">
+                            <motion.div
+                                onClick={() => setActiveFeature(activeFeature === i ? null : i)}
+                                animate={{
+                                    scale: activeFeature === i ? 1.05 : 1,
+                                    borderColor: activeFeature === i ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                    zIndex: activeFeature === i ? 10 : 0
+                                }}
+                                whileHover={{
+                                    x: [0, -5, 5, -5, 5, 0],
+                                    transition: { duration: 0.5 }
+                                }}
+                                className={clsx(
+                                    "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                    activeFeature === i
+                                        ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                        : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                )}
+                            >
+                                <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === i ? "scale-110" : "group-hover:scale-105")}>
+                                    {f.icon}
+                                </div>
+                                <h3 className={clsx("text-lg font-bold mb-2", activeFeature === i ? "text-orange-600" : "text-slate-900")}>
+                                    {f.title}
+                                </h3>
+                                <p className="text-slate-500 text-xs leading-relaxed">
+                                    {f.desc}
+                                </p>
 
-                            {/* Active Indicator Arrow */}
-                            {activeFeature === i && (
-                                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
-                            )}
-                        </motion.div>
+                                {/* Active Indicator Arrow */}
+                                {activeFeature === i && (
+                                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                                )}
+                            </motion.div>
+
+                            {/* Mobile Inline Detail Panel */}
+                            <AnimatePresence>
+                                {activeFeature === i && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
+                                    >
+                                        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
+                                            <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
+                                                <img
+                                                    src={f.image}
+                                                    alt={f.title}
+                                                    className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
+                                                />
+                                            </div>
+                                            <div className="p-6">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
+                                                        {f.icon}
+                                                    </div>
+                                                    <h3 className="text-xl font-bold text-slate-900">
+                                                        {f.title}
+                                                    </h3>
+                                                </div>
+                                                <div className="text-slate-600 text-sm leading-relaxed mb-6">
+                                                    {f.longDesc}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     ))}
                 </div>
 
-                {/* Shared Detail Panel */}
-                <AnimatePresence mode="wait">
-                    {activeFeature !== null && (
-                        <motion.div
-                            key="detail-panel"
-                            initial={{ opacity: 0, y: -20, height: 0 }}
-                            animate={{ opacity: 1, y: 0, height: "auto" }}
-                            exit={{ opacity: 0, y: -20, height: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="overflow-hidden mt-8"
-                        >
-                            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-                                <div className="grid lg:grid-cols-2 gap-0">
-                                    {/* Image Section */}
-                                    <div className="bg-slate-50 p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100">
-                                        <motion.img
-                                            key={features[activeFeature].image}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ duration: 0.4, delay: 0.1 }}
-                                            src={features[activeFeature].image}
-                                            alt={features[activeFeature].title}
-                                            className="rounded-xl shadow-lg max-h-[300px] w-auto object-contain"
-                                        />
-                                    </div>
+                {/* Shared Detail Panel (Desktop Only) */}
+                <div className="hidden md:block">
+                    <AnimatePresence mode="wait">
+                        {activeFeature !== null && (
+                            <motion.div
+                                key="detail-panel"
+                                initial={{ opacity: 0, y: -20, height: 0 }}
+                                animate={{ opacity: 1, y: 0, height: "auto" }}
+                                exit={{ opacity: 0, y: -20, height: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="overflow-hidden mt-8"
+                            >
+                                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+                                    <div className="grid lg:grid-cols-2 gap-0">
+                                        {/* Image Section */}
+                                        <div className="bg-slate-50 p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100">
+                                            <motion.img
+                                                key={features[activeFeature].image}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ duration: 0.4, delay: 0.1 }}
+                                                src={features[activeFeature].image}
+                                                alt={features[activeFeature].title}
+                                                className="rounded-xl shadow-lg max-h-[300px] w-auto object-contain"
+                                            />
+                                        </div>
 
-                                    {/* Content Section */}
-                                    <div className="p-8 lg:p-12 flex flex-col justify-center">
-                                        <motion.div
-                                            key={features[activeFeature].title}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ duration: 0.4, delay: 0.2 }}
-                                        >
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
-                                                    {features[activeFeature].icon}
-                                                </div>
-                                                <h3 className="text-2xl font-bold text-slate-900">
-                                                    {features[activeFeature].title}
-                                                </h3>
-                                            </div>
-
-                                            <div className="text-slate-600 text-lg leading-relaxed mb-8">
-                                                {features[activeFeature].longDesc}
-                                            </div>
-
-                                            <button
-                                                onClick={() => setActiveFeature(null)}
-                                                className="text-sm font-bold text-slate-400 hover:text-orange-600 flex items-center gap-2 transition-colors"
+                                        {/* Content Section */}
+                                        <div className="p-8 lg:p-12 flex flex-col justify-center">
+                                            <motion.div
+                                                key={features[activeFeature].title}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.4, delay: 0.2 }}
                                             >
-                                                Kapat <span className="text-xs">✕</span>
-                                            </button>
-                                        </motion.div>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                        {features[activeFeature].icon}
+                                                    </div>
+                                                    <h3 className="text-2xl font-bold text-slate-900">
+                                                        {features[activeFeature].title}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="text-slate-600 text-lg leading-relaxed mb-8">
+                                                    {features[activeFeature].longDesc}
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setActiveFeature(null)}
+                                                    className="text-sm font-bold text-slate-400 hover:text-orange-600 flex items-center gap-2 transition-colors"
+                                                >
+                                                    Kapat <span className="text-xs">✕</span>
+                                                </button>
+                                            </motion.div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </section>
     );
@@ -256,7 +294,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
     const formatPrice = (p: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(p);
 
     return (
-        <section id="pricing" className="py-24 bg-white relative overflow-hidden">
+        <section id="pricing" className="py-12 md:py-24 bg-white relative overflow-hidden">
             {/* Background Decoration */}
             <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-orange-50/50 rounded-full blur-3xl pointer-events-none" />
 
@@ -418,7 +456,7 @@ export function ContactSection() {
     }
 
     return (
-        <section id="contact" className="py-24 bg-white">
+        <section id="contact" className="py-12 md:py-24 bg-white">
             <div className="container mx-auto px-4">
                 <div className="grid lg:grid-cols-2 gap-16 items-center">
                     {/* Left Content */}

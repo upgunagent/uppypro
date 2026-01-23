@@ -2,6 +2,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export default async function AppLayout({
     children,
@@ -32,9 +33,10 @@ export default async function AppLayout({
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
-            <main className="flex-1 ml-[88px] flex flex-col h-screen overflow-y-auto">
+            <main className="flex-1 ml-0 md:ml-[88px] flex flex-col h-screen overflow-y-auto mb-16 md:mb-0">
                 {children}
             </main>
+            <MobileBottomNav />
         </div>
     );
 }

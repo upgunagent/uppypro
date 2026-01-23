@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle, Instagram, Trash2, Search } from "lucide-react";
+import { MessageCircle, Instagram, Trash2, Search, MessageSquare } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { deleteConversation } from "@/app/actions/chat";
@@ -240,13 +240,45 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
     return (
         <div className="flex flex-col h-full">
             {/* Header with Search */}
-            <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 shrink-0 bg-slate-50">
-                <h1 className="text-xl font-bold">
+            {/* Header with Search and Tabs */}
+            {/* Header with Search and Tabs */}
+            <div className="flex flex-col gap-3 p-4 border-b border-slate-200 shrink-0 bg-slate-50">
+                {/* Desktop Title (Hidden on Mobile) */}
+                <h1 className="text-xl font-bold hidden md:block">
                     {currentTab === 'all' && 'Tüm Mesajlar'}
                     {currentTab === 'whatsapp' && 'WhatsApp'}
                     {currentTab === 'instagram' && 'Instagram'}
                 </h1>
-                <div className="relative w-64">
+
+                {/* Mobile Top Tabs (Hidden on Desktop) */}
+                <div className="flex md:hidden items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {[
+                        { id: 'all', label: 'Tüm Mesajlar', icon: MessageSquare },
+                        { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+                        { id: 'instagram', label: 'Instagram', icon: Instagram }
+                    ].map((tab) => {
+                        const isActive = currentTab === tab.id;
+                        return (
+                            <Link
+                                key={tab.id}
+                                href={`/panel/inbox?tab=${tab.id}`}
+                                className={clsx(
+                                    "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all shadow-sm border",
+                                    isActive
+                                        ? (tab.id === 'instagram' ? "bg-gradient-to-r from-red-500 to-orange-500 text-white border-transparent" :
+                                            tab.id === 'whatsapp' ? "bg-green-500 text-white border-transparent" :
+                                                "bg-indigo-600 text-white border-transparent")
+                                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                                )}
+                            >
+                                <tab.icon size={16} />
+                                {tab.label}
+                            </Link>
+                        );
+                    })}
+                </div>
+
+                <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     <input
                         type="text"
@@ -256,7 +288,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                         placeholder="Ara (Ad, Telefon)..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                        className="w-full h-10 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
                     />
                 </div>
             </div>

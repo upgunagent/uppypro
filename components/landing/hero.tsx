@@ -18,6 +18,15 @@ export function HeroSection() {
                 <div className="flex flex-col lg:flex-row items-center gap-16">
                     {/* Text Content */}
                     <div className="flex-1 text-center lg:text-left space-y-8">
+                        {/* Mobile Login Button */}
+                        <div className="md:hidden mb-6 flex justify-center">
+                            <Link href="/login">
+                                <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white shadow-lg rounded-full px-8 py-6 text-lg transition-colors w-full max-w-xs">
+                                    İşletme Girişi
+                                </Button>
+                            </Link>
+                        </div>
+
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-1000">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
@@ -26,7 +35,7 @@ export function HeroSection() {
                             Yapay Zeka Destekli Müşteri Paneli
                         </div>
 
-                        <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                             Instagram + WhatsApp <br />
                             <span className="relative inline-block">
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
