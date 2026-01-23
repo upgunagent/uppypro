@@ -251,7 +251,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                 </h1>
 
                 {/* Mobile Top Tabs (Hidden on Desktop) */}
-                <div className="flex md:hidden items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <div className="flex md:hidden items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
                     {[
                         { id: 'all', label: 'Tüm Mesajlar', icon: MessageSquare },
                         { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
@@ -263,7 +263,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                 key={tab.id}
                                 href={`/panel/inbox?tab=${tab.id}`}
                                 className={clsx(
-                                    "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all shadow-sm border",
+                                    "flex shrink-0 items-center gap-2 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all shadow-sm border",
                                     isActive
                                         ? (tab.id === 'instagram' ? "bg-gradient-to-r from-red-500 to-orange-500 text-white border-transparent" :
                                             tab.id === 'whatsapp' ? "bg-green-500 text-white border-transparent" :
