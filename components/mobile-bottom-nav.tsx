@@ -32,7 +32,7 @@ export function MobileBottomNav() {
     );
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex items-center justify-around pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex items-center justify-around pb-safe h-[60px]">
             <NavItem
                 href="/panel/inbox?tab=all"
                 icon={MessageSquare}

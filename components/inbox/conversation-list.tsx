@@ -350,6 +350,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                             src={conv.profile_pic}
                                                             alt="Profile"
                                                             className="w-full h-full object-cover rounded-full"
+                                                            referrerPolicy="no-referrer"
                                                         />
                                                     ) : (
                                                         <Instagram className={clsx("w-6 h-6", (conv.channel === 'instagram') ? "text-white" : "text-pink-600")} />

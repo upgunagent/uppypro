@@ -615,7 +615,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             )}
 
             {/* Input Area */}
-            <div className="fixed bottom-[55px] md:relative md:bottom-auto left-0 right-0 bg-white border-t border-slate-200 min-h-[72px] z-40">
+            <div className="fixed bottom-[60px] md:relative md:bottom-auto left-0 right-0 bg-white border-t border-slate-200 min-h-[72px] z-40">
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
                         <div className="absolute inset-0 w-full h-full bg-red-600/75" />
