@@ -33,7 +33,7 @@ export default async function AppLayout({
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
-            <main className="flex-1 ml-0 md:ml-[88px] flex flex-col h-screen overflow-y-auto mb-16 md:mb-0">
+            <main className="flex-1 ml-0 md:ml-[88px] flex flex-col h-[100dvh] overflow-y-auto pb-16 md:pb-0 md:mb-0">
                 {children}
             </main>
             <MobileBottomNav />

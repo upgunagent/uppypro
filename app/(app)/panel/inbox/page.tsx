@@ -102,7 +102,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     const isMobileChatOpen = !!selectedConversation;
 
     return (
-        <div className="flex h-[100dvh] w-full overflow-hidden bg-background relative">
+        <div className="flex h-full w-full overflow-hidden bg-background relative">
             {/* Left Pane: Conversation List */}
             {/* Mobile: Hidden if chat is open. Desktop: Always visible (w-[35%]) */}
             <div className={clsx(
