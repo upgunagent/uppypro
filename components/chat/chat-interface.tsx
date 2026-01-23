@@ -352,6 +352,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     };
 
+    // Focus State for Mobile Keyboard Handling
+    const [isInputFocused, setIsInputFocused] = useState(false);
+
     return (
         <div className="flex flex-col h-full relative">
 
@@ -615,7 +618,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             )}
 
             {/* Input Area */}
-            <div className="fixed bottom-0 md:relative md:bottom-auto left-0 right-0 bg-white border-t border-slate-200 z-40 pb-[60px] md:pb-0">
+            <div
+                className={clsx(
+                    "fixed md:relative left-0 right-0 bg-white border-t border-slate-200 z-40 transition-all duration-100",
+                    // Mobile Strategy: Always stick to bottom (covering scrolling content).
+                    // When blur: Add padding (58px) to push input slightly behind the 60px Nav (2px overlap).
+                    // When focus: Remove padding to sit on keyboard.
+                    isInputFocused ? "bottom-0 pb-0" : "bottom-0 pb-[58px] md:pb-0 md:bottom-auto"
+                )}
+            >
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
                         <div className="absolute inset-0 w-full h-full bg-red-600/75" />
@@ -762,8 +773,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                             <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
+                                onFocus={() => setIsInputFocused(true)}
+                                onBlur={() => setIsInputFocused(false)}
                                 placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
-                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500"
+                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500 text-base md:text-sm"
                             />
                             {!input.trim() && (
                                 <button
