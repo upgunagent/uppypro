@@ -615,7 +615,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             )}
 
             {/* Input Area */}
-            <div className="fixed bottom-[60px] md:relative md:bottom-auto left-0 right-0 bg-white border-t border-slate-200 min-h-[72px] z-40">
+            <div className="fixed bottom-0 md:relative md:bottom-auto left-0 right-0 bg-white border-t border-slate-200 z-40 pb-[60px] md:pb-0">
                 {conversationMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
                         <div className="absolute inset-0 w-full h-full bg-red-600/75" />
@@ -651,7 +651,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     </>
                 )}
 
-                <form onSubmit={handleSend} className="p-4 flex gap-2 items-center bg-white">
+                <form onSubmit={handleSend} className="p-2 md:p-4 flex gap-2 items-center bg-white">
                     <input
                         type="file"
                         id="file-upload"
@@ -793,6 +793,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 onClearChat={handleClearChat}
                 onDeleteChat={handleDeleteChat}
             />
-        </div>
+        </div >
     );
 }
