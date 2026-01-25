@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { sendToChannel, editMessageInChannel } from "@/lib/meta";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text', filename?: string, id?: string) {
+export async function sendMessage(conversationId: string, text: string, mediaUrl?: string, messageType: string = 'text', filename?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Yetkisiz Erişim");
@@ -22,8 +22,7 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
         sender: "HUMAN",
         text: text,
         media_url: mediaUrl,
-        message_type: messageType,
-        ...(id && { id })
+        message_type: messageType
     }).select().single();
 
     if (error) throw new Error(error.message);

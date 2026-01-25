@@ -197,9 +197,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .from('chat-media')
                 .getPublicUrl(storagePath);
 
-            const msgId = crypto.randomUUID();
             const optimisticMsg: Message = {
-                id: msgId,
+                id: "temp-" + Date.now(),
                 text: "",
                 sender: "HUMAN",
                 created_at: new Date().toISOString(),
@@ -208,7 +207,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             };
             setMessages((prev) => [...prev, optimisticMsg]);
 
-            await sendMessage(conversationId, "", publicUrl, 'audio', fileName, msgId);
+            await sendMessage(conversationId, "", publicUrl, 'audio', fileName);
 
         } catch (err: any) {
             console.error("Audio upload/send failed:", err);
@@ -301,34 +300,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         };
     }, [conversationId]);
 
-    // Polling Backup
-    useEffect(() => {
-        if (!conversationId) return;
-        const interval = setInterval(() => {
-            const supabase = createClient();
-            supabase
-                .from('messages')
-                .select('*')
-                .eq('conversation_id', conversationId)
-                .order('created_at', { ascending: true })
-                .then(({ data }) => {
-                    if (data && data.length !== messages.length) {
-                        // Only update if count mismatch to avoid stutter, simplistic sync
-                        // Actually let's trust realtime mostly, this is fallback
-                    }
-                });
-        }, 5000); // 5 sec is enough
-        return () => clearInterval(interval);
-    }, [conversationId, messages.length]);
+
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || sending) return;
 
         setSending(true);
-        const msgId = crypto.randomUUID();
         const optimisticMsg: Message = {
-            id: msgId,
+            id: "temp-" + Date.now(),
             text: input,
             sender: "HUMAN",
             created_at: new Date().toISOString()
@@ -338,7 +318,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         setShowEmojiPicker(false);
 
         try {
-            await sendMessage(conversationId, optimisticMsg.text, undefined, 'text', undefined, msgId);
+            await sendMessage(conversationId, optimisticMsg.text);
         } catch (err) {
             console.error("Failed to send", err);
         } finally {
@@ -703,10 +683,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     .getPublicUrl(filePath);
 
                                 const textToSend = input.trim() || file.name;
-                                const msgId = crypto.randomUUID();
 
                                 const optimisticMsg: Message = {
-                                    id: msgId,
+                                    id: "temp-" + Date.now(),
                                     text: textToSend,
                                     sender: "HUMAN",
                                     created_at: new Date().toISOString(),
@@ -717,7 +696,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                                 if (input.trim()) setInput("");
 
-                                await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name, msgId);
+                                await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
 
                             } catch (err: any) {
                                 console.error("Upload failed", err);
