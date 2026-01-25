@@ -294,38 +294,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     });
                 }
             )
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'conversations',
-                    filter: `id=eq.${conversationId}`
-                },
-                () => {
-                    // Fallback: When conversation updates (last_message, updated_at),
-                    // fetch latest messages to ensure we didn't miss anything.
-                    const fetchFresh = async () => {
-                        const { data: msgs } = await supabase
-                            .from("messages")
-                            .select("*")
-                            .eq("conversation_id", conversationId)
-                            .order("created_at", { ascending: true });
-
-                        if (msgs) {
-                            setMessages(prev => {
-                                // Merge logic: append only new ones to avoid flicker
-                                const existingIds = new Set(prev.map(m => m.id));
-                                const newOnes = msgs.filter(m => !existingIds.has(m.id));
-                                if (newOnes.length === 0) return prev;
-                                return [...prev, ...newOnes];
-                            });
-                            markConversationAsRead(conversationId);
-                        }
-                    };
-                    fetchFresh();
-                }
-            )
             .subscribe();
 
         return () => {
