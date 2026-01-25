@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MessageCircle, Instagram, Trash2, Search, MessageSquare } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
@@ -36,6 +37,7 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ initialConversations, tenantId, currentTab = 'all', selectedChatId }: ConversationListProps) {
+    const router = useRouter();
     const [conversations, setConversations] = useState<Conversation[]>(
         Array.isArray(initialConversations) ? initialConversations : []
     );
@@ -91,8 +93,8 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                     table: 'messages'
                 },
                 async (payload) => {
-                    const newMsg = payload.new;
-                    console.log("Inbox Realtime Update (No Filter):", newMsg);
+                    const newMsg = payload.new as any;
+                    // console.log("Inbox Realtime Update (No Filter):", newMsg);
 
                     // Double check tenant_id just in case RLS leaked (shouldn't happen)
                     if (newMsg.tenant_id !== tenantId) return;
@@ -101,7 +103,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                         const existingIdx = prev.findIndex(c => c.id === newMsg.conversation_id);
 
                         if (existingIdx !== -1) {
-                            console.log("Updating existing conversation:", newMsg.conversation_id);
+                            // console.log("Updating existing conversation:", newMsg.conversation_id);
                             // Move to top and update last message
                             const updatedConv = { ...prev[existingIdx] };
 
@@ -122,13 +124,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                             return [updatedConv, ...newList];
                         } else {
                             // NEW CONVERSATION: Fetch it!
-                            // If current tab is 'whatsapp' but message is 'instagram', we might exclude it?
-                            // But usually real-time should probably show it, or maybe strict filter.
-                            // For flexibility, we'll fetch and let local filter (if we added one) handle it.
-                            // However, we rely on parent passing initialConversations filtered by server.
-                            // So if we are in 'whatsapp' tab and receive 'instagram' msg, we should probably check channel.
-
-                            console.log("New conversation detected, fetching:", newMsg.conversation_id);
+                            // console.log("New conversation detected, fetching:", newMsg.conversation_id);
 
                             supabase
                                 .from('conversations')
@@ -165,11 +161,11 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                 }
             )
             .subscribe((status) => {
-                console.log("Inbox Subscription Status:", status);
+                // console.log("Inbox Subscription Status:", status);
             });
 
         return () => {
-            console.log("Unsubscribing from inbox-list");
+            // console.log("Unsubscribing from inbox-list");
             supabase.removeChannel(channel);
         };
     }, [tenantId, currentTab]);
@@ -239,8 +235,6 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header with Search */}
-            {/* Header with Search and Tabs */}
             {/* Header with Search and Tabs */}
             <div className="flex flex-col gap-3 p-4 border-b border-slate-200 shrink-0 bg-slate-50">
                 {/* Desktop Title (Hidden on Mobile) */}
@@ -294,7 +288,6 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar">
-                {/* Debug output removed */}
 
                 <AnimatePresence initial={false} mode='popLayout'>
                     {filteredConversations.map((conv) => {
@@ -320,7 +313,13 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                 transition={{ duration: 0.2 }}
                                 className="mb-2"
                             >
-                                <Link href={getConversationUrl(conv.id)} className="block relative group">
+                                <div
+                                    onClick={() => {
+                                        // Force navigation to ensure fresh state
+                                        window.location.href = getConversationUrl(conv.id);
+                                    }}
+                                    className="block relative group cursor-pointer"
+                                >
                                     <div className={clsx(
                                         "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] duration-200",
                                         conv.channel === 'instagram'
@@ -431,7 +430,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                     >
                                         <Trash2 size={18} />
                                     </button>
-                                </Link>
+                                </div>
                             </motion.div>
                         );
                     })}

@@ -84,12 +84,13 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
         if (selectedConversation) {
             // Fetch Messages
-            const { data: msgData } = await queryClient
+            const { data: msgData, error: msgError } = await queryClient
                 .from("messages")
                 .select("*")
                 .eq("conversation_id", chatId)
                 .eq("tenant_id", selectedConversation.tenant_id) // Extra RLS safety
                 .order("created_at", { ascending: true });
+
             selectedMessages = msgData || [];
 
             // Fetch Agent Settings
