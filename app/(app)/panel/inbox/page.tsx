@@ -72,7 +72,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
     if (chatId) {
         // Fetch Conversation Details
-        const { data: convData } = await supabase
+        const { data: convData } = await queryClient
             .from("conversations")
             .select("*")
             .eq("id", chatId)
@@ -82,7 +82,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
         if (selectedConversation) {
             // Fetch Messages
-            const { data: msgData } = await supabase
+            const { data: msgData } = await queryClient
                 .from("messages")
                 .select("*")
                 .eq("conversation_id", chatId)
@@ -90,7 +90,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             selectedMessages = msgData || [];
 
             // Fetch Agent Settings
-            const { data: settingsData } = await supabase
+            const { data: settingsData } = await queryClient
                 .from("agent_settings")
                 .select("ai_operational_enabled")
                 .eq("tenant_id", selectedConversation.tenant_id)
