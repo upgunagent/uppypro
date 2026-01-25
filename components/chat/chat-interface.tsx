@@ -285,12 +285,19 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     event: 'INSERT',
                     schema: 'public',
                     table: 'messages',
-                    filter: `conversation_id=eq.${conversationId}`
+                    // REMOVED FILTER FOR DEBUGGING
                 },
                 (payload) => {
-                    console.log("Realtime INSERT received:", payload);
-                    markConversationAsRead(conversationId);
+                    console.log("Global Realtime INSERT received:", payload);
                     const newMsg = payload.new as Message;
+                    console.log(`Checking match: MsgConvID=${(newMsg as any).conversation_id} vs CurrentID=${conversationId}`);
+
+                    if ((newMsg as any).conversation_id !== conversationId) {
+                        console.log("Ignoring message for other conversation");
+                        return;
+                    }
+
+                    markConversationAsRead(conversationId);
                     setMessages((prev) => {
                         if (prev.some(m => m.id === newMsg.id)) return prev;
                         return [...prev, newMsg];
