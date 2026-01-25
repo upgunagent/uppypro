@@ -366,9 +366,25 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         setShowEmojiPicker(false);
 
         try {
-            await sendMessage(conversationId, optimisticMsg.text);
+            const { data: realMsg } = await sendMessage(conversationId, optimisticMsg.text);
+
+            if (realMsg) {
+                setMessages(prev => {
+                    // Check if the real message already arrived via realtime or hybrid sync
+                    const alreadyExists = prev.some(m => m.id === realMsg.id);
+
+                    if (alreadyExists) {
+                        // If real message exists, remove the temp one to dedup
+                        return prev.filter(m => m.id !== optimisticMsg.id);
+                    } else {
+                        // Otherwise, swap temp -> real
+                        return prev.map(m => m.id === optimisticMsg.id ? (realMsg as Message) : m);
+                    }
+                });
+            }
         } catch (err) {
             console.error("Failed to send", err);
+            // Optional: Mark optimistic msg as error
         } finally {
             setSending(false);
         }

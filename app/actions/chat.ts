@@ -62,6 +62,7 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
     }
 
     revalidatePath(`/panel/chat/${conversationId}`);
+    return { data: insertedMsg };
 }
 
 export async function toggleMode(conversationId: string, currentMode: "BOT" | "HUMAN") {
