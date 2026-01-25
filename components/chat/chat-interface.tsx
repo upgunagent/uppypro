@@ -288,18 +288,30 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     // REMOVED FILTER FOR DEBUGGING
                 },
                 (payload) => {
-                    console.log("Global Realtime INSERT received:", payload);
                     const newMsg = payload.new as Message;
-                    console.log(`Checking match: MsgConvID=${(newMsg as any).conversation_id} vs CurrentID=${conversationId}`);
+                    console.log("Global Realtime INSERT received:", payload);
 
-                    if ((newMsg as any).conversation_id !== conversationId) {
-                        console.log("Ignoring message for other conversation");
-                        return;
-                    }
+                    if ((newMsg as any).conversation_id !== conversationId) return;
 
                     markConversationAsRead(conversationId);
                     setMessages((prev) => {
+                        // 1. Strict Dedup
                         if (prev.some(m => m.id === newMsg.id)) return prev;
+
+                        // 2. Optimistic Match (Deduplication Strategy)
+                        // If we have a temp message from HUMAN with same text, assume it's this one and replace it.
+                        if (newMsg.sender === 'HUMAN') {
+                            const matchIdx = prev.findIndex(m =>
+                                m.id.startsWith('temp-') &&
+                                m.text === newMsg.text
+                            );
+                            if (matchIdx !== -1) {
+                                const newList = [...prev];
+                                newList[matchIdx] = newMsg;
+                                return newList;
+                            }
+                        }
+
                         return [...prev, newMsg];
                     });
                 }
@@ -313,7 +325,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         };
     }, [conversationId]);
 
-    // HYBRID SYNC (Backup for 100% reliability like Sidebar)
+    // HYBRID SYNC (Backup)
     useEffect(() => {
         if (!conversationId) return;
 
@@ -328,22 +340,44 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             if (data) {
                 setMessages(prev => {
                     const existingIds = new Set(prev.map(m => m.id));
+                    // Filter out messages we already have strictly
                     const newOnes = data.filter(m => !existingIds.has(m.id));
+
                     if (newOnes.length === 0) return prev;
-                    return [...prev, ...newOnes];
+
+                    // Merge strategy with Optimistic Dedupe
+                    let newList = [...prev];
+
+                    newOnes.forEach(realMsg => {
+                        // Try to find a temp match for this real message
+                        if (realMsg.sender === 'HUMAN') {
+                            const matchIdx = newList.findIndex(m =>
+                                m.id.startsWith('temp-') &&
+                                m.text === realMsg.text
+                            );
+                            if (matchIdx !== -1) {
+                                newList[matchIdx] = realMsg; // Replace
+                            } else {
+                                newList.push(realMsg); // Append
+                            }
+                        } else {
+                            newList.push(realMsg); // Apppend (Bot/Customer)
+                        }
+                    });
+
+                    // Re-sort just in case replacment messed up order (though usually created_at handles it, but temp IDs don't have real valid created_at for comparison sometimes)
+                    // Actually trusting the array order or re-sorting by created_at is safer.
+                    newList.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+                    return newList;
                 });
 
-                // If we found new messages, valid sync
-                if (data.length > messages.length) {
-                    markConversationAsRead(conversationId);
-                }
+                // Read marker
+                markConversationAsRead(conversationId);
             }
         };
 
-        // Initial sync
         syncMessages();
-
-        // Periodic sync (every 2s, same as sidebar)
         const interval = setInterval(syncMessages, 2000);
         return () => clearInterval(interval);
     }, [conversationId, messages.length]);
