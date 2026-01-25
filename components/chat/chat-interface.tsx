@@ -197,8 +197,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 .from('chat-media')
                 .getPublicUrl(storagePath);
 
+            const msgId = crypto.randomUUID();
             const optimisticMsg: Message = {
-                id: "temp-" + Date.now(),
+                id: msgId,
                 text: "",
                 sender: "HUMAN",
                 created_at: new Date().toISOString(),
@@ -207,7 +208,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             };
             setMessages((prev) => [...prev, optimisticMsg]);
 
-            await sendMessage(conversationId, "", publicUrl, 'audio', fileName);
+            await sendMessage(conversationId, "", publicUrl, 'audio', fileName, msgId);
 
         } catch (err: any) {
             console.error("Audio upload/send failed:", err);
@@ -325,8 +326,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         if (!input.trim() || sending) return;
 
         setSending(true);
+        const msgId = crypto.randomUUID();
         const optimisticMsg: Message = {
-            id: "temp-" + Date.now(),
+            id: msgId,
             text: input,
             sender: "HUMAN",
             created_at: new Date().toISOString()
@@ -336,7 +338,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         setShowEmojiPicker(false);
 
         try {
-            await sendMessage(conversationId, optimisticMsg.text);
+            await sendMessage(conversationId, optimisticMsg.text, undefined, 'text', undefined, msgId);
         } catch (err) {
             console.error("Failed to send", err);
         } finally {
@@ -701,9 +703,10 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                     .getPublicUrl(filePath);
 
                                 const textToSend = input.trim() || file.name;
+                                const msgId = crypto.randomUUID();
 
                                 const optimisticMsg: Message = {
-                                    id: "temp-" + Date.now(),
+                                    id: msgId,
                                     text: textToSend,
                                     sender: "HUMAN",
                                     created_at: new Date().toISOString(),
@@ -714,7 +717,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                                 if (input.trim()) setInput("");
 
-                                await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name);
+                                await sendMessage(conversationId, textToSend, publicUrl, msgType, file.name, msgId);
 
                             } catch (err: any) {
                                 console.error("Upload failed", err);
