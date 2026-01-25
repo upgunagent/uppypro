@@ -647,6 +647,12 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         </div>
                     );
                 })}
+                {filteredMessages.length === 0 && !messageSearchQuery && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-2 opacity-60">
+                        <span className="text-4xl">💭</span>
+                        <p>Bu sohbette henüz mesaj yok.</p>
+                    </div>
+                )}
                 {filteredMessages.length === 0 && messageSearchQuery && (
                     <div className="text-center text-gray-400 text-sm mt-10">
                         Aranan kriterde mesaj bulunamadı.

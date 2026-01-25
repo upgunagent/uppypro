@@ -9,6 +9,8 @@ import { ConversationList } from "@/components/inbox/conversation-list";
 import ChatInterface from "@/components/chat/chat-interface";
 import { clsx } from "clsx";
 
+export const dynamic = "force-dynamic";
+
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string; tenantId?: string }> }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -86,6 +88,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 .from("messages")
                 .select("*")
                 .eq("conversation_id", chatId)
+                .eq("tenant_id", selectedConversation.tenant_id) // Extra RLS safety
                 .order("created_at", { ascending: true });
             selectedMessages = msgData || [];
 
@@ -94,7 +97,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 .from("agent_settings")
                 .select("ai_operational_enabled")
                 .eq("tenant_id", selectedConversation.tenant_id)
-                .single();
+                .maybeSingle(); // Changed from single() to maybeSingle()
             agentSettings = settingsData;
         }
     }
