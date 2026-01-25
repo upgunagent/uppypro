@@ -305,18 +305,48 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 }
             )
             .subscribe((status) => {
-                console.log(`Realtime Status for ${conversationId}:`, status);
                 setRealtimeStatus(status);
-
-                if (status === 'SUBSCRIBED') {
-                    // Optional: Fetch latest to be sure
-                }
             });
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, [conversationId]);
+
+    // HYBRID SYNC (Backup for 100% reliability like Sidebar)
+    useEffect(() => {
+        if (!conversationId) return;
+
+        const syncMessages = async () => {
+            const supabase = createClient();
+            const { data } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: true });
+
+            if (data) {
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const newOnes = data.filter(m => !existingIds.has(m.id));
+                    if (newOnes.length === 0) return prev;
+                    return [...prev, ...newOnes];
+                });
+
+                // If we found new messages, valid sync
+                if (data.length > messages.length) {
+                    markConversationAsRead(conversationId);
+                }
+            }
+        };
+
+        // Initial sync
+        syncMessages();
+
+        // Periodic sync (every 2s, same as sidebar)
+        const interval = setInterval(syncMessages, 2000);
+        return () => clearInterval(interval);
+    }, [conversationId, messages.length]);
 
 
 
