@@ -210,7 +210,7 @@ export async function markConversationAsRead(conversationId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    console.log(`markConversationAsRead called for conversation: ${conversationId}, User: ${user?.id}`);
+
 
     if (!user) return; // Silent fail
 
@@ -228,7 +228,7 @@ export async function markConversationAsRead(conversationId: string) {
     if (error) {
         console.error("markConversationAsRead Error:", error);
     } else {
-        console.log(`markConversationAsRead Success. Updated ${count} messages.`);
+        // Success
     }
 
     revalidatePath("/panel/inbox");

@@ -137,12 +137,14 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
                         <div className="flex-1 overflow-hidden relative">
                             <ChatInterface
+                                key={selectedConversation.id}
                                 conversationId={selectedConversation.id}
                                 initialMessages={selectedMessages}
                                 conversationMode={selectedConversation.mode}
                                 aiOperational={agentSettings?.ai_operational_enabled || false}
                                 platform={selectedConversation.channel || 'whatsapp'}
                                 customerName={selectedConversation.customer_handle || selectedConversation.external_thread_id || 'Bilinmeyen Kullanıcı'}
+                                profilePic={selectedConversation.profile_pic}
                             />
                         </div>
                     </div>

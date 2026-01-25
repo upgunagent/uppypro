@@ -82,36 +82,11 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         setMessages(initialMessages);
     }, [initialMessages]);
 
-    // 2. Conversation Init (Profile Pic + Fresh Fetch)
+    // 2. Conversation Init
     useEffect(() => {
         setActiveProfilePic(profilePic);
         markConversationAsRead(conversationId);
-
-        const fetchFreshKeys = async () => {
-            const supabase = createClient();
-
-            // 1. Messages 
-            const { data: msgs } = await supabase
-                .from("messages")
-                .select("*")
-                .eq("conversation_id", conversationId)
-                .order("created_at", { ascending: true });
-
-            if (msgs) {
-                setMessages(msgs);
-            }
-
-            // 2. Profile Pic 
-            const { data: conv } = await supabase
-                .from("conversations")
-                .select("profile_pic")
-                .eq("id", conversationId)
-                .single();
-
-            setActiveProfilePic(conv?.profile_pic ?? undefined);
-        };
-        fetchFreshKeys();
-    }, [conversationId]);
+    }, [conversationId, profilePic]);
 
     const handleEditSave = async () => {
         if (!editingId || !editValue.trim()) return;
@@ -271,8 +246,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     }, []);
 
-    // Debug State
-    const [realtimeStatus, setRealtimeStatus] = useState<string>('CONNECTING');
+
 
     // Realtime
     useEffect(() => {
@@ -289,7 +263,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                 },
                 (payload) => {
                     const newMsg = payload.new as Message;
-                    console.log("Global Realtime INSERT received:", payload);
 
                     if ((newMsg as any).conversation_id !== conversationId) return;
 
@@ -316,9 +289,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     });
                 }
             )
-            .subscribe((status) => {
-                setRealtimeStatus(status);
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
@@ -522,15 +493,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     </div>
 
                     {/* DEBUG INDICATOR */}
-                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 rounded border border-slate-200" title="Realtime Bağlantı Durumu">
-                        <div className={clsx("w-2 h-2 rounded-full",
-                            realtimeStatus === 'SUBSCRIBED' ? "bg-green-500 animate-pulse" :
-                                realtimeStatus === 'CHANNEL_ERROR' ? "bg-red-600" : "bg-yellow-500"
-                        )} />
-                        <span className="text-[10px] font-mono font-bold text-slate-500">
-                            {realtimeStatus}
-                        </span>
-                    </div>
+
 
                     <Button
                         variant="default"
