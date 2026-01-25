@@ -271,6 +271,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     }, []);
 
+    // Debug State
+    const [realtimeStatus, setRealtimeStatus] = useState<string>('CONNECTING');
+
     // Realtime
     useEffect(() => {
         const supabase = createClient();
@@ -285,6 +288,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     filter: `conversation_id=eq.${conversationId}`
                 },
                 (payload) => {
+                    console.log("Realtime INSERT received:", payload);
                     markConversationAsRead(conversationId);
                     const newMsg = payload.new as Message;
                     setMessages((prev) => {
@@ -293,7 +297,14 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     });
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log(`Realtime Status for ${conversationId}:`, status);
+                setRealtimeStatus(status);
+
+                if (status === 'SUBSCRIBED') {
+                    // Optional: Fetch latest to be sure
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -420,6 +431,17 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
                         <span className="font-bold text-sm text-slate-600">
                             {conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
+                        </span>
+                    </div>
+
+                    {/* DEBUG INDICATOR */}
+                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 rounded border border-slate-200" title="Realtime Bağlantı Durumu">
+                        <div className={clsx("w-2 h-2 rounded-full",
+                            realtimeStatus === 'SUBSCRIBED' ? "bg-green-500 animate-pulse" :
+                                realtimeStatus === 'CHANNEL_ERROR' ? "bg-red-600" : "bg-yellow-500"
+                        )} />
+                        <span className="text-[10px] font-mono font-bold text-slate-500">
+                            {realtimeStatus}
                         </span>
                     </div>
 
