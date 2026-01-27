@@ -91,6 +91,54 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     }, [tenantId]);
 
 
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const supabase = createClient();
+        let channel: any;
+
+        const getProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Initial fetch
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('avatar_url')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profile?.avatar_url) {
+                setAvatarUrl(profile.avatar_url);
+            }
+
+            // Realtime subscription
+            channel = supabase
+                .channel(`sidebar-profile:${user.id}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'profiles',
+                        filter: `user_id=eq.${user.id}`
+                    },
+                    (payload: any) => {
+                        // null check is important because user might remove photo
+                        setAvatarUrl(payload.new.avatar_url);
+                    }
+                )
+                .subscribe();
+        };
+
+        getProfile();
+
+        return () => {
+            if (channel) supabase.removeChannel(channel);
+        };
+    }, []);
+
+
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
@@ -103,6 +151,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
         { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
         { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
+        { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 
     // Helper for Sidebar Items
@@ -171,14 +220,25 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     return (
         <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
             <div className="mb-8 hover:scale-105 transition-transform duration-300">
-                <Image
-                    src="/brand-logo.png"
-                    alt="UP"
-                    width={60}
-                    height={60}
-                    className="w-[60px] h-[60px] object-contain drop-shadow-sm"
-                    priority
-                />
+                {avatarUrl ? (
+                    <Image
+                        src={avatarUrl}
+                        alt="Profile"
+                        width={60}
+                        height={60}
+                        className="w-[60px] h-[60px] object-cover rounded-full drop-shadow-sm border-2 border-slate-100"
+                        priority
+                    />
+                ) : (
+                    <Image
+                        src="/brand-logo.png"
+                        alt="UP"
+                        width={60}
+                        height={60}
+                        className="w-[60px] h-[60px] object-contain drop-shadow-sm"
+                        priority
+                    />
+                )}
             </div>
 
             <div className="flex-1 w-full space-y-6 flex flex-col items-center">

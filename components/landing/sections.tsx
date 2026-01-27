@@ -98,12 +98,12 @@ export function FeaturesSection() {
                 <div className="space-y-4">
                     <h4 className="text-xl font-bold text-slate-800">Müşterinizi Tanıyın, Her Sohbeti Satışa Dönüştürün</h4>
                     <p>
-                        Anonim mesajlaşmalara son verin. Uppypro, sohbet başladığı anda karşınızdaki kişinin kim olduğunu size gösterir.
+                        Anonim mesajlaşmalara son verin. Uppypro, sohbet başladığı anda karşınızdaki kişinin kim olduğunu size gösterir. Otomatik konuşma özeltini çıkarır ve müşteri notlarınıza kaydeder.
                     </p>
                     <ul className="space-y-2 list-disc pl-5">
                         <li><strong>Anında Kimlik Tespiti:</strong> Mesaj geldiği an, müşteri kartını chat ekranının yanında tek tıkla oluşturun. Instagram'dan yazıyorsa, profil fotoğrafı ve adı otomatik olarak karta işlenir.</li>
                         <li><strong>Kurumsal Hafıza:</strong> "Daha önce ne almıştı?" sorusunu düşünmeyin. Müşterinin geçmiş randevularını, satın aldığı hizmetleri, aldığınız notları ve tarihleri anında görün.</li>
-                        <li><strong>Akıllı Notlar & Takip:</strong> Müşteriyle ilgili kritik detayları not alın. Bir sonraki görüşmede ona ismiyle hitap edin ve ihtiyaçlarına özel öneriler sunun.</li>
+                        <li><strong>Otomatik Konuşma Özeti & Akıllı Notlar & Takip:</strong> Müşteriyle ilgili kritik detayları not alın. <span className="text-red-600 font-bold">"Konuşma Özeti Çıkar"</span> özelliği ile müşterileriniz ile yaptığınız görüşmeyi yapay zeka desteği ile otomatik özetini çıkarın ve isterseniz kendi notlarınızı da ekleyip kaydedin. Bir sonraki görüşmede ona ismiyle hitap edin, daha önce yapılan tüm işlemlerini görün ve ihtiyaçlarına özel öneriler sunun.</li>
                     </ul>
                 </div>
             ),
@@ -137,7 +137,8 @@ export function FeaturesSection() {
         <section id="features" className="py-12 md:py-24 bg-slate-50 scroll-mt-20">
             <div className="container mx-auto px-4">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Mesaj Yönetimini Satışa Çevirin</h2>
+                    <h2 className="text-5xl font-bold text-slate-900 mb-2">Özellikler</h2>
+                    <h3 className="text-2xl font-bold text-orange-500 mb-4">Mesaj Yönetimini Satışa Çevirin</h3>
                     <p className="text-slate-500">
                         Karmaşık panellere ve excel tablolarına veda edin. UppyPro ile müşteri iletişimi hiç bu kadar kolay olmamıştı.
                     </p>
@@ -328,6 +329,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı Oluşturma</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Otomatik Görüşme Özeti Çıkarma</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Takvim Uygulaması (Randevu oluşturma)</li>
                             <li className="flex items-center gap-3 text-slate-300"><X className="w-5 h-5 text-red-500 flex-shrink-0" /> AI Asistan Entegrasyonu</li>
                         </ul>

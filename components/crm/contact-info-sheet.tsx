@@ -9,6 +9,9 @@ import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCirc
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
 import { EventDialog } from "@/components/calendar/event-dialog"; // Import EventDialog
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { summarizeConversation } from "@/actions/summarize-conversation";
+import { Sparkles } from "lucide-react";
 
 interface ContactInfoSheetProps {
     isOpen: boolean;
@@ -44,6 +47,11 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
     const [showEventDialog, setShowEventDialog] = useState(false); // State for Event Dialog
     const [tenantId, setTenantId] = useState<string>(""); // Need tenant ID for event dialog
+
+    // AI Summary State
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [summaryOpen, setSummaryOpen] = useState(false);
+    const [summaryText, setSummaryText] = useState("");
 
     // Notes Data
 
@@ -249,6 +257,64 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
         alert("Bu işlem ana ekrandan yapılmalıdır.");
     };
 
+    const handleSummarize = async () => {
+        if (!customerId) {
+            alert("Konuşma özetini çıkarabilmem için öncelikli olarak kişi bilgilerini doldurup kaydetmeniz gerekmektedir.");
+            return;
+        }
+
+        if (!tenantId) return;
+        setSummaryLoading(true);
+        try {
+            const res = await summarizeConversation(tenantId, conversationId);
+            if (res.error) {
+                alert(res.error);
+                return;
+            }
+            if (res.summary) {
+                setSummaryText(res.summary);
+                setSummaryOpen(true);
+            }
+        } catch (err: any) {
+            alert("Hata: " + err.message);
+        } finally {
+            setSummaryLoading(false);
+        }
+    };
+
+    const handleSaveSummary = async () => {
+        if (!summaryText.trim()) return;
+
+        if (!customerId) {
+            alert("Özeti kaydetmek için önce yukarıdan müşteri kaydını oluşturmalısınız.");
+            return;
+        }
+
+        setNoteLoading(true);
+        const supabase = createClient();
+        try {
+            const { data: noteData, error } = await supabase
+                .from("customer_notes")
+                .insert({
+                    customer_id: customerId,
+                    note: summaryText.trim()
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            setNotesList(prev => [noteData, ...prev]);
+            setSummaryOpen(false);
+            setSummaryText("");
+            alert("Özet not olarak kaydedildi.");
+        } catch (error: any) {
+            alert("Kaydedilirken hata: " + error.message);
+        } finally {
+            setNoteLoading(false);
+        }
+    };
+
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800" overlayClassName="bg-transparent backdrop-blur-none">
@@ -384,6 +450,20 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 font-bold">
                         {noteLoading ? "Ekleniyor..." : <><Plus className="mr-2 w-4 h-4" /> Notu Kaydet</>}
                     </Button>
+
+                    <Button
+                        onClick={handleSummarize}
+                        disabled={summaryLoading}
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-700 font-semibold"
+                    >
+                        {summaryLoading ? (
+                            "Özet Hazırlanıyor..."
+                        ) : (
+                            <><Sparkles className="mr-2 w-4 h-4" /> ✨ Konuşma Özetini Çıkar</>
+                        )}
+                    </Button>
                 </div>
 
 
@@ -436,6 +516,38 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     defaultCustomerId={customerId || undefined}
                 />
             )}
+
+            {/* SUMMARY DIALOG */}
+            <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-purple-600" /> Yapay Zeka Özeti
+                        </DialogTitle>
+                        <DialogDescription>
+                            Görüşme geçmişine dayalı oluşturulan otomatik özet. Dilerseniz düzenleyebilirsiniz.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            value={summaryText}
+                            onChange={(e) => setSummaryText(e.target.value)}
+                            className="min-h-[200px] font-normal leading-relaxed"
+                            placeholder="Özet burada görünecek..."
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSummaryOpen(false)}>İptal</Button>
+                        <Button
+                            onClick={handleSaveSummary}
+                            disabled={noteLoading || !summaryText.trim()}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                            {noteLoading ? "Kaydediliyor..." : "Özeti Kaydet"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Sheet>
     );
 }
