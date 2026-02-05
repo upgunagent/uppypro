@@ -247,55 +247,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
 
 
-    // Realtime
-    useEffect(() => {
-        const supabase = createClient();
-        const channel = supabase
-            .channel(`chat:${conversationId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
-                    // REMOVED FILTER FOR DEBUGGING
-                },
-                (payload) => {
-                    const newMsg = payload.new as Message;
-
-                    if ((newMsg as any).conversation_id !== conversationId) return;
-
-                    markConversationAsRead(conversationId);
-                    setMessages((prev) => {
-                        // 1. Strict Dedup
-                        if (prev.some(m => m.id === newMsg.id)) return prev;
-
-                        // 2. Optimistic Match (Deduplication Strategy)
-                        // If we have a temp message from HUMAN with same text, assume it's this one and replace it.
-                        if (newMsg.sender === 'HUMAN') {
-                            const matchIdx = prev.findIndex(m =>
-                                m.id.startsWith('temp-') &&
-                                m.text === newMsg.text
-                            );
-                            if (matchIdx !== -1) {
-                                const newList = [...prev];
-                                newList[matchIdx] = newMsg;
-                                return newList;
-                            }
-                        }
-
-                        return [...prev, newMsg];
-                    });
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [conversationId]);
-
-    // HYBRID SYNC (Backup)
+    // HYBRID SYNC: Realtime + Polling Backup
     useEffect(() => {
         if (!conversationId) return;
 
@@ -335,8 +287,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         }
                     });
 
-                    // Re-sort just in case replacment messed up order (though usually created_at handles it, but temp IDs don't have real valid created_at for comparison sometimes)
-                    // Actually trusting the array order or re-sorting by created_at is safer.
+                    // Re-sort just in case replacment messed up order
                     newList.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
                     return newList;
@@ -347,8 +298,46 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             }
         };
 
+        // 1. Initial Fetch
         syncMessages();
-        // Removed Interval for better performance
+
+        // 2. Realtime Subscription
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`chat:${conversationId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `conversation_id=eq.${conversationId}` // More efficient server-side filtering
+                },
+                (payload) => {
+                    const newMsg = payload.new as Message;
+                    // Trigger sync or direct append
+                    // Direct append is faster for UI
+                    setMessages((prev) => {
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        const newList = [...prev, newMsg];
+                        // Sort ensures order
+                        newList.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                        return newList;
+                    });
+                    markConversationAsRead(conversationId);
+                }
+            )
+            .subscribe();
+
+        // 3. Polling Fallback (Every 4s) - Lightweight
+        // This ensures that even if Realtime drops, we get messages eventually.
+        // It does NOT block navigation like the global list polling did.
+        const interval = setInterval(syncMessages, 4000);
+
+        return () => {
+            clearInterval(interval);
+            supabase.removeChannel(channel);
+        };
     }, [conversationId]);
 
 
