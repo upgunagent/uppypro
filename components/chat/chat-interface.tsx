@@ -851,7 +851,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 </button>
                             )}
                             {input.trim() && (
-                                <Button type="submit" disabled={sending || conversationMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
+                                <Button type="submit" disabled={sending || currentMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
                                     <Send className="w-4 h-4" />
                                 </Button>
                             )}
