@@ -338,12 +338,21 @@ export async function POST(request: Request) {
                 .eq("tenant_id", tenantId)
                 .single();
 
+            // RE-FETCH FRESH MODE: Ensure we don't trigger AI if user just switched to HUMAN
+            const { data: freshConv } = await supabaseAdmin
+                .from("conversations")
+                .select("mode")
+                .eq("id", conversation.id)
+                .single();
+
+            const currentRealMode = freshConv?.mode || conversation.mode;
+
             let n8nStatus = "SKIPPED";
             let skipReason = "";
 
             if (!settings?.ai_operational_enabled) skipReason = "AI Disabled";
             else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
-            else if (conversation?.mode !== 'BOT') skipReason = `Mode is ${conversation?.mode}`;
+            else if (currentRealMode !== 'BOT') skipReason = `Mode is ${currentRealMode}`;
 
             if (!skipReason) {
                 try {
