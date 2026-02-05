@@ -104,7 +104,6 @@ export default function ChatInterface({ conversationId, initialMessages, convers
             const res = await editMessage(currentId, newVal, conversationId);
             if (!res.success) {
                 alert("Düzenleme başarısız: " + res.error);
-                window.location.reload();
             }
         } catch (err: any) {
             console.error("Edit failed", err);
@@ -349,9 +348,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         };
 
         syncMessages();
-        const interval = setInterval(syncMessages, 2000);
-        return () => clearInterval(interval);
-    }, [conversationId, messages.length]);
+        // Removed Interval for better performance
+    }, [conversationId]);
 
 
 
@@ -395,11 +393,27 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     };
 
+    // Local Mode State to Support Optimistic Updates
+    const [currentMode, setCurrentMode] = useState(conversationMode);
+
+    useEffect(() => {
+        setCurrentMode(conversationMode);
+    }, [conversationMode]);
+
     const handleToggle = async () => {
+        const previousMode = currentMode; // Store the mode before optimistic update
+        const newMode = previousMode === 'BOT' ? 'HUMAN' : 'BOT';
+
+        // Optimistic Update
+        setCurrentMode(newMode);
+
         try {
-            await toggleMode(conversationId, conversationMode);
+            await toggleMode(conversationId, newMode); // Pass the target mode to the backend
         } catch (err) {
             console.error("Toggle failed", err);
+            // Rollback on error
+            setCurrentMode(previousMode); // Revert to the previous mode
+            alert("Mod değişimi başarısız oldu.");
         }
     };
 
@@ -486,9 +500,9 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     </div>
 
                     <div className="flex items-center gap-2 hidden sm:flex">
-                        <div className={clsx("w-3 h-3 rounded-full", conversationMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
+                        <div className={clsx("w-3 h-3 rounded-full", currentMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
                         <span className="font-bold text-sm text-slate-600">
-                            {conversationMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
+                            {currentMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
                         </span>
                     </div>
 
@@ -503,12 +517,12 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                         className={clsx(
                             "h-9 px-3 text-xs md:text-sm whitespace-nowrap",
                             !aiOperational && "opacity-50 cursor-not-allowed",
-                            conversationMode === "BOT"
+                            currentMode === "BOT"
                                 ? "bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg shadow-green-500/20"
                                 : "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-500/20"
                         )}
                     >
-                        {conversationMode === "BOT" ? <><User className="mr-1.5 w-3.5 h-3.5" />Devral</> : <><Bot className="mr-1.5 w-3.5 h-3.5" />AI'ya Devret</>}
+                        {currentMode === "BOT" ? <><User className="mr-1.5 w-3.5 h-3.5" />Devral</> : <><Bot className="mr-1.5 w-3.5 h-3.5" />AI'ya Devret</>}
                     </Button>
 
                     {/* NEW CRM MENU */}
@@ -687,7 +701,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     isInputFocused ? "bottom-0 pb-0" : "bottom-0 pb-[58px] md:pb-0 md:bottom-auto"
                 )}
             >
-                {conversationMode === 'BOT' && (
+                {currentMode === 'BOT' && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
                         <div className="absolute inset-0 w-full h-full bg-red-600/75" />
                         <button

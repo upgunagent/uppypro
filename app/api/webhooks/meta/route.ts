@@ -171,6 +171,8 @@ export async function POST(request: Request) {
                     .select("tenant_id, access_token_encrypted")
                     .eq("channel", "instagram")
                     .contains("meta_identifiers", { ig_user_id: recipientId })
+                    .order('created_at', { ascending: false })
+                    .limit(1)
                     .maybeSingle();
 
                 if (conn) {
@@ -200,6 +202,8 @@ export async function POST(request: Request) {
                     .select("tenant_id, access_token_encrypted")
                     .eq("channel", "whatsapp")
                     .contains("meta_identifiers", { phone_number_id: recipientId })
+                    .order('created_at', { ascending: false })
+                    .limit(1)
                     .maybeSingle();
 
                 if (!connection) {
@@ -208,6 +212,8 @@ export async function POST(request: Request) {
                         .select("tenant_id, access_token_encrypted")
                         .eq("channel", "whatsapp")
                         .contains("meta_identifiers", { mock_id: recipientId })
+                        .order('created_at', { ascending: false })
+                        .limit(1)
                         .maybeSingle();
                     connection = connection2;
                 }

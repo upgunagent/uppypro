@@ -170,65 +170,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
         };
     }, [tenantId, currentTab]);
 
-    // TURBO HYBRID MODE with VISIBLE DIAGNOSTICS
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const time = new Date().toLocaleTimeString();
-            setLastPoll(time);
-
-            if (!tenantId) {
-                setDebugError("Tenant ID is MISSING!");
-                return;
-            }
-
-            const supabase = createClient();
-            let query = supabase
-                .from('conversations')
-                .select(`*, messages(*)`) // Select all from messages to ensure we get created_at
-                .eq('tenant_id', tenantId)
-                .order('updated_at', { ascending: false })
-                .order('created_at', { foreignTable: 'messages', ascending: true }) // Explicit Sort
-                .limit(15);
-
-            if (currentTab !== 'all') {
-                query = query.eq('channel', currentTab);
-            }
-
-            query.then(({ data, error }) => {
-                if (error) {
-                    setDebugError(error.message);
-                } else if (data) {
-                    setDebugError(null); // Clear previous errors
-                    setConversations(prev => {
-                        // Create a deeper signature that includes message read status
-                        const newDataSig = JSON.stringify(data.map((c: any) => {
-                            const msgs = c.messages || [];
-                            const unread = msgs.filter((m: any) => m.direction === 'IN' && !m.is_read).length;
-                            return c.id + c.updated_at + unread + (c.profile_pic || ''); // Include profile_pic update in signature
-                        }));
-
-                        const prevDataSig = JSON.stringify(prev.slice(0, 15).map(c => {
-                            const msgs = c.messages || [];
-                            const unread = msgs.filter((m) => m.direction === 'IN' && !m.is_read).length;
-                            return c.id + c.updated_at + unread + (c.profile_pic || '');
-                        }));
-
-                        if (newDataSig !== prevDataSig) {
-                            return data.map((d: any) => ({
-                                ...d,
-                                messages: d.messages || []
-                            }));
-                        }
-                        return prev;
-                    });
-                }
-            });
-        }, 2000);
-
-        return () => clearInterval(interval);
-    }, [tenantId, currentTab]);
-
-    // Construct URL for conversation item
+    // URL Constructor
     const getConversationUrl = (convId: string) => {
         return `/panel/inbox?tab=${currentTab}&chatId=${convId}`;
     };
