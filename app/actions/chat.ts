@@ -65,13 +65,15 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
     return { data: insertedMsg };
 }
 
-export async function toggleMode(conversationId: string, currentMode: "BOT" | "HUMAN") {
+export async function toggleMode(conversationId: string, targetMode: "BOT" | "HUMAN") {
     const supabase = await createClient();
-    const newMode = currentMode === "BOT" ? "HUMAN" : "BOT";
+
+    // Logic Fix: Previous implementation flipped the passed argument, causing "HUMAN" input to be saved as "BOT".
+    // We now trust the client to pass the DESIRED (Target) mode.
 
     const { error } = await supabase
         .from("conversations")
-        .update({ mode: newMode })
+        .update({ mode: targetMode })
         .eq("id", conversationId);
 
     if (error) throw new Error(error.message);
