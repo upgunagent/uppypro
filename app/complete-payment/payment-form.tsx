@@ -68,11 +68,10 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
             // If we lack a token, we can't easily map back in existing callback logic.
             // Let's assume for now we passed a valid reference or the existing token in DB.
 
-            // Actually, best approach: Pass the tenantId in the OID and update callback to use tenantId.
-            // OID: `ent_${inviteToken || 'no_token'}_${Date.now()}`
-            // My callback logic splits keys.
-
-            const oid = `ent_${inviteToken || 'no_token'}_${Date.now()}`;
+            // Generate alphanumeric merchant_oid (PayTR requirement - no special chars)
+            // Format: ent<token_without_hyphens><timestamp>
+            const tokenClean = (inviteToken || 'notoken').replace(/-/g, ''); // Remove hyphens from UUID
+            const oid = `ent${tokenClean}${Date.now()}`;
 
             const res = await getPaytrToken({
                 userIp: "127.0.0.1", // Server action will use generic, or we can try to get it. Use server side detection in action ideally.
