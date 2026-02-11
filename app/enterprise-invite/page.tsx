@@ -69,6 +69,13 @@ export default async function EnterpriseInvitePage({
         );
     }
 
+    // Get billing info
+    const { data: billingInfo } = await adminDb
+        .from("billing_info")
+        .select("*")
+        .eq("tenant_id", invite.tenant_id)
+        .single();
+
     // Calculate Price
     const priceUsd = subscription.custom_price_usd || 0;
     const exchangeRate = await getExchangeRate();
@@ -82,6 +89,7 @@ export default async function EnterpriseInvitePage({
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
             <EnterpriseInviteFlow
                 tenant={tenant}
+                billingInfo={billingInfo}
                 subscription={subscription}
                 priceUsd={priceUsd}
                 priceTry={priceTryTotal}

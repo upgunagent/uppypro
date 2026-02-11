@@ -37,19 +37,13 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const userId = userData.user.id;
 
         // 2. Create Tenant
-        // We store billing info here
+        // Use company name if corporate, else full name
+        const tenantName = data.billingType === 'corporate' ? data.companyName : data.fullName;
+
         const { data: tenant, error: tenantError } = await supabaseAdmin
             .from("tenants")
             .insert({
-                name: data.companyName,
-                billing_type: data.billingType,
-                tax_office: data.taxOffice,
-                tax_number: data.taxNumber,
-                tckn: data.tckn,
-                full_name: data.billingType === 'individual' ? data.fullName : null, // Store billing name if individual
-                address: data.address,
-                city: data.city,
-                district: data.district,
+                name: tenantName
             })
             .select()
             .single();
@@ -70,7 +64,40 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             role: 'tenant_owner'
         });
 
-        // 5. Create Subscription (Pending -> Custom Price USD)
+        // 5. Save Billing Info (Correct Table: billing_info)
+        if (data.billingType === 'corporate') {
+            const { error: billingError } = await supabaseAdmin.from("billing_info").upsert({
+                tenant_id: tenant.id,
+                billing_type: 'company',
+                company_name: data.companyName,
+                tax_office: data.taxOffice,
+                tax_number: data.taxNumber,
+                address_full: data.address,
+                address_city: data.city,
+                address_district: data.district,
+                contact_email: data.email,
+                contact_phone: data.phone
+            }, { onConflict: 'tenant_id' });
+
+            if (billingError) console.error("Billing Info Error:", billingError);
+        } else {
+            // Individual billing
+            const { error: billingError } = await supabaseAdmin.from("billing_info").upsert({
+                tenant_id: tenant.id,
+                billing_type: 'individual',
+                full_name: data.fullName,
+                tckn: data.tckn,
+                address_full: data.address,
+                address_city: data.city,
+                address_district: data.district,
+                contact_email: data.email,
+                contact_phone: data.phone
+            }, { onConflict: 'tenant_id' });
+
+            if (billingError) console.error("Billing Info Error:", billingError);
+        }
+
+        // 6. Create Subscription (Pending -> Custom Price USD)
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
             status: 'pending', // Waiting for payment
@@ -80,7 +107,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             custom_price_usd: data.monthlyPrice
         });
 
-        // 6. Generate Invite Token (Custom, not Supabase magic link)
+        // 7. Generate Invite Token (Custom, not Supabase magic link)
         const token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
@@ -91,7 +118,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             expires_at: expiresAt.toISOString()
         });
 
-        // 7. Send Email with invite link
+        // 8. Send Email with invite link
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
         const inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
 
@@ -104,7 +131,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 <body style="margin:0;padding:20px;font-family:Arial,sans-serif">
 <div style="max-width:600px;margin:0 auto;padding:30px;background:#fff;border-radius:8px">
 <h2 style="color:#1e293b;margin:0 0 20px">Kurumsal Üyeliğiniz Hazır</h2>
-<p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.fullName}</b>, <b>${data.companyName}</b> için abonelik tanımlandı.</p>
+<p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.contactName}</b>, <b>${data.billingType === 'corporate' ? data.companyName : data.fullName}</b> için abonelik tanımlandı.</p>
 <p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal<br><b>Aylık:</b> $${data.monthlyPrice.toLocaleString('en-US')}</p>
 <a href="${inviteLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
 </div></body></html>`

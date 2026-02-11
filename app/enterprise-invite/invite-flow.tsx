@@ -10,6 +10,7 @@ import { ShieldCheck, ArrowRight } from "lucide-react";
 
 type EnterpriseInviteFlowProps = {
     tenant: any;
+    billingInfo: any;
     subscription: any;
     priceUsd: number;
     priceTry: number;
@@ -19,6 +20,7 @@ type EnterpriseInviteFlowProps = {
 
 export function EnterpriseInviteFlow({
     tenant,
+    billingInfo,
     subscription,
     priceUsd,
     priceTry,
@@ -32,17 +34,22 @@ export function EnterpriseInviteFlow({
     const [showKvkk, setShowKvkk] = useState(false);
     const [step, setStep] = useState<'agreements' | 'payment'>('agreements');
 
+    // Use billing info if available, otherwise fallback to tenant (though billing info should exist for corporate invites)
+    const buyerName = billingInfo?.billing_type === 'individual'
+        ? (billingInfo?.full_name || tenant.name)
+        : (billingInfo?.company_name || tenant.name);
+
     const agreementData: AgreementData = {
         buyer: {
-            name: tenant.billing_type === 'individual' ? (tenant.full_name || tenant.name) : tenant.name,
-            email: "yetkili@sirket.com", // This should ideally come from the user/member, but for now placeholder or passed prop
-            phone: "", // Need to pass phone from somewhere if key
-            address: tenant.address || "",
-            city: tenant.city || "",
-            district: tenant.district || "",
-            taxOffice: tenant.tax_office,
-            taxNumber: tenant.tax_number,
-            tckn: tenant.tckn,
+            name: buyerName,
+            email: billingInfo?.contact_email || "yetkili@sirket.com",
+            phone: billingInfo?.contact_phone || "",
+            address: billingInfo?.address_full || tenant.address || "",
+            city: billingInfo?.address_city || tenant.city || "",
+            district: billingInfo?.address_district || tenant.district || "",
+            taxOffice: billingInfo?.tax_office,
+            taxNumber: billingInfo?.tax_number,
+            tckn: billingInfo?.tckn,
         },
         plan: {
             name: "UppyPro Kurumsal",
