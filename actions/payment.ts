@@ -34,7 +34,9 @@ export async function getPaytrToken(data: {
     }
 
     try {
-        const user_basket = JSON.stringify([[data.productName, data.paymentAmount.toFixed(2), 1]]);
+        // PayTR expects basket prices as numbers (not strings)
+        // Format: [["Product Name", Price (number), Quantity]]
+        const user_basket = JSON.stringify([[data.productName, Number(data.paymentAmount.toFixed(2)), 1]]);
         const merchant_oid = data.basketId; // Unique Order ID
         const payment_amount = Math.round(data.paymentAmount * 100); // Kuruş cinsinden (Örn: 100.00 TL -> 10000)
         const currency = "TL";
