@@ -34,11 +34,11 @@ export async function getPaytrToken(data: {
     }
 
     try {
-        // CRITICAL: PayTR uses user_basket differently in hash vs form data:
-        // - Hash calculation: Plain JSON string (NOT base64)
-        // - Form data submission: Base64 encoded
-        const user_basket = JSON.stringify([["UppyPro Abonelik", Number(data.paymentAmount.toFixed(2)), 1]]);
-        const user_basket_base64 = Buffer.from(user_basket).toString('base64');
+        // PayTR user_basket: base64 encoded, with prices as STRINGS (not numbers)
+        // Format: base64(JSON.stringify([["Product", "Price", Qty]]))
+        const basketJson = JSON.stringify([["UppyPro Abonelik", data.paymentAmount.toFixed(2), 1]]);
+        const user_basket = Buffer.from(basketJson).toString('base64');
+
         const merchant_oid = data.basketId; // Unique Order ID
         const payment_amount = Math.round(data.paymentAmount * 100); // Kuruş cinsinden (Örn: 100.00 TL -> 10000)
         const currency = "TL";
@@ -74,7 +74,7 @@ export async function getPaytrToken(data: {
         formData.append("email", data.email);
         formData.append("payment_amount", payment_amount.toString());
         formData.append("paytr_token", paytr_token);
-        formData.append("user_basket", user_basket_base64); // Use base64 for form data
+        formData.append("user_basket", user_basket);
         formData.append("debug_on", "1");
         formData.append("no_installment", no_installment);
         formData.append("max_installment", max_installment);
