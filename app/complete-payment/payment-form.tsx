@@ -82,7 +82,9 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
                 address: `${userData.address} ${userData.district}/${userData.city}`,
                 paymentAmount: amount, // TL
                 basketId: oid,
-                productName: "UppyPro Kurumsal Abonelik"
+                productName: "UppyPro Kurumsal Abonelik",
+                okUrl: `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success&token=${inviteToken}`,
+                failUrl: `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&token=${inviteToken}`
             });
 
             if (res.error) {
