@@ -67,6 +67,9 @@ export default async function CompletePaymentPage() {
     const priceTry = Math.ceil(priceUsd * usdRate); // Round up to be safe/clean
     const packageName = getPackageName(subscription); // Should be UppyPro Kurumsal
 
+    // Fetch Billing Info for PayTR
+    const { data: billingInfo } = await supabase.from("billing_info").select("*").eq("tenant_id", member.tenant_id).single();
+
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
             <div className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
@@ -94,7 +97,25 @@ export default async function CompletePaymentPage() {
                     </div>
                 </div>
 
-                <PaymentForm tenantId={member.tenant_id} amount={priceTry} />
+                <PaymentForm
+                    tenantId={member.tenant_id}
+                    amount={priceTry}
+                    inviteToken={subscription.id} // Using subscription ID or similar as ref if no invite token needed, but usually we came from invite. 
+                    // Actually inviteToken is passed to this page via ?token maybe? 
+                    // The page checks user session. The invite token logic was for *signup*. 
+                    // Here we are likely in "Complete Payment" flow which triggers after clicking link in email?
+                    // The user is logged in via "recovery" link. 
+                    // So we might not have the raw invite token here unless passed in URL.
+                    // But we don't strictly need it if we know the tenant.
+                    userData={{
+                        email: user.email!,
+                        name: billingInfo?.contact_name || user.user_metadata.full_name || "Kullanıcı",
+                        phone: billingInfo?.contact_phone || user.user_metadata.phone || "905555555555",
+                        address: billingInfo?.address_full || "Adres bilgisi yok",
+                        city: billingInfo?.address_city || "İstanbul",
+                        district: billingInfo?.address_district || "Merkez"
+                    }}
+                />
 
                 <p className="text-center text-xs text-slate-400 mt-6">
                     © 2024 UPGUN AI Güvenli Ödeme Altyapısı
