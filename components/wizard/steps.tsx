@@ -11,6 +11,7 @@ import { clsx } from "clsx";
 import Link from "next/link";
 
 // Types
+// Types
 export type WizardData = {
     plan: string;
     // Account
@@ -28,7 +29,8 @@ export type WizardData = {
     district: string;
     // Agreements
     kvkk: boolean;
-    terms: boolean;
+    salesAgreement: boolean;
+    preInfoForm: boolean;
     marketing: boolean;
 };
 
@@ -41,16 +43,65 @@ interface StepProps {
 
 // 1. Plan Summary
 export function StepSummary({ data, onNext }: StepProps) {
-    const plans: Record<string, { name: string, price: number }> = {
-        "base": { name: "UppyPro Inbox", price: 495 },
-        "ai_starter": { name: "UppyPro AI Başlangıç", price: 2499 },
-        "ai_medium": { name: "UppyPro AI Orta", price: 4999 },
-        "ai_pro": { name: "UppyPro AI Profesyonel", price: 8999 },
-    };
+    const [exchangeRate, setExchangeRate] = useState<number>(0);
+    const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number }>>({
+        "base": { name: "UppyPro Inbox", price: 0 },
+        "ai_starter": { name: "UppyPro AI", price: 0 },
+        "ai_medium": { name: "UppyPro AI Orta", price: 0 },
+        "ai_pro": { name: "UppyPro AI Profesyonel", price: 0 },
+    });
+    const [loading, setLoading] = useState(true);
 
-    const selectedPlan = plans[data.plan] || plans["base"];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
+
+                const rate = await getExchangeRate();
+                const prices = await getProductPrices();
+
+                setExchangeRate(rate);
+
+                const inboxTL = prices.inbox * rate;
+                const aiStarterTL = prices.ai * rate;
+                const aiMediumTL = aiStarterTL * 2;
+                const aiProTL = aiStarterTL * 3.6;
+
+                setDynamicPlans({
+                    "base": { name: "UppyPro Inbox", price: inboxTL },
+                    "ai_starter": { name: "UppyPro AI", price: aiStarterTL },
+                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL },
+                });
+            } catch (e) {
+                console.error("Pricing fetch error:", e);
+                // Fallback
+                setDynamicPlans({
+                    "base": { name: "UppyPro Inbox", price: 495 },
+                    "ai_starter": { name: "UppyPro AI", price: 2499 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 4999 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 8999 },
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const selectedPlan = dynamicPlans[data.plan] || dynamicPlans["base"];
     const kdv = selectedPlan.price * 0.20;
     const total = selectedPlan.price + kdv;
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <span className="ml-3 text-slate-600">Fiyatlar güncelleniyor...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -65,7 +116,12 @@ export function StepSummary({ data, onNext }: StepProps) {
                         <div className="font-bold text-lg text-slate-900">{selectedPlan.name}</div>
                         <div className="text-xs text-slate-500">Aylık Abonelik</div>
                     </div>
-                    <div className="font-bold text-lg">{selectedPlan.price.toLocaleString('tr-TR')} TL</div>
+                    <div className="font-bold text-lg">
+                        {selectedPlan.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL
+                        <span className="block text-xs font-normal text-slate-400 mt-0.5">
+                            (Kur: {exchangeRate.toFixed(2)} TL)
+                        </span>
+                    </div>
                 </div>
                 <div className="flex justify-between items-center text-sm text-slate-500 mb-2">
                     <div>KDV (%20)</div>
@@ -192,7 +248,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { KvkkContent, TermsContent } from "./legal-contents";
+import { KvkkContent, DistanceSalesAgreement, PreliminaryInformationForm, AgreementData } from "./legal-contents";
 
 export function StepBillingDetails({ data, updateData, onNext, onBack }: StepProps) {
     const isCorporate = data.billingType === "corporate";
@@ -359,18 +415,100 @@ export function StepBillingDetails({ data, updateData, onNext, onBack }: StepPro
 
 // 5. Agreements
 export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) {
-    const isValid = data.kvkk && data.terms;
+    const isValid = data.kvkk && data.salesAgreement && data.preInfoForm;
     const [showKvkk, setShowKvkk] = useState(false);
-    const [showTerms, setShowTerms] = useState(false);
+    const [showSalesAgreement, setShowSalesAgreement] = useState(false);
+    const [showPreInfo, setShowPreInfo] = useState(false);
 
-    const handleKvkkAccept = () => {
-        updateData("kvkk", true);
-        setShowKvkk(false);
-    };
+    // Prepare dynamic data
+    const [exchangeRate, setExchangeRate] = useState<number>(0);
+    const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number, priceUsd: number }>>({
+        "base": { name: "UppyPro Inbox", price: 0, priceUsd: 0 },
+        "ai_starter": { name: "UppyPro AI", price: 0, priceUsd: 0 },
+        "ai_medium": { name: "UppyPro AI Orta", price: 0, priceUsd: 0 },
+        "ai_pro": { name: "UppyPro AI Profesyonel", price: 0, priceUsd: 0 },
+    });
+    const [loading, setLoading] = useState(true);
 
-    const handleTermsAccept = () => {
-        updateData("terms", true);
-        setShowTerms(false);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
+
+                const rate = await getExchangeRate();
+                const prices = await getProductPrices();
+
+                setExchangeRate(rate);
+
+                // Calculate TL prices
+                const inboxTL = prices.inbox * rate;
+                const aiStarterTL = prices.ai * rate;
+                const aiMediumTL = aiStarterTL * 2;
+                const aiProTL = aiStarterTL * 3.6;
+
+                // USD Prices (approximate for medium/pro as they are derived)
+                const aiMediumUsd = prices.ai * 2;
+                const aiProUsd = prices.ai * 3.6;
+
+                setDynamicPlans({
+                    "base": { name: "UppyPro Inbox", price: inboxTL, priceUsd: prices.inbox },
+                    "ai_starter": { name: "UppyPro AI", price: aiStarterTL, priceUsd: prices.ai },
+                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL, priceUsd: aiMediumUsd },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL, priceUsd: aiProUsd },
+                });
+            } catch (e) {
+                console.error("Pricing fetch error:", e);
+                // Fallback to old hardcoded if fails
+                setDynamicPlans({
+                    "base": { name: "UppyPro Inbox", price: 495, priceUsd: 14 },
+                    "ai_starter": { name: "UppyPro AI", price: 2499, priceUsd: 70 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 4999, priceUsd: 140 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 8999, priceUsd: 250 },
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const selectedPlan = dynamicPlans[data.plan] || dynamicPlans["base"];
+    const kdv = selectedPlan.price * 0.20;
+    const total = selectedPlan.price + kdv;
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <span className="ml-3 text-slate-600">Güncel kurlar alınıyor...</span>
+            </div>
+        );
+    }
+
+    const agreementData: AgreementData = {
+        buyer: {
+            name: data.billingType === 'corporate' ? data.companyName || data.fullName : data.fullName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            district: data.district,
+            ...(data.billingType === 'corporate' ? {
+                taxOffice: data.taxOffice,
+                taxNumber: data.taxNumber
+            } : {
+                tckn: data.tcKn
+            })
+        },
+        plan: {
+            name: selectedPlan.name,
+            price: selectedPlan.price,
+            total: total,
+            priceUsd: selectedPlan.priceUsd
+        },
+        exchangeRate: exchangeRate,
+        date: new Date().toLocaleDateString('tr-TR')
     };
 
     return (
@@ -381,6 +519,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
             </div>
 
             <div className="space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                {/* KVKK */}
                 <div className="flex items-start gap-3">
                     <Checkbox id="kvkk" checked={data.kvkk} onCheckedChange={(c) => updateData("kvkk", c === true)} />
                     <Label htmlFor="kvkk" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
@@ -396,21 +535,42 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                     </Label>
                 </div>
                 <hr className="border-slate-200" />
+
+                {/* Ön Bilgilendirme Formu */}
                 <div className="flex items-start gap-3">
-                    <Checkbox id="terms" checked={data.terms} onCheckedChange={(c) => updateData("terms", c === true)} />
-                    <Label htmlFor="terms" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
+                    <Checkbox id="preInfo" checked={data.preInfoForm} onCheckedChange={(c) => updateData("preInfoForm", c === true)} />
+                    <Label htmlFor="preInfo" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
                         <span
                             className="font-bold text-slate-900 underline hover:text-orange-600 transition-colors"
                             onClick={(e) => {
                                 e.preventDefault();
-                                setShowTerms(true);
+                                setShowPreInfo(true);
                             }}
                         >
-                            Kullanıcı Sözleşmesi
+                            Ön Bilgilendirme Formu
+                        </span>'nu okudum ve kabul ediyorum.
+                    </Label>
+                </div>
+                <hr className="border-slate-200" />
+
+                {/* Mesafeli Satış Sözleşmesi */}
+                <div className="flex items-start gap-3">
+                    <Checkbox id="salesAgreement" checked={data.salesAgreement} onCheckedChange={(c) => updateData("salesAgreement", c === true)} />
+                    <Label htmlFor="salesAgreement" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
+                        <span
+                            className="font-bold text-slate-900 underline hover:text-orange-600 transition-colors"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setShowSalesAgreement(true);
+                            }}
+                        >
+                            Mesafeli Satış Sözleşmesi
                         </span>'ni okudum ve kabul ediyorum.
                     </Label>
                 </div>
                 <hr className="border-slate-200" />
+
+                {/* Pazarlama */}
                 <div className="flex items-start gap-3">
                     <Checkbox id="marketing" checked={data.marketing} onCheckedChange={(c) => updateData("marketing", c === true)} />
                     <Label htmlFor="marketing" className="text-sm font-normal text-slate-700 leading-relaxed cursor-pointer">
@@ -430,23 +590,39 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                     </div>
                     <DialogFooter className="pt-4 border-t border-slate-100">
                         <Button variant="outline" onClick={() => setShowKvkk(false)}>Kapat</Button>
-                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleKvkkAccept}>Okudum, Anladım</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => { updateData("kvkk", true); setShowKvkk(false); }}>Okudum, Anladım</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Terms Modal */}
-            <Dialog open={showTerms} onOpenChange={setShowTerms}>
+            {/* Ön Bilgilendirme Formu Modal */}
+            <Dialog open={showPreInfo} onOpenChange={setShowPreInfo}>
                 <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>Kullanıcı Sözleşmesi</DialogTitle>
+                        <DialogTitle>Ön Bilgilendirme Formu</DialogTitle>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto pr-2">
-                        <TermsContent />
+                        <PreliminaryInformationForm data={agreementData} />
                     </div>
                     <DialogFooter className="pt-4 border-t border-slate-100">
-                        <Button variant="outline" onClick={() => setShowTerms(false)}>Kapat</Button>
-                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleTermsAccept}>Okudum, Kabul Ediyorum</Button>
+                        <Button variant="outline" onClick={() => setShowPreInfo(false)}>Kapat</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => { updateData("preInfoForm", true); setShowPreInfo(false); }}>Okudum, Kabul Ediyorum</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Mesafeli Satış Sözleşmesi Modal */}
+            <Dialog open={showSalesAgreement} onOpenChange={setShowSalesAgreement}>
+                <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Mesafeli Satış Sözleşmesi</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                        <DistanceSalesAgreement data={agreementData} />
+                    </div>
+                    <DialogFooter className="pt-4 border-t border-slate-100">
+                        <Button variant="outline" onClick={() => setShowSalesAgreement(false)}>Kapat</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => { updateData("salesAgreement", true); setShowSalesAgreement(false); }}>Okudum, Kabul Ediyorum</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

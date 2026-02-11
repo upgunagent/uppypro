@@ -36,8 +36,8 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
         .eq("billing_cycle", "monthly");
 
     // Import currency service
-    const { getUsdRate } = await import("@/lib/currency");
-    const usdRate = await getUsdRate();
+    const { getUsdExchangeRate } = await import("@/lib/currency");
+    const usdRate = await getUsdExchangeRate();
 
     const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
     const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;

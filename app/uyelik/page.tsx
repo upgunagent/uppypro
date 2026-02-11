@@ -28,7 +28,8 @@ function MembershipWizardContent() {
         city: "",
         district: "",
         kvkk: false,
-        terms: false,
+        salesAgreement: false,
+        preInfoForm: false,
         marketing: false
     });
 

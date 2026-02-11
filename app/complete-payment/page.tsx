@@ -36,8 +36,8 @@ export default async function CompletePaymentPage() {
         return redirect("/panel");
     }
 
-    const { getUsdRate } = await import("@/lib/currency");
-    const usdRate = await getUsdRate();
+    const { getUsdExchangeRate } = await import("@/lib/currency");
+    const usdRate = await getUsdExchangeRate();
 
     // Determine USD Price
     let priceUsd = 0;

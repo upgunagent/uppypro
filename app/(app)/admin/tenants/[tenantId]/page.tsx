@@ -66,8 +66,8 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
         .eq("billing_cycle", "monthly");
 
     // Import dynamically to avoid top-level await issues if any, though standard import works
-    const { getUsdRate } = await import("@/lib/currency");
-    const usdRate = await getUsdRate();
+    const { getUsdExchangeRate } = await import("@/lib/currency");
+    const usdRate = await getUsdExchangeRate();
 
     const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
     const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;

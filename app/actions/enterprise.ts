@@ -5,10 +5,18 @@ import { resend, EMAIL_FROM } from "@/lib/resend";
 import { revalidatePath } from "next/cache";
 
 export type EnterpriseInviteData = {
+    billingType: 'corporate' | 'individual';
     companyName: string;
-    fullName: string;
+    fullName: string; // If individual, this is the person's name. If corporate, this is the contact person's name.
+    contactName: string;
     email: string;
     phone: string;
+    taxOffice?: string;
+    taxNumber?: string;
+    tckn?: string;
+    address: string;
+    city: string;
+    district: string;
     monthlyPrice: number; // In USD
 };
 
@@ -22,16 +30,27 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
             email: data.email,
             email_confirm: true,
-            user_metadata: { full_name: data.fullName, phone: data.phone }
+            user_metadata: { full_name: data.contactName, phone: data.phone }
         });
 
         if (userError) throw new Error(`Kullanıcı oluşturulamadı: ${userError.message}`);
         const userId = userData.user.id;
 
         // 2. Create Tenant
+        // We store billing info here
         const { data: tenant, error: tenantError } = await supabaseAdmin
             .from("tenants")
-            .insert({ name: data.companyName })
+            .insert({
+                name: data.companyName,
+                billing_type: data.billingType,
+                tax_office: data.taxOffice,
+                tax_number: data.taxNumber,
+                tckn: data.tckn,
+                full_name: data.billingType === 'individual' ? data.fullName : null, // Store billing name if individual
+                address: data.address,
+                city: data.city,
+                district: data.district,
+            })
             .select()
             .single();
 
@@ -40,7 +59,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         // 3. Create Profile
         await supabaseAdmin.from("profiles").upsert({
             user_id: userId,
-            full_name: data.fullName,
+            full_name: data.contactName, // Profile name is contact person
             phone: data.phone
         });
 

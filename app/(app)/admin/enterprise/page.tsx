@@ -11,15 +11,24 @@ import { Loader2, Send } from "lucide-react";
 export default function EnterpriseInvitePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [billingType, setBillingType] = useState<'corporate' | 'individual'>('corporate');
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
 
         const data = {
-            companyName: formData.get("companyName") as string,
-            fullName: formData.get("fullName") as string,
+            billingType: billingType,
+            companyName: billingType === 'corporate' ? formData.get("companyName") as string : "Bireysel - " + formData.get("fullName") as string,
+            fullName: billingType === 'individual' ? formData.get("fullName") as string : formData.get("contactName") as string,
+            contactName: formData.get("contactName") as string,
             email: formData.get("email") as string,
             phone: formData.get("phone") as string,
+            taxOffice: formData.get("taxOffice") as string,
+            taxNumber: formData.get("taxNumber") as string,
+            tckn: formData.get("tckn") as string,
+            address: formData.get("address") as string,
+            city: formData.get("city") as string,
+            district: formData.get("district") as string,
             monthlyPrice: Number(formData.get("monthlyPrice")),
         };
 
@@ -45,15 +54,72 @@ export default function EnterpriseInvitePage() {
 
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <form id="invite-form" action={handleSubmit} className="space-y-4">
+                    {/* Billing Type Selection */}
                     <div className="space-y-2">
-                        <Label>Şirket Adı</Label>
-                        <Input name="companyName" required placeholder="Firma Ünvanı" />
+                        <Label>Üyelik Tipi</Label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center space-x-2 cursor-pointer border p-3 rounded-lg flex-1 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50">
+                                <input
+                                    type="radio"
+                                    name="billingType"
+                                    value="corporate"
+                                    defaultChecked={billingType === 'corporate'}
+                                    className="accent-orange-600"
+                                    onChange={(e) => setBillingType(e.target.value as 'corporate' | 'individual')}
+                                />
+                                <span className="font-medium">Kurumsal (Şirket)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer border p-3 rounded-lg flex-1 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50">
+                                <input
+                                    type="radio"
+                                    name="billingType"
+                                    value="individual"
+                                    defaultChecked={billingType === 'individual'}
+                                    className="accent-orange-600"
+                                    onChange={(e) => setBillingType(e.target.value as 'corporate' | 'individual')}
+                                />
+                                <span className="font-medium">Bireysel (Şahıs)</span>
+                            </label>
+                        </div>
                     </div>
+
+                    {billingType === 'corporate' && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Şirket Ünvanı</Label>
+                                <Input name="companyName" required placeholder="Tam Şirket Ünvanı" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Vergi Dairesi</Label>
+                                    <Input name="taxOffice" required placeholder="Vergi Dairesi" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Vergi Numarası</Label>
+                                    <Input name="taxNumber" required placeholder="Vergi No" />
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {billingType === 'individual' && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Ad Soyad (Fatura Sahibi)</Label>
+                                <Input name="fullName" required placeholder="Ad Soyad" />
+                                {/* Hidden input to satisfy legacy requirements if needed, or handled in handleSubmit */}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>TC Kimlik No</Label>
+                                <Input name="tckn" required placeholder="11 Haneli TCKN" maxLength={11} />
+                            </div>
+                        </>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Yetkili Ad Soyad</Label>
-                            <Input name="fullName" required placeholder="Ad Soyad" />
+                            <Label>{billingType === 'corporate' ? 'Yetkili Ad Soyad' : 'İletişim Ad Soyad'}</Label>
+                            <Input name="contactName" required placeholder="Ad Soyad" />
                         </div>
                         <div className="space-y-2">
                             <Label>Telefon</Label>
@@ -64,6 +130,28 @@ export default function EnterpriseInvitePage() {
                     <div className="space-y-2">
                         <Label>E-posta Adresi</Label>
                         <Input name="email" type="email" required placeholder="yetkili@sirket.com" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Fatura Adresi</Label>
+                        <textarea
+                            name="address"
+                            required
+                            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Açık adres..."
+                            rows={3}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>İl</Label>
+                            <Input name="city" required placeholder="İstanbul" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>İlçe</Label>
+                            <Input name="district" required placeholder="Beşiktaş" />
+                        </div>
                     </div>
 
                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg space-y-2">
