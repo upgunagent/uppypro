@@ -7,11 +7,24 @@ export async function validateToken(token: string) {
 
     try {
         // Fetch token from database
-        const { data: tokenData, error: tokenError } = await supabase
+        let { data: tokenData, error: tokenError } = await supabase
             .from('invite_tokens')
             .select('*')
             .eq('token', token)
             .maybeSingle();
+
+        // If not found in standard tokens, check enterprise tokens
+        if (!tokenData) {
+            const { data: entToken, error: entError } = await supabase
+                .from('enterprise_invite_tokens')
+                .select('*')
+                .eq('token', token)
+                .maybeSingle();
+
+            if (entToken && !entError) {
+                tokenData = entToken;
+            }
+        }
 
         if (tokenError || !tokenData) {
             return { valid: false, error: 'Token bulunamadı.' };

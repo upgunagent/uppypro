@@ -7,11 +7,27 @@ export async function setUserPassword(token: string, password: string) {
 
     try {
         // Validate token first
-        const { data: tokenData, error: tokenError } = await supabase
+        let { data: tokenData, error: tokenError } = await supabase
             .from('invite_tokens')
             .select('*')
             .eq('token', token)
             .maybeSingle();
+
+        let tableName = 'invite_tokens';
+
+        // If not found in standard tokens, check enterprise tokens
+        if (!tokenData) {
+            const { data: entToken, error: entError } = await supabase
+                .from('enterprise_invite_tokens')
+                .select('*')
+                .eq('token', token)
+                .maybeSingle();
+
+            if (entToken && !entError) {
+                tokenData = entToken;
+                tableName = 'enterprise_invite_tokens';
+            }
+        }
 
         if (tokenError || !tokenData) {
             return { success: false, error: 'Geçersiz token.' };
@@ -38,7 +54,7 @@ export async function setUserPassword(token: string, password: string) {
 
         // Mark token as used
         await supabase
-            .from('invite_tokens')
+            .from(tableName)
             .update({ used_at: new Date().toISOString() })
             .eq('token', token);
 
