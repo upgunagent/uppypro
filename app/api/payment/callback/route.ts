@@ -73,9 +73,12 @@ export async function POST(request: Request) {
                         current_period_end: nextMonth.toISOString()
                     }).eq('tenant_id', invite.tenant_id);
 
+                    // Token will be marked as used when password is set
+                    /*
                     await supabaseAdmin.from("enterprise_invite_tokens").update({
                         used_at: now.toISOString()
                     }).eq('token', inviteToken);
+                    */
 
                     await supabaseAdmin.from("payments").insert({
                         tenant_id: invite.tenant_id,

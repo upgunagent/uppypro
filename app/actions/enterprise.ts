@@ -195,11 +195,15 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
     if (error) return { error: error.message };
 
     // 3. Mark invite token as used (if provided)
+    // 3. Mark invite token as used (if provided) - REMOVED
+    // Token should only be used when password is set
+    /*
     if (cardData.inviteToken) {
         await admin.from("enterprise_invite_tokens").update({
             used_at: new Date().toISOString()
         }).eq('token', cardData.inviteToken);
     }
+    */
 
     // 4. Generate Auto-Login Link (Recovery Link) for Password Setup
     // First, find the owner of this tenant
