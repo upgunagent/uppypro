@@ -114,6 +114,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         await supabaseAdmin.from("enterprise_invite_tokens").insert({
             token,
             tenant_id: tenant.id,
+            user_id: userId,
             email: data.email,
             expires_at: expiresAt.toISOString()
         });
