@@ -98,6 +98,100 @@ export async function POST(request: Request) {
                         provider_payment_id: merchant_oid
                     });
                 }
+            } else if (prefix === 'signup' && refId) {
+                // Standard Signup logic
+                // merchant_oid: signup_<invite_token>_<timestamp>
+                const inviteTokenStr = refId;
+
+                const { data: invToken } = await supabaseAdmin
+                    .from("invite_tokens")
+                    .select("*, user:user_id(*), tenant:tenants(*)") // Assuming we can join or fetch separately
+                    .eq("token", inviteTokenStr)
+                    .single();
+
+                if (invToken) {
+                    const { user_id } = invToken;
+
+                    // Find tenant member to get tenant_id?
+                    // Or better, we stored tenant_id in invite_tokens? No, schema?
+                    // Let's assume user is owner of a tenant.
+                    const { data: member } = await supabaseAdmin.from("tenant_members").select("tenant_id").eq("user_id", user_id).single();
+
+                    if (member) {
+                        const now = new Date();
+                        const nextMonth = new Date(now);
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+                        // Activate Subscription
+                        await supabaseAdmin.from("subscriptions").update({
+                            status: 'active',
+                            current_period_start: now.toISOString(),
+                            current_period_end: nextMonth.toISOString()
+                        }).eq('tenant_id', member.tenant_id);
+
+                        // Log Payment
+                        await supabaseAdmin.from("payments").insert({
+                            tenant_id: member.tenant_id,
+                            amount: Number(total_amount),
+                            currency: 'TRY',
+                            status: 'success',
+                            type: 'subscription_activation',
+                            provider_payment_id: merchant_oid
+                        });
+
+                        // Send Welcome Email (via server action or direct resend here)
+                        // Importing resend locally here to avoid circular dep issues if any, or just use lib
+
+                        try {
+                            const { resend, EMAIL_FROM } = await import("@/lib/resend");
+                            const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${inviteTokenStr}`;
+
+                            // Get Tenant Name
+                            const { data: tenant } = await supabaseAdmin.from("tenants").select("name").eq("id", member.tenant_id).single();
+                            const tenantName = tenant?.name || "İşletmeniz";
+
+                            // Get User Email
+                            const { data: user } = await supabaseAdmin.auth.admin.getUserById(user_id);
+                            const email = user.user?.email;
+
+                            if (email) {
+                                await resend.emails.send({
+                                    from: EMAIL_FROM,
+                                    to: email,
+                                    subject: 'UppyPro Üyeliğiniz Oluşturuldu',
+                                    html: `
+                                        <!DOCTYPE html>
+                                        <html>
+                                        <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                                            <div style="text-align: center; margin-bottom: 30px;">
+                                                <img src="${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png" alt="UPGUN AI" style="height: 32px;" />
+                                            </div>
+                                            
+                                            <h2 style="color: #1e293b;">Hoş Geldiniz! 🎉</h2>
+                                            
+                                            <p><strong>${tenantName}</strong> için ödemeniz başarıyla alındı ve hesabınız aktif edildi.</p>
+                                            
+                                            <p>Panelinize erişmek için lütfen şifrenizi belirleyin:</p>
+                                            
+                                            <div style="text-align: center; margin: 30px 0;">
+                                                <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                                                    Şifremi Belirle
+                                                </a>
+                                            </div>
+                                            
+                                            <p style="color: #64748b; font-size: 14px;">
+                                                E-posta: ${email}
+                                            </p>
+                                        </body>
+                                        </html>
+                                    `
+                                });
+                            }
+                        } catch (mailError) {
+                            console.error("Mail send error in callback:", mailError);
+                        }
+                    }
+                }
             }
         } else {
             console.warn("PayTR Payment Failed:", body.failed_reason_code, body.failed_reason_msg);

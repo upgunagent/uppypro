@@ -24,6 +24,8 @@ export async function getPaytrToken(data: {
     paymentAmount: number; // In TL (Example: 125.50)
     basketId: string; // Order ID or similar
     productName: string;
+    okUrl?: string; // Custom Success URL
+    failUrl?: string; // Custom Fail URL
 }): Promise<PaytrTokenResult> {
 
     if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT) {
@@ -75,8 +77,8 @@ export async function getPaytrToken(data: {
         formData.append("user_name", data.name);
         formData.append("user_address", data.address);
         formData.append("user_phone", data.phone);
-        formData.append("merchant_ok_url", `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success&oid=${merchant_oid}`);
-        formData.append("merchant_fail_url", `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&oid=${merchant_oid}`);
+        formData.append("merchant_ok_url", data.okUrl || `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success&oid=${merchant_oid}`);
+        formData.append("merchant_fail_url", data.failUrl || `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&oid=${merchant_oid}`);
         formData.append("timeout_limit", "30");
         formData.append("currency", currency);
         formData.append("test_mode", test_mode);

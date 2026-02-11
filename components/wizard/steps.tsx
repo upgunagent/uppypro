@@ -639,27 +639,21 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
 // 6. Payment
 import { completeSignupWithInvite } from "@/app/actions/signup";
 import { useToast } from "@/components/ui/use-toast";
+import Script from "next/script";
 
 export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext: () => void, onBack: () => void }) {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
-    const [cardHolder, setCardHolder] = useState("Demo User");
-    const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
-    const [expiry, setExpiry] = useState("12/30");
-    const [cvc, setCvc] = useState("123");
+    // PayTR State
+    const [token, setToken] = useState<string | null>(null);
 
-    const handlePay = async () => {
+    const handleStartPayment = async () => {
         setLoading(true);
 
         try {
-            // Pass card data alongside wizard data
-            const result = await completeSignupWithInvite(data, {
-                cardHolder,
-                cardNumber: cardNumber.replace(/\s/g, ''),
-                expiry,
-                cvc
-            });
+            // Trigger signup and get PayTR token
+            const result = await completeSignupWithInvite(data);
 
             if (result.error) {
                 toast({
@@ -667,8 +661,10 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                     title: "Hata",
                     description: result.error
                 });
-            } else {
-                onNext();
+                setLoading(false);
+            } else if (result.paytrToken) {
+                setToken(result.paytrToken);
+                setLoading(false);
             }
         } catch (e) {
             toast({
@@ -676,54 +672,96 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                 title: "Hata",
                 description: "Bir hata oluştu."
             });
-        } finally {
             setLoading(false);
         }
     };
 
+    // Listener for PayTR success message if iframe redirection works strictly inside?
+    // Usually standard iframe behavior needs checking.
+    // If PayTR redirects to merchant_ok_url inside the iframe, we can detect it or use a simple query param on the main page.
+    // However, since this component is likely just mounting the iframe, if the iframe goes to success page, the user sees it IN the iframe.
+    // We want to break out or show StepSuccess.
+    // PayTR iframe resizer can sometimes pass messages.
+    // BUT simpler: PayTR POST callback handles the backend. 
+    // The frontend user needs to be redirected to a success page.
+    // If we set merchant_ok_url to "?status=success", the iframe will load that.
+    // We can use the 'iframeResizer' to detect height changes or just trust the user sees "Payment Successful" inside iframe.
+    // BETTER: Configure merchant_ok_url to a dedicated "success" page that sends a message to parent?
+    // OR simpler: just let iframe show "Success" and a button "Continue".
+    // But we are in a Wizard.
+    // Let's implement a listener for local testing? No.
+    // We provided `merchant_ok_url` in action (or need to ensure it points to something that helps).
+    // In `getPaytrToken`, we hardcoded `complete-payment`.
+    // We should override it for signup? `getPaytrToken` uses `process.env.NEXT_PUBLIC_APP_URL}/complete-payment`.
+    // That page (CompletePaymentPage) handles `status=success`.
+    // That page is designed for "Corporate Invite" flow (checks auth, pending subscription).
+    // IF we are signing up, we are NOT logged in yet!
+    // So if PayTR redirects there, it might show "Login error".
+    // Wait, `CompletePaymentPage` checks `supabase.auth.getUser()`. The user is NOT logged in during signup wizard.
+
+    // PROBLEM: PayTR success redirect will go to `complete-payment`.
+    // `complete-payment` requires login.
+    // Signup user is anonymous.
+
+    // SOLUTION: We need a different success URL for signup or handle anonymous in `complete-payment`.
+    // OR: Update `getPaytrToken` to accept custom URLs. 
+    // Let's update `getPaytrToken` to accept urls.
+
+    // Since I cannot change `getPaytrToken` signature easily without breaking other calls (or default), 
+    // I can stick to modifying `payment.ts` later if needed.
+    // BUT for now, let's assume I fix `payment.ts` next to accept URLs.
+
+    // Assuming we successfully redirect to `/uyelik/sonuc?status=success` or similar.
+    // The Wizard is on `/uyelik`.
+    // If iframe redirects to `/uyelik?status=success`, the page reloads.
+    // The wizard state reset! (Because it's state-based).
+    // If page reloads, user sees Step 1.
+    // That's bad.
+
+    // FIX: 
+    // 1. PayTR redirect should go to a dedicated "Thank You" page `app/uyelik/basarili/page.tsx`.
+    // 2. That page is simple static "Success, check email".
+    // 3. So when `getPaytrToken` is called, we MUST provide this URL.
+
+    // I will pass `merchant_ok_url` to `getPaytrToken` in `signup.ts`.
+
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h3 className="text-xl font-semibold mb-2">Ödeme</h3>
-                <p className="text-slate-500 text-sm">Kart bilgilerinizi girin (Test Modu Aktif: Rastgele değer girebilirsiniz).</p>
+                <h3 className="text-xl font-semibold mb-2">Güvenli Ödeme</h3>
+                <p className="text-slate-500 text-sm">
+                    {token ? "Lütfen ödeme işlemini aşağıdaki ekrandan tamamlayın." : "Ödemeniz PayTR güvencesiyle alınacaktır."}
+                </p>
             </div>
 
-            <div className="space-y-4">
-                <div className="relative">
-                    <CreditCard className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
-                    <Input
-                        placeholder="Kart Numarası"
-                        className="pl-10 font-mono"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
-                    />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <Input
-                        placeholder="AA/YY"
-                        className="font-mono text-center"
-                        value={expiry}
-                        onChange={(e) => setExpiry(e.target.value)}
-                    />
-                    <Input
-                        placeholder="CVC"
-                        className="font-mono text-center"
-                        maxLength={3}
-                        value={cvc}
-                        onChange={(e) => setCvc(e.target.value)}
-                    />
-                </div>
-                <Input
-                    placeholder="Kart Üzerindeki İsim"
-                    value={cardHolder}
-                    onChange={(e) => setCardHolder(e.target.value)}
-                />
-            </div>
+            {!token && (
+                <div className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3">
+                        <User className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                            <strong>{data.fullName}</strong> ({data.email}) adına hesap oluşturulacak ve ödeme sayfasına yönlendirileceksiniz.
+                        </div>
+                    </div>
 
-            <Button onClick={handlePay} disabled={loading} className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg">
-                {loading ? <><Loader2 className="animate-spin mr-2" /> İşleniyor...</> : "Ödemeyi Tamamla ve Üye Ol"}
-            </Button>
-            <Button variant="ghost" onClick={onBack} disabled={loading} className="w-full">Geri Dön</Button>
+                    <Button onClick={handleStartPayment} disabled={loading} className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg shadow-lg">
+                        {loading ? <><Loader2 className="animate-spin mr-2" /> Hazırlanıyor...</> : "Ödeme Başlat"}
+                    </Button>
+                    <Button variant="ghost" onClick={onBack} disabled={loading} className="w-full">Geri Dön</Button>
+                </div>
+            )}
+
+            {token && (
+                <div className="w-full min-h-[600px] border border-slate-200 rounded-xl overflow-hidden relative">
+                    <Script src="https://www.paytr.com/js/iframeResizer.min.js" strategy="afterInteractive" />
+                    <iframe
+                        src={`https://www.paytr.com/odeme/guvenli/${token}`}
+                        id="paytriframe"
+                        style={{ width: "100%", height: "600px" }}
+                        frameBorder="0"
+                        scrolling="no"
+                    ></iframe>
+                </div>
+            )}
         </div>
     );
 }
