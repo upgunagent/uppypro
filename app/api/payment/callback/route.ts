@@ -58,7 +58,7 @@ export async function POST(request: Request) {
                 // Enterprise Invite Flow
                 const { data: invite } = await supabaseAdmin
                     .from("enterprise_invite_tokens")
-                    .select("tenant_id")
+                    .select("tenant_id, user_id")
                     .eq("token", inviteToken)
                     .single();
 
@@ -85,6 +85,58 @@ export async function POST(request: Request) {
                         type: 'subscription_activation',
                         provider_payment_id: merchant_oid
                     });
+
+                    // Send password setup email
+                    try {
+                        const { resend, EMAIL_FROM } = await import("@/lib/resend");
+                        const setPasswordLink = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${inviteToken}`;
+
+                        const { data: tenant } = await supabaseAdmin.from("tenants").select("name").eq("id", invite.tenant_id).single();
+                        const tenantName = tenant?.name || "İşletmeniz";
+
+                        const { data: user } = await supabaseAdmin.auth.admin.getUserById(invite.user_id);
+                        const email = user.user?.email;
+
+                        if (email) {
+                            await resend.emails.send({
+                                from: EMAIL_FROM,
+                                to: email,
+                                subject: 'UppyPro Aboneliğiniz Başarıyla Aktif Edildi! 🎉',
+                                html: `
+                                    <!DOCTYPE html>
+                                    <html>
+                                    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                                        <div style="text-align: center; margin-bottom: 30px;">
+                                            <img src="${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png" alt="UPGUN AI" style="height: 32px;" />
+                                        </div>
+                                        
+                                        <h2 style="color: #1e293b;">Hoş Geldiniz! 🎉</h2>
+                                        
+                                        <p><strong>${tenantName}</strong> için ödemeniz başarıyla alındı ve hesabınız aktif edildi.</p>
+                                        
+                                        <p>Panelinize erişmek için lütfen şifrenizi belirleyin:</p>
+                                        
+                                        <div style="text-align: center; margin: 30px 0;">
+                                            <a href="${setPasswordLink}" style="display: inline-block; background-color: #ea580c; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                                                Şifremi Belirle
+                                            </a>
+                                        </div>
+                                        
+                                        <p style="color: #64748b; font-size: 14px;">Eğer bu işlemi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.</p>
+                                        
+                                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+                                        
+                                        <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                                            © 2024 UPGUN AI. Tüm hakları saklıdır.
+                                        </p>
+                                    </body>
+                                    </html>
+                                `
+                            });
+                        }
+                    } catch (mailError) {
+                        console.error("Mail send error in enterprise callback:", mailError);
+                    }
                 }
             } else if (prefix === 'signup' && inviteToken) {
                 // Standard Signup Flow
