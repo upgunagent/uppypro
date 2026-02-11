@@ -16,6 +16,7 @@ type EnterpriseInviteFlowProps = {
     priceTry: number;
     exchangeRate: number;
     inviteToken: string;
+    paymentError?: boolean;
 };
 
 export function EnterpriseInviteFlow({
@@ -25,7 +26,8 @@ export function EnterpriseInviteFlow({
     priceUsd,
     priceTry,
     exchangeRate,
-    inviteToken
+    inviteToken,
+    paymentError
 }: EnterpriseInviteFlowProps) {
     const [agreementsConfirmed, setAgreementsConfirmed] = useState(false);
     const [kvkkConfirmed, setKvkkConfirmed] = useState(false);
@@ -71,6 +73,20 @@ export function EnterpriseInviteFlow({
                         <strong>{tenant.name}</strong> için ödemeyi tamamlayın.
                     </p>
                 </div>
+
+                {paymentError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start">
+                        <div className="mr-3 mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="font-semibold">Ödeme Başarısız</p>
+                            <p className="text-sm">Ödeme işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.</p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 mb-8 flex justify-between items-center">
                     <div>
