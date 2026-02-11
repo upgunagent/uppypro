@@ -133,8 +133,8 @@ export async function completeSignupWithInvite(data: WizardData) {
         }
 
         // 8. Generate PayTR Token
-        const refId = tokenData.token; // Use invite token as ref
-        const oid = `signup_${refId}_${Date.now()}`;
+        const refId = tokenData.token.replace(/-/g, ''); // Remove hyphens from UUID
+        const oid = `signup${refId}${Date.now()}`; // Format: signup<32chars><13chars> = 51 chars total, alphanumeric only
 
         // Calculate Amount (Reuse logic or pass from front? Better recalculate)
         // Ideally should fetch prices again, but for now let's trusty pass from front OR re-calc.
