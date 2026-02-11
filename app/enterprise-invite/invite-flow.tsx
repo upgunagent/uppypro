@@ -80,7 +80,12 @@ export function EnterpriseInviteFlow({
                     </div>
                 </div>
 
-                <PaymentForm tenantId={tenant.id} amount={priceTry} inviteToken={inviteToken} />
+                <PaymentForm
+                    tenantId={tenant.id}
+                    amount={priceTry}
+                    inviteToken={inviteToken}
+                    userData={agreementData.buyer}
+                />
             </div>
         );
     }
