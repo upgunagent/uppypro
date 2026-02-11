@@ -58,7 +58,7 @@ export async function POST(request: Request) {
                 // Enterprise Invite Flow
                 const { data: invite } = await supabaseAdmin
                     .from("enterprise_invite_tokens")
-                    .select("tenant_id, user_id")
+                    .select("tenant_id, user_id, email")
                     .eq("token", inviteToken)
                     .single();
 
@@ -98,7 +98,9 @@ export async function POST(request: Request) {
                         const tenantName = tenant?.name || "İşletmeniz";
 
                         const { data: user } = await supabaseAdmin.auth.admin.getUserById(invite.user_id);
-                        const email = user.user?.email;
+                        const email = user?.user?.email || invite.email;
+
+                        console.log("Sending password setup email to:", email);
 
                         if (email) {
                             await resend.emails.send({
@@ -136,6 +138,9 @@ export async function POST(request: Request) {
                                     </html>
                                 `
                             });
+                            console.log("Password setup email sent successfully.");
+                        } else {
+                            console.error("No email found for user or invite during callback.");
                         }
                     } catch (mailError) {
                         console.error("Mail send error in enterprise callback:", mailError);
