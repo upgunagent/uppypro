@@ -34,9 +34,10 @@ export async function getPaytrToken(data: {
     }
 
     try {
-        // PayTR expects basket prices as numbers (not strings)
-        // Format: [["Product Name", Price (number), Quantity]]
-        const user_basket = JSON.stringify([[data.productName, Number(data.paymentAmount.toFixed(2)), 1]]);
+        // PayTR user_basket: base64 encoded to prevent Turkish character encoding issues
+        // Format: base64(JSON.stringify([["Product", Price, Qty]]))
+        const basketData = JSON.stringify([["UppyPro Abonelik", Number(data.paymentAmount.toFixed(2)), 1]]);
+        const user_basket = Buffer.from(basketData).toString('base64');
         const merchant_oid = data.basketId; // Unique Order ID
         const payment_amount = Math.round(data.paymentAmount * 100); // Kuruş cinsinden (Örn: 100.00 TL -> 10000)
         const currency = "TL";
