@@ -61,7 +61,45 @@ export async function getUsdExchangeRate(): Promise<number> {
         console.error("Frankfurter Fetch Error:", error);
     }
 
-    // 3. Last Resort Fallback (Updated periodically)
-    console.error("All exchange rate APIs failed. Using hardcoded fallback.");
+    // 3. Try Open Exchange Rates (open.er-api.com)
+    try {
+        console.log("Fetching exchange rate from Open ER API...");
+        const response = await fetch("https://open.er-api.com/v6/latest/USD", {
+            next: { revalidate: 3600 }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data?.rates?.TRY) {
+                const rate = data.rates.TRY;
+                console.log("Exchange rate fetched from Open ER API:", rate);
+                return rate;
+            }
+        }
+    } catch (error) {
+        console.error("Open ER API Fetch Error:", error);
+    }
+
+    // 4. Try Fawaz Ahmed Currency API (via jsdelivr)
+    try {
+        console.log("Fetching exchange rate from Fawaz Ahmed API...");
+        const response = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", {
+            next: { revalidate: 3600 }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data?.usd?.try) {
+                const rate = data.usd.try;
+                console.log("Exchange rate fetched from Fawaz Ahmed API:", rate);
+                return rate;
+            }
+        }
+    } catch (error) {
+        console.error("Fawaz Ahmed API Fetch Error:", error);
+    }
+
+    // 5. Last Resort Fallback (Updated periodically)
+    console.error("All payment exchange rate APIs failed. Using hardcoded fallback.");
     return 37.50;
 }
