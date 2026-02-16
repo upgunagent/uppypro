@@ -1,5 +1,13 @@
 import crypto from 'crypto';
 
+export const IyzicoConfig = {
+    apiKey: (process.env.IYZICO_API_KEY || '').trim(),
+    secretKey: (process.env.IYZICO_SECRET_KEY || '').trim(),
+    baseUrl: (process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com').trim(),
+    locale: 'tr',
+    conversationId: Date.now().toString()
+};
+
 // Iyzico V2 Authentication Helper
 // Reference: https://github.com/iyzico/iyzipay-php/blob/master/src/Iyzipay/IyziAuthV2Generator.php
 function generateIyzicoV2Header(
@@ -39,6 +47,14 @@ function generateIyzicoV2Header(
     // apiKey:API_KEY&randomKey:RANDOM_STRING&signature:SIGNATURE
     const authString = `apiKey:${apiKey}&randomKey:${randomString}&signature:${signature}`;
 
+    // Debug Logging
+    console.log('[IYZICO Auth Debug] URI:', uri);
+    console.log('[IYZICO Auth Debug] URI Path:', uriPath);
+    console.log('[IYZICO Auth Debug] Payload Length:', payload.length);
+    console.log('[IYZICO Auth Debug] Payload:', payload);
+    console.log('[IYZICO Auth Debug] Signature:', signature);
+    console.log('[IYZICO Auth Debug] Auth String:', authString);
+
     // 5. Build Header
     // IYZWSv2 base64(authString)
     return `IYZWSv2 ${Buffer.from(authString).toString('base64')}`;
@@ -48,13 +64,15 @@ function generateRandomString(): string {
     return crypto.randomBytes(8).toString('hex') + Date.now().toString();
 }
 
-export const IyzicoConfig = {
-    apiKey: process.env.IYZICO_API_KEY || '',
-    secretKey: process.env.IYZICO_SECRET_KEY || '',
-    baseUrl: process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com',
-    locale: 'tr',
-    conversationId: Date.now().toString()
-};
+function getIyzicoHeaders(authString: string, randomString: string) {
+    return {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authString,
+        'x-iyzi-rnd': randomString,
+        'x-iyzi-client-version': 'iyzipay-node-2.0.48'
+    };
+}
 
 // Direct HTTP API call - no npm package dependency!
 export async function initializeSubscriptionCheckout(data: {
@@ -105,20 +123,17 @@ export async function initializeSubscriptionCheckout(data: {
 
     console.log('[IYZICO] Initializing subscription checkout...');
     console.log('[IYZICO] API URL:', uri);
+    console.log('[IYZICO] Request Body:', requestBody);
 
     try {
         const response = await fetch(uri, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authString,
-                'x-iyzi-rnd': randomString
-            },
+            headers: getIyzicoHeaders(authString, randomString),
             body: requestBody
         });
 
         const result = await response.json();
-        console.log('[IYZICO] Response status:', result.status);
+        console.log('[IYZICO] Response:', JSON.stringify(result));
 
         if (result.status === 'success') {
             return {
@@ -162,11 +177,7 @@ export async function getSubscriptionCheckoutFormResult(token: string): Promise<
 
     const response = await fetch(uri, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authString,
-            'x-iyzi-rnd': randomString
-        },
+        headers: getIyzicoHeaders(authString, randomString),
         body: requestBody
     });
 
@@ -193,11 +204,7 @@ export async function cancelSubscription(subscriptionReferenceCode: string): Pro
 
     const response = await fetch(uri, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authString,
-            'x-iyzi-rnd': randomString
-        },
+        headers: getIyzicoHeaders(authString, randomString),
         body: requestBody
     });
 
@@ -230,11 +237,7 @@ export async function updateSubscriptionCard(data: {
 
     const response = await fetch(uri, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authString,
-            'x-iyzi-rnd': randomString
-        },
+        headers: getIyzicoHeaders(authString, randomString),
         body: requestBody
     });
 
@@ -274,11 +277,7 @@ export async function getSubscriptionCardUpdateResult(token: string): Promise<an
 
     const response = await fetch(uri, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authString,
-            'x-iyzi-rnd': randomString
-        },
+        headers: getIyzicoHeaders(authString, randomString),
         body: requestBody
     });
 
@@ -307,18 +306,19 @@ export async function createProduct(data: {
         requestBody
     );
 
+    console.log('[IYZICO] Creating product:', data.name);
+    console.log('[IYZICO] API URL:', uri);
+    console.log('[IYZICO] Request Body:', requestBody);
+
     try {
         const response = await fetch(uri, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authString,
-                'x-iyzi-rnd': randomString
-            },
+            headers: getIyzicoHeaders(authString, randomString),
             body: requestBody
         });
 
         const result = await response.json();
+        console.log('[IYZICO] Product Creation Response:', JSON.stringify(result));
 
         if (result.status === 'success') {
             return {
@@ -354,7 +354,7 @@ export async function createPricingPlan(data: {
         conversationId: IyzicoConfig.conversationId,
         productReferenceCode: data.productReferenceCode,
         name: data.name,
-        price: data.price.toString(),
+        price: data.price.toFixed(2), // Ensure string format like "700.00"
         currencyCode: data.currencyCode,
         paymentInterval: data.paymentInterval,
         paymentIntervalCount: data.paymentIntervalCount,
@@ -374,18 +374,19 @@ export async function createPricingPlan(data: {
         requestBody
     );
 
+    console.log('[IYZICO] Creating pricing plan:', data.name);
+    console.log('[IYZICO] API URL:', uri);
+    console.log('[IYZICO] Request Body:', requestBody);
+
     try {
         const response = await fetch(uri, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authString,
-                'x-iyzi-rnd': randomString
-            },
+            headers: getIyzicoHeaders(authString, randomString),
             body: requestBody
         });
 
         const result = await response.json();
+        console.log('[IYZICO] Pricing Plan Response:', JSON.stringify(result));
 
         if (result.status === 'success') {
             return {
