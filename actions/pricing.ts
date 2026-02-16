@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getUsdExchangeRate } from "@/lib/currency";
 
 export async function getProductPrices() {
     const supabase = await createClient();
@@ -39,6 +40,5 @@ export async function getProductPrices() {
 }
 
 export async function getExchangeRate() {
-    const { getUsdExchangeRate } = await import("@/lib/currency");
     return getUsdExchangeRate();
 }
