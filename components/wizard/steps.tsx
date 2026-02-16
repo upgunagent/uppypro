@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getProductPrices } from "@/actions/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,8 +72,41 @@ export function StepSummary({ data, onNext }: StepProps) {
                     console.error("[CLIENT] CDN fetch failed:", err);
                 }
                 console.log("[CLIENT] Using exchange rate:", rate);
-                const prices = await getProductPrices();
-                console.log("[CLIENT] getProductPrices() returned:", prices);
+
+                // FETCH PRICES DIRECTLY FROM SUPABASE - NO SERVER ACTION
+                const { createClient } = await import("@/lib/supabase/client");
+                const supabase = createClient();
+
+                let prices = {
+                    inbox: 19.99,
+                    ai: 79.99,
+                    ai_medium: 159.98,
+                    ai_pro: 289.96
+                };
+
+                try {
+                    const { data: priceData } = await supabase
+                        .from('pricing')
+                        .select('product_key, monthly_price_usd')
+                        .eq('billing_cycle', 'monthly');
+
+                    if (priceData && priceData.length > 0) {
+                        const priceMap = priceData.reduce((acc: any, item: any) => {
+                            acc[item.product_key] = item.monthly_price_usd;
+                            return acc;
+                        }, {});
+
+                        prices = {
+                            inbox: priceMap.uppypro_inbox || 19.99,
+                            ai: priceMap.uppypro_ai || 79.99,
+                            ai_medium: priceMap.uppypro_ai_medium || 159.98,
+                            ai_pro: priceMap.uppypro_ai_pro || 289.96
+                        };
+                    }
+                    console.log("[CLIENT] Prices from Supabase:", prices);
+                } catch (error) {
+                    console.error("[CLIENT] Failed to fetch prices from Supabase:", error);
+                }
 
                 // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
                 if (rate === 44.00) {
@@ -529,8 +561,41 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                     console.error("[CLIENT-AGREEMENTS] CDN fetch failed:", err);
                 }
                 console.log("[CLIENT-AGREEMENTS] Using exchange rate:", rate);
-                const prices = await getProductPrices();
-                console.log("[CLIENT-AGREEMENTS] getProductPrices() returned:", prices);
+
+                // FETCH PRICES DIRECTLY FROM SUPABASE - NO SERVER ACTION
+                const { createClient } = await import("@/lib/supabase/client");
+                const supabase = createClient();
+
+                let prices = {
+                    inbox: 19.99,
+                    ai: 79.99,
+                    ai_medium: 159.98,
+                    ai_pro: 289.96
+                };
+
+                try {
+                    const { data: priceData } = await supabase
+                        .from('pricing')
+                        .select('product_key, monthly_price_usd')
+                        .eq('billing_cycle', 'monthly');
+
+                    if (priceData && priceData.length > 0) {
+                        const priceMap = priceData.reduce((acc: any, item: any) => {
+                            acc[item.product_key] = item.monthly_price_usd;
+                            return acc;
+                        }, {});
+
+                        prices = {
+                            inbox: priceMap.uppypro_inbox || 19.99,
+                            ai: priceMap.uppypro_ai || 79.99,
+                            ai_medium: priceMap.uppypro_ai_medium || 159.98,
+                            ai_pro: priceMap.uppypro_ai_pro || 289.96
+                        };
+                    }
+                    console.log("[CLIENT-AGREEMENTS] Prices from Supabase:", prices);
+                } catch (error) {
+                    console.error("[CLIENT-AGREEMENTS] Failed to fetch prices from Supabase:", error);
+                }
 
                 // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
                 if (rate === 44.00) {
