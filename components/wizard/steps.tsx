@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getProductPrices, getExchangeRate } from "@/actions/pricing";
+import { getProductPrices } from "@/actions/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,9 +56,23 @@ export function StepSummary({ data, onNext }: StepProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("[CLIENT] About to call getExchangeRate()");
-                let rate = await getExchangeRate();
-                console.log("[CLIENT] getExchangeRate() returned:", rate);
+                console.log("[CLIENT] Fetching exchange rate directly from CDN...");
+
+                // SKIP SERVER ACTION - DIRECT CDN FETCH
+                let rate = 43.50; // fallback  
+                try {
+                    const cdnRes = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
+                    if (cdnRes.ok) {
+                        const cdnData = await cdnRes.json();
+                        if (cdnData?.usd?.['try'] && !isNaN(cdnData.usd['try']) && cdnData.usd['try'] > 0) {
+                            rate = cdnData.usd['try'];
+                            console.log("[CLIENT] CDN rate:", rate);
+                        }
+                    }
+                } catch (err) {
+                    console.error("[CLIENT] CDN fetch failed:", err);
+                }
+                console.log("[CLIENT] Using exchange rate:", rate);
                 const prices = await getProductPrices();
                 console.log("[CLIENT] getProductPrices() returned:", prices);
 
@@ -498,9 +512,23 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("[CLIENT-AGREEMENTS] About to call getExchangeRate()");
-                let rate = await getExchangeRate();
-                console.log("[CLIENT-AGREEMENTS] getExchangeRate() returned:", rate);
+                console.log("[CLIENT-AGREEMENTS] Fetching exchange rate directly from CDN...");
+
+                // SKIP SERVER ACTION - DIRECT CDN FETCH
+                let rate = 43.50; // fallback  
+                try {
+                    const cdnRes = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
+                    if (cdnRes.ok) {
+                        const cdnData = await cdnRes.json();
+                        if (cdnData?.usd?.['try'] && !isNaN(cdnData.usd['try']) && cdnData.usd['try'] > 0) {
+                            rate = cdnData.usd['try'];
+                            console.log("[CLIENT-AGREEMENTS] CDN rate:", rate);
+                        }
+                    }
+                } catch (err) {
+                    console.error("[CLIENT-AGREEMENTS] CDN fetch failed:", err);
+                }
+                console.log("[CLIENT-AGREEMENTS] Using exchange rate:", rate);
                 const prices = await getProductPrices();
                 console.log("[CLIENT-AGREEMENTS] getProductPrices() returned:", prices);
 
