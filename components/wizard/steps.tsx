@@ -79,12 +79,12 @@ export function StepSummary({ data, onNext }: StepProps) {
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback can rely on a safer assumption or show error state
-                setExchangeRate(37.50);
+                setExchangeRate(43.70);
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 740 }, // ~20$ * 37.50
-                    "ai_starter": { name: "UppyPro AI", price: 2999 }, // ~80$ * 37.50
-                    "ai_medium": { name: "UppyPro AI Orta", price: 5999 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10875 },
+                    "base": { name: "UppyPro Inbox", price: 873.55 }, // ~19.99 * 43.70
+                    "ai_starter": { name: "UppyPro AI", price: 3495.63 }, // ~79.99 * 43.70
+                    "ai_medium": { name: "UppyPro AI Orta", price: 6991.56 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12672.56 },
                 });
             } finally {
                 setLoading(false);
@@ -459,12 +459,12 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback to old hardcoded if fails
-                setExchangeRate(37.50);
+                setExchangeRate(43.70);
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 740, priceUsd: 20 },
-                    "ai_starter": { name: "UppyPro AI", price: 2999, priceUsd: 80 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 5999, priceUsd: 160 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10875, priceUsd: 290 },
+                    "base": { name: "UppyPro Inbox", price: 873.55, priceUsd: 19.99 },
+                    "ai_starter": { name: "UppyPro AI", price: 3495.63, priceUsd: 79.99 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 6991.56, priceUsd: 159.98 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12672.56, priceUsd: 289.96 },
                 });
             } finally {
                 setLoading(false);

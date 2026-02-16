@@ -104,7 +104,31 @@ export async function getUsdExchangeRate(): Promise<number> {
         console.error("Open ER API Fetch Error:", error);
     }
 
-    // 5. Last Resort Fallback
-    console.error("All exchange rate APIs failed. Using hardcoded fallback.");
-    return 36.50; // Updated to more realistic current rate
+    // 5. Try Google Finance (Scraping - User Requested)
+    try {
+        console.log("Fetching from Google Finance...");
+        const response = await fetch("https://www.google.com/finance/quote/USD-TRY", {
+            cache: 'no-store',
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+        });
+
+        if (response.ok) {
+            const text = await response.text();
+            // Regex to find value in Google Finance HTML (Class: YMlKec fxKbKc)
+            const match = text.match(/<div class="YMlKec fxKbKc">([\d,.]+)<\/div>/);
+            if (match && match[1]) {
+                const rate = parseFloat(match[1].replace(',', '.'));
+                console.log("Exchange rate fetched from Google Finance:", rate);
+                if (!isNaN(rate) && rate > 0) return rate;
+            }
+        }
+    } catch (error) {
+        console.error("Google Finance Fetch Error:", error);
+    }
+
+    // 6. Last Resort Fallback (Updated for 2026)
+    console.error("All payment exchange rate APIs failed. Using hardcoded fallback.");
+    return 43.70; // Updated to match current 2026 market rate
 }
