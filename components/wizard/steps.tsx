@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { getProductPrices, getExchangeRate } from "@/app/actions/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,8 +56,6 @@ export function StepSummary({ data, onNext }: StepProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
-
                 let rate = await getExchangeRate();
                 const prices = await getProductPrices();
 
@@ -496,8 +495,6 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
-
                 let rate = await getExchangeRate();
                 const prices = await getProductPrices();
 
