@@ -128,7 +128,7 @@ export async function getUsdExchangeRate(): Promise<number> {
         console.error("Google Finance Fetch Error:", error);
     }
 
-    // 6. Last Resort Fallback (Updated for 2026)
+    // 6. Last Resort Fallback (Updated for Verification)
     console.error("All payment exchange rate APIs failed. Using hardcoded fallback.");
-    return 43.70; // Updated to match current 2026 market rate
+    return 44.00; // Updated to 44.00 to verify if live rate is worked
 }

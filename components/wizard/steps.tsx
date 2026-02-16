@@ -60,8 +60,8 @@ export function StepSummary({ data, onNext }: StepProps) {
                 let rate = await getExchangeRate();
                 const prices = await getProductPrices();
 
-                // Hybrid Fetching: If server returns fallback (43.70), try client-side fetch
-                if (rate === 43.70) {
+                // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
+                if (rate === 44.00) {
                     let clientFetched = false;
 
                     // 1. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
@@ -120,12 +120,12 @@ export function StepSummary({ data, onNext }: StepProps) {
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback can rely on a safer assumption or show error state
-                setExchangeRate(43.70);
+                setExchangeRate(44.00);
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 873.55 }, // ~19.99 * 43.70
-                    "ai_starter": { name: "UppyPro AI", price: 3495.63 }, // ~79.99 * 43.70
-                    "ai_medium": { name: "UppyPro AI Orta", price: 6991.56 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12672.56 },
+                    "base": { name: "UppyPro Inbox", price: 879.56 }, // ~19.99 * 44.00
+                    "ai_starter": { name: "UppyPro AI", price: 3519.56 }, // ~79.99 * 44.00
+                    "ai_medium": { name: "UppyPro AI Orta", price: 7039.12 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12758.24 },
                 });
             } finally {
                 setLoading(false);
@@ -483,8 +483,8 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 let rate = await getExchangeRate();
                 const prices = await getProductPrices();
 
-                // Hybrid Fetching: If server returns fallback (43.70), try client-side fetch
-                if (rate === 43.70) {
+                // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
+                if (rate === 44.00) {
                     let clientFetched = false;
 
                     // 1. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
@@ -541,12 +541,12 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback to old hardcoded if fails
-                setExchangeRate(43.70);
+                setExchangeRate(44.00);
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 873.55, priceUsd: 19.99 },
-                    "ai_starter": { name: "UppyPro AI", price: 3495.63, priceUsd: 79.99 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 6991.56, priceUsd: 159.98 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12672.56, priceUsd: 289.96 },
+                    "base": { name: "UppyPro Inbox", price: 879.56, priceUsd: 19.99 },
+                    "ai_starter": { name: "UppyPro AI", price: 3519.56, priceUsd: 79.99 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 7039.12, priceUsd: 159.98 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12758.24, priceUsd: 289.96 },
                 });
             } finally {
                 setLoading(false);
