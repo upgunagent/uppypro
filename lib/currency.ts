@@ -9,7 +9,26 @@ interface ExchangeRate {
 
 export async function getUsdExchangeRate(): Promise<number> {
 
-    // 1. Try finans.truncgil.com (TCMB Mirror - High Availability & JSON)
+    // 1. Try jsDelivr CDN (Static JSON - Most Reliable, High Availability)
+    try {
+        console.log("Fetching exchange rate from jsDelivr CDN...");
+        const response = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", {
+            cache: 'no-store'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data?.usd?.try) {
+                const rate = data.usd.try;
+                console.log("Exchange rate fetched from jsDelivr CDN:", rate);
+                if (!isNaN(rate) && rate > 0) return rate;
+            }
+        }
+    } catch (error) {
+        console.error("jsDelivr CDN Fetch Error:", error);
+    }
+
+    // 2. Try finans.truncgil.com (TCMB Mirror - High Availability & JSON)
     try {
         console.log("Fetching exchange rate from TCMB Mirror (Truncgil)...");
         const controller = new AbortController();

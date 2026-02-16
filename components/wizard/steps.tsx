@@ -64,39 +64,57 @@ export function StepSummary({ data, onNext }: StepProps) {
                 if (rate === 44.00) {
                     let clientFetched = false;
 
-                    // 1. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
+                    // 1. Try jsDelivr CDN (Static JSON - Most Reliable)
                     try {
-                        console.log("Server returned fallback, trying Client-side Truncgil...");
-                        const res = await fetch("https://finans.truncgil.com/today.json");
+                        console.log("Server returned fallback, trying Client-side jsDelivr...");
+                        const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
                         if (res.ok) {
                             const data = await res.json();
-                            if (data?.USD?.Satış) {
-                                const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
-                                if (!isNaN(newRate) && newRate > 0) {
-                                    rate = newRate;
-                                    clientFetched = true;
-                                    console.log("Client-side Truncgil success:", rate);
-                                }
+                            if (data?.usd?.try) {
+                                rate = data.usd.try;
+                                clientFetched = true;
+                                console.log("Client-side jsDelivr success:", rate);
                             }
                         }
                     } catch (e) {
-                        console.error("Client-side Truncgil failed:", e);
+                        console.error("Client-side jsDelivr failed:", e);
                     }
 
-                    // 2. Try Open ER if Truncgil failed
+                    // 2. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
                     if (!clientFetched) {
                         try {
-                            console.log("Trying Client-side Open ER...");
-                            const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                            console.log("Server returned fallback, trying Client-side Truncgil...");
+                            const res = await fetch("https://finans.truncgil.com/today.json");
                             if (res.ok) {
                                 const data = await res.json();
-                                if (data?.rates?.TRY) {
-                                    rate = data.rates.TRY;
-                                    console.log("Client-side Open ER success:", rate);
+                                if (data?.USD?.Satış) {
+                                    const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
+                                    if (!isNaN(newRate) && newRate > 0) {
+                                        rate = newRate;
+                                        clientFetched = true;
+                                        console.log("Client-side Truncgil success:", rate);
+                                    }
                                 }
                             }
-                        } catch (clientError) {
-                            console.error("Client-side Open ER failed:", clientError);
+                        } catch (e) {
+                            console.error("Client-side Truncgil failed:", e);
+                        }
+
+                        // 2. Try Open ER if Truncgil failed
+                        if (!clientFetched) {
+                            try {
+                                console.log("Trying Client-side Open ER...");
+                                const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    if (data?.rates?.TRY) {
+                                        rate = data.rates.TRY;
+                                        console.log("Client-side Open ER success:", rate);
+                                    }
+                                }
+                            } catch (clientError) {
+                                console.error("Client-side Open ER failed:", clientError);
+                            }
                         }
                     }
                 }
@@ -487,39 +505,57 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 if (rate === 44.00) {
                     let clientFetched = false;
 
-                    // 1. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
+                    // 1. Try jsDelivr CDN (Static JSON - Most Reliable)
                     try {
-                        console.log("Server returned fallback, trying Client-side Truncgil...");
-                        const res = await fetch("https://finans.truncgil.com/today.json");
+                        console.log("Server returned fallback, trying Client-side jsDelivr...");
+                        const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
                         if (res.ok) {
                             const data = await res.json();
-                            if (data?.USD?.Satış) {
-                                const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
-                                if (!isNaN(newRate) && newRate > 0) {
-                                    rate = newRate;
-                                    clientFetched = true;
-                                    console.log("Client-side Truncgil success:", rate);
-                                }
+                            if (data?.usd?.try) {
+                                rate = data.usd.try;
+                                clientFetched = true;
+                                console.log("Client-side jsDelivr success:", rate);
                             }
                         }
                     } catch (e) {
-                        console.error("Client-side Truncgil failed:", e);
+                        console.error("Client-side jsDelivr failed:", e);
                     }
 
-                    // 2. Try Open ER if Truncgil failed
+                    // 2. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
                     if (!clientFetched) {
                         try {
-                            console.log("Trying Client-side Open ER...");
-                            const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                            console.log("Server returned fallback, trying Client-side Truncgil...");
+                            const res = await fetch("https://finans.truncgil.com/today.json");
                             if (res.ok) {
                                 const data = await res.json();
-                                if (data?.rates?.TRY) {
-                                    rate = data.rates.TRY;
-                                    console.log("Client-side Open ER success:", rate);
+                                if (data?.USD?.Satış) {
+                                    const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
+                                    if (!isNaN(newRate) && newRate > 0) {
+                                        rate = newRate;
+                                        clientFetched = true;
+                                        console.log("Client-side Truncgil success:", rate);
+                                    }
                                 }
                             }
-                        } catch (clientError) {
-                            console.error("Client-side Open ER failed:", clientError);
+                        } catch (e) {
+                            console.error("Client-side Truncgil failed:", e);
+                        }
+
+                        // 2. Try Open ER if Truncgil failed
+                        if (!clientFetched) {
+                            try {
+                                console.log("Trying Client-side Open ER...");
+                                const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    if (data?.rates?.TRY) {
+                                        rate = data.rates.TRY;
+                                        console.log("Client-side Open ER success:", rate);
+                                    }
+                                }
+                            } catch (clientError) {
+                                console.error("Client-side Open ER failed:", clientError);
+                            }
                         }
                     }
                 }
