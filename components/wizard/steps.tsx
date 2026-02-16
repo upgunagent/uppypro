@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getProductPrices, getExchangeRate } from "@/app/actions/pricing";
+import { getProductPrices, getExchangeRate } from "@/actions/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
