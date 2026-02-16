@@ -57,8 +57,25 @@ export function StepSummary({ data, onNext }: StepProps) {
             try {
                 const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
 
-                const rate = await getExchangeRate();
+                let rate = await getExchangeRate();
                 const prices = await getProductPrices();
+
+                // Hybrid Fetching: If server returns fallback (43.70), try client-side fetch
+                if (rate === 43.70) {
+                    try {
+                        console.log("Server returned fallback rate, attempting client-side fetch...");
+                        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data?.rates?.TRY) {
+                                rate = data.rates.TRY;
+                                console.log("Client-side fetch successful:", rate);
+                            }
+                        }
+                    } catch (clientError) {
+                        console.error("Client-side fetch failed:", clientError);
+                    }
+                }
 
                 setExchangeRate(rate);
 
@@ -439,8 +456,25 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
             try {
                 const { getProductPrices, getExchangeRate } = await import("@/actions/pricing");
 
-                const rate = await getExchangeRate();
+                let rate = await getExchangeRate();
                 const prices = await getProductPrices();
+
+                // Hybrid Fetching: If server returns fallback (43.70), try client-side fetch
+                if (rate === 43.70) {
+                    try {
+                        console.log("Server returned fallback rate, attempting client-side fetch...");
+                        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data?.rates?.TRY) {
+                                rate = data.rates.TRY;
+                                console.log("Client-side fetch successful:", rate);
+                            }
+                        }
+                    } catch (clientError) {
+                        console.error("Client-side fetch failed:", clientError);
+                    }
+                }
 
                 setExchangeRate(rate);
 
