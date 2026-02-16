@@ -241,3 +241,118 @@ export async function getSubscriptionCardUpdateResult(token: string): Promise<an
 
     return await response.json();
 }
+
+export async function createProduct(data: {
+    name: string;
+    description?: string;
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string }> {
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        name: data.name,
+        description: data.description || data.name
+    });
+
+    const randomString = generateRandomString();
+    const authString = generateIyzicoAuthString(
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    try {
+        const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/products`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authString,
+                'x-iyzi-rnd': randomString
+            },
+            body: requestBody
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            return {
+                status: 'success',
+                referenceCode: result.referenceCode
+            };
+        } else {
+            return {
+                status: 'failure',
+                errorMessage: result.errorMessage
+            };
+        }
+    } catch (error: any) {
+        return {
+            status: 'failure',
+            errorMessage: error.message
+        };
+    }
+}
+
+export async function createPricingPlan(data: {
+    productReferenceCode: string;
+    name: string;
+    price: number;
+    currencyCode: 'TRY' | 'USD' | 'EUR';
+    paymentInterval: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    paymentIntervalCount: number;
+    trialPeriodDays?: number;
+    planPaymentType?: 'RECURRING';
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string }> {
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        productReferenceCode: data.productReferenceCode,
+        name: data.name,
+        price: data.price.toString(),
+        currencyCode: data.currencyCode,
+        paymentInterval: data.paymentInterval,
+        paymentIntervalCount: data.paymentIntervalCount,
+        trialPeriodDays: data.trialPeriodDays,
+        planPaymentType: data.planPaymentType || 'RECURRING'
+    });
+
+    const randomString = generateRandomString();
+    const authString = generateIyzicoAuthString(
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    try {
+        // Note: productReferenceCode is in the URL!
+        const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/products/${data.productReferenceCode}/pricing-plans`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authString,
+                'x-iyzi-rnd': randomString
+            },
+            body: requestBody
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            return {
+                status: 'success',
+                referenceCode: result.referenceCode
+            };
+        } else {
+            return {
+                status: 'failure',
+                errorMessage: result.errorMessage
+            };
+        }
+    } catch (error: any) {
+        return {
+            status: 'failure',
+            errorMessage: error.message
+        };
+    }
+}
