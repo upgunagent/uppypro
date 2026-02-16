@@ -70,8 +70,8 @@ export function StepSummary({ data, onNext }: StepProps) {
                         const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
                         if (res.ok) {
                             const data = await res.json();
-                            if (data?.usd?.try) {
-                                rate = data.usd.try;
+                            if (data?.usd?.['try']) {
+                                rate = data.usd['try'];
                                 clientFetched = true;
                                 console.log("Client-side jsDelivr success:", rate);
                             }
@@ -511,8 +511,8 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                         const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
                         if (res.ok) {
                             const data = await res.json();
-                            if (data?.usd?.try) {
-                                rate = data.usd.try;
+                            if (data?.usd?.['try']) {
+                                rate = data.usd['try'];
                                 clientFetched = true;
                                 console.log("Client-side jsDelivr success:", rate);
                             }

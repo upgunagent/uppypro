@@ -18,8 +18,8 @@ export async function getUsdExchangeRate(): Promise<number> {
 
         if (response.ok) {
             const data = await response.json();
-            if (data?.usd?.try) {
-                const rate = data.usd.try;
+            if (data?.usd?.['try']) {
+                const rate = data.usd['try'];
                 console.log("Exchange rate fetched from jsDelivr CDN:", rate);
                 if (!isNaN(rate) && rate > 0) return rate;
             }
