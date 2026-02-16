@@ -61,7 +61,7 @@ export const DistanceSalesAgreement = ({ data }: { data: AgreementData }) => {
             <p><strong>Platform:</strong> UPGUN AI tarafından sunulan web tabanlı uygulama.</p>
             <p><strong>Hizmet(ler):</strong> Platform’daki mesaj yönetimi, entegrasyonlar, AI özellikleri, raporlar ve benzeri modüller.</p>
             <p><strong>Abonelik / Paket:</strong> Hizmetlerin aylık dönemlerle sunulduğu plan(lar).</p>
-            <p><strong>Ödeme Altyapısı:</strong> PayTR ve/veya UPGUN AI’nın belirlediği diğer altyapılar.</p>
+            <p><strong>Ödeme Altyapısı:</strong> iyzico ve/veya UPGUN AI’nın belirlediği diğer altyapılar.</p>
 
             <h3 className="font-bold text-lg">3. Sözleşmenin Konusu</h3>
             <p>Sözleşme’nin konusu; Alıcı’nın seçtiği <strong>{data.plan.name}</strong> paketi kapsamında dijital hizmet aboneliğinin ifası ve bunun karşılığında abonelik bedelinin tahsili ile tarafların hak ve yükümlülüklerinin düzenlenmesidir.</p>
@@ -78,7 +78,7 @@ export const DistanceSalesAgreement = ({ data }: { data: AgreementData }) => {
             <p><strong>İlk Dönem Tahsil Edilecek Tutar (KDV Dahil):</strong> {data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
 
             <h3 className="font-bold text-lg">6. Ödeme, Aylık Otomatik Yenileme ve Tahsilat</h3>
-            <p>6.1. Ödeme PayTR (veya seçilen altyapı) üzerinden alınır.</p>
+            <p>6.1. Ödeme iyzico güvencesi ile (veya seçilen altyapı) üzerinden alınır.</p>
             <p>6.2. <strong>Aylık Otomatik Yenileme:</strong> Abonelik, Alıcı iptal edene kadar her ay otomatik yenilenir.</p>
             <p>6.3. <strong>Yenileme Dönemlerinde Fiyatlandırma:</strong> Sonraki aylarda yapılacak tahsilatlarda, paket bedeli olan <strong>{data.plan.priceUsd.toFixed(2)} USD</strong> (artı yürürlükteki KDV oranı), ilgili yenileme günündeki güncel TCMB Döviz Satış kuru üzerinden TL'ye çevrilerek tahsil edilir. Alıcı, kur değişimlerinden kaynaklanabilecek fiyat farkını peşinen kabul eder.</p>
 

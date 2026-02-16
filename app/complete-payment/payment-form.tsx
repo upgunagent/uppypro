@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
-import { getPaytrToken } from "@/actions/payment";
+import { initializeSubscriptionPayment } from "@/actions/payment";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import Script from "next/script";
+import { Input } from "@/components/ui/input";
 
 type PaymentFormProps = {
     tenantId: string;
     amount: number;
     inviteToken?: string;
+    pricingPlanReferenceCode?: string;
     userData: {
         email: string;
         name: string;
@@ -20,17 +20,17 @@ type PaymentFormProps = {
         address: string;
         city: string;
         district: string;
+        identityNumber?: string;
     }
 };
 
-export function PaymentForm({ tenantId, amount, inviteToken, userData }: PaymentFormProps) {
+export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenceCode, userData }: PaymentFormProps) {
     const [loading, setLoading] = useState(false);
-    const [token, setToken] = useState<string | null>(null);
-    // Steps: 'init' -> 'payment' (iframe) -> 'password' (success)
     const [step, setStep] = useState<'init' | 'payment' | 'password' | 'success'>('init');
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const checkoutFormRef = useRef<HTMLDivElement>(null);
 
     // Password state
     const [password, setPassword] = useState("");
@@ -39,61 +39,61 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
     // Check for callback status
     useEffect(() => {
         const status = searchParams.get('status');
+        const reason = searchParams.get('reason');
+
         if (status === 'success') {
             setStep('password');
             toast({ title: "Ödeme Başarılı", description: "Lütfen hesabınız için şifre belirleyin." });
         } else if (status === 'fail') {
             setStep('init');
-            toast({ variant: "destructive", title: "Ödeme Başarısız", description: "İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin." });
+            toast({ variant: "destructive", title: "Ödeme Başarısız", description: reason || "İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin." });
         }
     }, [searchParams, toast]);
 
     const handleStartPayment = async () => {
+        if (!pricingPlanReferenceCode) {
+            toast({ variant: "destructive", title: "Hata", description: "Ödeme planı bulunamadı. Lütfen yönetici ile iletişime geçin." });
+            return;
+        }
+
         setLoading(true);
         try {
-            // Generate distinct temp invite token reference if not provided
-            // We use 'ent_' prefix to match callback logic: ent_<token>_<timestamp>
-            // If we don't have a token, we might need one. 
-            // Assumption: inviteToken is passed or we use tenantId to finding it? 
-            // The callback logic uses "inviteToken" to activate.
-            // If inviteToken is undefined, we need a fallback or ensure it's passed.
-            // In page.tsx I passed subscription.id as inviteToken fallback, which is WRONG if callback expects invite token format.
-            // Callback expects: `const { data: invite } = ... .eq("token", inviteToken)`
-            // So we MUST have a valid invite token.
-            // If page.tsx doesn't have it, we might be in trouble.
-            // However, CompletePaymentPage is usually accessed via recovery link, not invite link.
-            // We should ideally find the active invite token for this tenant? 
-            // Or just pass the tenantId and update callback to support tenantId directly.
-            // Correct fix: I'll accept `inviteToken` is potentially just a reference, but for now let's send what we have.
-            // If we lack a token, we can't easily map back in existing callback logic.
-            // Let's assume for now we passed a valid reference or the existing token in DB.
-
-            // Generate alphanumeric merchant_oid (PayTR requirement - no special chars)
-            // Format: ent<token_without_hyphens><timestamp>
-            const tokenClean = (inviteToken || 'notoken').replace(/-/g, ''); // Remove hyphens from UUID
-            const oid = `ent${tokenClean}${Date.now()}`;
-
-            const res = await getPaytrToken({
-                userIp: "127.0.0.1", // Server action will use generic, or we can try to get it. Use server side detection in action ideally.
-                userId: userData.email, // Using email as ID ref
-                email: userData.email,
-                name: userData.name,
-                phone: userData.phone,
-                address: `${userData.address} ${userData.district}/${userData.city}`,
-                paymentAmount: amount, // TL
-                basketId: oid,
-                productName: "UppyPro Kurumsal Abonelik",
-                okUrl: `${process.env.NEXT_PUBLIC_APP_URL}/enterprise-payment-success`,
-                failUrl: `${process.env.NEXT_PUBLIC_APP_URL}/enterprise-invite?token=${inviteToken}&payment=fail`
+            const res = await initializeSubscriptionPayment({
+                pricingPlanReferenceCode: pricingPlanReferenceCode,
+                user: {
+                    id: userData.email, // Passing email as ID for Iyzico customer ref if needed
+                    email: userData.email,
+                    name: userData.name,
+                    phone: userData.phone,
+                    address: `${userData.address} ${userData.district}/${userData.city}`,
+                    identityNumber: userData.identityNumber
+                },
+                tenantId: tenantId
             });
 
             if (res.error) {
                 toast({ variant: "destructive", title: "Hata", description: res.error });
                 setLoading(false);
-            } else if (res.token) {
-                setToken(res.token);
+            } else if (res.checkoutFormContent) {
                 setStep('payment');
                 setLoading(false);
+
+                // Inject Iyzico Script
+                // Iyzico returns raw HTML with script tags. We need to execute the script.
+                // We'll put the HTML in the div, then extract and run the script.
+                setTimeout(() => {
+                    if (checkoutFormRef.current) {
+                        checkoutFormRef.current.innerHTML = res.checkoutFormContent!;
+
+                        const scripts = checkoutFormRef.current.querySelectorAll("script");
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement("script");
+                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                            oldScript.parentNode?.replaceChild(newScript, oldScript);
+                        });
+                    }
+                }, 100);
             }
         } catch (e) {
             console.error(e);
@@ -114,18 +114,8 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
 
         setLoading(true);
         try {
-            // Check if we have token from URL or prop. 
-            // If we are in 'password' step, we imply payment success.
-            // We need to set password for the user.
-            // Does setPasswordEnterprise require inviteToken? Yes.
-            // If we don't have it in URL, we might fail.
-            // But we can fallback to a generic "setPassword" action that uses current session?
-            // The user IS logged in (CompletePaymentPage checks auth).
-            // So we can just use supabase.auth.updateUser!
-
             const { createClient } = await import("@/lib/supabase/client");
             const supabase = createClient();
-
             const { error } = await supabase.auth.updateUser({ password: password });
 
             if (error) {
@@ -208,7 +198,7 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
                     <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3">
                         <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            Ödemeniz <strong>PayTR</strong> güvencesiyle 256-bit SSL korumalı altyapı üzerinden alınacaktır. Kart bilgileriniz tarafımızca saklanmaz.
+                            Ödemeniz <strong>Iyzico</strong> güvencesiyle 256-bit SSL korumalı altyapı üzerinden alınacaktır. Kart bilgileriniz Iyzico tarafından saklanacaktır.
                         </div>
                     </div>
 
@@ -218,18 +208,9 @@ export function PaymentForm({ tenantId, amount, inviteToken, userData }: Payment
                 </div>
             )}
 
-            {step === 'payment' && token && (
-                <div className="w-full min-h-[600px] border border-slate-200 rounded-xl overflow-hidden">
-                    <Script src="https://www.paytr.com/js/iframeResizer.min.js" strategy="afterInteractive" />
-                    <iframe
-                        src={`https://www.paytr.com/odeme/guvenli/${token}`}
-                        id="paytriframe"
-                        style={{ width: "100%", height: "600px" }}
-                        frameBorder="0"
-                        scrolling="no"
-                    ></iframe>
-                </div>
-            )}
+            <div className={`${step === 'payment' ? 'block' : 'hidden'} w-full min-h-[600px] border border-slate-200 rounded-xl overflow-hidden bg-white`}>
+                <div id="iyzipay-checkout-form" className="responsive" ref={checkoutFormRef}></div>
+            </div>
         </div>
     );
 }

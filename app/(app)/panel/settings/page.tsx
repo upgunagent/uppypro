@@ -93,7 +93,7 @@ export default async function SettingsPage() {
                 priceUsd={pricing?.monthly_price_usd}
                 usdRate={usdRate}
             />
-            <PaymentMethodsCard methods={paymentMethods || []} />
+            <PaymentMethodsCard methods={paymentMethods || []} subscription={subscription} />
             <PasswordChangeCard />
         </div>
     );

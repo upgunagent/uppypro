@@ -27,11 +27,6 @@ export async function initializeSubscriptionPayment(data: {
     try {
         const supabase = createAdminClient();
 
-        // 1. Get or Create Iyzico Customer Reference (Later - for now just pass details)
-        // Note: In a full implementation, we should check if this user already has an iyzico_customer_reference_code
-        // and pass it. For now, we will let Iyzico handle customer creation within the checkout flow if possible
-        // or just pass user details every time (Standard Checkout Flow).
-
         // Wrapper for Iyzico
         const result = await initIyzicoCheckout({
             pricingPlanReferenceCode: data.pricingPlanReferenceCode,

@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['iyzipay'],
 };
 
 export default nextConfig;

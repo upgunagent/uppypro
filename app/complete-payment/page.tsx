@@ -58,10 +58,25 @@ export default async function CompletePaymentPage() {
         // Let's rely on standard values for now or fetch.
         // Better: Fetch pricing.
         const { data: prices } = await supabase.from("pricing").select("*").in("product_key", ["uppypro_inbox", "uppypro_ai"]);
-        const inboxUsd = prices?.find(p => p.product_key === 'uppypro_inbox')?.monthly_price_usd || 19;
-        const aiUsd = prices?.find(p => p.product_key === 'uppypro_ai')?.monthly_price_usd || 79;
+        const inboxPrice = prices?.find(p => p.product_key === 'uppypro_inbox');
+        const aiPrice = prices?.find(p => p.product_key === 'uppypro_ai');
+
+        const inboxUsd = inboxPrice?.monthly_price_usd || 19;
+        const aiUsd = aiPrice?.monthly_price_usd || 79;
 
         priceUsd = isAi || isEnterprise ? aiUsd : inboxUsd;
+    }
+
+    // Determine Iyzico Plan Code
+    // First check subscription specific override (if any)
+    let iyzicoPlanCode = subscription.iyzico_pricing_plan_reference_code; // If we saved it on sub creation
+
+    if (!iyzicoPlanCode) {
+        // Fallback to finding it from pricing table based on product
+        const { data: prices } = await supabase.from("pricing").select("product_key, iyzico_pricing_plan_reference_code").in("product_key", ["uppypro_inbox", "uppypro_ai"]);
+        const productKey = (subscription.ai_product_key === 'uppypro_ai' || subscription.ai_product_key === 'uppypro_enterprise') ? 'uppypro_ai' : 'uppypro_inbox';
+        const priceRecord = prices?.find(p => p.product_key === productKey);
+        iyzicoPlanCode = priceRecord?.iyzico_pricing_plan_reference_code;
     }
 
     const priceTry = Math.ceil(priceUsd * usdRate); // Round up to be safe/clean
@@ -113,8 +128,10 @@ export default async function CompletePaymentPage() {
                         phone: billingInfo?.contact_phone || user.user_metadata.phone || "905555555555",
                         address: billingInfo?.address_full || "Adres bilgisi yok",
                         city: billingInfo?.address_city || "İstanbul",
-                        district: billingInfo?.address_district || "Merkez"
+                        district: billingInfo?.address_district || "Merkez",
+                        identityNumber: billingInfo?.identity_number // Add if available
                     }}
+                    pricingPlanReferenceCode={iyzicoPlanCode}
                 />
 
                 <p className="text-center text-xs text-slate-400 mt-6">

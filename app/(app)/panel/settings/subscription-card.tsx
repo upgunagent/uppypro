@@ -234,12 +234,8 @@ export function SubscriptionCard({
             {cancel_at_period_end && (
                 <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-sm text-slate-500">
-                        Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir. Fikrinizi değiştirirseniz iptali geri alabilirsiniz.
+                        Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir. Bu tarihe kadar tüm özelliklerden faydalanmaya devam edebilirsiniz.
                     </p>
-                    <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800" onClick={handleUndoCancel} disabled={isLoading}>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {isLoading ? 'İşleniyor...' : 'İptali Geri Al ve Devam Et'}
-                    </Button>
                 </div>
             )}
         </div>

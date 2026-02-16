@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { cancelSubscription as iyzicoCancel, updateSubscriptionCard as iyzicoUpdateCard } from "@/lib/iyzico";
 
 export async function cancelSubscription(reason: string, details?: string) {
     const supabase = await createClient();
@@ -28,7 +29,7 @@ export async function cancelSubscription(reason: string, details?: string) {
     // Aktif aboneliği bul
     const { data: subscription } = await adminDb
         .from("subscriptions")
-        .select("id, status, current_period_end")
+        .select("id, status, current_period_end, iyzico_subscription_reference_code")
         .eq("tenant_id", member.tenant_id)
         .eq("status", "active")
         .single();
@@ -37,16 +38,31 @@ export async function cancelSubscription(reason: string, details?: string) {
         return { error: "İptal edilecek aktif bir abonelik bulunamadı." };
     }
 
-    // Güncelleme: İptali planla
+    // Iyzico İptali
+    if (subscription.iyzico_subscription_reference_code) {
+        try {
+            const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
+            if (result.status !== 'success') {
+                return { error: "Iyzico iptal işlemi başarısız: " + result.errorMessage };
+            }
+        } catch (e: any) {
+            console.error("Iyzico Cancel Error:", e);
+            return { error: "Ödeme sağlayıcı hatası: " + e.message };
+        }
+    }
+
+    // Güncelleme: İptali planla / uygula
+    // Iyzico anında iptal ettiği için durumu canceled yapabiliriz veya dönem sonuna kadar erişimi koruruz.
+    // Erişim koruma mantığı: status active kalır, cancel_at_period_end true olur.
+    // Ancak Iyzico tekrar çekim yapmayacak.
     const { error } = await adminDb
         .from("subscriptions")
         .update({
-            cancel_at_period_end: true,
+            cancel_at_period_end: true, // UI'da "İptal edildi, dönem sonuna kadar açık" göstermek için
             cancellation_scheduled_at: new Date().toISOString(),
             cancel_reason: reason,
             cancel_reason_details: details,
-            // Status hala 'active' kalır, sadece flag değişir.
-            // Cron job veya Iyzico webhook süresi dolunca 'canceled' yapacak.
+            // Iyzico tarafında iptal olduğu için bir daha çekim olmaz.
         })
         .eq("id", subscription.id);
 
@@ -60,54 +76,44 @@ export async function cancelSubscription(reason: string, details?: string) {
 }
 
 export async function undoCancelSubscription() {
+    return { error: "Iyzico altyapısında iptal işlemi geri alınamaz. Lütfen abonelik süreniz bittiğinde tekrar abone olun." };
+}
+
+export async function initializeCardUpdate() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { error: "Yetkilendirme hatası." };
-    }
+    if (!user) return { error: "User not found" };
 
     const adminDb = createAdminClient();
+    const { data: member } = await adminDb.from("tenant_members").select("tenant_id").eq("user_id", user.id).single();
+    if (!member) return { error: "Tenant not found" };
 
-    const { data: member } = await adminDb
-        .from("tenant_members")
-        .select("tenant_id, role")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!member || (member.role !== 'owner' && member.role !== 'admin' && member.role !== 'tenant_owner')) {
-        return { error: "Bu işlem için yetkiniz yok." };
-    }
-
-    // İptali planlanmış aboneliği bul
     const { data: subscription } = await adminDb
         .from("subscriptions")
-        .select("id")
+        .select("iyzico_subscription_reference_code, iyzico_customer_reference_code")
         .eq("tenant_id", member.tenant_id)
         .eq("status", "active")
-        .eq("cancel_at_period_end", true)
         .single();
 
-    if (!subscription) {
-        return { error: "Geri alınacak bir iptal işlemi bulunamadı." };
+    if (!subscription || !subscription.iyzico_subscription_reference_code) {
+        return { error: "Aktif Iyzico aboneliği bulunamadı." };
     }
 
-    // Güncelleme: İptali geri al
-    const { error } = await adminDb
-        .from("subscriptions")
-        .update({
-            cancel_at_period_end: false,
-            cancellation_scheduled_at: null,
-            cancel_reason: null,
-            cancel_reason_details: null
-        })
-        .eq("id", subscription.id);
+    try {
+        const result = await iyzicoUpdateCard({
+            subscriptionReferenceCode: subscription.iyzico_subscription_reference_code,
+            customerReferenceCode: subscription.iyzico_customer_reference_code,
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-card-update-callback`
+        });
 
-    if (error) {
-        console.error("Undo Cancel Error:", error);
-        return { error: `İptal işlemi geri alınırken bir hata oluştu: ${error.message}` };
+        if (result.status !== 'success') {
+            return { error: result.errorMessage };
+        }
+
+        return { checkoutFormContent: result.checkoutFormContent };
+
+    } catch (e: any) {
+        console.error("Card Update Init Error:", e);
+        return { error: e.message };
     }
-
-    revalidatePath("/panel/settings");
-    return { success: true };
 }

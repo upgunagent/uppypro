@@ -1,15 +1,65 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { addPaymentMethod, deletePaymentMethod } from "./actions";
-import { CreditCard, Trash2, Plus } from "lucide-react";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { initializeCardUpdate } from "@/app/actions/subscription";
+import { CreditCard, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
-export function PaymentMethodsCard({ methods }: { methods: any[] }) {
+export function PaymentMethodsCard({ methods, subscription }: { methods: any[], subscription?: any }) {
     const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const checkoutFormRef = useRef<HTMLDivElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const reason = urlParams.get('reason');
+
+            if (status === 'card_update_success') {
+                toast({ title: "Başarılı", description: "Kart bilgileriniz güncellendi." });
+                // Clean URL
+                window.history.replaceState({}, '', window.location.pathname);
+            } else if (status === 'card_update_fail') {
+                toast({ variant: "destructive", title: "Hata", description: reason || "Kart güncelleme başarısız." });
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        }
+    }, [toast]);
+
+    const handleUpdateCard = async () => {
+        setLoading(true);
+        try {
+            const res = await initializeCardUpdate();
+            if (res.error) {
+                toast({ variant: "destructive", title: "Hata", description: res.error });
+                setLoading(false);
+                setOpen(false);
+            } else if (res.checkoutFormContent) {
+                // Inject script
+                setTimeout(() => {
+                    if (checkoutFormRef.current) {
+                        checkoutFormRef.current.innerHTML = res.checkoutFormContent!;
+                        const scripts = checkoutFormRef.current.querySelectorAll("script");
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement("script");
+                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                            oldScript.parentNode?.replaceChild(newScript, oldScript);
+                        });
+                    }
+                }, 100);
+            }
+        } catch (e) {
+            console.error(e);
+            toast({ variant: "destructive", title: "Hata", description: "Bir hata oluştu." });
+            setLoading(false);
+            setOpen(false);
+        }
+    };
 
     return (
         <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
@@ -18,76 +68,55 @@ export function PaymentMethodsCard({ methods }: { methods: any[] }) {
                     <div className="p-2 bg-emerald-50 rounded-lg">
                         <CreditCard className="text-emerald-600 w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900">Ödeme Yöntemleri</h3>
+                    <div>
+                        <h3 className="font-bold text-lg text-slate-900">Ödeme Yöntemi</h3>
+                        {subscription?.card_last4 ? (
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-slate-700">
+                                    {subscription.card_brand} **** {subscription.card_last4}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                    {subscription.card_association}
+                                </span>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-500">Kayıtlı kartınızı güncelleyebilirsiniz.</p>
+                        )}
+                    </div>
                 </div>
 
-                <Dialog open={open} onOpenChange={setOpen}>
+                <Dialog open={open} onOpenChange={(val) => {
+                    setOpen(val);
+                    if (val) {
+                        handleUpdateCard();
+                    } else {
+                        setLoading(false); // Reset
+                    }
+                }}>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Kart Ekle
+                            Kartı Güncelle
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
-                        <form action={async (fd) => {
-                            await addPaymentMethod(fd);
-                            setOpen(false);
-                        }}>
-                            <DialogHeader>
-                                <DialogTitle>Yeni Kart Ekle</DialogTitle>
-                                <DialogDescription>
-                                    Ödemelerinizi yapmak için yeni bir kredi kartı ekleyin.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Kart Sahibi</Label>
-                                    <Input name="cardHolder" placeholder="Ad Soyad" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Kart Numarası</Label>
-                                    <Input name="cardNumber" placeholder="0000 0000 0000 0000" maxLength={19} required />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>SKT (Ay/Yıl)</Label>
-                                        <Input name="expiry" placeholder="MM/YY" required />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>CVC</Label>
-                                        <Input name="cvc" placeholder="123" maxLength={3} required />
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit">Kaydet</Button>
-                            </DialogFooter>
-                        </form>
+                    <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Kart Güncelleme</DialogTitle>
+                            <DialogDescription>
+                                Iyzico güvenli ödeme sayfası yükleniyor...
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="min-h-[400px] flex items-center justify-center">
+                            {loading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
+                            <div id="iyzipay-checkout-form" className="responsive w-full" ref={checkoutFormRef}></div>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            <div className="space-y-3">
-                {methods && methods.length > 0 ? (
-                    methods.map((method) => (
-                        <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-6 bg-slate-200 rounded flex items-center justify-center text-xs text-slate-500 font-mono">
-                                    {method.card_family || 'CARD'}
-                                </div>
-                                <div>
-                                    <p className="font-medium text-slate-900">•••• •••• •••• {method.last_four}</p>
-                                    {method.is_default && <span className="text-xs text-blue-600 font-medium">Varsayılan</span>}
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => deletePaymentMethod(method.id)}>
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-sm text-slate-500 italic">Kayıtlı ödeme yöntemi bulunmamaktadır.</p>
-                )}
+            <div className="text-sm text-slate-500 italic">
+                Aboneliğinizin devam etmesi için kredi kartı bilgilerinizin güncel olması gerekmektedir.
+                Iyzico altyapısı sayesinde kart bilgileriniz tarafımızca saklanmadan, güvenle işlenir.
             </div>
         </div>
     );
