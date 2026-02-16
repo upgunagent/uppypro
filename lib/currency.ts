@@ -11,21 +11,29 @@ export async function getUsdExchangeRate(): Promise<number> {
 
     // 1. Try jsDelivr CDN (Static JSON - Most Reliable, High Availability)
     try {
-        console.log("Fetching exchange rate from jsDelivr CDN...");
+        console.log("[CURRENCY] Fetching exchange rate from jsDelivr CDN...");
         const response = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", {
             cache: 'no-store'
         });
 
+        console.log("[CURRENCY] jsDelivr response status:", response.status, response.ok);
+
         if (response.ok) {
             const data = await response.json();
+            console.log("[CURRENCY] jsDelivr data keys:", Object.keys(data || {}));
+            console.log("[CURRENCY] jsDelivr usd object keys:", Object.keys(data?.usd || {}));
+            console.log("[CURRENCY] jsDelivr try value:", data?.usd?.['try']);
+
             if (data?.usd?.['try']) {
                 const rate = data.usd['try'];
-                console.log("Exchange rate fetched from jsDelivr CDN:", rate);
+                console.log("[CURRENCY] ✅ Exchange rate fetched from jsDelivr CDN:", rate);
                 if (!isNaN(rate) && rate > 0) return rate;
+            } else {
+                console.error("[CURRENCY] ❌ jsDelivr data structure invalid");
             }
         }
     } catch (error) {
-        console.error("jsDelivr CDN Fetch Error:", error);
+        console.error("[CURRENCY] ❌ jsDelivr CDN Fetch Error:", error);
     }
 
     // 2. Try finans.truncgil.com (TCMB Mirror - High Availability & JSON)
