@@ -21,7 +21,7 @@ export async function GET() {
         });
 
         if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
-            throw new Error(`Failed to create Inbox product: ${inboxProduct.errorMessage}`);
+            throw { message: `Failed to create Inbox product: ${inboxProduct.errorMessage}`, details: inboxProduct.errorDetails };
         }
         results.push({ step: 'Create Inbox Product', code: inboxProduct.referenceCode });
 
@@ -32,17 +32,6 @@ export async function GET() {
             .eq('product_key', 'uppypro_inbox');
 
         // 1.1 Create Inbox Monthly Plan
-        // Exchange Rate Strategy: We set a base USD price. 
-        // BUT Iyzico requires TRY for Sandbox usually, or we can use USD if enabled.
-        // Let's assume we use TRY and convert dynamically, OR simply set a fixed TRY price for testing.
-        // The user said: "tüm ödemeler sitede gözüken dolar miktarı kur bazında tl ye çevrilerek müşteriye tl olarak ödeme çekiliyor"
-        // This usually means the CHARGE is in TRY.
-        // If we create a SUBSCRIPTION in Iyzico, the price is FIXED at creation time of the plan.
-        // If we want dynamic conversion, we can't use fixed subscription plans easily unless we update them daily?
-        // OR does Iyzico support USD?
-        // For now, let's create a plan with a fixed TRY amount for testing (e.g. 19.99 * 35 = ~700 TL)
-        // OR better: Create a plan with USD currency code if Iyzico Sandbox supports it.
-
         console.log('Creating Inbox Monthly Plan...');
         const inboxPlan = await createPricingPlan({
             productReferenceCode: inboxProduct.referenceCode,
@@ -55,7 +44,7 @@ export async function GET() {
         });
 
         if (inboxPlan.status !== 'success' || !inboxPlan.referenceCode) {
-            throw new Error(`Failed to create Inbox Plan: ${inboxPlan.errorMessage}`);
+            throw { message: `Failed to create Inbox Plan: ${inboxPlan.errorMessage}`, details: inboxPlan.errorDetails };
         }
         results.push({ step: 'Create Inbox Plan', code: inboxPlan.referenceCode });
 
@@ -75,7 +64,7 @@ export async function GET() {
         });
 
         if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
-            throw new Error(`Failed to create AI product: ${aiProduct.errorMessage}`);
+            throw { message: `Failed to create AI product: ${aiProduct.errorMessage}`, details: aiProduct.errorDetails };
         }
         results.push({ step: 'Create AI Product', code: aiProduct.referenceCode });
 
@@ -98,7 +87,7 @@ export async function GET() {
         });
 
         if (aiPlan.status !== 'success' || !aiPlan.referenceCode) {
-            throw new Error(`Failed to create AI Plan: ${aiPlan.errorMessage}`);
+            throw { message: `Failed to create AI Plan: ${aiPlan.errorMessage}`, details: aiPlan.errorDetails };
         }
         results.push({ step: 'Create AI Plan', code: aiPlan.referenceCode });
 
@@ -112,6 +101,10 @@ export async function GET() {
         return NextResponse.json({ success: true, results });
 
     } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            error: error.message || 'Unknown error',
+            details: error.details || error
+        }, { status: 500 });
     }
 }

@@ -9,7 +9,6 @@ export const IyzicoConfig = {
 };
 
 // Iyzico V2 Authentication Helper
-// Reference: https://github.com/iyzico/iyzipay-php/blob/master/src/Iyzipay/IyziAuthV2Generator.php
 function generateIyzicoV2Header(
     uri: string,
     apiKey: string,
@@ -17,8 +16,6 @@ function generateIyzicoV2Header(
     randomString: string,
     requestBody: string | null
 ): string {
-    // 1. Extract URI Path (starts with /v2)
-    // Example: https://sandbox-api.iyzipay.com/v2/subscription/products -> /v2/subscription/products
     let uriPath = uri;
     const v2Index = uri.indexOf('/v2');
     if (v2Index !== -1) {
@@ -30,33 +27,23 @@ function generateIyzicoV2Header(
         }
     }
 
-    // 2. Prepare Payload
-    // Payload = randomString + uriPath + requestBody
     let payload = randomString + uriPath;
     if (requestBody && requestBody !== '[]' && requestBody !== '{}') {
         payload += requestBody;
     }
 
-    // 3. Generate HMAC-SHA256 Signature (Hex)
     const signature = crypto
         .createHmac('sha256', secretKey)
         .update(payload)
         .digest('hex');
 
-    // 4. Prepare Authorization String
-    // apiKey:API_KEY&randomKey:RANDOM_STRING&signature:SIGNATURE
     const authString = `apiKey:${apiKey}&randomKey:${randomString}&signature:${signature}`;
 
     // Debug Logging
     console.log('[IYZICO Auth Debug] URI:', uri);
-    console.log('[IYZICO Auth Debug] URI Path:', uriPath);
-    console.log('[IYZICO Auth Debug] Payload Length:', payload.length);
     console.log('[IYZICO Auth Debug] Payload:', payload);
     console.log('[IYZICO Auth Debug] Signature:', signature);
-    console.log('[IYZICO Auth Debug] Auth String:', authString);
 
-    // 5. Build Header
-    // IYZWSv2 base64(authString)
     return `IYZWSv2 ${Buffer.from(authString).toString('base64')}`;
 }
 
@@ -74,7 +61,6 @@ function getIyzicoHeaders(authString: string, randomString: string) {
     };
 }
 
-// Direct HTTP API call - no npm package dependency!
 export async function initializeSubscriptionCheckout(data: {
     pricingPlanReferenceCode: string;
     subscriptionInitialStatus: 'PENDING' | 'ACTIVE';
@@ -100,7 +86,7 @@ export async function initializeSubscriptionCheckout(data: {
             zipCode: string;
         };
     };
-}): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string }> {
+}): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string; errorDetails?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
@@ -122,8 +108,6 @@ export async function initializeSubscriptionCheckout(data: {
     );
 
     console.log('[IYZICO] Initializing subscription checkout...');
-    console.log('[IYZICO] API URL:', uri);
-    console.log('[IYZICO] Request Body:', requestBody);
 
     try {
         const response = await fetch(uri, {
@@ -145,14 +129,16 @@ export async function initializeSubscriptionCheckout(data: {
             console.error('[IYZICO] Error:', result.errorMessage);
             return {
                 status: result.status,
-                errorMessage: result.errorMessage || 'Unknown error'
+                errorMessage: result.errorMessage || 'Unknown error',
+                errorDetails: result
             };
         }
     } catch (error: any) {
         console.error('[IYZICO] Exception:', error);
         return {
             status: 'failure',
-            errorMessage: error.message
+            errorMessage: error.message,
+            errorDetails: error
         };
     }
 }
@@ -215,7 +201,7 @@ export async function updateSubscriptionCard(data: {
     subscriptionReferenceCode?: string;
     customerReferenceCode: string;
     callbackUrl: string;
-}): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string }> {
+}): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string; errorDetails?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
@@ -252,7 +238,8 @@ export async function updateSubscriptionCard(data: {
     } else {
         return {
             status: result.status,
-            errorMessage: result.errorMessage
+            errorMessage: result.errorMessage,
+            errorDetails: result
         };
     }
 }
@@ -287,7 +274,7 @@ export async function getSubscriptionCardUpdateResult(token: string): Promise<an
 export async function createProduct(data: {
     name: string;
     description?: string;
-}): Promise<{ status: string; errorMessage?: string; referenceCode?: string }> {
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
@@ -307,8 +294,6 @@ export async function createProduct(data: {
     );
 
     console.log('[IYZICO] Creating product:', data.name);
-    console.log('[IYZICO] API URL:', uri);
-    console.log('[IYZICO] Request Body:', requestBody);
 
     try {
         const response = await fetch(uri, {
@@ -328,13 +313,15 @@ export async function createProduct(data: {
         } else {
             return {
                 status: 'failure',
-                errorMessage: result.errorMessage
+                errorMessage: result.errorMessage,
+                errorDetails: result
             };
         }
     } catch (error: any) {
         return {
             status: 'failure',
-            errorMessage: error.message
+            errorMessage: error.message,
+            errorDetails: error
         };
     }
 }
@@ -348,13 +335,13 @@ export async function createPricingPlan(data: {
     paymentIntervalCount: number;
     trialPeriodDays?: number;
     planPaymentType?: 'RECURRING';
-}): Promise<{ status: string; errorMessage?: string; referenceCode?: string }> {
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
         productReferenceCode: data.productReferenceCode,
         name: data.name,
-        price: data.price.toFixed(2), // Ensure string format like "700.00"
+        price: data.price.toFixed(2),
         currencyCode: data.currencyCode,
         paymentInterval: data.paymentInterval,
         paymentIntervalCount: data.paymentIntervalCount,
@@ -363,7 +350,6 @@ export async function createPricingPlan(data: {
     });
 
     const randomString = generateRandomString();
-    // Reference code is in URL path, so we use it for URI construction but also it should be in payload logic presumably handled by URI extractor
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/products/${data.productReferenceCode}/pricing-plans`;
 
     const authString = generateIyzicoV2Header(
@@ -375,8 +361,6 @@ export async function createPricingPlan(data: {
     );
 
     console.log('[IYZICO] Creating pricing plan:', data.name);
-    console.log('[IYZICO] API URL:', uri);
-    console.log('[IYZICO] Request Body:', requestBody);
 
     try {
         const response = await fetch(uri, {
@@ -396,13 +380,15 @@ export async function createPricingPlan(data: {
         } else {
             return {
                 status: 'failure',
-                errorMessage: result.errorMessage
+                errorMessage: result.errorMessage,
+                errorDetails: result
             };
         }
     } catch (error: any) {
         return {
             status: 'failure',
-            errorMessage: error.message
+            errorMessage: error.message,
+            errorDetails: error
         };
     }
 }
