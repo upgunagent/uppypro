@@ -79,11 +79,12 @@ export function StepSummary({ data, onNext }: StepProps) {
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback can rely on a safer assumption or show error state
+                setExchangeRate(37.50);
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 740 }, // ~20$ * 37
-                    "ai_starter": { name: "UppyPro AI", price: 2960 }, // ~80$ * 37
-                    "ai_medium": { name: "UppyPro AI Orta", price: 5920 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10730 },
+                    "base": { name: "UppyPro Inbox", price: 740 }, // ~20$ * 37.50
+                    "ai_starter": { name: "UppyPro AI", price: 2999 }, // ~80$ * 37.50
+                    "ai_medium": { name: "UppyPro AI Orta", price: 5999 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10875 },
                 });
             } finally {
                 setLoading(false);
@@ -458,11 +459,12 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback to old hardcoded if fails
+                setExchangeRate(37.50);
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: 740, priceUsd: 20 },
-                    "ai_starter": { name: "UppyPro AI", price: 2960, priceUsd: 80 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 5920, priceUsd: 160 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10730, priceUsd: 290 },
+                    "ai_starter": { name: "UppyPro AI", price: 2999, priceUsd: 80 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 5999, priceUsd: 160 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10875, priceUsd: 290 },
                 });
             } finally {
                 setLoading(false);

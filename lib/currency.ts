@@ -10,12 +10,17 @@ interface ExchangeRate {
 export async function getUsdExchangeRate(): Promise<number> {
     try {
         console.log("Fetching exchange rate from TCMB...");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         const response = await fetch("https://www.tcmb.gov.tr/kurlar/today.xml", {
             next: { revalidate: 3600 }, // Cache for 1 hour
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
-            }
+            },
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             console.error(`TCMB API Error: ${response.status} ${response.statusText}`);
