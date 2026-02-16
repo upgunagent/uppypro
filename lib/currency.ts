@@ -8,6 +8,7 @@ interface ExchangeRate {
 }
 
 export async function getUsdExchangeRate(): Promise<number> {
+    // 1. Try TCMB
     try {
         console.log("Fetching exchange rate from TCMB...");
         const controller = new AbortController();
@@ -22,36 +23,45 @@ export async function getUsdExchangeRate(): Promise<number> {
         });
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            console.error(`TCMB API Error: ${response.status} ${response.statusText}`);
-            throw new Error(`TCMB API Error: ${response.statusText}`);
+        if (response.ok) {
+            const xmlText = await response.text();
+            const parser = new XMLParser({ ignoreAttributes: false });
+            const data = parser.parse(xmlText);
+
+            if (data?.Tarih_Date?.Currency) {
+                const usdData = data.Tarih_Date.Currency.find((c: any) => c["@_CurrencyCode"] === "USD" || c.CurrencyName === "US DOLLAR");
+                if (usdData) {
+                    const rate = parseFloat(usdData.ForexSelling);
+                    console.log("Exchange rate fetched from TCMB:", rate);
+                    return rate;
+                }
+            }
         }
-
-        const xmlText = await response.text();
-        const parser = new XMLParser({ ignoreAttributes: false });
-        const data = parser.parse(xmlText);
-
-        // Handle potential XML structure variations or empty responses
-        if (!data || !data.Tarih_Date || !data.Tarih_Date.Currency) {
-            console.error("Invalid XML structure received from TCMB", xmlText.substring(0, 100)); // Log first 100 chars
-            throw new Error("Invalid XML structure");
-        }
-
-        const usdData = data.Tarih_Date.Currency.find((c: any) => c["@_CurrencyCode"] === "USD" || c.CurrencyName === "US DOLLAR");
-
-        if (!usdData) {
-            console.error("USD data not found in XML");
-            throw new Error("USD currency data not found");
-        }
-
-        const rate = parseFloat(usdData.ForexSelling);
-        console.log("Exchange rate fetched successfully:", rate);
-        return rate;
-
+        console.warn("TCMB fetch failed or invalid data, trying backup...");
     } catch (error) {
-        console.error("Exchange Rate Fetch Error Details:", error);
-        // Fallback to a hardcoded recent approximate rate if API fails
-        // This ensures the app doesn't crash or show 0 price
-        return 37.50;
+        console.error("TCMB Fetch Error:", error);
     }
+
+    // 2. Try Frankfurter (Backup)
+    try {
+        console.log("Fetching exchange rate from Frankfurter...");
+        const response = await fetch("https://api.frankfurter.app/latest?from=USD&to=TRY", {
+            next: { revalidate: 3600 }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data?.rates?.TRY) {
+                const rate = data.rates.TRY;
+                console.log("Exchange rate fetched from Frankfurter:", rate);
+                return rate;
+            }
+        }
+    } catch (error) {
+        console.error("Frankfurter Fetch Error:", error);
+    }
+
+    // 3. Last Resort Fallback (Updated periodically)
+    console.error("All exchange rate APIs failed. Using hardcoded fallback.");
+    return 37.50;
 }
