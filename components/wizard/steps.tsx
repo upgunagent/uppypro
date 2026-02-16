@@ -56,8 +56,11 @@ export function StepSummary({ data, onNext }: StepProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log("[CLIENT] About to call getExchangeRate()");
                 let rate = await getExchangeRate();
+                console.log("[CLIENT] getExchangeRate() returned:", rate);
                 const prices = await getProductPrices();
+                console.log("[CLIENT] getProductPrices() returned:", prices);
 
                 // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
                 if (rate === 44.00) {
@@ -495,8 +498,11 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log("[CLIENT-AGREEMENTS] About to call getExchangeRate()");
                 let rate = await getExchangeRate();
+                console.log("[CLIENT-AGREEMENTS] getExchangeRate() returned:", rate);
                 const prices = await getProductPrices();
+                console.log("[CLIENT-AGREEMENTS] getProductPrices() returned:", prices);
 
                 // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
                 if (rate === 44.00) {
