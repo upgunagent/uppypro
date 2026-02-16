@@ -22,6 +22,7 @@ export function LandingHeader() {
                     <Link href="#features" className="hover:text-primary transition-colors">Özellikler</Link>
                     <Link href="#pricing" className="hover:text-primary transition-colors">Paketler</Link>
                     <Link href="#faq" className="hover:text-primary transition-colors">SSS</Link>
+                    <Link href="#solutions" className="hover:text-primary transition-colors">Çözümlerimiz</Link>
                     <Link href="#contact" className="hover:text-primary transition-colors">İletişim</Link>
                 </nav>
 
@@ -50,6 +51,13 @@ export function LandingFooter() {
                         <p className="text-sm text-gray-500 max-w-xs">
                             Instagram ve WhatsApp mesajlarınızı yapay zeka ile yönetin, satışlarınızı artırın.
                         </p>
+                        <div className="pt-4">
+                            <img
+                                src="/iyzico-footer.png"
+                                alt="Iyzico ile Öde - Visa, Mastercard, Troy, American Express"
+                                className="h-8 w-auto bg-transparent"
+                            />
+                        </div>
                     </div>
 
                     {/* Quick Access */}

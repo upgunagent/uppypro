@@ -11,7 +11,7 @@ import { EnterpriseContactModal } from "./enterprise-contact-modal";
 import { sendMeetingRequest } from "@/actions/contact-meeting";
 
 export function FeaturesSection() {
-    const [activeFeature, setActiveFeature] = useState<number | null>(null);
+    const [activeFeature, setActiveFeature] = useState<number | null>(0);
 
     const features = [
         {

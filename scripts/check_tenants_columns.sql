@@ -1,4 +1,1 @@
-
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'tenants';
+add_marketing_consent.sql

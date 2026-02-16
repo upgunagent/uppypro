@@ -1,6 +1,7 @@
 import { LandingHeader, LandingFooter } from "@/components/landing/layout";
 import { HeroSection } from "@/components/landing/hero";
 import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/components/landing/sections";
+import { SolutionsSection } from "@/components/landing/solutions";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -125,6 +126,8 @@ export default async function LandingPage() {
                         </div>
                     </div>
                 </section>
+
+                <SolutionsSection />
 
                 <ContactSection />
             </main>
