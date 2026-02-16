@@ -1,23 +1,51 @@
 import crypto from 'crypto';
 
-// Iyzico Authentication Helper
-function generateIyzicoAuthString(
+// Iyzico V2 Authentication Helper
+// Reference: https://github.com/iyzico/iyzipay-php/blob/master/src/Iyzipay/IyziAuthV2Generator.php
+function generateIyzicoV2Header(
+    uri: string,
     apiKey: string,
     secretKey: string,
     randomString: string,
-    requestBody: string
+    requestBody: string | null
 ): string {
-    const dataToSign = randomString + requestBody;
-    const hash = crypto
-        .createHmac('sha256', secretKey)
-        .update(dataToSign)
-        .digest('base64');
+    // 1. Extract URI Path (starts with /v2)
+    // Example: https://sandbox-api.iyzipay.com/v2/subscription/products -> /v2/subscription/products
+    let uriPath = uri;
+    const v2Index = uri.indexOf('/v2');
+    if (v2Index !== -1) {
+        const questionMarkIndex = uri.indexOf('?');
+        if (questionMarkIndex !== -1) {
+            uriPath = uri.substring(v2Index, questionMarkIndex);
+        } else {
+            uriPath = uri.substring(v2Index);
+        }
+    }
 
-    return `IYZWSv2 ${apiKey}:${hash}:${randomString}`;
+    // 2. Prepare Payload
+    // Payload = randomString + uriPath + requestBody
+    let payload = randomString + uriPath;
+    if (requestBody && requestBody !== '[]' && requestBody !== '{}') {
+        payload += requestBody;
+    }
+
+    // 3. Generate HMAC-SHA256 Signature (Hex)
+    const signature = crypto
+        .createHmac('sha256', secretKey)
+        .update(payload)
+        .digest('hex');
+
+    // 4. Prepare Authorization String
+    // apiKey:API_KEY&randomKey:RANDOM_STRING&signature:SIGNATURE
+    const authString = `apiKey:${apiKey}&randomKey:${randomString}&signature:${signature}`;
+
+    // 5. Build Header
+    // IYZWSv2 base64(authString)
+    return `IYZWSv2 ${Buffer.from(authString).toString('base64')}`;
 }
 
 function generateRandomString(): string {
-    return crypto.randomBytes(16).toString('hex');
+    return crypto.randomBytes(8).toString('hex') + Date.now().toString();
 }
 
 export const IyzicoConfig = {
@@ -65,7 +93,10 @@ export async function initializeSubscriptionCheckout(data: {
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/initialize`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
@@ -73,10 +104,10 @@ export async function initializeSubscriptionCheckout(data: {
     );
 
     console.log('[IYZICO] Initializing subscription checkout...');
-    console.log('[IYZICO] API URL:', `${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/initialize`);
+    console.log('[IYZICO] API URL:', uri);
 
     try {
-        const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/initialize`, {
+        const response = await fetch(uri, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -119,14 +150,17 @@ export async function getSubscriptionCheckoutFormResult(token: string): Promise<
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/auth/result`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
         requestBody
     );
 
-    const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/auth/result`, {
+    const response = await fetch(uri, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -147,14 +181,17 @@ export async function cancelSubscription(subscriptionReferenceCode: string): Pro
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/cancel`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
         requestBody
     );
 
-    const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/cancel`, {
+    const response = await fetch(uri, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -181,14 +218,17 @@ export async function updateSubscriptionCard(data: {
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/initialize`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
         requestBody
     );
 
-    const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/card-update/initialize`, {
+    const response = await fetch(uri, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -222,14 +262,17 @@ export async function getSubscriptionCardUpdateResult(token: string): Promise<an
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/auth/result`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
         requestBody
     );
 
-    const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/card-update/auth/result`, {
+    const response = await fetch(uri, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -254,7 +297,10 @@ export async function createProduct(data: {
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/products`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
@@ -262,7 +308,7 @@ export async function createProduct(data: {
     );
 
     try {
-        const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/products`, {
+        const response = await fetch(uri, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -317,7 +363,11 @@ export async function createPricingPlan(data: {
     });
 
     const randomString = generateRandomString();
-    const authString = generateIyzicoAuthString(
+    // Reference code is in URL path, so we use it for URI construction but also it should be in payload logic presumably handled by URI extractor
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/products/${data.productReferenceCode}/pricing-plans`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
@@ -325,8 +375,7 @@ export async function createPricingPlan(data: {
     );
 
     try {
-        // Note: productReferenceCode is in the URL!
-        const response = await fetch(`${IyzicoConfig.baseUrl}/v2/subscription/products/${data.productReferenceCode}/pricing-plans`, {
+        const response = await fetch(uri, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
