@@ -61,7 +61,7 @@ function generateIyzicoV2Header(
 }
 
 function generateRandomString(): string {
-    return crypto.randomBytes(8).toString('hex') + Date.now().toString();
+    return Date.now().toString() + crypto.randomBytes(4).toString('hex');
 }
 
 function getIyzicoHeaders(authString: string, randomString: string) {
