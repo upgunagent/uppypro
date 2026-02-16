@@ -13,13 +13,29 @@ export async function getProductPrices() {
 
     if (error) {
         console.error("Pricing Fetch Error:", error);
-        return { inbox: 19.99, ai: 79.99 }; // Fallback defaults
+        // Fallback defaults
+        return {
+            inbox: 19.99,
+            ai: 79.99,
+            ai_medium: 159.99, // 2x ai
+            ai_pro: 289.99     // ~3.6x ai
+        };
     }
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19.99;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79.99;
+    const inboxPriceUSD = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19.99;
+    const aiPriceUSD = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79.99;
 
-    return { inbox: inboxPrice, ai: aiPrice };
+    // Derived prices logic should match what was intended. 
+    // Assuming multipliers: Medium = 2x, Pro = 3.6x of Base AI price
+    const aiMediumUSD = aiPriceUSD * 2;
+    const aiProUSD = aiPriceUSD * 3.6;
+
+    return {
+        inbox: inboxPriceUSD,
+        ai: aiPriceUSD,
+        ai_medium: aiMediumUSD,
+        ai_pro: aiProUSD
+    };
 }
 
 export async function getExchangeRate() {

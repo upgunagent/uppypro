@@ -62,10 +62,13 @@ export function StepSummary({ data, onNext }: StepProps) {
 
                 setExchangeRate(rate);
 
+                // prices object now contains: { inbox, ai, ai_medium, ai_pro } in USD
+                // We need to calculate TL prices: PriceUSD * Rate
+
                 const inboxTL = prices.inbox * rate;
                 const aiStarterTL = prices.ai * rate;
-                const aiMediumTL = aiStarterTL * 2;
-                const aiProTL = aiStarterTL * 3.6;
+                const aiMediumTL = prices.ai_medium * rate;
+                const aiProTL = prices.ai_pro * rate;
 
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: inboxTL },
@@ -75,12 +78,12 @@ export function StepSummary({ data, onNext }: StepProps) {
                 });
             } catch (e) {
                 console.error("Pricing fetch error:", e);
-                // Fallback
+                // Fallback can rely on a safer assumption or show error state
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 495 },
-                    "ai_starter": { name: "UppyPro AI", price: 2499 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 4999 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 8999 },
+                    "base": { name: "UppyPro Inbox", price: 740 }, // ~20$ * 37
+                    "ai_starter": { name: "UppyPro AI", price: 2960 }, // ~80$ * 37
+                    "ai_medium": { name: "UppyPro AI Orta", price: 5920 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10730 },
                 });
             } finally {
                 setLoading(false);
@@ -443,27 +446,23 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 // Calculate TL prices
                 const inboxTL = prices.inbox * rate;
                 const aiStarterTL = prices.ai * rate;
-                const aiMediumTL = aiStarterTL * 2;
-                const aiProTL = aiStarterTL * 3.6;
-
-                // USD Prices (approximate for medium/pro as they are derived)
-                const aiMediumUsd = prices.ai * 2;
-                const aiProUsd = prices.ai * 3.6;
+                const aiMediumTL = prices.ai_medium * rate;
+                const aiProTL = prices.ai_pro * rate;
 
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: inboxTL, priceUsd: prices.inbox },
                     "ai_starter": { name: "UppyPro AI", price: aiStarterTL, priceUsd: prices.ai },
-                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL, priceUsd: aiMediumUsd },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL, priceUsd: aiProUsd },
+                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL, priceUsd: prices.ai_medium },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL, priceUsd: prices.ai_pro },
                 });
             } catch (e) {
                 console.error("Pricing fetch error:", e);
                 // Fallback to old hardcoded if fails
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 495, priceUsd: 14 },
-                    "ai_starter": { name: "UppyPro AI", price: 2499, priceUsd: 70 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 4999, priceUsd: 140 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 8999, priceUsd: 250 },
+                    "base": { name: "UppyPro Inbox", price: 740, priceUsd: 20 },
+                    "ai_starter": { name: "UppyPro AI", price: 2960, priceUsd: 80 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 5920, priceUsd: 160 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 10730, priceUsd: 290 },
                 });
             } finally {
                 setLoading(false);
