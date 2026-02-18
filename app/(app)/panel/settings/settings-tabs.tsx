@@ -8,11 +8,12 @@ interface SettingsTabsProps {
     connectionTab: ReactNode;
     profileTab: ReactNode;
     subscriptionTab: ReactNode;
+    defaultValue?: string;
 }
 
-export function SettingsTabs({ connectionTab, profileTab, subscriptionTab }: SettingsTabsProps) {
+export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, defaultValue = "connections" }: SettingsTabsProps) {
     return (
-        <Tabs defaultValue="connections" className="w-full space-y-6">
+        <Tabs defaultValue={defaultValue} className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-3 lg:w-[600px] h-12 bg-slate-100 p-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
                     <Plug className="w-4 h-4 mr-2" />

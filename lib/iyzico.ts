@@ -367,30 +367,11 @@ export async function retrySubscription(referenceCode: string): Promise<any> {
 }
 
 export async function getSubscriptionCardUpdateResult(token: string): Promise<any> {
-    const requestBody = JSON.stringify({
-        locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
-        token: token
-    });
+    // According to docs, Card Update via Checkout Form uses the same result retrieval as Subscription Checkout.
+    // GET /v2/subscription/checkoutform/{token}
 
-    const randomString = generateRandomString();
-    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/auth/result`;
-
-    const authString = generateIyzicoV2Header(
-        uri,
-        IyzicoConfig.apiKey,
-        IyzicoConfig.secretKey,
-        randomString,
-        requestBody
-    );
-
-    const response = await fetch(uri, {
-        method: 'POST',
-        headers: getIyzicoHeaders(authString, randomString),
-        body: requestBody
-    });
-
-    return await response.json();
+    // We can reuse the logic from getSubscriptionCheckoutFormResult
+    return await getSubscriptionCheckoutFormResult(token);
 }
 
 export async function createProduct(data: {

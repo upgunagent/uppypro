@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
         if (result.status !== 'success') {
             console.error("Iyzico Card Update Failed:", result.errorMessage);
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?status=card_update_fail&reason=${encodeURIComponent(result.errorMessage)}`, 302);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_fail&reason=${encodeURIComponent(result.errorMessage)}`, 302);
         }
 
         // Result should contain card info
@@ -56,10 +56,10 @@ export async function POST(request: Request) {
                 .eq('iyzico_subscription_reference_code', subscriptionReferenceCode);
         }
 
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?status=card_update_success`, 302);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_success`, 302);
 
     } catch (error: any) {
         console.error("Iyzico Card Update Callback Error:", error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?status=card_update_fail&reason=SystemError`, 302);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_fail&reason=SystemError`, 302);
     }
 }

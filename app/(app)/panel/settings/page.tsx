@@ -10,7 +10,12 @@ import { PasswordChangeCard } from "./password-change-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
-export default async function SettingsPage() {
+interface SettingsPageProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function SettingsPage(props: SettingsPageProps) {
+    const searchParams = await props.searchParams;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -113,6 +118,7 @@ export default async function SettingsPage() {
             </div>
 
             <SettingsTabs
+                defaultValue={searchParams.tab as string || "connections"}
                 connectionTab={connectionTab}
                 profileTab={profileTab}
                 subscriptionTab={subscriptionTab}
