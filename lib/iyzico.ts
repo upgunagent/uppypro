@@ -698,3 +698,31 @@ export async function getSubscriptionDetails(subscriptionReferenceCode: string):
         return { status: 'failure', errorMessage: error.message };
     }
 }
+
+export async function getCustomerDetails(customerReferenceCode: string): Promise<any> {
+    const randomString = generateRandomString();
+    // Endpoint for retrieving customer details: GET /v2/subscription/customers/{customerReferenceCode}
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/customers/${customerReferenceCode}`;
+    const requestBody = "{}";
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    try {
+        const response = await fetch(uri, {
+            method: 'GET',
+            headers: getIyzicoHeaders(authString, randomString)
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Get Customer Details Exception:', error);
+        return { status: 'failure', errorMessage: error.message };
+    }
+}
