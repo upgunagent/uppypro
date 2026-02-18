@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { PaymentForm } from "./payment-form";
 import { getPackageName } from "@/lib/subscription-utils";
 
-export default async function CompletePaymentPage() {
+export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string } }) {
     const supabase = await createClient();
 
     // Check Auth
@@ -14,7 +14,13 @@ export default async function CompletePaymentPage() {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="bg-red-50 text-red-800 p-4 rounded-lg">
-                    Oturum açılamadı. Lütfen e-postadaki linke tekrar tıklayın.
+                    <p className="font-bold mb-2">Oturum açılamadı.</p>
+                    <p className="text-sm">Ödeme sonrası otomatik giriş yapılamadı. Lütfen e-postanıza gönderilen davet linkine tekrar tıklayın.</p>
+                    {searchParams?.reason && (
+                        <div className="mt-4 p-2 bg-red-100 rounded text-xs break-all">
+                            <strong>Hata Detayı:</strong> {decodeURIComponent(searchParams.reason)}
+                        </div>
+                    )}
                 </div>
             </div>
         );
