@@ -54,20 +54,22 @@ export async function initializeCardUpdate() {
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
             console.log(`[SELF-HEALING] Iyzico Result:`, JSON.stringify(result));
 
-            if (result.status === 'success' && result.subscriptionReferenceCode) {
+            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
+
+            if (result.status === 'success' && subRefCode) {
                 // Update DB immediately
                 await adminDb.from("subscriptions")
                     .update({
-                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_subscription_reference_code: subRefCode,
                         iyzico_customer_reference_code: result.customerReferenceCode,
                         status: 'active' // Ensure it's active
                     })
                     .eq("id", subscription.id);
 
                 // Update local variable
-                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+                subscription.iyzico_subscription_reference_code = subRefCode;
                 subscription.iyzico_customer_reference_code = result.customerReferenceCode;
-                console.log(`[SELF-HEALING] Recovery Successful: ${result.subscriptionReferenceCode}`);
+                console.log(`[SELF-HEALING] Recovery Successful: ${subRefCode}`);
             } else {
                 console.error(`[SELF-HEALING] Recovery Failed. Status: ${result.status}, RefCode: ${result.subscriptionReferenceCode}, Error: ${result.errorMessage}`);
             }
@@ -79,8 +81,13 @@ export async function initializeCardUpdate() {
     }
 
     if (!subscription.iyzico_subscription_reference_code) {
-        const hasToken = !!subscription.iyzico_checkout_token;
-        return { error: `Abonelik referans kodu bulunamadı. (Recovery: ${hasToken ? 'Tried' : 'No Token'}). ID: ${subscription.id}` };
+        let debugInfo = `Token: ${!!subscription.iyzico_checkout_token}`;
+        // If recovery ran, we might have logs but can't see them.
+        // Let's rely on what we can infer or if we can pass the last error up? 
+        // We can'teasily. 
+        // But we can check if we have a token and if we are here, it failed.
+
+        return { error: `Abonelik referans kodu bulunamadı. (Recovery Failed). Destek için bu kodu iletin: [SUB-ID: ${subscription.id}] [TOKEN-EXISTS: ${!!subscription.iyzico_checkout_token}]` };
     }
 
     try {
@@ -142,15 +149,17 @@ export async function cancelUserSubscription(reason: string, details?: string) {
         try {
             const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
-            if (result.status === 'success' && result.subscriptionReferenceCode) {
+            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
+
+            if (result.status === 'success' && subRefCode) {
                 await adminDb.from("subscriptions")
                     .update({
-                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_subscription_reference_code: subRefCode,
                         iyzico_customer_reference_code: result.customerReferenceCode,
                         status: 'active'
                     })
                     .eq("id", subscription.id);
-                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+                subscription.iyzico_subscription_reference_code = subRefCode;
             }
         } catch (e) { console.error("Self-healing failed:", e); }
     }
@@ -220,15 +229,17 @@ export async function retryUserPayment() {
         try {
             const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
-            if (result.status === 'success' && result.subscriptionReferenceCode) {
+            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
+
+            if (result.status === 'success' && subRefCode) {
                 await adminDb.from("subscriptions")
                     .update({
-                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_subscription_reference_code: subRefCode,
                         iyzico_customer_reference_code: result.customerReferenceCode,
                         status: 'active'
                     })
                     .eq("id", subscription.id);
-                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+                subscription.iyzico_subscription_reference_code = subRefCode;
             }
         } catch (e) { console.error("Self-healing failed:", e); }
     }
@@ -292,15 +303,17 @@ export async function changeUserPlan(newProductKey: 'uppypro_inbox' | 'uppypro_a
         try {
             const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
-            if (result.status === 'success' && result.subscriptionReferenceCode) {
+            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
+
+            if (result.status === 'success' && subRefCode) {
                 await adminDb.from("subscriptions")
                     .update({
-                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_subscription_reference_code: subRefCode,
                         iyzico_customer_reference_code: result.customerReferenceCode,
                         status: 'active'
                     })
                     .eq("id", subscription.id);
-                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+                subscription.iyzico_subscription_reference_code = subRefCode;
             }
         } catch (e) { console.error("Self-healing failed:", e); }
     }
