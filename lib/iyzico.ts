@@ -235,7 +235,8 @@ export async function updateSubscriptionCard(data: {
 
     if (data.subscriptionReferenceCode) {
         payload.subscriptionReferenceCode = data.subscriptionReferenceCode;
-    } else if (data.customerReferenceCode) {
+    }
+    if (data.customerReferenceCode) {
         payload.customerReferenceCode = data.customerReferenceCode;
     }
 
