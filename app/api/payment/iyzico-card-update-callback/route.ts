@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSubscriptionCardUpdateResult } from "@/lib/iyzico";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
 
 export async function POST(request: Request) {
     try {
@@ -115,7 +116,8 @@ export async function POST(request: Request) {
             console.error("Could not find subscription for Card Update!", { subscriptionReferenceCode, token });
         }
 
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_success`, 302);
+        revalidatePath('/panel/settings');
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_success&refresh=${Date.now()}`, 302);
 
     } catch (error: any) {
         console.error("Iyzico Card Update Callback Error:", error);
