@@ -252,7 +252,14 @@ export async function updateSubscriptionCard(data: {
         body: requestBody
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    let result;
+    try {
+        result = JSON.parse(responseText);
+    } catch (e) {
+        console.error("Iyzico Invalid JSON Response:", responseText);
+        throw new Error(`Iyzico API Response Error: ${responseText.slice(0, 100)}`);
+    }
 
     if (result.status === 'success') {
         return {
