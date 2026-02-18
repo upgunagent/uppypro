@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { initializeSubscriptionCheckout as initIyzicoCheckout } from "@/lib/iyzico";
+import { initializeSubscriptionCheckout as initIyzicoCheckout, IyzicoConfig } from "@/lib/iyzico";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
@@ -96,7 +96,7 @@ export async function initializeSubscriptionPayment(data: {
             checkoutFormContent: result.checkoutFormContent,
             token: result.token,
             debugCallbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`,
-            debugConversationId: data.conversationId || IyzicoConfig.conversationId
+            debugConversationId: user.user_metadata?.tenant_id || IyzicoConfig.conversationId
         };
 
     } catch (error: any) {
