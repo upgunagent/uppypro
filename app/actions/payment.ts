@@ -46,7 +46,14 @@ export async function initializeSubscriptionPayment(data: {
     try {
         const supabase = createAdminClient();
 
-        const gsmNumber = formatPhoneNumber(data.user.phone) || '+905555555555';
+        // Format phone number inline to ensure logic is picked up
+        let rawPhone = data.user.phone || '';
+        let cleanedPhone = rawPhone.replace(/\D/g, '');
+        if (cleanedPhone.startsWith('0')) cleanedPhone = cleanedPhone.substring(1);
+        if (!cleanedPhone.startsWith('90')) cleanedPhone = '90' + cleanedPhone;
+        const gsmNumber = '+' + cleanedPhone;
+
+        console.log(`[PAYMENT-DEBUG-${Date.now()}] Formatting Phone: ${data.user.phone} -> ${gsmNumber}`);
 
         // Wrapper for Iyzico
         const result = await initIyzicoCheckout({
@@ -79,7 +86,7 @@ export async function initializeSubscriptionPayment(data: {
         if (result.status !== 'success') {
             console.error("Iyzico Init Error:", result.errorMessage);
             // Adding a timestamp or random ID to force a change that MUST be visible
-            return { error: `[E-${Date.now().toString().slice(-4)}] Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
+            return { error: `[PAY-ERR-${Date.now().toString().slice(-4)}] Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
         }
 
         return {
