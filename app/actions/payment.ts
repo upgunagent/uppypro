@@ -60,7 +60,7 @@ export async function initializeSubscriptionPayment(data: {
             conversationId: data.tenantId, // IMPORTANT: Pass Tenant ID to identify in Callback
             pricingPlanReferenceCode: data.pricingPlanReferenceCode,
             subscriptionInitialStatus: 'ACTIVE', // Start immediately
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback`,
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`,
             customer: {
                 name: data.user.name.split(' ')[0] || 'Ad',
                 surname: data.user.name.split(' ').slice(1).join(' ') || 'Soyad',
