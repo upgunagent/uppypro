@@ -5,8 +5,9 @@ import { getPackageName } from "@/lib/subscription-utils";
 import { MagicLinkExchange } from "./magic-link-exchange";
 import { SetPasswordForm } from "./set-password-form";
 
-export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string, source?: string } }) {
+export default async function CompletePaymentPage({ searchParams }: { searchParams: Promise<{ status?: string, reason?: string, source?: string }> }) {
     const supabase = await createClient();
+    const params = await searchParams;
 
     // Check Auth
     const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +24,7 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
 
     // If coming back from successful payment (status=success), show password form directly.
     // The subscription is now 'active', not 'pending', so we skip the pending check.
-    const isPostPayment = searchParams?.status === 'success';
+    const isPostPayment = params?.status === 'success';
 
     if (isPostPayment) {
         // Show password form directly — no need to check subscription status
