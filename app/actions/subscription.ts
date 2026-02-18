@@ -48,9 +48,12 @@ export async function initializeCardUpdate() {
 
     // SELF-HEALING: If reference code is missing but we have a token (e.g. callback failed)
     if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        console.log(`[SELF-HEALING] Attempting recovery for sub ${subscription.id} with token ${subscription.iyzico_checkout_token}`);
         try {
             const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            console.log(`[SELF-HEALING] Iyzico Result:`, JSON.stringify(result));
+
             if (result.status === 'success' && result.subscriptionReferenceCode) {
                 // Update DB immediately
                 await adminDb.from("subscriptions")
@@ -64,14 +67,20 @@ export async function initializeCardUpdate() {
                 // Update local variable
                 subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
                 subscription.iyzico_customer_reference_code = result.customerReferenceCode;
+                console.log(`[SELF-HEALING] Recovery Successful: ${result.subscriptionReferenceCode}`);
+            } else {
+                console.error(`[SELF-HEALING] Recovery Failed. Status: ${result.status}, RefCode: ${result.subscriptionReferenceCode}, Error: ${result.errorMessage}`);
             }
         } catch (e) {
             console.error("Self-healing failed:", e);
         }
+    } else {
+        console.log(`[SELF-HEALING] Skipped. RefCode: ${subscription.iyzico_subscription_reference_code}, Token: ${subscription.iyzico_checkout_token}`);
     }
 
     if (!subscription.iyzico_subscription_reference_code) {
-        return { error: "Abonelik referans kodu bulunamadı. Lütfen destek ekibiyle iletişime geçin." };
+        const hasToken = !!subscription.iyzico_checkout_token;
+        return { error: `Abonelik referans kodu bulunamadı. (Recovery: ${hasToken ? 'Tried' : 'No Token'}). ID: ${subscription.id}` };
     }
 
     try {
