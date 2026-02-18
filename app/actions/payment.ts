@@ -11,6 +11,25 @@ export type PaymentInitResult = {
     error?: string;
 };
 
+function formatPhoneNumber(phone: string): string {
+    if (!phone) return '';
+    // Remove all non-digits
+    let cleaned = phone.replace(/\D/g, '');
+
+    // If it starts with '0', remove it (e.g., 0532... -> 532...)
+    if (cleaned.startsWith('0')) {
+        cleaned = cleaned.substring(1);
+    }
+
+    // If it doesn't start with '90', add it (e.g., 532... -> 90532...)
+    if (!cleaned.startsWith('90')) {
+        cleaned = '90' + cleaned;
+    }
+
+    // Add + prefix
+    return '+' + cleaned;
+}
+
 export async function initializeSubscriptionPayment(data: {
     pricingPlanReferenceCode: string;
     user: {
@@ -36,7 +55,7 @@ export async function initializeSubscriptionPayment(data: {
                 name: data.user.name.split(' ')[0] || 'Ad',
                 surname: data.user.name.split(' ').slice(1).join(' ') || 'Soyad',
                 email: data.user.email,
-                gsmNumber: data.user.phone || '+905555555555', // Validate/Format this in frontend!
+                gsmNumber: formatPhoneNumber(data.user.phone) || '+905555555555',
                 identityNumber: data.user.identityNumber || '11111111111', // Default if missing
                 billingAddress: {
                     contactName: data.user.name,
