@@ -96,7 +96,7 @@ export async function initializeSubscriptionPayment(data: {
             checkoutFormContent: result.checkoutFormContent,
             token: result.token,
             debugCallbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`,
-            debugConversationId: user.user_metadata?.tenant_id || IyzicoConfig.conversationId
+            debugConversationId: data.tenantId || IyzicoConfig.conversationId
         };
 
     } catch (error: any) {
