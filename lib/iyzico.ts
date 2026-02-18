@@ -682,40 +682,28 @@ export async function getCustomerDetails(customerReferenceCode: string): Promise
 }
 
 export async function getUserCards(customerReferenceCode: string): Promise<any> {
-    const randomString = generateRandomString();
+    // Use official SDK to avoid signature issues
+    // We must require it dynamically because we just installed it and it might be CommonJS
+    const Iyzipay = require('iyzipay');
 
-    // V1 Card Storage Endpoint: POST /cardstorage/cards
-    // Auth: Authorization: IYZWS apiKey:signature
-    // Signature: base64(sha1(apiKey + randomString + secretKey + requestBody))
-
-    const uri = `${IyzicoConfig.baseUrl}/cardstorage/cards`;
-    const requestBody = JSON.stringify({
-        locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
-        cardUserKey: customerReferenceCode
+    const iyzipay = new Iyzipay({
+        apiKey: IyzicoConfig.apiKey,
+        secretKey: IyzicoConfig.secretKey,
+        uri: IyzicoConfig.baseUrl
     });
 
-    // V1 Auth Generation (Corrected to SHA1 Hash, not HMAC)
-    const payload = IyzicoConfig.apiKey + randomString + IyzicoConfig.secretKey + requestBody;
-    const signature = crypto.createHash('sha1').update(payload).digest('base64');
-    const authString = `IYZWS ${IyzicoConfig.apiKey}:${signature}`;
-
-    try {
-        const response = await fetch(uri, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': authString,
-                'x-iyzi-rnd': randomString
-            },
-            body: requestBody
+    return new Promise((resolve, reject) => {
+        iyzipay.cardList.retrieve({
+            locale: IyzicoConfig.locale,
+            conversationId: IyzicoConfig.conversationId,
+            cardUserKey: customerReferenceCode
+        }, function (err: any, result: any) {
+            if (err) {
+                console.error('[IYZICO] Get User Cards SDK Error:', err);
+                resolve({ status: 'failure', errorMessage: err.message, errorDetails: err });
+            } else {
+                resolve(result);
+            }
         });
-
-        const result = await response.json();
-        return result;
-    } catch (error: any) {
-        console.error('[IYZICO] Get User Cards Exception:', error);
-        return { status: 'failure', errorMessage: error.message };
-    }
+    });
 }
