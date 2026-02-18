@@ -19,12 +19,9 @@ function generateIyzicoV2Header(
     let uriPath = uri;
     const v2Index = uri.indexOf('/v2');
     if (v2Index !== -1) {
-        const questionMarkIndex = uri.indexOf('?');
-        if (questionMarkIndex !== -1) {
-            uriPath = uri.substring(v2Index, questionMarkIndex);
-        } else {
-            uriPath = uri.substring(v2Index);
-        }
+        // For V2, we need the path including query params if it's a GET request
+        // The implementation below was stripping query params, which causes auth failure for GET
+        uriPath = uri.substring(v2Index);
     }
 
     let payload = randomString + uriPath;
