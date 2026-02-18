@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { createProduct, createPricingPlan, getAllProducts } from '@/lib/iyzico';
+import { createProduct, createPricingPlan, getAllProducts, debugIyzicoAuth } from '@/lib/iyzico';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
@@ -33,8 +33,8 @@ export async function GET() {
         } else {
             console.warn('Failed to list products:', allProducts.errorMessage);
             debugLog.push('Trying Debug Auth Strategies...');
-            // Import dynamically to avoid top-level issues if not exported yet
-            const { debugIyzicoAuth } = await import('@/lib/iyzico');
+
+            // Use imported debug function
             const debugResults = await debugIyzicoAuth();
             debugLog.push({ msg: 'Auth Debug Results', results: debugResults });
         }
@@ -54,7 +54,6 @@ export async function GET() {
             });
 
             if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
-                // Double check if error is "Already Exists" but we missed it in Step 0
                 throw {
                     message: `Failed to create Inbox product: ${inboxProduct.errorMessage || 'Missing Reference Code'}`,
                     details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct,
