@@ -242,7 +242,7 @@ export async function updateSubscriptionCard(data: {
     const requestBody = JSON.stringify(payload);
 
     const randomString = generateRandomString();
-    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/initialize`;
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/checkoutform/initialize`;
 
     const authString = generateIyzicoV2Header(
         uri,
