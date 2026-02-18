@@ -78,7 +78,8 @@ export async function initializeSubscriptionPayment(data: {
 
         if (result.status !== 'success') {
             console.error("Iyzico Init Error:", result.errorMessage);
-            return { error: `Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
+            // Adding a timestamp or random ID to force a change that MUST be visible
+            return { error: `[E-${Date.now().toString().slice(-4)}] Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
         }
 
         return {
