@@ -400,8 +400,28 @@ export async function createPricingPlan(data: {
 
 export async function getAllProducts(): Promise<{ status: string; errorMessage?: string; items?: any[]; errorDetails?: any }> {
     const randomString = generateRandomString();
-    // Remove query params to avoid signature mismatch issues (fetch normalization vs signature)
-    const uri = `${IyzicoConfig.baseUrl.replace(/\/+$/, '')}/v2/subscription/products`;
+
+    // Construct Query Params Deterministically
+    const params = new URLSearchParams({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        page: '1',
+        count: '100' // Fetch more items to ensure we find ours
+    });
+
+    // Ensure baseUrl has no trailing slash
+    const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
+    const path = '/v2/subscription/products';
+    const queryString = params.toString(); // e.g. "locale=tr&conversationId=..."
+
+    // Full URI
+    const uri = `${baseUrl}${path}?${queryString}`;
+
+    console.log('[IYZICO] Signing Payload for GET:', {
+        path: path,
+        query: queryString,
+        fullUri: uri
+    });
 
     const authString = generateIyzicoV2Header(
         uri,
@@ -411,8 +431,6 @@ export async function getAllProducts(): Promise<{ status: string; errorMessage?:
         null
     );
 
-    console.log('[IYZICO] Fetching all products from:', uri);
-
     try {
         const response = await fetch(uri, {
             method: 'GET',
@@ -420,7 +438,7 @@ export async function getAllProducts(): Promise<{ status: string; errorMessage?:
         });
 
         const result = await response.json();
-        // Log only part of the result to avoid clutter
+        // Log result
         console.log('[IYZICO] Get All Products Response:', JSON.stringify(result).substring(0, 500) + '...');
 
         if (result.status === 'success') {
