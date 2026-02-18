@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Calendar, Package, Tag, AlertTriangle, CheckCircle } from "lucide-react";
+import { CreditCard, Calendar, Package, Tag, AlertTriangle, CheckCircle, RefreshCw, ArrowLeftRight } from "lucide-react";
 import { getPackageName } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,14 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelSubscription, undoCancelSubscription } from "@/app/actions/subscription";
+import { cancelUserSubscription, retryUserPayment, changeUserPlan } from "@/app/actions/subscription";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 export function SubscriptionCard({
     subscription,
     price,
+    allPrices = [],
     customPriceTry,
     customPriceUsd,
     priceUsd,
@@ -35,16 +37,22 @@ export function SubscriptionCard({
 }: {
     subscription: any,
     price: any,
+    allPrices?: any[],
     customPriceTry?: number,
     customPriceUsd?: number,
     priceUsd?: number,
     usdRate?: number
 }) {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
     const [cancelReason, setCancelReason] = useState<string>("");
     const [cancelDetails, setCancelDetails] = useState<string>("");
+
     const [isLoading, setIsLoading] = useState(false);
+
     const router = useRouter();
+    const { toast } = useToast();
 
     if (!subscription) {
         return (
@@ -54,7 +62,7 @@ export function SubscriptionCard({
         );
     }
 
-    const { status, billing_cycle, current_period_end, cancel_at_period_end } = subscription;
+    const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key } = subscription;
     const packageName = getPackageName(subscription);
 
     // Format price: Prioritize USD
@@ -75,41 +83,71 @@ export function SubscriptionCard({
 
     const formattedEndDate = current_period_end ? new Date(current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
 
+    // Determine Upgrade/Downgrade Target
+    const currentProductKey = ai_product_key || 'uppypro_inbox';
+    const targetProductKey = currentProductKey === 'uppypro_ai' ? 'uppypro_inbox' : 'uppypro_ai';
+    const targetPrice = allPrices?.find(p => p.product_key === targetProductKey);
+    const targetPlanName = targetProductKey === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
+    const isUpgrade = targetProductKey === 'uppypro_ai'; // Inbox -> AI is upgrade
+
     const handleCancel = async () => {
         if (!cancelReason) return;
         setIsLoading(true);
         try {
-            const result = await cancelSubscription(cancelReason, cancelDetails);
+            const result = await cancelUserSubscription(cancelReason, cancelDetails);
             if (result.error) {
-                alert(result.error);
+                toast({ variant: "destructive", title: "Hata", description: result.error });
                 return;
             }
+            toast({ title: "Başarılı", description: "Aboneliğiniz iptal edildi." });
             setIsCancelModalOpen(false);
             router.refresh();
         } catch (error) {
             console.error(error);
-            alert("Beklenmeyen bir hata oluştu.");
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleUndoCancel = async () => {
+    const handleRetry = async () => {
         setIsLoading(true);
         try {
-            const result = await undoCancelSubscription();
+            const result = await retryUserPayment();
             if (result.error) {
-                alert(result.error);
+                toast({ variant: "destructive", title: "Hata", description: result.error });
                 return;
             }
+            toast({ title: "İşlem Başarılı", description: result.message });
             router.refresh();
         } catch (error) {
             console.error(error);
-            alert("Beklenmeyen bir hata oluştu.");
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleChangePlan = async () => {
+        setIsLoading(true);
+        try {
+            const result = await changeUserPlan(targetProductKey);
+            if (result.error) {
+                toast({ variant: "destructive", title: "Hata", description: result.error });
+                return;
+            }
+            toast({ title: "Başarılı", description: `Paketiniz ${targetPlanName} olarak güncellendi.` });
+            setIsUpgradeModalOpen(false);
+            router.refresh();
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const isRetryable = status === 'past_due' || status === 'unpaid' || status === 'suspended';
 
     return (
         <div className="space-y-6 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -169,9 +207,69 @@ export function SubscriptionCard({
                 </div>
             </div>
 
-            {/* Actions for Active Subscription */}
-            {status === 'active' && !cancel_at_period_end && (
-                <div className="pt-4 border-t border-slate-100 flex justify-end">
+            {/* Actions Toolbar */}
+            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-end gap-3">
+
+                {/* Retry Button */}
+                {isRetryable && (
+                    <Button
+                        variant="default"
+                        onClick={handleRetry}
+                        disabled={isLoading}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                        Ödemeyi Tekrar Dene
+                    </Button>
+                )}
+
+                {/* Upgrade/Downgrade Button */}
+                {status === 'active' && !cancel_at_period_end && targetPrice && (
+                    <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                                {isUpgrade ? `${targetPlanName}'a Yükselt` : `${targetPlanName}'a Geç`}
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Paket Değişikliği</DialogTitle>
+                                <DialogDescription>
+                                    Mevcut paketiniz: <strong>{packageName}</strong> <br />
+                                    Yeni paket: <strong>{targetPlanName}</strong>
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm text-slate-500">Yeni Aylık Ücret</span>
+                                        <span className="font-bold text-lg">
+                                            ${targetPrice.monthly_price_usd}
+                                            <span className="text-xs font-normal text-slate-500 ml-1">
+                                                (≈ {(targetPrice.monthly_price_usd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL)
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500">
+                                        {isUpgrade
+                                            ? "Paket yükseltme işleminde fark ücreti anında tahsil edilebilir."
+                                            : "Paket düşürme işlemi bir sonraki fatura döneminde geçerli olur."}
+                                    </p>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)}>Vazgeç</Button>
+                                <Button onClick={handleChangePlan} disabled={isLoading}>
+                                    {isLoading ? 'İşleniyor...' : 'Onayla ve Değiştir'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                )}
+
+                {/* Cancel Button */}
+                {status === 'active' && !cancel_at_period_end && (
                     <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
                         <DialogTrigger asChild>
                             <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50">
@@ -212,7 +310,7 @@ export function SubscriptionCard({
                                     </div>
                                 )}
                                 <div className="bg-orange-50 p-3 rounded-md border border-orange-100 text-sm text-orange-800">
-                                    <strong>Bilgi:</strong> İptal etseniz bile, mevcut dönem sonuna kadar ({formattedEndDate}) sistemimizi kullanmaya devam edebilirsiniz. Bu tarihten sonra aboneliğiniz yenilenmeyecektir.
+                                    <strong>Bilgi:</strong> İptal etseniz bile, mevcut dönem sonuna kadar ({formattedEndDate}) sistemimizi kullanmaya devam edebilirsiniz.
                                 </div>
                             </div>
                             <DialogFooter>
@@ -227,14 +325,14 @@ export function SubscriptionCard({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* Actions for Scheduled Cancellation */}
+            {/* Scheduled Cancellation Message */}
             {cancel_at_period_end && (
                 <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-sm text-slate-500">
-                        Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir. Bu tarihe kadar tüm özelliklerden faydalanmaya devam edebilirsiniz.
+                        Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir.
                     </p>
                 </div>
             )}

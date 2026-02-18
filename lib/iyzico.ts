@@ -269,6 +269,89 @@ export async function updateSubscriptionCard(data: {
     }
 }
 
+export async function upgradeSubscription(subscriptionReferenceCode: string, newPricingPlanReferenceCode: string): Promise<any> {
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        newPricingPlanReferenceCode: newPricingPlanReferenceCode,
+        subscriptionReferenceCode: subscriptionReferenceCode // Add ref code to body as per docs? Correct endpoint has it in URL but body usually mirrors it. No, docs say URL parameter. Body has newPricingPlanReferenceCode.
+    });
+    // Wait, let's check docs: https://docs.iyzico.com/urunler/abonelik/abonelik-entegrasyonu/abonelik-islemleri#post-v2-subscription-subscriptions-subscriptionreferencecode-upgrade
+    // Endpoint: /v2/subscription/subscriptions/{subscriptionReferenceCode}/upgrade
+    // Body: { locale, conversationId, newPricingPlanReferenceCode }
+    // Correct.
+
+    const randomString = generateRandomString();
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}/upgrade`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    console.log(`[IYZICO] Upgrading subscription ${subscriptionReferenceCode} to plan ${newPricingPlanReferenceCode}`);
+
+    try {
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: getIyzicoHeaders(authString, randomString),
+            body: requestBody
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Upgrade Exception:', error);
+        return {
+            status: 'failure',
+            errorMessage: error.message,
+            errorDetails: error
+        };
+    }
+}
+
+export async function retrySubscription(referenceCode: string): Promise<any> {
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        referenceCode: referenceCode
+    });
+
+    const randomString = generateRandomString();
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/operation/retry`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    console.log(`[IYZICO] Retrying subscription payment for ${referenceCode}`);
+
+    try {
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: getIyzicoHeaders(authString, randomString),
+            body: requestBody
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Retry Exception:', error);
+        return {
+            status: 'failure',
+            errorMessage: error.message,
+            errorDetails: error
+        };
+    }
+}
+
 export async function getSubscriptionCardUpdateResult(token: string): Promise<any> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,

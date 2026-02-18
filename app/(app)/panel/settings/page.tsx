@@ -43,20 +43,21 @@ export default async function SettingsPage() {
         supabase.from("payment_methods").select("*").eq("tenant_id", member.tenant_id)
     ]);
 
-    // Fetch pricing if subscription exists
-    // Fetch pricing if subscription exists
+    // Fetch pricing for both plans to support upgrade/downgrade UI
     let pricing = null;
-    if (subscription) {
-        // If ai_product_key is null, it's the standard Inbox plan
-        const productKey = subscription.ai_product_key || 'uppypro_inbox';
+    let allPrices = [];
 
-        const { data } = await supabase.from("pricing")
-            .select("*")
-            .eq("product_key", productKey)
-            .eq("billing_cycle", subscription.billing_cycle || 'monthly')
-            .limit(1)
-            .maybeSingle();
-        pricing = data;
+    // Always fetch pricing for standard plans
+    const { data: prices } = await supabase.from("pricing")
+        .select("*")
+        .in("product_key", ['uppypro_inbox', 'uppypro_ai'])
+        .eq("billing_cycle", subscription?.billing_cycle || 'monthly');
+
+    allPrices = prices || [];
+
+    if (subscription) {
+        const productKey = subscription.ai_product_key || 'uppypro_inbox';
+        pricing = allPrices.find(p => p.product_key === productKey);
     }
 
 
@@ -88,6 +89,7 @@ export default async function SettingsPage() {
             <SubscriptionCard
                 subscription={subscription}
                 price={pricing}
+                allPrices={allPrices}
                 customPriceTry={subscription?.custom_price_try}
                 customPriceUsd={subscription?.custom_price_usd}
                 priceUsd={pricing?.monthly_price_usd}
