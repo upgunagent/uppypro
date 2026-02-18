@@ -21,7 +21,10 @@ export async function GET() {
         });
 
         if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
-            throw { message: `Failed to create Inbox product: ${inboxProduct.errorMessage}`, details: inboxProduct.errorDetails };
+            throw {
+                message: `Failed to create Inbox product: ${inboxProduct.errorMessage || 'Missing Reference Code'}`,
+                details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct
+            };
         }
         results.push({ step: 'Create Inbox Product', code: inboxProduct.referenceCode });
 
@@ -44,7 +47,10 @@ export async function GET() {
         });
 
         if (inboxPlan.status !== 'success' || !inboxPlan.referenceCode) {
-            throw { message: `Failed to create Inbox Plan: ${inboxPlan.errorMessage}`, details: inboxPlan.errorDetails };
+            throw {
+                message: `Failed to create Inbox Plan: ${inboxPlan.errorMessage || 'Missing Reference Code'}`,
+                details: inboxPlan.errorDetails || inboxPlan.rawResult || inboxPlan
+            };
         }
         results.push({ step: 'Create Inbox Plan', code: inboxPlan.referenceCode });
 
@@ -64,7 +70,10 @@ export async function GET() {
         });
 
         if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
-            throw { message: `Failed to create AI product: ${aiProduct.errorMessage}`, details: aiProduct.errorDetails };
+            throw {
+                message: `Failed to create AI product: ${aiProduct.errorMessage || 'Missing Reference Code'}`,
+                details: aiProduct.errorDetails || aiProduct.rawResult || aiProduct
+            };
         }
         results.push({ step: 'Create AI Product', code: aiProduct.referenceCode });
 
@@ -87,7 +96,10 @@ export async function GET() {
         });
 
         if (aiPlan.status !== 'success' || !aiPlan.referenceCode) {
-            throw { message: `Failed to create AI Plan: ${aiPlan.errorMessage}`, details: aiPlan.errorDetails };
+            throw {
+                message: `Failed to create AI Plan: ${aiPlan.errorMessage || 'Missing Reference Code'}`,
+                details: aiPlan.errorDetails || aiPlan.rawResult || aiPlan
+            };
         }
         results.push({ step: 'Create AI Plan', code: aiPlan.referenceCode });
 

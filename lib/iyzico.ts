@@ -274,7 +274,7 @@ export async function getSubscriptionCardUpdateResult(token: string): Promise<an
 export async function createProduct(data: {
     name: string;
     description?: string;
-}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any }> {
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any; rawResult?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
@@ -306,9 +306,16 @@ export async function createProduct(data: {
         console.log('[IYZICO] Product Creation Response:', JSON.stringify(result));
 
         if (result.status === 'success') {
+            // Aggressive reference code extraction
+            const refCode = result.referenceCode ||
+                result.data?.referenceCode ||
+                result.productReferenceCode ||
+                result.data?.productReferenceCode;
+
             return {
                 status: 'success',
-                referenceCode: result.referenceCode
+                referenceCode: refCode,
+                rawResult: result
             };
         } else {
             return {
@@ -335,7 +342,7 @@ export async function createPricingPlan(data: {
     paymentIntervalCount: number;
     trialPeriodDays?: number;
     planPaymentType?: 'RECURRING';
-}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any }> {
+}): Promise<{ status: string; errorMessage?: string; referenceCode?: string; errorDetails?: any; rawResult?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
@@ -375,7 +382,8 @@ export async function createPricingPlan(data: {
         if (result.status === 'success') {
             return {
                 status: 'success',
-                referenceCode: result.referenceCode
+                referenceCode: result.referenceCode || result.data?.referenceCode,
+                rawResult: result
             };
         } else {
             return {
