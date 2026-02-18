@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
-import { initializeSubscriptionPayment } from "@/actions/payment";
+import { initializeSubscriptionPayment } from "@/app/actions/payment";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";

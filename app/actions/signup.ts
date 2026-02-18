@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resend, EMAIL_FROM } from "@/lib/resend";
 import { WizardData } from "@/components/wizard/steps";
-import { initializeSubscriptionPayment } from "@/actions/payment";
+import { initializeSubscriptionPayment } from "@/app/actions/payment";
 
 export async function completeSignupWithInvite(data: WizardData) {
     const supabaseAdmin = createAdminClient();
