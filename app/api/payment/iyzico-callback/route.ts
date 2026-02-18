@@ -109,8 +109,92 @@ export async function POST(request: Request) {
             });
         }
 
-        // Redirect to success page
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success`, 302);
+        // 3. User & Session Handling
+        // We need to sign the user in. Iyzico callback is server-side.
+        // We can generate a Magic Link and redirect the user to it.
+        // This will authenticate them and then redirect to the success page.
+
+        // Find the user associated with this tenant
+        // Assuming the creator is the owner.
+        // Also we can try to use result.email but tenantId is safer for subscription association.
+
+        let targetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success`;
+
+        if (tenantId) {
+            const { data: member } = await supabase
+                .from('tenant_members')
+                .select('user_id')
+                .eq('tenant_id', tenantId)
+                .eq('role', 'tenant_owner')
+                .single();
+
+            if (member && member.user_id) {
+                const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
+                if (userData && userData.user && userData.user.email) {
+                    const { data: linkData } = await supabase.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: userData.user.email,
+                        options: {
+                            redirectTo: targetUrl
+                        }
+                    });
+
+                    if (linkData && linkData.properties && linkData.properties.action_link) {
+                        console.log(`[IYZICO-CALLBACK] Generated Magic Link for ${userData.user.email}`);
+                        return NextResponse.redirect(linkData.properties.action_link, 302);
+                    }
+                }
+            }
+        }
+
+        if (tenantId) {
+            // ... existing tenant lookup ...
+        }
+
+        // FALLBACK: User Lookup by Email if Tenant ID method failed
+        if (!tenantId || tenantId.length > 20) { // If it's a timestamp (long) or missing
+            const email = result.email || result.customerEmail || result.customer?.email;
+            console.log(`[IYZICO-CALLBACK] Fallback: Looking up user by email: ${email}`);
+
+            if (email) {
+                // Try to find in billing_info
+                const { data: billing } = await supabase
+                    .from('billing_info')
+                    .select('tenant_id')
+                    .eq('contact_email', email)
+                    .single();
+
+                if (billing && billing.tenant_id) {
+                    const { data: member } = await supabase
+                        .from('tenant_members')
+                        .select('user_id')
+                        .eq('tenant_id', billing.tenant_id)
+                        .eq('role', 'tenant_owner')
+                        .single();
+
+                    if (member && member.user_id) {
+                        const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
+                        if (userData && userData.user && userData.user.email) {
+                            const { data: linkData } = await supabase.auth.admin.generateLink({
+                                type: 'magiclink',
+                                email: userData.user.email,
+                                options: {
+                                    redirectTo: targetUrl
+                                }
+                            });
+
+                            if (linkData && linkData.properties && linkData.properties.action_link) {
+                                console.log(`[IYZICO-CALLBACK] Generated Magic Link for ${userData.user.email} (Email Fallback)`);
+                                return NextResponse.redirect(linkData.properties.action_link, 302);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback Redirect (If user lookup fails, they will see "Oturum açılamadı" but at least page loads)
+        return NextResponse.redirect(targetUrl, 302);
 
     } catch (error: any) {
         console.error("Iyzico Callback Error:", error);

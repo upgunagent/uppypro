@@ -57,6 +57,7 @@ export async function initializeSubscriptionPayment(data: {
 
         // Wrapper for Iyzico
         const result = await initIyzicoCheckout({
+            conversationId: data.tenantId, // IMPORTANT: Pass Tenant ID to identify in Callback
             pricingPlanReferenceCode: data.pricingPlanReferenceCode,
             subscriptionInitialStatus: 'ACTIVE', // Start immediately
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback`,

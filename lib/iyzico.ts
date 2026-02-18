@@ -59,6 +59,7 @@ function getIyzicoHeaders(authString: string, randomString: string) {
 }
 
 export async function initializeSubscriptionCheckout(data: {
+    conversationId?: string;
     pricingPlanReferenceCode: string;
     subscriptionInitialStatus: 'PENDING' | 'ACTIVE';
     callbackUrl: string;
@@ -86,7 +87,7 @@ export async function initializeSubscriptionCheckout(data: {
 }): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string; errorDetails?: any }> {
     const requestBody = JSON.stringify({
         locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
+        conversationId: data.conversationId || IyzicoConfig.conversationId,
         pricingPlanReferenceCode: data.pricingPlanReferenceCode,
         subscriptionInitialStatus: data.subscriptionInitialStatus,
         callbackUrl: data.callbackUrl,
