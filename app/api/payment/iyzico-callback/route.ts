@@ -196,11 +196,12 @@ export async function POST(request: Request) {
         }
 
         // Fallback Redirect (If user lookup fails)
-        console.log("[IYZICO-CALLBACK] Session restoration failed - Fallback to standard redirect");
-        return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${tenantId ? 'TenantFound' : 'TenantMissing'}`, 302);
+        console.log("[IYZICO-CALLBACK-V1] Session restoration failed - Fallback to standard redirect");
+        return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${tenantId ? 'TenantFound' : 'TenantMissing'}&source=v1`, 302);
 
     } catch (error: any) {
-        console.error("Iyzico Callback Error:", error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(error.message)}`, 302);
+        console.error("Iyzico Callback V1 Error:", error);
+        const errorMsg = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Unknown Error";
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(errorMsg)}&source=v1`, 302);
     }
 }

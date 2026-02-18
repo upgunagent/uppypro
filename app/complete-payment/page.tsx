@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { PaymentForm } from "./payment-form";
 import { getPackageName } from "@/lib/subscription-utils";
 
-export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string } }) {
+export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string, source?: string } }) {
     const supabase = await createClient();
 
     // Check Auth
@@ -19,6 +19,7 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
                     {searchParams?.reason && (
                         <div className="mt-4 p-2 bg-red-100 rounded text-xs break-all">
                             <strong>Hata Detayı:</strong> {decodeURIComponent(searchParams.reason)}
+                            {searchParams.source && <div className="mt-1 text-slate-500">Kaynak: {searchParams.source}</div>}
                         </div>
                     )}
                 </div>
