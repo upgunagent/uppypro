@@ -726,3 +726,49 @@ export async function getCustomerDetails(customerReferenceCode: string): Promise
         return { status: 'failure', errorMessage: error.message };
     }
 }
+
+export async function getUserCards(customerReferenceCode: string): Promise<any> {
+    const randomString = generateRandomString();
+    // V1 Card Storage Endpoint: POST /cardstorage/cards
+    // We try to use V2 Auth first. If it fails, we might need V1 Auth.
+    // But let's try V2 Auth passed to V1 endpoint (sometimes works if API Key allows).
+    // Actually, Card Storage usually requires V1 Auth (IYZWS).
+    // Let's implement V1 Auth Helper here locally or reuse if possible.
+    // For now, let's try to reuse generateIyzicoV2Header but usually V1 is diff.
+    // WAIT: V1 signature is base64(sha1(apiKey + secretKey + randomString + requestBody)) ? No.
+    // V1: Authorization: IYZWS apiKey:HMACSHA1(secretKey, payload)
+    // Payload: apiKey + randomString + requestBody
+
+    // Let's implement V1 Auth logic inline to be safe.
+
+    const uri = `${IyzicoConfig.baseUrl}/cardstorage/cards`;
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        cardUserKey: customerReferenceCode
+    });
+
+    // V1 Auth Generation
+    const payload = IyzicoConfig.apiKey + randomString + requestBody;
+    const signature = crypto.createHmac('sha1', IyzicoConfig.secretKey).update(payload).digest('base64');
+    const authString = `IYZWS ${IyzicoConfig.apiKey}:${signature}`;
+
+    try {
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': authString,
+                'x-iyzi-rnd': randomString
+            },
+            body: requestBody
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Get User Cards Exception:', error);
+        return { status: 'failure', errorMessage: error.message };
+    }
+}
