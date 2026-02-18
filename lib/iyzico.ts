@@ -25,7 +25,8 @@ function generateIyzicoV2Header(
     }
 
     let payload = randomString + uriPath;
-    if (requestBody && requestBody !== '[]' && requestBody !== '{}') {
+    let payload = randomString + uriPath;
+    if (requestBody) {
         payload += requestBody;
     }
 
@@ -151,22 +152,18 @@ export async function getSubscriptionCheckoutFormResult(token: string): Promise<
     const path = `/v2/subscription/checkoutform/${token}`;
     const uri = `${IyzicoConfig.baseUrl}${path}`;
 
-    // For V2 GET, the payload for signature is randomString + path + queryParams(if any)
-    // Here we have no query params in the path variable approach? 
-    // Wait, path variable IS the path. 
+    // For V2 GET, iyzipay-node appends "{}" (stringified empty object) to the payload
+    // if there is no request model (which is the case for retrieve).
+    // So we must pass "{}" as body for signature generation, even if we don't send it in fetch.
 
-    // Auth Helper logic:
-    // uriPath = path (including token)
-    // payload = randomString + uriPath + (body if not empty)
-
-    // We send NO BODY for GET.
+    const requestBody = "{}";
 
     const authString = generateIyzicoV2Header(
         uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
-        null // No body
+        requestBody
     );
 
     console.log(`[IYZICO] Retrieving result for token: ${token} at ${uri}`);
