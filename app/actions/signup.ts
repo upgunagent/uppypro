@@ -10,7 +10,8 @@ export async function completeSignupWithInvite(data: WizardData) {
     let createdUserId: string | null = null;
 
     try {
-        console.log("Starting signup for:", data.email);
+        console.log("[SIGNUP-DEBUG] Starting signup for:", data.email);
+        console.log("[SIGNUP-DEBUG] Data:", JSON.stringify(data));
 
         // 1. Create User (Without Password, Auto Confirm)
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
@@ -18,6 +19,11 @@ export async function completeSignupWithInvite(data: WizardData) {
             email_confirm: true,
             user_metadata: { full_name: data.fullName, phone: data.phone }
         });
+
+        if (userError) {
+            console.error("[SIGNUP-DEBUG] Create User Error:", userError);
+            throw new Error(`[USER-CREATE] ${userError.message}`);
+        }
 
         if (userError) throw userError;
         if (!userData.user) throw new Error("Kullanıcı bulunamadı.");
@@ -159,6 +165,6 @@ export async function completeSignupWithInvite(data: WizardData) {
         if (e.message?.includes("already been registered")) {
             return { error: "Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin." };
         }
-        return { error: e.message || "Bir hata oluştu." };
+        return { error: `[SIGNUP-ERR] ${e.message}` || "Bir hata oluştu." };
     }
 }
