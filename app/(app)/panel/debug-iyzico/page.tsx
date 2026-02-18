@@ -33,17 +33,22 @@ export default async function DebugIyzicoPage() {
     let checkoutResult = null;
     let subDetails = null;
     let custDetails = null;
+    let userCards = null;
     let error = null;
 
     try {
         if (token) {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             checkoutResult = await getSubscriptionCheckoutFormResult(token);
         }
         if (refCode) {
+            const { getSubscriptionDetails } = await import("@/lib/iyzico");
             subDetails = await getSubscriptionDetails(refCode);
         }
         if (custRef) {
+            const { getCustomerDetails, getUserCards } = await import("@/lib/iyzico");
             custDetails = await getCustomerDetails(custRef);
+            userCards = await getUserCards(custRef);
         }
     } catch (e: any) {
         error = e.message;
@@ -79,6 +84,11 @@ export default async function DebugIyzicoPage() {
                 <div className="bg-slate-50 p-4 rounded overflow-auto border max-h-[600px]">
                     <h2 className="font-bold mb-2">Customer Details (Ref: {custRef})</h2>
                     <pre>{JSON.stringify(custDetails, null, 2)}</pre>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded overflow-auto border max-h-[600px]">
+                    <h2 className="font-bold mb-2">User Cards (CardUserKey: {custRef})</h2>
+                    <pre>{JSON.stringify(userCards, null, 2)}</pre>
                 </div>
             </div>
         </div>
