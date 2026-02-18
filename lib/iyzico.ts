@@ -142,30 +142,61 @@ export async function initializeSubscriptionCheckout(data: {
 }
 
 export async function getSubscriptionCheckoutFormResult(token: string): Promise<any> {
-    const requestBody = JSON.stringify({
-        locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
-        token: token
-    });
+    // Correct Endpoint for Subscription V2 is GET /v2/subscription/checkoutform/{token}
+    // and expects NO body (or empty body) but signed payload.
 
     const randomString = generateRandomString();
-    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/checkoutform/auth/result`;
+
+    // The endpoint path has the token in it.
+    const path = `/v2/subscription/checkoutform/${token}`;
+    const uri = `${IyzicoConfig.baseUrl}${path}`;
+
+    // For V2 GET, the payload for signature is randomString + path + queryParams(if any)
+    // Here we have no query params in the path variable approach? 
+    // Wait, path variable IS the path. 
+
+    // Auth Helper logic:
+    // uriPath = path (including token)
+    // payload = randomString + uriPath + (body if not empty)
+
+    // We send NO BODY for GET.
 
     const authString = generateIyzicoV2Header(
         uri,
         IyzicoConfig.apiKey,
         IyzicoConfig.secretKey,
         randomString,
-        requestBody
+        null // No body
     );
 
-    const response = await fetch(uri, {
-        method: 'POST',
-        headers: getIyzicoHeaders(authString, randomString),
-        body: requestBody
-    });
+    console.log(`[IYZICO] Retrieving result for token: ${token} at ${uri}`);
 
-    return await response.json();
+    try {
+        const response = await fetch(uri, {
+            method: 'GET',
+            headers: getIyzicoHeaders(authString, randomString)
+        });
+
+        const result = await response.json();
+        console.log('[IYZICO] Retrieve Result:', JSON.stringify(result));
+
+        // Normalize Result for caller
+        // If success, result likely contains data directly or in .data
+        // We will flatten/merge it so the caller can find .subscriptionReferenceCode
+
+        if (result.status === 'success') {
+            return {
+                ...result,
+                ...result.data, // Flatten data if present
+                status: 'success'
+            };
+        }
+
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Retrieve Exception:', error);
+        throw error;
+    }
 }
 
 export async function cancelSubscription(subscriptionReferenceCode: string): Promise<any> {
