@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { createProduct, createPricingPlan } from '@/lib/iyzico';
+import { createProduct, createPricingPlan, getAllProducts } from '@/lib/iyzico';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
@@ -15,10 +15,23 @@ export async function GET() {
 
         // 1. Create INBOX Product
         console.log('Creating Inbox Product...');
-        const inboxProduct = await createProduct({
+        let inboxProduct = await createProduct({
             name: 'UppyPro Inbox',
             description: 'Instagram inbox automation'
         });
+
+        // Handle "Product Already Exists" (201001)
+        if (inboxProduct.status !== 'success' && inboxProduct.errorDetails?.errorCode === '201001') {
+            console.log('Inbox product already exists. Fetching existing products to find reference code...');
+            const allProducts = await getAllProducts();
+            if (allProducts.status === 'success' && allProducts.items) {
+                const existing = allProducts.items.find((p: any) => p.name === 'UppyPro Inbox');
+                if (existing) {
+                    inboxProduct = { status: 'success', referenceCode: existing.referenceCode };
+                    results.push({ step: 'Create Inbox Product (Found Existing)', code: existing.referenceCode });
+                }
+            }
+        }
 
         if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
             throw {
@@ -26,7 +39,10 @@ export async function GET() {
                 details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct
             };
         }
-        results.push({ step: 'Create Inbox Product', code: inboxProduct.referenceCode });
+
+        if (!results.some((r: any) => r.step.includes('Found Existing') && r.step.includes('Inbox'))) {
+            results.push({ step: 'Create Inbox Product', code: inboxProduct.referenceCode });
+        }
 
         // Update Product in DB
         await supabase
@@ -37,7 +53,7 @@ export async function GET() {
         // 1.1 Create Inbox Monthly Plan
         console.log('Creating Inbox Monthly Plan...');
         const inboxPlan = await createPricingPlan({
-            productReferenceCode: inboxProduct.referenceCode,
+            productReferenceCode: inboxProduct.referenceCode!,
             name: 'UppyPro Inbox Monthly',
             price: 700.00, // Approx 20 USD
             currencyCode: 'TRY',
@@ -47,6 +63,7 @@ export async function GET() {
         });
 
         if (inboxPlan.status !== 'success' || !inboxPlan.referenceCode) {
+            // If plan exists errors come up, we might need similar logic, but let's assume PLANS can be re-created
             throw {
                 message: `Failed to create Inbox Plan: ${inboxPlan.errorMessage || 'Missing Reference Code'}`,
                 details: inboxPlan.errorDetails || inboxPlan.rawResult || inboxPlan
@@ -64,10 +81,23 @@ export async function GET() {
 
         // 2. Create AI Product
         console.log('Creating AI Product...');
-        const aiProduct = await createProduct({
+        let aiProduct = await createProduct({
             name: 'UppyPro AI',
             description: 'AI Customer Engagement'
         });
+
+        // Handle "Product Already Exists" (201001)
+        if (aiProduct.status !== 'success' && aiProduct.errorDetails?.errorCode === '201001') {
+            console.log('AI product already exists. Fetching existing products to find reference code...');
+            const allProducts = await getAllProducts();
+            if (allProducts.status === 'success' && allProducts.items) {
+                const existing = allProducts.items.find((p: any) => p.name === 'UppyPro AI');
+                if (existing) {
+                    aiProduct = { status: 'success', referenceCode: existing.referenceCode };
+                    results.push({ step: 'Create AI Product (Found Existing)', code: existing.referenceCode });
+                }
+            }
+        }
 
         if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
             throw {
@@ -75,7 +105,10 @@ export async function GET() {
                 details: aiProduct.errorDetails || aiProduct.rawResult || aiProduct
             };
         }
-        results.push({ step: 'Create AI Product', code: aiProduct.referenceCode });
+
+        if (!results.some((r: any) => r.step.includes('Found Existing') && r.step.includes('AI'))) {
+            results.push({ step: 'Create AI Product', code: aiProduct.referenceCode });
+        }
 
         // Update Product in DB
         await supabase
@@ -86,7 +119,7 @@ export async function GET() {
         // 2.1 Create AI Monthly Plan
         console.log('Creating AI Monthly Plan...');
         const aiPlan = await createPricingPlan({
-            productReferenceCode: aiProduct.referenceCode,
+            productReferenceCode: aiProduct.referenceCode!,
             name: 'UppyPro AI Monthly',
             price: 2800.00, // Approx 80 USD
             currencyCode: 'TRY',

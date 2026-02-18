@@ -400,3 +400,48 @@ export async function createPricingPlan(data: {
         };
     }
 }
+
+export async function getAllProducts(): Promise<{ status: string; errorMessage?: string; items?: any[]; errorDetails?: any }> {
+    const randomString = generateRandomString();
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/products?locale=${IyzicoConfig.locale}&conversationId=${IyzicoConfig.conversationId}`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        null
+    );
+
+    console.log('[IYZICO] Fetching all products...');
+
+    try {
+        const response = await fetch(uri, {
+            method: 'GET',
+            headers: getIyzicoHeaders(authString, randomString)
+        });
+
+        const result = await response.json();
+        // Log only part of the result to avoid clutter
+        console.log('[IYZICO] Get All Products Response:', JSON.stringify(result).substring(0, 500) + '...');
+
+        if (result.status === 'success') {
+            return {
+                status: 'success',
+                items: result.data?.items || result.items || [],
+            };
+        } else {
+            return {
+                status: 'failure',
+                errorMessage: result.errorMessage,
+                errorDetails: result
+            };
+        }
+    } catch (error: any) {
+        return {
+            status: 'failure',
+            errorMessage: error.message,
+            errorDetails: error
+        };
+    }
+}
