@@ -227,13 +227,19 @@ export async function updateSubscriptionCard(data: {
     customerReferenceCode: string;
     callbackUrl: string;
 }): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string; errorDetails?: any }> {
-    const requestBody = JSON.stringify({
+    const payload: any = {
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
-        subscriptionReferenceCode: data.subscriptionReferenceCode,
-        customerReferenceCode: data.customerReferenceCode,
         callbackUrl: data.callbackUrl
-    });
+    };
+
+    if (data.subscriptionReferenceCode) {
+        payload.subscriptionReferenceCode = data.subscriptionReferenceCode;
+    } else if (data.customerReferenceCode) {
+        payload.customerReferenceCode = data.customerReferenceCode;
+    }
+
+    const requestBody = JSON.stringify(payload);
 
     const randomString = generateRandomString();
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/initialize`;
@@ -258,7 +264,7 @@ export async function updateSubscriptionCard(data: {
         result = JSON.parse(responseText);
     } catch (e) {
         console.error("Iyzico Invalid JSON Response:", responseText);
-        throw new Error(`Iyzico API Response Error: ${responseText.slice(0, 100)}`);
+        throw new Error(`Iyzico API Response Error (${uri}): ${responseText.slice(0, 100)}`);
     }
 
     if (result.status === 'success') {
