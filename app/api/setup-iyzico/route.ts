@@ -10,55 +10,72 @@ const supabase = createClient(
 );
 
 export async function GET() {
+    const debugLog: any[] = [];
     try {
         const results = [];
 
-        // 1. Create INBOX Product
-        console.log('Creating Inbox Product...');
-        let inboxProduct = await createProduct({
-            name: 'UppyPro Inbox',
-            description: 'Instagram inbox automation'
-        });
+        // --- STEP 0: CHECK EXISTING PRODUCTS ---
+        console.log('Fetching existing products...');
+        debugLog.push('Step 0: Fetching existing products...');
 
-        // Handle "Product Already Exists" (201001)
-        if (inboxProduct.status !== 'success' && inboxProduct.errorDetails?.errorCode === '201001') {
-            console.log('Inbox product already exists. Fetching existing products to find reference code...');
-            const allProducts = await getAllProducts();
-            console.log(`[DEBUG] Found ${allProducts.items?.length || 0} existing products.`);
+        const allProducts = await getAllProducts();
+        debugLog.push({ msg: 'Get All Products Result', status: allProducts.status, itemCount: allProducts.items?.length, error: allProducts.errorMessage });
 
-            if (allProducts.status === 'success' && allProducts.items) {
-                // Loose matching
-                const existing = allProducts.items.find((p: any) => p.name?.includes('Inbox') || p.name === 'UppyPro Inbox');
-                console.log(`[DEBUG] Matched Inbox Product:`, existing?.name);
+        let existingInboxProduct = null;
+        let existingAiProduct = null;
 
-                if (existing) {
-                    inboxProduct = { status: 'success', referenceCode: existing.referenceCode };
-                    results.push({ step: 'Create Inbox Product (Found Existing)', code: existing.referenceCode });
-                }
+        if (allProducts.status === 'success' && allProducts.items) {
+            // Log names for debugging
+            debugLog.push({ msg: 'Found Products', names: allProducts.items.map((p: any) => p.name) });
+
+            existingInboxProduct = allProducts.items.find((p: any) => p.name === 'UppyPro Inbox' || p.name?.includes('Inbox'));
+            existingAiProduct = allProducts.items.find((p: any) => p.name === 'UppyPro AI' || p.name?.includes('AI'));
+        } else {
+            // If we can't list products, we definitely can't check if they exist. 
+            // But we shouldn't block creation *unless* we know they exist.
+            // However, since we are getting "Already Exists", we KNOW they exist.
+            // So failing to list them is the critical root cause here.
+            console.warn('Failed to list products:', allProducts.errorMessage);
+        }
+
+        // --- STEP 1: INBOX PRODUCT ---
+        let inboxReferenceCode = existingInboxProduct?.referenceCode;
+
+        if (existingInboxProduct) {
+            console.log('Inbox Product already exists:', existingInboxProduct.referenceCode);
+            results.push({ step: 'Inbox Product (Found Existing)', code: inboxReferenceCode });
+            debugLog.push('Skipping Inbox Creation - Found Existing');
+        } else {
+            console.log('Creating Inbox Product...');
+            const inboxProduct = await createProduct({
+                name: 'UppyPro Inbox',
+                description: 'Instagram inbox automation'
+            });
+
+            if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
+                // Double check if error is "Already Exists" but we missed it in Step 0
+                // This would mean Step 0 failed to return it (e.g. pagination or delay)
+                throw {
+                    message: `Failed to create Inbox product: ${inboxProduct.errorMessage || 'Missing Reference Code'}`,
+                    details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct,
+                    debug: debugLog
+                };
             }
-        }
-
-        if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
-            throw {
-                message: `Failed to create Inbox product: ${inboxProduct.errorMessage || 'Missing Reference Code'}`,
-                details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct
-            };
-        }
-
-        if (!results.some((r: any) => r.step.includes('Found Existing') && r.step.includes('Inbox'))) {
-            results.push({ step: 'Create Inbox Product', code: inboxProduct.referenceCode });
+            inboxReferenceCode = inboxProduct.referenceCode;
+            results.push({ step: 'Create Inbox Product', code: inboxReferenceCode });
         }
 
         // Update Product in DB
         await supabase
             .from('products')
-            .update({ iyzico_product_reference_code: inboxProduct.referenceCode })
+            .update({ iyzico_product_reference_code: inboxReferenceCode })
             .eq('product_key', 'uppypro_inbox');
 
-        // 1.1 Create Inbox Monthly Plan
+
+        // --- STEP 1.1: INBOX PLAN ---
         console.log('Creating Inbox Monthly Plan...');
         const inboxPlan = await createPricingPlan({
-            productReferenceCode: inboxProduct.referenceCode!,
+            productReferenceCode: inboxReferenceCode!,
             name: 'UppyPro Inbox Monthly',
             price: 700.00, // Approx 20 USD
             currencyCode: 'TRY',
@@ -68,10 +85,10 @@ export async function GET() {
         });
 
         if (inboxPlan.status !== 'success' || !inboxPlan.referenceCode) {
-            // If plan exists errors come up, we might need similar logic, but let's assume PLANS can be re-created
             throw {
                 message: `Failed to create Inbox Plan: ${inboxPlan.errorMessage || 'Missing Reference Code'}`,
-                details: inboxPlan.errorDetails || inboxPlan.rawResult || inboxPlan
+                details: inboxPlan.errorDetails || inboxPlan.rawResult || inboxPlan,
+                debug: debugLog
             };
         }
         results.push({ step: 'Create Inbox Plan', code: inboxPlan.referenceCode });
@@ -84,52 +101,41 @@ export async function GET() {
             .eq('billing_cycle', 'monthly');
 
 
-        // 2. Create AI Product
-        console.log('Creating AI Product...');
-        let aiProduct = await createProduct({
-            name: 'UppyPro AI',
-            description: 'AI Customer Engagement'
-        });
+        // --- STEP 2: AI PRODUCT ---
+        let aiReferenceCode = existingAiProduct?.referenceCode;
 
-        // Handle "Product Already Exists" (201001)
-        if (aiProduct.status !== 'success' && aiProduct.errorDetails?.errorCode === '201001') {
-            console.log('AI product already exists. Fetching existing products to find reference code...');
-            const allProducts = await getAllProducts();
-            console.log(`[DEBUG] Found ${allProducts.items?.length || 0} existing products.`);
+        if (existingAiProduct) {
+            console.log('AI Product already exists:', existingAiProduct.referenceCode);
+            results.push({ step: 'AI Product (Found Existing)', code: aiReferenceCode });
+        } else {
+            console.log('Creating AI Product...');
+            const aiProduct = await createProduct({
+                name: 'UppyPro AI',
+                description: 'AI Customer Engagement'
+            });
 
-            if (allProducts.status === 'success' && allProducts.items) {
-                // Loose matching
-                const existing = allProducts.items.find((p: any) => p.name?.includes('AI') || p.name === 'UppyPro AI');
-                console.log(`[DEBUG] Matched AI Product:`, existing?.name);
-
-                if (existing) {
-                    aiProduct = { status: 'success', referenceCode: existing.referenceCode };
-                    results.push({ step: 'Create AI Product (Found Existing)', code: existing.referenceCode });
-                }
+            if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
+                throw {
+                    message: `Failed to create AI product: ${aiProduct.errorMessage || 'Missing Reference Code'}`,
+                    details: aiProduct.errorDetails || aiProduct.rawResult || aiProduct,
+                    debug: debugLog
+                };
             }
-        }
-
-        if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
-            throw {
-                message: `Failed to create AI product: ${aiProduct.errorMessage || 'Missing Reference Code'}`,
-                details: aiProduct.errorDetails || aiProduct.rawResult || aiProduct
-            };
-        }
-
-        if (!results.some((r: any) => r.step.includes('Found Existing') && r.step.includes('AI'))) {
-            results.push({ step: 'Create AI Product', code: aiProduct.referenceCode });
+            aiReferenceCode = aiProduct.referenceCode;
+            results.push({ step: 'Create AI Product', code: aiReferenceCode });
         }
 
         // Update Product in DB
         await supabase
             .from('products')
-            .update({ iyzico_product_reference_code: aiProduct.referenceCode })
+            .update({ iyzico_product_reference_code: aiReferenceCode })
             .eq('product_key', 'uppypro_ai');
 
-        // 2.1 Create AI Monthly Plan
+
+        // --- STEP 2.1: AI PLAN ---
         console.log('Creating AI Monthly Plan...');
         const aiPlan = await createPricingPlan({
-            productReferenceCode: aiProduct.referenceCode!,
+            productReferenceCode: aiReferenceCode!,
             name: 'UppyPro AI Monthly',
             price: 2800.00, // Approx 80 USD
             currencyCode: 'TRY',
@@ -141,7 +147,8 @@ export async function GET() {
         if (aiPlan.status !== 'success' || !aiPlan.referenceCode) {
             throw {
                 message: `Failed to create AI Plan: ${aiPlan.errorMessage || 'Missing Reference Code'}`,
-                details: aiPlan.errorDetails || aiPlan.rawResult || aiPlan
+                details: aiPlan.errorDetails || aiPlan.rawResult || aiPlan,
+                debug: debugLog
             };
         }
         results.push({ step: 'Create AI Plan', code: aiPlan.referenceCode });
@@ -153,13 +160,14 @@ export async function GET() {
             .eq('product_key', 'uppypro_ai')
             .eq('billing_cycle', 'monthly');
 
-        return NextResponse.json({ success: true, results });
+        return NextResponse.json({ success: true, results, debug: debugLog });
 
     } catch (error: any) {
         return NextResponse.json({
             success: false,
             error: error.message || 'Unknown error',
-            details: error.details || error
+            details: error.details || error,
+            debug: debugLog || undefined
         }, { status: 500 });
     }
 }
