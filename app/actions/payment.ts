@@ -46,6 +46,8 @@ export async function initializeSubscriptionPayment(data: {
     try {
         const supabase = createAdminClient();
 
+        const gsmNumber = formatPhoneNumber(data.user.phone) || '+905555555555';
+
         // Wrapper for Iyzico
         const result = await initIyzicoCheckout({
             pricingPlanReferenceCode: data.pricingPlanReferenceCode,
@@ -55,7 +57,7 @@ export async function initializeSubscriptionPayment(data: {
                 name: data.user.name.split(' ')[0] || 'Ad',
                 surname: data.user.name.split(' ').slice(1).join(' ') || 'Soyad',
                 email: data.user.email,
-                gsmNumber: formatPhoneNumber(data.user.phone) || '+905555555555',
+                gsmNumber: gsmNumber,
                 identityNumber: data.user.identityNumber || '11111111111', // Default if missing
                 billingAddress: {
                     contactName: data.user.name,
@@ -76,7 +78,7 @@ export async function initializeSubscriptionPayment(data: {
 
         if (result.status !== 'success') {
             console.error("Iyzico Init Error:", result.errorMessage);
-            return { error: `Ödeme başlatılamadı: ${result.errorMessage}` };
+            return { error: `Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
         }
 
         return {
