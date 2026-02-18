@@ -1,17 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { initializeCardUpdate } from "@/app/actions/subscription";
-import { CreditCard, Loader2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { CreditCard, ArrowRight } from "lucide-react";
+import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 export function PaymentMethodsCard({ methods, subscription }: { methods: any[], subscription?: any }) {
-    const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const checkoutFormRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -30,35 +27,8 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
         }
     }, [toast]);
 
-    const handleUpdateCard = async () => {
-        setLoading(true);
-        try {
-            const res = await initializeCardUpdate();
-            if (res.error) {
-                toast({ variant: "destructive", title: "Hata", description: res.error });
-                setLoading(false);
-                setOpen(false);
-            } else if (res.checkoutFormContent) {
-                // Inject script
-                setTimeout(() => {
-                    if (checkoutFormRef.current) {
-                        checkoutFormRef.current.innerHTML = res.checkoutFormContent!;
-                        const scripts = checkoutFormRef.current.querySelectorAll("script");
-                        scripts.forEach(oldScript => {
-                            const newScript = document.createElement("script");
-                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                            oldScript.parentNode?.replaceChild(newScript, oldScript);
-                        });
-                    }
-                }, 100);
-            }
-        } catch (e) {
-            console.error(e);
-            toast({ variant: "destructive", title: "Hata", description: "Bir hata oluştu." });
-            setLoading(false);
-            setOpen(false);
-        }
+    const handleUpdateCard = () => {
+        router.push("/panel/card-update");
     };
 
     return (
@@ -85,33 +55,10 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
                     </div>
                 </div>
 
-                <Dialog open={open} onOpenChange={(val) => {
-                    setOpen(val);
-                    if (val) {
-                        handleUpdateCard();
-                    } else {
-                        setLoading(false); // Reset
-                    }
-                }}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                            Kartı Güncelle
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Kart Güncelleme</DialogTitle>
-                            <DialogDescription>
-                                Iyzico güvenli ödeme sayfası yükleniyor...
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="min-h-[400px] flex items-center justify-center">
-                            {loading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-                            <div id="iyzipay-checkout-form" className="responsive w-full" ref={checkoutFormRef}></div>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                <Button variant="outline" size="sm" onClick={handleUpdateCard}>
+                    Kartı Güncelle
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
             </div>
 
             <div className="text-sm text-slate-500 italic">
