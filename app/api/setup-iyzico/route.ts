@@ -14,43 +14,37 @@ export async function GET() {
     try {
         const results = [];
 
-        // --- STEP 0: CHECK EXISTING PRODUCTS ---
+        // --- STEP 0: CHECK EXISTING PRODUCTS (Non-Blocking) ---
         console.log('Fetching existing products...');
-        debugLog.push('Step 0: Fetching existing products...');
-
-        const allProducts = await getAllProducts();
-        debugLog.push({ msg: 'Get All Products Result', status: allProducts.status, itemCount: allProducts.items?.length, error: allProducts.errorMessage });
+        debugLog.push('Step 0: Fetching existing products (Best Effort)...');
 
         let existingInboxProduct = null;
         let existingAiProduct = null;
 
+        const allProducts = await getAllProducts();
+
         if (allProducts.status === 'success' && allProducts.items) {
-            // Log names for debugging
             debugLog.push({ msg: 'Found Products', names: allProducts.items.map((p: any) => p.name) });
-
-            existingInboxProduct = allProducts.items.find((p: any) => p.name === 'UppyPro Inbox' || p.name?.includes('Inbox'));
-            existingAiProduct = allProducts.items.find((p: any) => p.name === 'UppyPro AI' || p.name?.includes('AI'));
+            existingInboxProduct = allProducts.items.find((p: any) => p.name?.includes('Inbox'));
+            existingAiProduct = allProducts.items.find((p: any) => p.name?.includes('AI'));
         } else {
-            console.warn('Failed to list products:', allProducts.errorMessage);
-            debugLog.push('Trying Debug Auth Strategies...');
-
-            // Use imported debug function
-            const debugResults = await debugIyzicoAuth();
-            debugLog.push({ msg: 'Auth Debug Results', results: debugResults });
+            // Just log warning, don't fail, and proceed to create new V2 products
+            console.warn('Authentication failed for GET. Proceeding with V2 creation.', allProducts.errorMessage);
+            debugLog.push('GET Query Failed - Proceeding with "Create New (v2)" Strategy');
         }
 
-        // --- STEP 1: INBOX PRODUCT ---
+        // --- STEP 1: INBOX PRODUCT (v2) ---
         let inboxReferenceCode = existingInboxProduct?.referenceCode;
 
         if (existingInboxProduct) {
             console.log('Inbox Product already exists:', existingInboxProduct.referenceCode);
             results.push({ step: 'Inbox Product (Found Existing)', code: inboxReferenceCode });
-            debugLog.push('Skipping Inbox Creation - Found Existing');
         } else {
-            console.log('Creating Inbox Product...');
+            console.log('Creating Inbox Product (v2)...');
+            // Using "v2" name to ensure uniqueness and bypass "Already Exists" error from v1
             const inboxProduct = await createProduct({
-                name: 'UppyPro Inbox',
-                description: 'Instagram inbox automation'
+                name: 'UppyPro Inbox v2',
+                description: 'Instagram inbox automation (v2)'
             });
 
             if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
@@ -61,7 +55,7 @@ export async function GET() {
                 };
             }
             inboxReferenceCode = inboxProduct.referenceCode;
-            results.push({ step: 'Create Inbox Product', code: inboxReferenceCode });
+            results.push({ step: 'Create Inbox Product v2', code: inboxReferenceCode });
         }
 
         // Update Product in DB
@@ -71,11 +65,11 @@ export async function GET() {
             .eq('product_key', 'uppypro_inbox');
 
 
-        // --- STEP 1.1: INBOX PLAN ---
-        console.log('Creating Inbox Monthly Plan...');
+        // --- STEP 1.1: INBOX PLAN (v2) ---
+        console.log('Creating Inbox Monthly Plan (v2)...');
         const inboxPlan = await createPricingPlan({
             productReferenceCode: inboxReferenceCode!,
-            name: 'UppyPro Inbox Monthly',
+            name: 'UppyPro Inbox Monthly v2',
             price: 700.00, // Approx 20 USD
             currencyCode: 'TRY',
             paymentInterval: 'MONTHLY',
@@ -90,7 +84,7 @@ export async function GET() {
                 debug: debugLog
             };
         }
-        results.push({ step: 'Create Inbox Plan', code: inboxPlan.referenceCode });
+        results.push({ step: 'Create Inbox Plan v2', code: inboxPlan.referenceCode });
 
         // Update Pricing in DB
         await supabase
@@ -100,17 +94,17 @@ export async function GET() {
             .eq('billing_cycle', 'monthly');
 
 
-        // --- STEP 2: AI PRODUCT ---
+        // --- STEP 2: AI PRODUCT (v2) ---
         let aiReferenceCode = existingAiProduct?.referenceCode;
 
         if (existingAiProduct) {
             console.log('AI Product already exists:', existingAiProduct.referenceCode);
             results.push({ step: 'AI Product (Found Existing)', code: aiReferenceCode });
         } else {
-            console.log('Creating AI Product...');
+            console.log('Creating AI Product (v2)...');
             const aiProduct = await createProduct({
-                name: 'UppyPro AI',
-                description: 'AI Customer Engagement'
+                name: 'UppyPro AI v2',
+                description: 'AI Customer Engagement (v2)'
             });
 
             if (aiProduct.status !== 'success' || !aiProduct.referenceCode) {
@@ -121,7 +115,7 @@ export async function GET() {
                 };
             }
             aiReferenceCode = aiProduct.referenceCode;
-            results.push({ step: 'Create AI Product', code: aiReferenceCode });
+            results.push({ step: 'Create AI Product v2', code: aiReferenceCode });
         }
 
         // Update Product in DB
@@ -131,11 +125,11 @@ export async function GET() {
             .eq('product_key', 'uppypro_ai');
 
 
-        // --- STEP 2.1: AI PLAN ---
-        console.log('Creating AI Monthly Plan...');
+        // --- STEP 2.1: AI PLAN (v2) ---
+        console.log('Creating AI Monthly Plan (v2)...');
         const aiPlan = await createPricingPlan({
             productReferenceCode: aiReferenceCode!,
-            name: 'UppyPro AI Monthly',
+            name: 'UppyPro AI Monthly v2',
             price: 2800.00, // Approx 80 USD
             currencyCode: 'TRY',
             paymentInterval: 'MONTHLY',
@@ -150,7 +144,7 @@ export async function GET() {
                 debug: debugLog
             };
         }
-        results.push({ step: 'Create AI Plan', code: aiPlan.referenceCode });
+        results.push({ step: 'Create AI Plan v2', code: aiPlan.referenceCode });
 
         // Update Pricing in DB
         await supabase
