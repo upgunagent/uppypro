@@ -682,28 +682,48 @@ export async function getCustomerDetails(customerReferenceCode: string): Promise
 }
 
 export async function getUserCards(customerReferenceCode: string): Promise<any> {
-    // Use official SDK to avoid signature issues
-    // We must require it dynamically because we just installed it and it might be CommonJS
-    const Iyzipay = require('iyzipay');
+    const randomString = generateRandomString();
 
-    const iyzipay = new Iyzipay({
-        apiKey: IyzicoConfig.apiKey,
-        secretKey: IyzicoConfig.secretKey,
-        uri: IyzicoConfig.baseUrl
+    // V1 Card Storage Endpoint: POST /cardstorage/cards
+    // The official iyzipay library uses V2 Headers (IYZWSv2) for this endpoint.
+    // AND it uses the relative path `/cardstorage/cards` for the signature.
+
+    const path = '/cardstorage/cards';
+    const uri = `${IyzicoConfig.baseUrl}${path}`;
+
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        cardUserKey: customerReferenceCode
     });
 
-    return new Promise((resolve, reject) => {
-        iyzipay.cardList.retrieve({
-            locale: IyzicoConfig.locale,
-            conversationId: IyzicoConfig.conversationId,
-            cardUserKey: customerReferenceCode
-        }, function (err: any, result: any) {
-            if (err) {
-                console.error('[IYZICO] Get User Cards SDK Error:', err);
-                resolve({ status: 'failure', errorMessage: err.message, errorDetails: err });
-            } else {
-                resolve(result);
-            }
+    // Manual V2 Auth Generation
+    // We must sign 'randomString + path + requestBody' (ignoring host)
+
+    const payload = randomString + path + requestBody;
+    const signature = crypto.createHmac('sha256', IyzicoConfig.secretKey).update(payload).digest('hex');
+    const authString = `apiKey:${IyzicoConfig.apiKey}&randomKey:${randomString}&signature:${signature}`;
+    const token = `IYZWSv2 ${Buffer.from(authString).toString('base64')}`;
+
+    console.log(`[IYZICO] GetUserCards Path=${path}, Payload=${payload}, Sig=${signature}`);
+
+    try {
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': token,
+                'x-iyzi-rnd': randomString,
+                'x-iyzi-client-version': 'iyzipay-node-2.0.48'
+            },
+            body: requestBody
         });
-    });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Get User Cards Exception:', error);
+        return { status: 'failure', errorMessage: error.message };
+    }
 }
