@@ -16,20 +16,26 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
         return <MagicLinkExchange />;
     }
 
-    // Get Pending Subscription
+    // Get Tenant
     const { data: member } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", user.id).single();
     if (!member) return <div>Üyelik bulunamadı.</div>;
+
+    // If coming back from successful payment (status=success), show password form directly.
+    // The subscription is now 'active', not 'pending', so we skip the pending check.
+    const isPostPayment = searchParams?.status === 'success';
 
     const { data: subscription } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("tenant_id", member.tenant_id)
-        .eq("status", "pending")
+        .in("status", isPostPayment ? ["active", "pending"] : ["pending"])
+        .order("created_at", { ascending: false })
+        .limit(1)
         .single();
 
     if (!subscription) {
-        // Already active?
-        return redirect("/panel");
+        // No pending subscription — redirect to login
+        return redirect("/login");
     }
 
     const { getUsdExchangeRate } = await import("@/lib/currency");

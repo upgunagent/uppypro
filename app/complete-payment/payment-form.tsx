@@ -158,6 +158,10 @@ export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenc
             } else {
                 setLoading(false);
                 setStep('success');
+                // Sign out so user logs in fresh with their new password
+                const { createClient: createClientFn } = await import("@/lib/supabase/client");
+                const supabase = createClientFn();
+                await supabase.auth.signOut();
             }
         } catch (e) {
             console.error(e);
@@ -174,13 +178,13 @@ export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenc
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900">Hesabınız Hazır! 🎉</h2>
                 <p className="text-slate-600 max-w-sm mx-auto">
-                    Şifreniz başarıyla oluşturuldu. Panelinize yönlendiriliyorsunuz...
+                    Şifreniz başarıyla oluşturuldu. Giriş yaparak panelinize erişebilirsiniz.
                 </p>
                 <Button
-                    onClick={() => router.push("/panel")}
+                    onClick={() => router.push("/login")}
                     className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg shadow-lg shadow-orange-500/20 mt-4"
                 >
-                    Panele Git
+                    Giriş Yap
                 </Button>
             </div>
         );
