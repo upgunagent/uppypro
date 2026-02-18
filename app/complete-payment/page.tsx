@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PaymentForm } from "./payment-form";
 import { getPackageName } from "@/lib/subscription-utils";
 import { MagicLinkExchange } from "./magic-link-exchange";
+import { SetPasswordForm } from "./set-password-form";
 
 export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string, source?: string } }) {
     const supabase = await createClient();
@@ -24,11 +25,27 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
     // The subscription is now 'active', not 'pending', so we skip the pending check.
     const isPostPayment = searchParams?.status === 'success';
 
+    if (isPostPayment) {
+        // Show password form directly — no need to check subscription status
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+                    <div className="text-center mb-8">
+                        <img src="/brand-logo-text.png" alt="UPGUN AI" className="h-8 mx-auto mb-6" />
+                        <h1 className="text-2xl font-bold text-slate-900">Ödeme Başarılı!</h1>
+                        <p className="text-slate-500 mt-2">Hesabınız için bir şifre belirleyin.</p>
+                    </div>
+                    <SetPasswordForm />
+                </div>
+            </div>
+        );
+    }
+
     const { data: subscription } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("tenant_id", member.tenant_id)
-        .in("status", isPostPayment ? ["active", "pending"] : ["pending"])
+        .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
