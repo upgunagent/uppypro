@@ -662,6 +662,7 @@ export async function debugIyzicoAuth(): Promise<any> {
                 signedPayload: payload
             });
 
+        } catch (e: any) {
             outcomes.push({ strategy: strat.name, error: e.message });
         }
     }
