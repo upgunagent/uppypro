@@ -56,10 +56,9 @@ export async function POST(request: Request) {
             if (sub) subscriptionId = sub.id;
         }
 
-        // Fetch Subscription Details (Golden Source)
+        // Fetch Subscription and Customer Details (Golden Source)
         if (subscriptionReferenceCode || subscriptionId) {
             try {
-                // If we found sub by token but refCode is missing in result, we need to fetch it from DB FIRST
                 let refCodeForLookup = subscriptionReferenceCode;
                 if (!refCodeForLookup && subscriptionId) {
                     const { data: sub } = await supabase.from('subscriptions').select('iyzico_subscription_reference_code').eq('id', subscriptionId).single();
@@ -67,18 +66,35 @@ export async function POST(request: Request) {
                 }
 
                 if (refCodeForLookup) {
-                    const { getSubscriptionDetails } = await import("@/lib/iyzico");
+                    const { getSubscriptionDetails, getCustomerDetails } = await import("@/lib/iyzico");
+
+                    // 1. Get Subscription Details
                     const subDetails = await getSubscriptionDetails(refCodeForLookup);
                     console.log("Iyzico Subscription Details:", JSON.stringify(subDetails, null, 2));
 
-                    // If Subscription Details contains card info, prefer it?
-                    // Structure might be subDetails.data.orders[...]? 
-                    // Or subDetails.data.paymentType?
-                    // We don't know for sure, but logging will help future debug.
-                    // For now, let's stick to result but if result is empty, check subDetails?
+                    // Check for card info in Subscription Details
+                    // Flattened data usually?
+                    const subData = subDetails.data || subDetails;
+                    if (subData.lastFourDigits) cardLast4 = subData.lastFourDigits;
+                    if (subData.cardAssociation) cardBrand = subData.cardAssociation;
+                    if (subData.cardFamily) cardAssociation = subData.cardFamily;
+
+                    // 2. Get Customer Details
+                    const custRef = subData.customerReferenceCode || result.customerReferenceCode;
+                    if (custRef) {
+                        const custDetails = await getCustomerDetails(custRef);
+                        console.log("Iyzico Customer Details:", JSON.stringify(custDetails, null, 2));
+
+                        // Check for card info in Customer Details
+                        const custData = custDetails.data || custDetails;
+                        // Sometimes customer details response includes the default card info?
+                        if (custData.lastFourDigits) cardLast4 = custData.lastFourDigits; // Prioritize Customer level if present?
+                        if (custData.cardAssociation) cardBrand = custData.cardAssociation;
+                        if (custData.cardFamily) cardAssociation = custData.cardFamily;
+                    }
                 }
             } catch (e) {
-                console.error("Failed to fetch subscription details:", e);
+                console.error("Failed to fetch extended details:", e);
             }
         }
 
