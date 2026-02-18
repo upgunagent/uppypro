@@ -28,9 +28,9 @@ export async function POST(request: Request) {
         */
         console.log("Iyzico Card Update Result:", JSON.stringify(result, null, 2));
 
-        const cardLast4 = result.lastFourDigits;
-        const cardBrand = result.cardAssociation;
-        const cardAssociation = result.cardFamily;
+        let cardLast4 = result.lastFourDigits;
+        let cardBrand = result.cardAssociation;
+        let cardAssociation = result.cardFamily;
 
         // We need to know which subscription/tenant this belongs to.
         const subscriptionReferenceCode = result.subscriptionReferenceCode;
@@ -54,6 +54,32 @@ export async function POST(request: Request) {
                 .eq('iyzico_checkout_token', token)
                 .single();
             if (sub) subscriptionId = sub.id;
+        }
+
+        // Fetch Subscription Details (Golden Source)
+        if (subscriptionReferenceCode || subscriptionId) {
+            try {
+                // If we found sub by token but refCode is missing in result, we need to fetch it from DB FIRST
+                let refCodeForLookup = subscriptionReferenceCode;
+                if (!refCodeForLookup && subscriptionId) {
+                    const { data: sub } = await supabase.from('subscriptions').select('iyzico_subscription_reference_code').eq('id', subscriptionId).single();
+                    refCodeForLookup = sub?.iyzico_subscription_reference_code;
+                }
+
+                if (refCodeForLookup) {
+                    const { getSubscriptionDetails } = await import("@/lib/iyzico");
+                    const subDetails = await getSubscriptionDetails(refCodeForLookup);
+                    console.log("Iyzico Subscription Details:", JSON.stringify(subDetails, null, 2));
+
+                    // If Subscription Details contains card info, prefer it?
+                    // Structure might be subDetails.data.orders[...]? 
+                    // Or subDetails.data.paymentType?
+                    // We don't know for sure, but logging will help future debug.
+                    // For now, let's stick to result but if result is empty, check subDetails?
+                }
+            } catch (e) {
+                console.error("Failed to fetch subscription details:", e);
+            }
         }
 
         if (subscriptionId) {

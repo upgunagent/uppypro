@@ -662,9 +662,38 @@ export async function debugIyzicoAuth(): Promise<any> {
                 signedPayload: payload
             });
 
-        } catch (e: any) {
             outcomes.push({ strategy: strat.name, error: e.message });
         }
     }
     return outcomes;
+}
+
+export async function getSubscriptionDetails(subscriptionReferenceCode: string): Promise<any> {
+    const randomString = generateRandomString();
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}`;
+
+    // For GET /v2/subscription/subscriptions/{code}, we sign with empty body
+    // iyzipay-node convention for GET V2 is often empty object stringified as body for signature
+    const requestBody = "{}";
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    try {
+        const response = await fetch(uri, {
+            method: 'GET',
+            headers: getIyzicoHeaders(authString, randomString)
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Get Subscription Details Exception:', error);
+        return { status: 'failure', errorMessage: error.message };
+    }
 }
