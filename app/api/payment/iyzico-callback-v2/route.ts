@@ -137,7 +137,11 @@ export async function POST(request: Request) {
 
         // Fail Redirect (If user lookup fails)
         console.log("[IYZICO-CALLBACK-V2] Session restoration failed - Fallback to standard redirect");
-        return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${tenantId ? 'TenantFound' : 'TenantMissing'}-V2&source=v2`, 302);
+
+        // DEBUG: Flatten result keys to understand what we actually got
+        const debugInfo = `TID:${tenantId || 'NULL'}-Email:${(result.email || result.customerEmail || 'NULL')}-K:${Object.keys(result).filter(k => k !== 'checkoutFormContent').join(',')}`;
+
+        return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${debugInfo}&source=v2`, 302);
 
     } catch (error: any) {
         console.error("Iyzico Callback V2 Error:", error);

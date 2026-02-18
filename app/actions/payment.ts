@@ -10,6 +10,7 @@ export type PaymentInitResult = {
     token?: string;
     error?: string;
     debugCallbackUrl?: string;
+    debugConversationId?: string;
 };
 
 function formatPhoneNumber(phone: string): string {
@@ -94,7 +95,8 @@ export async function initializeSubscriptionPayment(data: {
         return {
             checkoutFormContent: result.checkoutFormContent,
             token: result.token,
-            debugCallbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`
+            debugCallbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`,
+            debugConversationId: data.conversationId || IyzicoConfig.conversationId
         };
 
     } catch (error: any) {

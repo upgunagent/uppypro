@@ -78,6 +78,7 @@ export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenc
                 // DEBUG: Show user the callback URL being used
                 if (res.debugCallbackUrl) {
                     console.log("DEBUG: Callback URL SENT:", res.debugCallbackUrl);
+                    console.log("DEBUG: Conversation ID SENT:", res.debugConversationId);
                     // toast({ title: "Debug", description: `Callback: ${res.debugCallbackUrl}` }); 
                 }
 
