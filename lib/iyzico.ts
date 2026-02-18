@@ -288,12 +288,8 @@ export async function upgradeSubscription(subscriptionReferenceCode: string, new
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
         newPricingPlanReferenceCode: newPricingPlanReferenceCode,
-        subscriptionReferenceCode: subscriptionReferenceCode // Add ref code to body as per docs? Correct endpoint has it in URL but body usually mirrors it. No, docs say URL parameter. Body has newPricingPlanReferenceCode.
+        subscriptionReferenceCode: subscriptionReferenceCode
     });
-    // Wait, let's check docs: https://docs.iyzico.com/urunler/abonelik/abonelik-entegrasyonu/abonelik-islemleri#post-v2-subscription-subscriptions-subscriptionreferencecode-upgrade
-    // Endpoint: /v2/subscription/subscriptions/{subscriptionReferenceCode}/upgrade
-    // Body: { locale, conversationId, newPricingPlanReferenceCode }
-    // Correct.
 
     const randomString = generateRandomString();
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}/upgrade`;
@@ -367,10 +363,6 @@ export async function retrySubscription(referenceCode: string): Promise<any> {
 }
 
 export async function getSubscriptionCardUpdateResult(token: string): Promise<any> {
-    // According to docs, Card Update via Checkout Form uses the same result retrieval as Subscription Checkout.
-    // GET /v2/subscription/checkoutform/{token}
-
-    // We can reuse the logic from getSubscriptionCheckoutFormResult
     return await getSubscriptionCheckoutFormResult(token);
 }
 
@@ -409,7 +401,6 @@ export async function createProduct(data: {
         console.log('[IYZICO] Product Creation Response:', JSON.stringify(result));
 
         if (result.status === 'success') {
-            // Aggressive reference code extraction
             const refCode = result.referenceCode ||
                 result.data?.referenceCode ||
                 result.productReferenceCode ||
@@ -505,18 +496,10 @@ export async function createPricingPlan(data: {
 }
 
 export async function getAllProducts(): Promise<{ status: string; errorMessage?: string; items?: any[]; errorDetails?: any }> {
-    // Rely on Debug Function logic which seems robust, or simple retry.
-    // For now, let's just make sure getAllProducts uses one of the strategies we are testing
-    // Strat B (Sorted) seems most promising standard.
-
-    // We will update getAllProducts to use the "proven" method once diagnostic confirms it.
-    // For now, let's default it to what we *think* works: Sorted params.
-
     const randomString = generateRandomString();
     const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
     const path = '/v2/subscription/products';
 
-    // Default to Sorted Alphabetically
     const params = new URLSearchParams();
     params.append('conversationId', IyzicoConfig.conversationId);
     params.append('count', '100');
@@ -526,7 +509,6 @@ export async function getAllProducts(): Promise<{ status: string; errorMessage?:
     const qs = params.toString();
     const uri = `${baseUrl}${path}?${qs}`;
 
-    // Signature includes params
     const payload = randomString + `${path}?${qs}`;
     const signature = crypto.createHmac('sha256', IyzicoConfig.secretKey).update(payload).digest('hex');
     const authString = `apiKey:${IyzicoConfig.apiKey}&randomKey:${randomString}&signature:${signature}`;
@@ -569,8 +551,8 @@ export async function debugIyzicoAuth(): Promise<any> {
         },
         {
             name: 'Strat B: Sorted Alphabetically', sort: true, params: {
-                conversationId: IyzicoConfig.conversationId, // c
-                count: '1',                                  // co -> after conv? No. conversationId vs count. 'n' vs 'u'. conv < count.
+                conversationId: IyzicoConfig.conversationId,
+                count: '1',
                 locale: IyzicoConfig.locale,
                 page: '1'
             }
@@ -591,49 +573,25 @@ export async function debugIyzicoAuth(): Promise<any> {
     ];
 
     const outcomes: any[] = [];
-
     const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
     const path = '/v2/subscription/products';
     const randomString = generateRandomString();
 
     for (const strat of strategies) {
         try {
-            // Construct Query String
             const searchParams = new URLSearchParams();
 
-            // Note: URLSearchParams doesn't guarantee sorting by append order implementation dependent? 
-            // Better to just push keys safely.
-            // Actually JS objects don't guarantee strict order, but we can try to force it by appending in order.
-
-            // For Strat B (Sorted), we manually add them in alphabetical order of keys:
-            // conversationId, count, locale, page
-
             if (strat.name.includes('Sorted')) {
-                // Keys: conversationId, count, locale, page
-                // 'conversationId' < 'count' ? 'v' vs 'u'. 'u' comes first! c-o-u-n-t vs c-o-n-v.
-                // Wait. n vs u. n is before u.
-                // con... vs cou...
-                // n (110) vs u (117).
-                // So conversationId < count.
-
-                // Order:
-                // conversationId
-                // count
-                // locale
-                // page
-
                 if (strat.params.conversationId) searchParams.append('conversationId', strat.params.conversationId);
                 if (strat.params.count) searchParams.append('count', strat.params.count as string);
                 if (strat.params.locale) searchParams.append('locale', strat.params.locale);
                 if (strat.params.page) searchParams.append('page', strat.params.page as string);
             } else {
-                // For unsorted or others, just append as iterate
                 Object.keys(strat.params).forEach(key => searchParams.append(key, (strat.params as any)[key]));
             }
 
             const qs = searchParams.toString();
             const uri = qs ? `${baseUrl}${path}?${qs}` : `${baseUrl}${path}`;
-            // Signature includes the full path + query
             const sigPayloadPath = qs ? `${path}?${qs}` : path;
 
             const payload = randomString + sigPayloadPath;
@@ -672,9 +630,6 @@ export async function debugIyzicoAuth(): Promise<any> {
 export async function getSubscriptionDetails(subscriptionReferenceCode: string): Promise<any> {
     const randomString = generateRandomString();
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}`;
-
-    // For GET /v2/subscription/subscriptions/{code}, we sign with empty body
-    // iyzipay-node convention for GET V2 is often empty object stringified as body for signature
     const requestBody = "{}";
 
     const authString = generateIyzicoV2Header(
@@ -701,7 +656,6 @@ export async function getSubscriptionDetails(subscriptionReferenceCode: string):
 
 export async function getCustomerDetails(customerReferenceCode: string): Promise<any> {
     const randomString = generateRandomString();
-    // Endpoint for retrieving customer details: GET /v2/subscription/customers/{customerReferenceCode}
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/customers/${customerReferenceCode}`;
     const requestBody = "{}";
 
@@ -729,17 +683,10 @@ export async function getCustomerDetails(customerReferenceCode: string): Promise
 
 export async function getUserCards(customerReferenceCode: string): Promise<any> {
     const randomString = generateRandomString();
-    // V1 Card Storage Endpoint: POST /cardstorage/cards
-    // We try to use V2 Auth first. If it fails, we might need V1 Auth.
-    // But let's try V2 Auth passed to V1 endpoint (sometimes works if API Key allows).
-    // Actually, Card Storage usually requires V1 Auth (IYZWS).
-    // Let's implement V1 Auth Helper here locally or reuse if possible.
-    // For now, let's try to reuse generateIyzicoV2Header but usually V1 is diff.
-    // WAIT: V1 signature is base64(sha1(apiKey + secretKey + randomString + requestBody)) ? No.
-    // V1: Authorization: IYZWS apiKey:HMACSHA1(secretKey, payload)
-    // Payload: apiKey + randomString + requestBody
 
-    // Let's implement V1 Auth logic inline to be safe.
+    // V1 Card Storage Endpoint: POST /cardstorage/cards
+    // Auth: Authorization: IYZWS apiKey:signature
+    // Signature: base64(sha1(apiKey + randomString + secretKey + requestBody))
 
     const uri = `${IyzicoConfig.baseUrl}/cardstorage/cards`;
     const requestBody = JSON.stringify({
@@ -748,9 +695,9 @@ export async function getUserCards(customerReferenceCode: string): Promise<any> 
         cardUserKey: customerReferenceCode
     });
 
-    // V1 Auth Generation
-    const payload = IyzicoConfig.apiKey + randomString + requestBody;
-    const signature = crypto.createHmac('sha1', IyzicoConfig.secretKey).update(payload).digest('base64');
+    // V1 Auth Generation (Corrected to SHA1 Hash, not HMAC)
+    const payload = IyzicoConfig.apiKey + randomString + IyzicoConfig.secretKey + requestBody;
+    const signature = crypto.createHash('sha1').update(payload).digest('base64');
     const authString = `IYZWS ${IyzicoConfig.apiKey}:${signature}`;
 
     try {
