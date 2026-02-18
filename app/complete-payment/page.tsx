@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PaymentForm } from "./payment-form";
 import { getPackageName } from "@/lib/subscription-utils";
+import { MagicLinkExchange } from "./magic-link-exchange";
 
 export default async function CompletePaymentPage({ searchParams }: { searchParams: { status?: string, reason?: string, source?: string } }) {
     const supabase = await createClient();
@@ -9,22 +10,10 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
     // Check Auth
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        // If not logged in, user likely didn't use the magic link correctly or session expired.
-        // But since we use recovery link, they SHOULD be logged in.
-        return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="bg-red-50 text-red-800 p-4 rounded-lg">
-                    <p className="font-bold mb-2">Oturum açılamadı.</p>
-                    <p className="text-sm">Ödeme sonrası otomatik giriş yapılamadı. Lütfen e-postanıza gönderilen davet linkine tekrar tıklayın.</p>
-                    {searchParams?.reason && (
-                        <div className="mt-4 p-2 bg-red-100 rounded text-xs break-all">
-                            <strong>Hata Detayı:</strong> {decodeURIComponent(searchParams.reason)}
-                            {searchParams.source && <div className="mt-1 text-slate-500">Kaynak: {searchParams.source}</div>}
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
+        // User might have arrived via magic link with token in URL hash.
+        // The server can't see the hash, so we render a client component that
+        // will exchange the token and reload the page.
+        return <MagicLinkExchange />;
     }
 
     // Get Pending Subscription
