@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         // Log for debugging
         console.log(`[IYZICO-CALLBACK-V2] Processing TenantID: ${tenantId}`);
 
-        if (tenantId && tenantId.length < 20) {
+        if (tenantId) {
             const now = new Date();
             const nextMonth = new Date(now);
             nextMonth.setMonth(nextMonth.getMonth() + 1);
