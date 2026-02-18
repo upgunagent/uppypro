@@ -120,7 +120,9 @@ export async function POST(request: Request) {
 
         let targetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success`;
 
-        if (tenantId) {
+        console.log(`[IYZICO-CALLBACK] Processing TenantID: ${tenantId}`);
+
+        if (tenantId && tenantId.length < 20) { // Valid Tenant ID check (not timestamp)
             const { data: member } = await supabase
                 .from('tenant_members')
                 .select('user_id')
@@ -193,11 +195,12 @@ export async function POST(request: Request) {
             }
         }
 
-        // Fallback Redirect (If user lookup fails, they will see "Oturum açılamadı" but at least page loads)
-        return NextResponse.redirect(targetUrl, 302);
+        // Fallback Redirect (If user lookup fails)
+        console.log("[IYZICO-CALLBACK] Session restoration failed - Fallback to standard redirect");
+        return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${tenantId ? 'TenantFound' : 'TenantMissing'}`, 302);
 
     } catch (error: any) {
         console.error("Iyzico Callback Error:", error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=SystemError`, 302);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(error.message)}`, 302);
     }
 }
