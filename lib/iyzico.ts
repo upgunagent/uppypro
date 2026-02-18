@@ -399,107 +399,137 @@ export async function createPricingPlan(data: {
 }
 
 export async function getAllProducts(): Promise<{ status: string; errorMessage?: string; items?: any[]; errorDetails?: any }> {
+    // Rely on Debug Function logic which seems robust, or simple retry.
+    // For now, let's just make sure getAllProducts uses one of the strategies we are testing
+    // Strat B (Sorted) seems most promising standard.
+
+    // We will update getAllProducts to use the "proven" method once diagnostic confirms it.
+    // For now, let's default it to what we *think* works: Sorted params.
+
     const randomString = generateRandomString();
-
-    // Construct Query Params Deterministically
-    const params = new URLSearchParams({
-        locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
-        page: '1',
-        count: '100' // Fetch more items to ensure we find ours
-    });
-
-    // Ensure baseUrl has no trailing slash
     const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
     const path = '/v2/subscription/products';
-    const queryString = params.toString(); // e.g. "locale=tr&conversationId=..."
 
-    // Full URI
-    const uri = `${baseUrl}${path}?${queryString}`;
+    // Default to Sorted Alphabetically
+    const params = new URLSearchParams();
+    params.append('conversationId', IyzicoConfig.conversationId);
+    params.append('count', '100');
+    params.append('locale', IyzicoConfig.locale);
+    params.append('page', '1');
 
-    console.log('[IYZICO] Signing Payload for GET:', {
-        path: path,
-        query: queryString,
-        fullUri: uri
-    });
+    const qs = params.toString();
+    const uri = `${baseUrl}${path}?${qs}`;
 
-    const authString = generateIyzicoV2Header(
-        uri,
-        IyzicoConfig.apiKey,
-        IyzicoConfig.secretKey,
-        randomString,
-        null
-    );
+    // Signature includes params
+    const payload = randomString + `${path}?${qs}`;
+    const signature = crypto.createHmac('sha256', IyzicoConfig.secretKey).update(payload).digest('hex');
+    const authString = `apiKey:${IyzicoConfig.apiKey}&randomKey:${randomString}&signature:${signature}`;
+    const token = `IYZWSv2 ${Buffer.from(authString).toString('base64')}`;
+
+    console.log('[IYZICO] Fetching all products (Speculative Sorted)...');
 
     try {
         const response = await fetch(uri, {
             method: 'GET',
-            headers: getIyzicoHeaders(authString, randomString)
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': token,
+                'x-iyzi-rnd': randomString,
+                'x-iyzi-client-version': 'iyzipay-node-2.0.48'
+            }
         });
 
         const result = await response.json();
-        // Log result
-        console.log('[IYZICO] Get All Products Response:', JSON.stringify(result).substring(0, 500) + '...');
-
         if (result.status === 'success') {
-            return {
-                status: 'success',
-                items: result.data?.items || result.items || [],
-            };
+            return { status: 'success', items: result.data?.items || result.items || [] };
         } else {
-            return {
-                status: 'failure',
-                errorMessage: result.errorMessage,
-                errorDetails: result
-            };
+            return { status: 'failure', errorMessage: result.errorMessage, errorDetails: result };
         }
     } catch (error: any) {
-        return {
-            status: 'failure',
-            errorMessage: error.message,
-            errorDetails: error
-        };
+        return { status: 'failure', errorMessage: error.message, errorDetails: error };
     }
 }
 
 export async function debugIyzicoAuth(): Promise<any> {
     const strategies = [
-        { name: 'Strat 1: Query in Sig', params: true, stripSig: false },
-        { name: 'Strat 2: Query Stripped from Sig', params: true, stripSig: true },
-        { name: 'Strat 3: No Query', params: false, stripSig: false }
+        {
+            name: 'Strat A: Unsorted (Original)', sort: false, params: {
+                locale: IyzicoConfig.locale,
+                conversationId: IyzicoConfig.conversationId,
+                page: '1',
+                count: '1'
+            }
+        },
+        {
+            name: 'Strat B: Sorted Alphabetically', sort: true, params: {
+                conversationId: IyzicoConfig.conversationId, // c
+                count: '1',                                  // co -> after conv? No. conversationId vs count. 'n' vs 'u'. conv < count.
+                locale: IyzicoConfig.locale,
+                page: '1'
+            }
+        },
+        {
+            name: 'Strat C: Minimal Params (Sorted)', sort: true, params: {
+                conversationId: IyzicoConfig.conversationId,
+                locale: IyzicoConfig.locale
+            }
+        },
+        {
+            name: 'Strat D: Only Page/Count', sort: true, params: {
+                page: '1',
+                count: '1'
+            }
+        },
+        { name: 'Strat E: No Params (Clean)', sort: true, params: {} }
     ];
 
     const outcomes: any[] = [];
 
-    // Base setup
     const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
     const path = '/v2/subscription/products';
     const randomString = generateRandomString();
 
     for (const strat of strategies) {
         try {
-            let uri = baseUrl + path;
-            let sigPayloadPath = path;
+            // Construct Query String
+            const searchParams = new URLSearchParams();
 
-            if (strat.params) {
-                // Alphabetical order logic (Iyzico standard)
-                // Using URLSearchParams usually sorts? No, usage determines order. 
-                // Let's use conversationId and locale as strict example
-                const params = new URLSearchParams();
-                params.append('conversationId', IyzicoConfig.conversationId);
-                params.append('locale', IyzicoConfig.locale);
-                params.append('page', '1');
-                params.append('count', '1');
+            // Note: URLSearchParams doesn't guarantee sorting by append order implementation dependent? 
+            // Better to just push keys safely.
+            // Actually JS objects don't guarantee strict order, but we can try to force it by appending in order.
 
-                const qs = params.toString();
-                uri += '?' + qs;
+            // For Strat B (Sorted), we manually add them in alphabetical order of keys:
+            // conversationId, count, locale, page
 
-                if (!strat.stripSig) {
-                    sigPayloadPath += '?' + qs;
-                }
+            if (strat.name.includes('Sorted')) {
+                // Keys: conversationId, count, locale, page
+                // 'conversationId' < 'count' ? 'v' vs 'u'. 'u' comes first! c-o-u-n-t vs c-o-n-v.
+                // Wait. n vs u. n is before u.
+                // con... vs cou...
+                // n (110) vs u (117).
+                // So conversationId < count.
+
+                // Order:
+                // conversationId
+                // count
+                // locale
+                // page
+
+                if (strat.params.conversationId) searchParams.append('conversationId', strat.params.conversationId);
+                if (strat.params.count) searchParams.append('count', strat.params.count as string);
+                if (strat.params.locale) searchParams.append('locale', strat.params.locale);
+                if (strat.params.page) searchParams.append('page', strat.params.page as string);
+            } else {
+                // For unsorted or others, just append as iterate
+                Object.keys(strat.params).forEach(key => searchParams.append(key, (strat.params as any)[key]));
             }
 
-            // Generate Signature Manually
+            const qs = searchParams.toString();
+            const uri = qs ? `${baseUrl}${path}?${qs}` : `${baseUrl}${path}`;
+            // Signature includes the full path + query
+            const sigPayloadPath = qs ? `${path}?${qs}` : path;
+
             const payload = randomString + sigPayloadPath;
             const signature = crypto.createHmac('sha256', IyzicoConfig.secretKey).update(payload).digest('hex');
             const authStr = `apiKey:${IyzicoConfig.apiKey}&randomKey:${randomString}&signature:${signature}`;
