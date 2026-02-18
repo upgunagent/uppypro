@@ -18,8 +18,9 @@ export async function POST(request: Request) {
 
         if (result.status !== 'success') {
             console.error("Iyzico Payment Failed (V2):", result.errorMessage);
+            const failReason = result.errorMessage || "Unknown Iyzico Error";
             // Redirect to fail page
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(result.errorMessage)}`, 302);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(failReason)}&source=v2`, 302);
         }
 
         const subscriptionReferenceCode = result.subscriptionReferenceCode;

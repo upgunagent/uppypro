@@ -17,9 +17,10 @@ export async function POST(request: Request) {
         const result = await getSubscriptionCheckoutFormResult(token);
 
         if (result.status !== 'success') {
-            console.error("Iyzico Payment Failed:", result.errorMessage);
+            console.error("Iyzico Payment Failed (V1):", result.errorMessage);
+            const failReason = result.errorMessage || "Unknown Iyzico Error";
             // Redirect to fail page
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(result.errorMessage)}`, 302);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(failReason)}&source=v1`, 302);
         }
 
         // Only handle specific statuses if needed, otherwise success means subscription started
