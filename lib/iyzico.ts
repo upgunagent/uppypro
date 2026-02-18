@@ -25,7 +25,6 @@ function generateIyzicoV2Header(
     }
 
     let payload = randomString + uriPath;
-    let payload = randomString + uriPath;
     if (requestBody) {
         payload += requestBody;
     }
