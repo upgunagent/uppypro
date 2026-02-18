@@ -75,6 +75,12 @@ export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenc
                 toast({ variant: "destructive", title: "Hata", description: res.error });
                 setLoading(false);
             } else if (res.checkoutFormContent) {
+                // DEBUG: Show user the callback URL being used
+                if (res.debugCallbackUrl) {
+                    console.log("DEBUG: Callback URL SENT:", res.debugCallbackUrl);
+                    // toast({ title: "Debug", description: `Callback: ${res.debugCallbackUrl}` }); 
+                }
+
                 setStep('payment');
                 setLoading(false);
 

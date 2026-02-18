@@ -3,6 +3,7 @@ import { getSubscriptionCheckoutFormResult } from "@/lib/iyzico";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
+    console.log("!!! [CRITICAL] IYZICO-CALLBACK-V1 HIT !!! This route should be deprecated/bypassed!");
     try {
         const formData = await request.formData();
         const token = formData.get("token") as string;
