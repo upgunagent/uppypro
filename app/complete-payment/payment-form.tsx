@@ -36,6 +36,33 @@ export function PaymentForm({ tenantId, amount, inviteToken, pricingPlanReferenc
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
 
+    // Handle magic link token in URL hash (from Iyzico callback redirect)
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (!hash || !hash.includes('access_token')) return;
+
+        const params = new URLSearchParams(hash.substring(1)); // Remove leading #
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+            console.log('[AUTH] Magic link token detected in hash, establishing session...');
+            import('@/lib/supabase/client').then(({ createClient }) => {
+                const supabase = createClient();
+                supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('[AUTH] Failed to set session:', error);
+                        } else {
+                            console.log('[AUTH] Session established, reloading...');
+                            // Clear hash and reload so server component sees authenticated user
+                            window.location.href = window.location.pathname + '?status=success';
+                        }
+                    });
+            });
+        }
+    }, []);
+
     // Check for callback status
     useEffect(() => {
         const status = searchParams.get('status');
