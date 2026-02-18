@@ -48,7 +48,7 @@ export default function CardUpdatePage() {
     }, []);
 
     const handleBack = () => {
-        router.push("/panel/settings");
+        router.push("/panel/settings?tab=subscription");
     };
 
     return (

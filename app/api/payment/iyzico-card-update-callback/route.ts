@@ -26,34 +26,51 @@ export async function POST(request: Request) {
            Typically contains:
            lastFourDigits, cardAssociation, cardFamily, etc.
         */
+        console.log("Iyzico Card Update Result:", JSON.stringify(result, null, 2));
 
         const cardLast4 = result.lastFourDigits;
         const cardBrand = result.cardAssociation;
         const cardAssociation = result.cardFamily;
 
         // We need to know which subscription/tenant this belongs to.
-        // Iyzico card update retrieve MIGHT return conversationId if we sent it during init.
-        // We sent: conversationId: IyzicoConfig.conversationId ('123456789') -> This is static in lib/iyzico.ts
-
-        // Problem: We don't know the tenant ID from the callback if conversationId is static!
-        // We must make conversationId dynamic in lib/iyzico.ts or passed in data.
-
-        // But for now, let's look at `customerReferenceCode` or `subscriptionReferenceCode`.
-        // We have these in result.
-
         const subscriptionReferenceCode = result.subscriptionReferenceCode;
+        let subscriptionId = null;
+
+        const supabase = createAdminClient();
 
         if (subscriptionReferenceCode) {
-            const supabase = createAdminClient();
+            const { data: sub } = await supabase.from('subscriptions')
+                .select('id')
+                .eq('iyzico_subscription_reference_code', subscriptionReferenceCode)
+                .single();
+            if (sub) subscriptionId = sub.id;
+        }
 
+        // Fallback: Lookup by Token
+        if (!subscriptionId && token) {
+            console.log("Subscription lookup by RefCode failed. Trying Token:", token);
+            const { data: sub } = await supabase.from('subscriptions')
+                .select('id')
+                .eq('iyzico_checkout_token', token)
+                .single();
+            if (sub) subscriptionId = sub.id;
+        }
+
+        if (subscriptionId) {
+            console.log(`Updating Subscription ${subscriptionId} with card info: ${cardLast4}`);
             await supabase.from('subscriptions')
                 .update({
                     card_last4: cardLast4,
                     card_brand: cardBrand,
                     card_association: cardAssociation,
+                    // Also ensure ref codes are synced if we found it via token
+                    iyzico_subscription_reference_code: subscriptionReferenceCode || undefined, // Don't null it if missing?
+                    iyzico_customer_reference_code: result.customerReferenceCode || undefined,
                     updated_at: new Date().toISOString()
                 })
-                .eq('iyzico_subscription_reference_code', subscriptionReferenceCode);
+                .eq('id', subscriptionId);
+        } else {
+            console.error("Could not find subscription for Card Update!", { subscriptionReferenceCode, token });
         }
 
         return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?tab=subscription&status=card_update_success`, 302);

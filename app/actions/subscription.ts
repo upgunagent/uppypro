@@ -101,6 +101,14 @@ export async function initializeCardUpdate() {
             return { error: result.errorMessage || "Kart güncelleme başlatılamadı." };
         }
 
+        // Save Token for Callback Identification
+        await adminDb.from("subscriptions")
+            .update({
+                iyzico_checkout_token: result.token,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", subscription.id);
+
         return {
             checkoutFormContent: result.checkoutFormContent,
             token: result.token
