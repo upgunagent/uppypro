@@ -42,8 +42,36 @@ export async function initializeCardUpdate() {
         .eq("status", "active")
         .single();
 
-    if (!subscription || !subscription.iyzico_subscription_reference_code) {
+    if (!subscription) {
         return { error: "Aktif bir abonelik bulunamadı." };
+    }
+
+    // SELF-HEALING: If reference code is missing but we have a token (e.g. callback failed)
+    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        try {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
+            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            if (result.status === 'success' && result.subscriptionReferenceCode) {
+                // Update DB immediately
+                await adminDb.from("subscriptions")
+                    .update({
+                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_customer_reference_code: result.customerReferenceCode,
+                        status: 'active' // Ensure it's active
+                    })
+                    .eq("id", subscription.id);
+
+                // Update local variable
+                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+                subscription.iyzico_customer_reference_code = result.customerReferenceCode;
+            }
+        } catch (e) {
+            console.error("Self-healing failed:", e);
+        }
+    }
+
+    if (!subscription.iyzico_subscription_reference_code) {
+        return { error: "Abonelik referans kodu bulunamadı. Lütfen destek ekibiyle iletişime geçin." };
     }
 
     try {
@@ -91,13 +119,31 @@ export async function cancelUserSubscription(reason: string, details?: string) {
 
     const { data: subscription } = await adminDb
         .from("subscriptions")
-        .select("id, status, iyzico_subscription_reference_code")
+        .select("id, status, iyzico_subscription_reference_code, iyzico_checkout_token")
         .eq("tenant_id", member.tenant_id)
         .in("status", ["active", "past_due"]) // Allow canceling past_due as well
         .single();
 
     if (!subscription) {
         return { error: "İptal edilecek abonelik bulunamadı." };
+    }
+
+    // SELF-HEALING
+    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        try {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
+            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            if (result.status === 'success' && result.subscriptionReferenceCode) {
+                await adminDb.from("subscriptions")
+                    .update({
+                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_customer_reference_code: result.customerReferenceCode,
+                        status: 'active'
+                    })
+                    .eq("id", subscription.id);
+                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+            }
+        } catch (e) { console.error("Self-healing failed:", e); }
     }
 
     // Call Iyzico
@@ -152,12 +198,34 @@ export async function retryUserPayment() {
 
     const { data: subscription } = await adminDb
         .from("subscriptions")
-        .select("iyzico_subscription_reference_code, status")
+        .select("id, iyzico_subscription_reference_code, status, iyzico_checkout_token")
         .eq("tenant_id", member.tenant_id)
         .single();
 
-    if (!subscription || !subscription.iyzico_subscription_reference_code) {
+    if (!subscription) {
         return { error: "Abonelik bulunamadı." };
+    }
+
+    // SELF-HEALING
+    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        try {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
+            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            if (result.status === 'success' && result.subscriptionReferenceCode) {
+                await adminDb.from("subscriptions")
+                    .update({
+                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_customer_reference_code: result.customerReferenceCode,
+                        status: 'active'
+                    })
+                    .eq("id", subscription.id);
+                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+            }
+        } catch (e) { console.error("Self-healing failed:", e); }
+    }
+
+    if (!subscription.iyzico_subscription_reference_code) {
+        return { error: "Abonelik referans kodu bulunamadı." };
     }
 
     try {
@@ -206,7 +274,29 @@ export async function changeUserPlan(newProductKey: 'uppypro_inbox' | 'uppypro_a
         .eq("status", "active")
         .single();
 
-    if (!subscription || !subscription.iyzico_subscription_reference_code) {
+    if (!subscription) {
+        return { error: "Aktif abonelik bulunamadı." };
+    }
+
+    // SELF-HEALING
+    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        try {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
+            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            if (result.status === 'success' && result.subscriptionReferenceCode) {
+                await adminDb.from("subscriptions")
+                    .update({
+                        iyzico_subscription_reference_code: result.subscriptionReferenceCode,
+                        iyzico_customer_reference_code: result.customerReferenceCode,
+                        status: 'active'
+                    })
+                    .eq("id", subscription.id);
+                subscription.iyzico_subscription_reference_code = result.subscriptionReferenceCode;
+            }
+        } catch (e) { console.error("Self-healing failed:", e); }
+    }
+
+    if (!subscription.iyzico_subscription_reference_code) {
         return { error: "Aktif abonelik bulunamadı." };
     }
 
