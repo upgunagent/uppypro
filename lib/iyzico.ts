@@ -461,3 +461,74 @@ export async function getAllProducts(): Promise<{ status: string; errorMessage?:
         };
     }
 }
+
+export async function debugIyzicoAuth(): Promise<any> {
+    const strategies = [
+        { name: 'Strat 1: Query in Sig', params: true, stripSig: false },
+        { name: 'Strat 2: Query Stripped from Sig', params: true, stripSig: true },
+        { name: 'Strat 3: No Query', params: false, stripSig: false }
+    ];
+
+    const outcomes: any[] = [];
+
+    // Base setup
+    const baseUrl = IyzicoConfig.baseUrl.replace(/\/+$/, '');
+    const path = '/v2/subscription/products';
+    const randomString = generateRandomString();
+
+    for (const strat of strategies) {
+        try {
+            let uri = baseUrl + path;
+            let sigPayloadPath = path;
+
+            if (strat.params) {
+                // Alphabetical order logic (Iyzico standard)
+                // Using URLSearchParams usually sorts? No, usage determines order. 
+                // Let's use conversationId and locale as strict example
+                const params = new URLSearchParams();
+                params.append('conversationId', IyzicoConfig.conversationId);
+                params.append('locale', IyzicoConfig.locale);
+                params.append('page', '1');
+                params.append('count', '1');
+
+                const qs = params.toString();
+                uri += '?' + qs;
+
+                if (!strat.stripSig) {
+                    sigPayloadPath += '?' + qs;
+                }
+            }
+
+            // Generate Signature Manually
+            const payload = randomString + sigPayloadPath;
+            const signature = crypto.createHmac('sha256', IyzicoConfig.secretKey).update(payload).digest('hex');
+            const authStr = `apiKey:${IyzicoConfig.apiKey}&randomKey:${randomString}&signature:${signature}`;
+            const token = `IYZWSv2 ${Buffer.from(authStr).toString('base64')}`;
+
+            console.log(`[IyziDebug] ${strat.name}: Uri=${uri}, Payload=${payload}`);
+
+            const response = await fetch(uri, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': token,
+                    'x-iyzi-rnd': randomString,
+                    'x-iyzi-client-version': 'iyzipay-node-2.0.48'
+                }
+            });
+
+            const data = await response.json();
+            outcomes.push({
+                strategy: strat.name,
+                success: data.status === 'success',
+                error: data.errorMessage,
+                signedPayload: payload
+            });
+
+        } catch (e: any) {
+            outcomes.push({ strategy: strat.name, error: e.message });
+        }
+    }
+    return outcomes;
+}

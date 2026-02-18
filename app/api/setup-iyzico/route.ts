@@ -31,11 +31,12 @@ export async function GET() {
             existingInboxProduct = allProducts.items.find((p: any) => p.name === 'UppyPro Inbox' || p.name?.includes('Inbox'));
             existingAiProduct = allProducts.items.find((p: any) => p.name === 'UppyPro AI' || p.name?.includes('AI'));
         } else {
-            // If we can't list products, we definitely can't check if they exist. 
-            // But we shouldn't block creation *unless* we know they exist.
-            // However, since we are getting "Already Exists", we KNOW they exist.
-            // So failing to list them is the critical root cause here.
             console.warn('Failed to list products:', allProducts.errorMessage);
+            debugLog.push('Trying Debug Auth Strategies...');
+            // Import dynamically to avoid top-level issues if not exported yet
+            const { debugIyzicoAuth } = await import('@/lib/iyzico');
+            const debugResults = await debugIyzicoAuth();
+            debugLog.push({ msg: 'Auth Debug Results', results: debugResults });
         }
 
         // --- STEP 1: INBOX PRODUCT ---
@@ -54,7 +55,6 @@ export async function GET() {
 
             if (inboxProduct.status !== 'success' || !inboxProduct.referenceCode) {
                 // Double check if error is "Already Exists" but we missed it in Step 0
-                // This would mean Step 0 failed to return it (e.g. pagination or delay)
                 throw {
                     message: `Failed to create Inbox product: ${inboxProduct.errorMessage || 'Missing Reference Code'}`,
                     details: inboxProduct.errorDetails || inboxProduct.rawResult || inboxProduct,
