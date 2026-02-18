@@ -400,7 +400,8 @@ export async function createPricingPlan(data: {
 
 export async function getAllProducts(): Promise<{ status: string; errorMessage?: string; items?: any[]; errorDetails?: any }> {
     const randomString = generateRandomString();
-    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/products?locale=${IyzicoConfig.locale}&conversationId=${IyzicoConfig.conversationId}`;
+    // Remove query params to avoid signature mismatch issues (fetch normalization vs signature)
+    const uri = `${IyzicoConfig.baseUrl.replace(/\/+$/, '')}/v2/subscription/products`;
 
     const authString = generateIyzicoV2Header(
         uri,
@@ -410,7 +411,7 @@ export async function getAllProducts(): Promise<{ status: string; errorMessage?:
         null
     );
 
-    console.log('[IYZICO] Fetching all products...');
+    console.log('[IYZICO] Fetching all products from:', uri);
 
     try {
         const response = await fetch(uri, {
