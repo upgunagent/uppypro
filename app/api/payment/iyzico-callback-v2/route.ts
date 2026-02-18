@@ -32,8 +32,32 @@ export async function POST(request: Request) {
 
         // 1. Identify Tenant / User
         // Primary: Conversation ID passed as Tenant ID
-        const tenantId = result.conversationId;
+        let tenantId = result.conversationId;
 
+        // Fallback: If conversationId is missing (which happens with Iyzico V2 GET sometimes),
+        // try to find the subscription by the token!
+        if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
+            console.log(`[IYZICO-CALLBACK-V2] Tenant ID missing in result. Attempting lookup by Token: ${token}`);
+
+            const supabase = createAdminClient();
+            const { data: subData, error: subError } = await supabase
+                .from('subscriptions')
+                .select('tenant_id')
+                .eq('iyzico_checkout_token', token)
+                .single();
+
+            if (subData && subData.tenant_id) {
+                console.log(`[IYZICO-CALLBACK-V2] FOUND Tenant ID via Token: ${subData.tenant_id}`);
+                tenantId = subData.tenant_id;
+            } else {
+                console.error(`[IYZICO-CALLBACK-V2] Could not find subscription by token: ${token}`, subError);
+            }
+        }
+
+        if (!tenantId) {
+            console.error("[IYZICO-CALLBACK-V2] Tenant ID missing!");
+            // ... fallback to email lookup logic existing below ...
+        }
         // Log for debugging
         console.log(`[IYZICO-CALLBACK-V2] Processing TenantID: ${tenantId}`);
 

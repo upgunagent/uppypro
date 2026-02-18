@@ -92,6 +92,22 @@ export async function initializeSubscriptionPayment(data: {
             return { error: `[PAY-ERR-${Date.now().toString().slice(-4)}] Ödeme başlatılamadı: ${result.errorMessage} (Tel: ${gsmNumber})` };
         }
 
+        // CRITICAL: Save the token to the subscription record immediately.
+        // This is our fail-safe if the callback doesn't have the conversationId (Tenant ID).
+        if (result.token) {
+            const { error: updateError } = await supabase
+                .from('subscriptions')
+                .update({ iyzico_checkout_token: result.token })
+                .eq('tenant_id', data.tenantId);
+
+            if (updateError) {
+                console.error("Failed to save Iyzico Token to DB:", updateError);
+                // We don't block the flow, but this is risky.
+            } else {
+                console.log(`[PAYMENT] Token saved for Tenant ${data.tenantId}: ${result.token}`);
+            }
+        }
+
         return {
             checkoutFormContent: result.checkoutFormContent,
             token: result.token,
