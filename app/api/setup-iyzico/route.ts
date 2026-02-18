@@ -24,8 +24,13 @@ export async function GET() {
         if (inboxProduct.status !== 'success' && inboxProduct.errorDetails?.errorCode === '201001') {
             console.log('Inbox product already exists. Fetching existing products to find reference code...');
             const allProducts = await getAllProducts();
+            console.log(`[DEBUG] Found ${allProducts.items?.length || 0} existing products.`);
+
             if (allProducts.status === 'success' && allProducts.items) {
-                const existing = allProducts.items.find((p: any) => p.name === 'UppyPro Inbox');
+                // Loose matching
+                const existing = allProducts.items.find((p: any) => p.name?.includes('Inbox') || p.name === 'UppyPro Inbox');
+                console.log(`[DEBUG] Matched Inbox Product:`, existing?.name);
+
                 if (existing) {
                     inboxProduct = { status: 'success', referenceCode: existing.referenceCode };
                     results.push({ step: 'Create Inbox Product (Found Existing)', code: existing.referenceCode });
@@ -90,8 +95,13 @@ export async function GET() {
         if (aiProduct.status !== 'success' && aiProduct.errorDetails?.errorCode === '201001') {
             console.log('AI product already exists. Fetching existing products to find reference code...');
             const allProducts = await getAllProducts();
+            console.log(`[DEBUG] Found ${allProducts.items?.length || 0} existing products.`);
+
             if (allProducts.status === 'success' && allProducts.items) {
-                const existing = allProducts.items.find((p: any) => p.name === 'UppyPro AI');
+                // Loose matching
+                const existing = allProducts.items.find((p: any) => p.name?.includes('AI') || p.name === 'UppyPro AI');
+                console.log(`[DEBUG] Matched AI Product:`, existing?.name);
+
                 if (existing) {
                     aiProduct = { status: 'success', referenceCode: existing.referenceCode };
                     results.push({ step: 'Create AI Product (Found Existing)', code: existing.referenceCode });
