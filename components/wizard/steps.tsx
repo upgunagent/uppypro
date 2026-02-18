@@ -287,9 +287,25 @@ export function StepAccount({ data, updateData, onNext, onBack }: StepProps) {
                     <Label>Telefon Numarası</Label>
                     <Input
                         type="tel"
-                        placeholder="0555 555 55 55"
+                        placeholder="(5XX) XXX XX XX"
                         value={data.phone}
-                        onChange={(e) => updateData("phone", e.target.value)}
+                        onChange={(e) => {
+                            let val = e.target.value.replace(/\D/g, '');
+                            if (val.startsWith('0')) val = val.substring(1);
+                            if (val.startsWith('90')) val = val.substring(2);
+
+                            // Limit to 10 digits
+                            val = val.substring(0, 10);
+
+                            // Format
+                            let formatted = val;
+                            if (val.length > 0) formatted = `(${val.substring(0, 3)}`;
+                            if (val.length > 3) formatted += `) ${val.substring(3, 6)}`;
+                            if (val.length > 6) formatted += ` ${val.substring(6, 8)}`;
+                            if (val.length > 8) formatted += ` ${val.substring(8, 10)}`;
+
+                            updateData("phone", formatted);
+                        }}
                     />
                 </div>
                 <div className="bg-blue-50 text-blue-700 p-4 rounded-lg text-sm flex gap-3">
