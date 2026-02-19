@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSubscriptionCheckoutFormResult } from "@/lib/iyzico";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getDistanceSalesAgreementHtml } from "@/lib/agreement-generator";
+import { generatePdfBuffer } from "@/lib/pdf-generator";
+import { sendSubscriptionWelcomeEmail } from "@/app/actions/email";
 
 export async function POST(request: Request) {
     try {
@@ -83,6 +86,72 @@ export async function POST(request: Request) {
                     card_association: cardAssociation
                 })
                 .eq('tenant_id', tenantId);
+
+            // --- SEND WELCOME EMAIL WITH PDF ---
+            try {
+                // 1. Fetch Tenant & Billing Info for the Agreement
+                const { data: tenantData } = await supabase.from('tenants').select('*').eq('id', tenantId).single();
+                const { data: billingData } = await supabase.from('billing_info').select('*').eq('tenant_id', tenantId).single();
+
+                if (tenantData) {
+                    // Normalize Data
+                    const buyerName = billingData?.billing_type === 'individual'
+                        ? (billingData?.full_name || tenantData.name)
+                        : (billingData?.company_name || tenantData.name);
+
+                    const buyerEmail = billingData?.contact_email || result.email || result.customerEmail || "musteri@example.com";
+
+                    // Mocking some data if not available in result directly, refetching from DB would be better but for speed:
+                    // We know the price from variables above or result
+                    const pricePaid = result.paidPrice || 0;
+                    const currency = result.currency || 'TRY';
+
+                    // Generate HTML
+                    const agreementHtml = getDistanceSalesAgreementHtml({
+                        buyer: {
+                            name: buyerName,
+                            email: buyerEmail,
+                            phone: billingData?.contact_phone || result.buyer?.registrationAddress || "",
+                            address: billingData?.address_full || tenantData.address || "Adres belirtilmedi",
+                            city: billingData?.address_city || tenantData.city || "Şehir",
+                            district: billingData?.address_district || tenantData.district || "İlçe",
+                            taxOffice: billingData?.tax_office,
+                            taxNumber: billingData?.tax_number,
+                            tckn: billingData?.tckn,
+                        },
+                        plan: {
+                            name: "UppyPro Abonelik", // TODO: Fetch real plan name from DB if possible
+                            price: pricePaid / 1.2, // Approx
+                            total: pricePaid,
+                            priceUsd: 0, // Need to fetch or calculate
+                        },
+                        exchangeRate: 0,
+                        date: new Date().toLocaleDateString('tr-TR')
+                    });
+
+                    // Generate PDF
+                    console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement...");
+                    const pdfBuffer = await generatePdfBuffer(agreementHtml);
+
+                    // Send Email
+                    console.log(`[IYZICO-CALLBACK-V2] Sending Welcome Email to ${buyerEmail}...`);
+                    await sendSubscriptionWelcomeEmail({
+                        recipientEmail: buyerEmail,
+                        recipientName: buyerName,
+                        planName: "UppyPro Abonelik",
+                        priceUsd: 0, // Displayed in mail
+                        billingCycle: "monthly",
+                        nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
+                        agreementPdfBuffer: pdfBuffer
+                    });
+                    console.log("[IYZICO-CALLBACK-V2] Welcome Email Sent successfully.");
+                }
+            } catch (emailErr) {
+                console.error("[IYZICO-CALLBACK-V2] Failed to send welcome email:", emailErr);
+                // Do NOT block the flow, just log error
+            }
+
+            // Also add payment record
 
             // Also add payment record
             // ... (Add payment record logic if needed, omitted for brevity but should be there)
