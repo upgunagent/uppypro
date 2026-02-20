@@ -77,8 +77,9 @@ export default async function TenantListPage() {
                     <TableBody>
                         {tenants?.map((tenant) => {
                             const sub = tenant.subscriptions?.[0];
-                            const isEnterprise = sub?.ai_product_key === 'uppypro_enterprise';
+                            const isCorporate = sub?.ai_product_key?.startsWith('uppypro_corporate_') || sub?.ai_product_key === 'uppypro_enterprise';
                             const isPro = sub?.ai_product_key === 'uppypro_ai';
+                            const corporateSize = sub?.ai_product_key?.replace('uppypro_corporate_', '').toUpperCase();
 
                             return (
                                 <TableRow key={tenant.id} className="hover:bg-slate-50/50">
@@ -92,8 +93,10 @@ export default async function TenantListPage() {
                                         <div className="flex flex-wrap gap-1">
                                             {sub ? (
                                                 <>
-                                                    {isEnterprise ? (
-                                                        <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-none">Kurumsal</Badge>
+                                                    {isCorporate ? (
+                                                        <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-none">
+                                                            Kurumsal{corporateSize && corporateSize !== 'ENTERPRISE' ? ` (${corporateSize.charAt(0) + corporateSize.slice(1).toLowerCase()})` : ''}
+                                                        </Badge>
                                                     ) : isPro ? (
                                                         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Pro AI</Badge>
                                                     ) : (

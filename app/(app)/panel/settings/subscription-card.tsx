@@ -134,6 +134,7 @@ export function SubscriptionCard({
     const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key } = subscription;
     const packageName = getPackageName(subscription);
     const isCanceled = status === 'canceled';
+    const isCorporate = ai_product_key?.startsWith('uppypro_corporate_') || ai_product_key === 'uppypro_enterprise';
 
     // Fiyat formatla
     let formattedPrice = '-';
@@ -445,8 +446,8 @@ export function SubscriptionCard({
                     </Dialog>
                 )}
 
-                {/* Upgrade/Downgrade Button */}
-                {status === 'active' && !cancel_at_period_end && targetPrice && (
+                {/* Upgrade/Downgrade Button - only for Inbox/AI plans, not corporate */}
+                {status === 'active' && !cancel_at_period_end && !isCorporate && targetPrice && (
                     <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
@@ -477,6 +478,9 @@ export function SubscriptionCard({
                                             : "Paket düşürme işlemi bir sonraki fatura döneminde geçerli olur."}
                                     </p>
                                 </div>
+                                <p className="text-xs text-slate-500">
+                                    Kurumsal plana geçmek için <a href="mailto:info@upgunai.com" className="text-blue-600 underline">info@upgunai.com</a> adresine mail atabilirsiniz.
+                                </p>
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)}>Vazgeç</Button>
@@ -486,6 +490,13 @@ export function SubscriptionCard({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
+                )}
+
+                {/* Corporate plan info - contact for changes */}
+                {status === 'active' && !cancel_at_period_end && isCorporate && (
+                    <div className="text-xs text-slate-500 flex items-center gap-1">
+                        Paket değişikliği için <a href="mailto:info@upgunai.com" className="text-blue-600 underline">info@upgunai.com</a> ile iletişime geçin.
+                    </div>
                 )}
 
                 {/* Cancel Button */}
