@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Calendar, Package, Tag, AlertTriangle, CheckCircle, RefreshCw, ArrowLeftRight } from "lucide-react";
+import { CreditCard, Calendar, Package, Tag, AlertTriangle, CheckCircle, RefreshCw, ArrowLeftRight, RotateCcw } from "lucide-react";
 import { getPackageName } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelUserSubscription, retryUserPayment, changeUserPlan } from "@/app/actions/subscription";
+import { cancelUserSubscription, retryUserPayment, changeUserPlan, reactivateUserSubscription } from "@/app/actions/subscription";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -45,14 +45,43 @@ export function SubscriptionCard({
 }) {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
     const [cancelReason, setCancelReason] = useState<string>("");
     const [cancelDetails, setCancelDetails] = useState<string>("");
 
+    const [selectedReactivatePlan, setSelectedReactivatePlan] = useState<string>("");
+    const [checkoutFormContent, setCheckoutFormContent] = useState<string>("");
+    const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
 
+    const checkoutRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const { toast } = useToast();
+
+    // Render Iyzico checkout form when content is available
+    useEffect(() => {
+        if (checkoutFormContent && checkoutRef.current) {
+            checkoutRef.current.innerHTML = '';
+            const div = document.createElement('div');
+            div.innerHTML = checkoutFormContent;
+
+            // Execute scripts
+            const scripts = div.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                document.head.appendChild(newScript);
+            });
+
+            checkoutRef.current.appendChild(div);
+        }
+    }, [checkoutFormContent]);
 
     if (!subscription) {
         return (
@@ -64,21 +93,23 @@ export function SubscriptionCard({
 
     const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key } = subscription;
     const packageName = getPackageName(subscription);
+    const isCanceled = status === 'canceled';
 
-    // Format price: Prioritize USD
+    // Format price: Prioritize TL
     let formattedPrice = '-';
 
     if (customPriceUsd) {
-        formattedPrice = `$${customPriceUsd} (≈ ${(customPriceUsd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL)`;
+        // Business deal in USD (Legacy or specific agreement)
+        formattedPrice = `$${customPriceUsd}`;
     } else if (customPriceTry) {
-        // Legacy TRY
-        formattedPrice = `${(customPriceTry / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
-    } else if (priceUsd) {
-        // Standard Plan USD
-        formattedPrice = `$${priceUsd} (≈ ${(priceUsd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL)`;
+        // Business deal in TL
+        formattedPrice = `${(customPriceTry / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL + KDV`;
     } else if (price?.monthly_price_try) {
-        // Fallback or Legacy Standard
-        formattedPrice = `${(price.monthly_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
+        // Standard Plan TL
+        formattedPrice = `${price.monthly_price_try.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} TL + KDV`;
+    } else if (priceUsd) {
+        // Fallback Legacy USD
+        formattedPrice = `$${priceUsd}`;
     }
 
     const formattedEndDate = current_period_end ? new Date(current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
@@ -147,7 +178,43 @@ export function SubscriptionCard({
         }
     };
 
+    const handleReactivate = async () => {
+        if (!selectedReactivatePlan) {
+            toast({ variant: "destructive", title: "Hata", description: "Lütfen bir paket seçin." });
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const result = await reactivateUserSubscription(selectedReactivatePlan);
+            if (result.error) {
+                toast({ variant: "destructive", title: "Hata", description: result.error });
+                return;
+            }
+            if (result.checkoutFormContent) {
+                setCheckoutFormContent(result.checkoutFormContent);
+                setShowCheckoutForm(true);
+            }
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const isRetryable = status === 'past_due' || status === 'unpaid' || status === 'suspended';
+
+    // Get status display info
+    const getStatusBadge = () => {
+        if (cancel_at_period_end) return null;
+        if (isCanceled) {
+            return <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100">İptal Edildi</Badge>;
+        }
+        if (status === 'active') {
+            return <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100">Aktif</Badge>;
+        }
+        return <Badge variant="destructive">{status}</Badge>;
+    };
 
     return (
         <div className="space-y-6 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -171,11 +238,7 @@ export function SubscriptionCard({
                     <p className="text-sm text-slate-500">Paket</p>
                     <div className="flex items-center gap-2">
                         <span className="text-xl font-bold text-slate-900">{packageName}</span>
-                        {!cancel_at_period_end && (
-                            <Badge variant={status === 'active' ? 'default' : 'destructive'} className={status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
-                                {status === 'active' ? 'Aktif' : status}
-                            </Badge>
-                        )}
+                        {getStatusBadge()}
                     </div>
                 </div>
 
@@ -200,9 +263,12 @@ export function SubscriptionCard({
                 </div>
 
                 <div className="space-y-1">
-                    <p className="text-sm text-slate-500">{cancel_at_period_end ? 'Erişim Bitiş Tarihi' : 'Sonraki Ödeme'}</p>
+                    <p className="text-sm text-slate-500">{cancel_at_period_end ? 'Erişim Bitiş Tarihi' : isCanceled ? 'İptal Tarihi' : 'Sonraki Ödeme'}</p>
                     <span className="font-medium text-slate-900">
-                        {formattedEndDate}
+                        {isCanceled && subscription.canceled_at
+                            ? new Date(subscription.canceled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : formattedEndDate
+                        }
                     </span>
                 </div>
             </div>
@@ -221,6 +287,108 @@ export function SubscriptionCard({
                         <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                         Ödemeyi Tekrar Dene
                     </Button>
+                )}
+
+                {/* Reactivate Button (for canceled subscriptions) */}
+                {isCanceled && (
+                    <Dialog open={isReactivateModalOpen} onOpenChange={(open) => {
+                        setIsReactivateModalOpen(open);
+                        if (!open) {
+                            setShowCheckoutForm(false);
+                            setCheckoutFormContent("");
+                            setSelectedReactivatePlan(currentProductKey);
+                        }
+                    }}>
+                        <DialogTrigger asChild>
+                            <Button
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => setSelectedReactivatePlan(currentProductKey)}
+                            >
+                                <RotateCcw className="w-4 h-4 mr-2" />
+                                Aboneliği Yeniden Başlat
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className={showCheckoutForm ? "sm:max-w-2xl" : "sm:max-w-md"}>
+                            {!showCheckoutForm ? (
+                                <>
+                                    <DialogHeader>
+                                        <DialogTitle>Aboneliği Yeniden Başlat</DialogTitle>
+                                        <DialogDescription>
+                                            Aboneliğinizi tekrar başlatmak için bir paket seçin. Ödeme bilgileriniz güvenli bir şekilde Iyzico altyapısı üzerinden alınacaktır.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-4 space-y-4">
+                                        <div className="space-y-3">
+                                            <label className="text-sm font-medium text-slate-700">Paket Seçimi</label>
+                                            <div className="grid gap-3">
+                                                {allPrices.filter(p => p.product_key !== 'uppypro_enterprise').map((p) => {
+                                                    const planName = p.product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
+                                                    const planDescription = p.product_key === 'uppypro_ai'
+                                                        ? 'Yapay zeka destekli otomatik yanıtlar dahil'
+                                                        : 'Temel mesaj yönetimi özellikleri';
+                                                    const isSelected = selectedReactivatePlan === p.product_key;
+                                                    return (
+                                                        <div
+                                                            key={p.product_key}
+                                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                                                                    ? 'border-emerald-500 bg-emerald-50'
+                                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                                }`}
+                                                            onClick={() => setSelectedReactivatePlan(p.product_key)}
+                                                        >
+                                                            <div className="flex justify-between items-center">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold text-slate-900">{planName}</span>
+                                                                        {p.product_key === currentProductKey && (
+                                                                            <Badge variant="secondary" className="text-xs bg-slate-100">Önceki Paketiniz</Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-sm text-slate-500 mt-0.5">{planDescription}</p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <span className="font-bold text-lg text-slate-900">
+                                                                        {p.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-500 block">+ KDV / ay</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-blue-50 p-3 rounded-md border border-blue-100 text-sm text-blue-800">
+                                            <strong>Bilgi:</strong> Yeni bir ödeme formu açılacak ve aboneliğiniz seçtiğiniz paketle yeniden başlatılacaktır.
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setIsReactivateModalOpen(false)}>Vazgeç</Button>
+                                        <Button
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                            onClick={handleReactivate}
+                                            disabled={!selectedReactivatePlan || isLoading}
+                                        >
+                                            {isLoading ? 'Hazırlanıyor...' : 'Devam Et'}
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            ) : (
+                                <>
+                                    <DialogHeader>
+                                        <DialogTitle>Ödeme</DialogTitle>
+                                        <DialogDescription>
+                                            Kart bilgilerinizi girerek aboneliğinizi başlatabilirsiniz.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-2">
+                                        <div ref={checkoutRef} id="iyzipay-checkout-form" className="min-h-[400px]" />
+                                    </div>
+                                </>
+                            )}
+                        </DialogContent>
+                    </Dialog>
                 )}
 
                 {/* Upgrade/Downgrade Button */}
@@ -245,9 +413,9 @@ export function SubscriptionCard({
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm text-slate-500">Yeni Aylık Ücret</span>
                                         <span className="font-bold text-lg">
-                                            ${targetPrice.monthly_price_usd}
+                                            {targetPrice.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
                                             <span className="text-xs font-normal text-slate-500 ml-1">
-                                                (≈ {(targetPrice.monthly_price_usd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL)
+                                                + KDV
                                             </span>
                                         </span>
                                     </div>
@@ -334,6 +502,28 @@ export function SubscriptionCard({
                     <p className="text-sm text-slate-500">
                         Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir.
                     </p>
+                </div>
+            )}
+
+            {/* Canceled Subscription Message */}
+            {isCanceled && !showCheckoutForm && (
+                <div className="pt-4 border-t border-slate-100">
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                        <p className="text-sm text-red-800">
+                            Aboneliğiniz iptal edilmiştir. Tekrar abone olmak için <strong>"Aboneliği Yeniden Başlat"</strong> butonunu kullanabilirsiniz.
+                            {subscription.cancel_reason && (
+                                <span className="block mt-1 text-red-600">
+                                    İptal sebebi: {
+                                        subscription.cancel_reason === 'PRICE' ? 'Fiyat yüksek' :
+                                            subscription.cancel_reason === 'NOT_USING' ? 'Kullanmıyorum' :
+                                                subscription.cancel_reason === 'MISSING_FEATURE' ? 'Aradığım özellik yok' :
+                                                    subscription.cancel_reason === 'TECH_ISSUE' ? 'Teknik sorun' :
+                                                        subscription.cancel_reason
+                                    }
+                                </span>
+                            )}
+                        </p>
+                    </div>
                 </div>
             )}
         </div>

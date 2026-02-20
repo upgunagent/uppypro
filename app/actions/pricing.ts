@@ -2,15 +2,14 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { getUsdExchangeRate } from "@/lib/currency";
 
-export async function updatePricing(productKey: string, priceUsd: number) {
+export async function updatePricing(productKey: string, priceTry: number) {
     const admin = createAdminClient();
 
-    // priceUsd received as normal number (e.g. 19), save as is (numeric)
+    // priceTry received as normal number
     const { error } = await admin
         .from('pricing')
-        .update({ monthly_price_usd: priceUsd })
+        .update({ monthly_price_try: priceTry })
         .eq('product_key', productKey)
         .eq('billing_cycle', 'monthly');
 
@@ -25,45 +24,45 @@ export async function updatePricing(productKey: string, priceUsd: number) {
     return { success: true };
 }
 
-export async function getExchangeRate(): Promise<number> {
-    try {
-        const rate = await getUsdExchangeRate();
-        return rate;
-    } catch (error) {
-        console.error("[PRICING ACTION] Error fetching exchange rate:", error);
-        return 44.00; // Fallback
-    }
-}
+// getExchangeRate removed as we use TL directly now.
+// getUsdExchangeRate import also removed
 
 export async function getProductPrices() {
     const admin = createAdminClient();
 
     const { data, error } = await admin
         .from('pricing')
-        .select('product_key, monthly_price_usd')
+        .select('product_key, monthly_price_try')
         .eq('billing_cycle', 'monthly');
 
     if (error || !data) {
         console.error("[PRICING ACTION] Error fetching prices:", error);
-        // Fallback prices
+        // Fallback prices in TL (approximate from script)
         return {
-            inbox: 19.99,
-            ai: 79.99,
-            ai_medium: 159.98,
-            ai_pro: 289.96
+            inbox: 895,
+            ai: 3995,
+            corporate_small: 4995,
+            corporate_medium: 6995,
+            corporate_large: 9995,
+            corporate_xl: 12995
         };
     }
 
     // Convert array to object
     const prices = data.reduce((acc, item) => {
-        acc[item.product_key] = item.monthly_price_usd;
+        // Map DB keys to frontend keys if needed, or just use DB keys
+        // Frontend uses: inbox, ai. 
+        // Corporate keys: uppypro_corporate_small -> corporate_small? 
+        // Let's keep consistent with frontend components.
+        // Assuming frontend will be updated to use 'uppypro_corporate_small' or we map here.
+        // For now, mapping simple keys.
+
+        if (item.product_key === 'base_inbox' || item.product_key === 'inbox') acc['inbox'] = item.monthly_price_try;
+        else if (item.product_key === 'uppypro_ai') acc['ai'] = item.monthly_price_try;
+        else acc[item.product_key] = item.monthly_price_try;
+
         return acc;
     }, {} as Record<string, number>);
 
-    return {
-        inbox: prices.inbox || 19.99,
-        ai: prices.ai_starter || 79.99,
-        ai_medium: prices.ai_medium || 159.98,
-        ai_pro: prices.ai_pro || 289.96
-    };
+    return prices;
 }

@@ -29,7 +29,7 @@ export default function EnterpriseInvitePage() {
             address: formData.get("address") as string,
             city: formData.get("city") as string,
             district: formData.get("district") as string,
-            monthlyPrice: Number(formData.get("monthlyPrice")),
+            planKey: formData.get("planKey") as string,
         };
 
         const res = await createEnterpriseInvite(data);
@@ -154,18 +154,32 @@ export default function EnterpriseInvitePage() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg space-y-2">
-                        <Label className="text-orange-900">Aylık Abonelik Ücreti (USD)</Label>
-                        <Input
-                            name="monthlyPrice"
-                            type="number"
-                            required
-                            min="0"
-                            step="0.01"
-                            className="bg-white border-orange-200 focus-visible:ring-orange-500"
-                            placeholder="Örn: 1000"
-                        />
-                        <p className="text-xs text-orange-700">Bu tutar (USD) üzerinden fatura kesilecek ve ödeme anında kur çevrilecektir.</p>
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                        <Label className="text-lg font-semibold block">Paket Seçimi</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { key: 'uppypro_corporate_small', name: 'Small', price: '4.995 TL + KDV' },
+                                { key: 'uppypro_corporate_medium', name: 'Medium', price: '6.995 TL + KDV' },
+                                { key: 'uppypro_corporate_large', name: 'Large', price: '9.995 TL + KDV' },
+                                { key: 'uppypro_corporate_xl', name: 'XL', price: '12.995 TL + KDV' }
+                            ].map((plan) => (
+                                <label key={plan.key} className="flex flex-col space-y-1 cursor-pointer border p-4 rounded-lg has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 hover:bg-slate-50 transition-colors relative">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-900">{plan.name}</span>
+                                        <input
+                                            type="radio"
+                                            name="planKey"
+                                            value={plan.key}
+                                            required
+                                            defaultChecked={plan.key === 'uppypro_corporate_medium'}
+                                            className="accent-orange-600 w-5 h-5"
+                                        />
+                                    </div>
+                                    <span className="text-orange-600 font-semibold">{plan.price}</span>
+                                    <span className="text-xs text-slate-500">Aylık Abonelik</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="pt-4">

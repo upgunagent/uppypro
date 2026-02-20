@@ -59,9 +59,14 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                     <ManageSubscriptionForm
                         tenantId={tenantId}
                         subscription={subscription}
-                        inboxPrice={inboxPriceUsd}
-                        aiPrice={aiPriceUsd}
-                        usdRate={usdRate}
+                        pricing={{
+                            inbox: inboxPriceUsd,
+                            ai: aiPriceUsd,
+                            corporate_small: 0,
+                            corporate_medium: 0,
+                            corporate_large: 0,
+                            corporate_xl: 0
+                        }}
                     />
                 </div>
 

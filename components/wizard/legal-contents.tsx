@@ -19,9 +19,7 @@ export type AgreementData = {
         name: string;
         price: number; // KDV hariç TL
         total: number; // KDV dahil TL
-        priceUsd: number; // KDV hariç USD
     },
-    exchangeRate: number;
     date: string;
 };
 
@@ -72,19 +70,18 @@ export const DistanceSalesAgreement = ({ data }: { data: AgreementData }) => {
 
             <h3 className="font-bold text-lg">5. Fiyatlandırma ve Ödeme</h3>
             <p>5.1. Alıcı, ödeme adımına geçmeden önce gösterilen toplam bedeli onayladığını kabul eder.</p>
-            <p>5.2. Hizmet bedeli <strong>{data.plan.priceUsd.toFixed(2)} USD/Ay + KDV</strong> olarak belirlenmiştir. Tahsilat, işlem anındaki Türkiye Cumhuriyet Merkez Bankası (TCMB) Efektif Satış kuru üzerinden Türk Lirası'na (TL) çevrilerek yapılır.</p>
-            <p>5.3. İşbu sözleşmenin kurulduğu tarih itibarıyla <strong>1 USD = {data.exchangeRate.toFixed(4)} TL</strong> kabul edilerek ilk dönem tahsilatı gerçekleştirilir.</p>
+            <p>5.2. Hizmet bedeli, seçilen pakete göre Türk Lirası (TL) cinsinden belirlenmiştir ve ödeme anında gösterilen tutar üzerinden tahsil edilir.</p>
             <p><strong>İlk Dönem Paket Bedeli (KDV Hariç):</strong> {data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
             <p><strong>İlk Dönem Tahsil Edilecek Tutar (KDV Dahil):</strong> {data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
 
             <h3 className="font-bold text-lg">6. Ödeme, Aylık Otomatik Yenileme ve Tahsilat</h3>
             <p>6.1. Ödeme iyzico güvencesi ile (veya seçilen altyapı) üzerinden alınır.</p>
             <p>6.2. <strong>Aylık Otomatik Yenileme:</strong> Abonelik, Alıcı iptal edene kadar her ay otomatik yenilenir.</p>
-            <p>6.3. <strong>Yenileme Dönemlerinde Fiyatlandırma:</strong> Sonraki aylarda yapılacak tahsilatlarda, paket bedeli olan <strong>{data.plan.priceUsd.toFixed(2)} USD</strong> (artı yürürlükteki KDV oranı), ilgili yenileme günündeki güncel TCMB Döviz Satış kuru üzerinden TL'ye çevrilerek tahsil edilir. Alıcı, kur değişimlerinden kaynaklanabilecek fiyat farkını peşinen kabul eder.</p>
+            <p>6.3. <strong>Yenileme Dönemlerinde Fiyatlandırma:</strong> Sonraki aylarda yapılacak tahsilatlarda, o dönemin güncel liste fiyatı üzerinden tahsilat yapılır. Fiyat değişiklikleri makul bir süre önceden Kullanıcı'ya bildirilir.</p>
 
             <h3 className="font-bold text-lg">7. Kurumsal Paket / Özel Abonelik Linki ile Satın Alma</h3>
             <p>7.1. Kurumsal paketlerde ücret, UPGUN AI tarafından Alıcı’ya özel olarak belirlenebilir ve Alıcı’ya e-posta ile “abonelik linki” gönderilebilir.</p>
-            <p>7.2. Bu link üzerinden Alıcı’ya; paket adı, dönem (aylık), ücret (USD/KDV hariç gösterim olabilir), ödeme anında uygulanacak TL’ye dönüşüm ve KDV dahil toplam tahsilat tutarı gösterilir ve onay alınır.</p>
+            <p>7.2. Bu link üzerinden Alıcı’ya; paket adı, dönem (aylık), ücret ve KDV dahil toplam tahsilat tutarı gösterilir ve onay alınır.</p>
             <p>7.3. Linkin güvenliği ve yetkisiz kişilerce paylaşılmaması Alıcı’nın sorumluluğundadır. UPGUN AI, makul şüphe halinde ek doğrulama isteyebilir.</p>
             <p>7.4. Alıcı, linkte belirtilen teklif şartlarını onaylayıp ödemeyi tamamladığında abonelik başlar.</p>
 
@@ -136,13 +133,13 @@ export const PreliminaryInformationForm = ({ data }: { data: AgreementData }) =>
 
             <h3 className="font-bold text-lg">3. Sözleşme Konusu Hizmetin Temel Nitelikleri ve Bedeli</h3>
             <p><strong>Hizmet Adı:</strong> {data.plan.name} (Aylık Abonelik)</p>
-            <p><strong>Paket Bedeli:</strong> {data.plan.priceUsd.toFixed(2)} USD + KDV / Ay</p>
+            <p><strong>Paket Bedeli:</strong> {data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL + KDV / Ay</p>
             <p><strong>Tahsilat Para Birimi:</strong> Türk Lirası (TL)</p>
             <p><strong>Ödeme Yöntemi:</strong> Kredi Kartı ile Otomatik Yenileme</p>
             <p>
-                <strong>Fiyatlandırma Politikası:</strong> Hizmet bedeli USD cinsinden belirlenmiştir. İlk ödeme ve sonraki aylık yenilemelerde, tahsil edilecek tutar <strong>{data.plan.priceUsd.toFixed(2)} USD</strong> (artı KDV) karşılığı Türk Lirası olacaktır. Dönüşüm işlemi, ödeme günündeki güncel TCMB Döviz kuruna göre yapılır.
+                <strong>Fiyatlandırma Politikası:</strong> Hizmet bedeli Türk Lirası (TL) cinsinden belirlenmiştir. İlk ödeme ve sonraki aylık yenilemelerde, ilgili dönemin güncel liste fiyatı üzerinden tahsilat yapılır.
             </p>
-            <p><strong>İlk Dönem Toplam Tahsilat Tutarı:</strong> {data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL (Bugünkü kur: {data.exchangeRate.toFixed(4)} TL ile hesaplanmıştır)</p>
+            <p><strong>İlk Dönem Toplam Tahsilat Tutarı:</strong> {data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
 
             <h3 className="font-bold text-lg">4. Cayma Hakkı</h3>
             <p>Alıcı, 14 gün içinde cayma hakkına sahiptir. Ancak, dijital içeriklerin sunulmasına ilişkin sözleşmelerde, hizmetin ifasına başlanmışsa cayma hakkı kullanılamayabilir. Alıcı, satın alma işlemini tamamlayarak hizmetin ifasının hemen başlamasını talep ettiğini ve bu nedenle cayma hakkını kaybedebileceğini kabul eder.</p>

@@ -57,9 +57,7 @@ export function EnterpriseInviteFlow({
             name: "UppyPro Kurumsal",
             price: priceTry / 1.20, // Approx base price
             total: priceTry,
-            priceUsd: priceUsd,
         },
-        exchangeRate: exchangeRate,
         date: new Date().toLocaleDateString('tr-TR'),
     };
 

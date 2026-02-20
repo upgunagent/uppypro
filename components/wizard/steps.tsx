@@ -43,7 +43,6 @@ interface StepProps {
 
 // 1. Plan Summary
 export function StepSummary({ data, onNext }: StepProps) {
-    const [exchangeRate, setExchangeRate] = useState<number>(0);
     const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number }>>({
         "base": { name: "UppyPro Inbox", price: 0 },
         "ai_starter": { name: "UppyPro AI", price: 0 },
@@ -55,52 +54,34 @@ export function StepSummary({ data, onNext }: StepProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("[CLIENT] Fetching exchange rate directly from CDN...");
-
-                // SKIP SERVER ACTION - DIRECT CDN FETCH
-                let rate = 43.50; // fallback  
-                try {
-                    const cdnRes = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
-                    if (cdnRes.ok) {
-                        const cdnData = await cdnRes.json();
-                        if (cdnData?.usd?.['try'] && !isNaN(cdnData.usd['try']) && cdnData.usd['try'] > 0) {
-                            rate = cdnData.usd['try'];
-                            console.log("[CLIENT] CDN rate:", rate);
-                        }
-                    }
-                } catch (err) {
-                    console.error("[CLIENT] CDN fetch failed:", err);
-                }
-                console.log("[CLIENT] Using exchange rate:", rate);
-
-                // FETCH PRICES DIRECTLY FROM SUPABASE - NO SERVER ACTION
+                // FETCH PRICES DIRECTLY FROM SUPABASE
                 const { createClient } = await import("@/lib/supabase/client");
                 const supabase = createClient();
 
                 let prices = {
-                    inbox: 19.99,
-                    ai: 79.99,
-                    ai_medium: 159.98,
-                    ai_pro: 289.96
+                    inbox: 895,
+                    ai: 3995,
+                    ai_medium: 6995,
+                    ai_pro: 9995
                 };
 
                 try {
                     const { data: priceData } = await supabase
                         .from('pricing')
-                        .select('product_key, monthly_price_usd')
+                        .select('product_key, monthly_price_try')
                         .eq('billing_cycle', 'monthly');
 
                     if (priceData && priceData.length > 0) {
                         const priceMap = priceData.reduce((acc: any, item: any) => {
-                            acc[item.product_key] = item.monthly_price_usd;
+                            acc[item.product_key] = item.monthly_price_try;
                             return acc;
                         }, {});
 
                         prices = {
-                            inbox: priceMap.uppypro_inbox || 19.99,
-                            ai: priceMap.uppypro_ai || 79.99,
-                            ai_medium: priceMap.uppypro_ai_medium || 159.98,
-                            ai_pro: priceMap.uppypro_ai_pro || 289.96
+                            inbox: priceMap.uppypro_inbox || 895,
+                            ai: priceMap.uppypro_ai || 3995,
+                            ai_medium: priceMap.uppypro_ai_medium || 6995,
+                            ai_pro: priceMap.uppypro_ai_pro || 9995
                         };
                     }
                     console.log("[CLIENT] Prices from Supabase:", prices);
@@ -108,90 +89,20 @@ export function StepSummary({ data, onNext }: StepProps) {
                     console.error("[CLIENT] Failed to fetch prices from Supabase:", error);
                 }
 
-                // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
-                if (rate === 44.00) {
-                    let clientFetched = false;
-
-                    // 1. Try jsDelivr CDN (Static JSON - Most Reliable)
-                    try {
-                        console.log("Server returned fallback, trying Client-side jsDelivr...");
-                        const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data?.usd?.['try']) {
-                                rate = data.usd['try'];
-                                clientFetched = true;
-                                console.log("Client-side jsDelivr success:", rate);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Client-side jsDelivr failed:", e);
-                    }
-
-                    // 2. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
-                    if (!clientFetched) {
-                        try {
-                            console.log("Server returned fallback, trying Client-side Truncgil...");
-                            const res = await fetch("https://finans.truncgil.com/today.json");
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data?.USD?.Satış) {
-                                    const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
-                                    if (!isNaN(newRate) && newRate > 0) {
-                                        rate = newRate;
-                                        clientFetched = true;
-                                        console.log("Client-side Truncgil success:", rate);
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.error("Client-side Truncgil failed:", e);
-                        }
-
-                        // 2. Try Open ER if Truncgil failed
-                        if (!clientFetched) {
-                            try {
-                                console.log("Trying Client-side Open ER...");
-                                const res = await fetch("https://open.er-api.com/v6/latest/USD");
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data?.rates?.TRY) {
-                                        rate = data.rates.TRY;
-                                        console.log("Client-side Open ER success:", rate);
-                                    }
-                                }
-                            } catch (clientError) {
-                                console.error("Client-side Open ER failed:", clientError);
-                            }
-                        }
-                    }
-                }
-
-                setExchangeRate(rate);
-
-                // prices object now contains: { inbox, ai, ai_medium, ai_pro } in USD
-                // We need to calculate TL prices: PriceUSD * Rate
-
-                const inboxTL = prices.inbox * rate;
-                const aiStarterTL = prices.ai * rate;
-                const aiMediumTL = prices.ai_medium * rate;
-                const aiProTL = prices.ai_pro * rate;
-
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: inboxTL },
-                    "ai_starter": { name: "UppyPro AI", price: aiStarterTL },
-                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL },
+                    "base": { name: "UppyPro Inbox", price: prices.inbox },
+                    "ai_starter": { name: "UppyPro AI", price: prices.ai },
+                    "ai_medium": { name: "UppyPro AI Orta", price: prices.ai_medium },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: prices.ai_pro },
                 });
             } catch (e) {
                 console.error("Pricing fetch error:", e);
-                // Fallback can rely on a safer assumption or show error state
-                setExchangeRate(44.00);
+                // Fallback
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 879.56 }, // ~19.99 * 44.00
-                    "ai_starter": { name: "UppyPro AI", price: 3519.56 }, // ~79.99 * 44.00
-                    "ai_medium": { name: "UppyPro AI Orta", price: 7039.12 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12758.24 },
+                    "base": { name: "UppyPro Inbox", price: 895 },
+                    "ai_starter": { name: "UppyPro AI", price: 3995 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 6995 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 9995 },
                 });
             } finally {
                 setLoading(false);
@@ -229,9 +140,6 @@ export function StepSummary({ data, onNext }: StepProps) {
                     </div>
                     <div className="font-bold text-lg">
                         {selectedPlan.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL
-                        <span className="block text-xs font-normal text-slate-400 mt-0.5">
-                            (Kur: {exchangeRate.toFixed(2)} TL)
-                        </span>
                     </div>
                 </div>
                 <div className="flex justify-between items-center text-sm text-slate-500 mb-2">
@@ -548,153 +456,65 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
     const [showPreInfo, setShowPreInfo] = useState(false);
 
     // Prepare dynamic data
-    const [exchangeRate, setExchangeRate] = useState<number>(0);
-    const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number, priceUsd: number }>>({
-        "base": { name: "UppyPro Inbox", price: 0, priceUsd: 0 },
-        "ai_starter": { name: "UppyPro AI", price: 0, priceUsd: 0 },
-        "ai_medium": { name: "UppyPro AI Orta", price: 0, priceUsd: 0 },
-        "ai_pro": { name: "UppyPro AI Profesyonel", price: 0, priceUsd: 0 },
+    const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number }>>({
+        "base": { name: "UppyPro Inbox", price: 0 },
+        "ai_starter": { name: "UppyPro AI", price: 0 },
+        "ai_medium": { name: "UppyPro AI Orta", price: 0 },
+        "ai_pro": { name: "UppyPro AI Profesyonel", price: 0 },
     });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("[CLIENT-AGREEMENTS] Fetching exchange rate directly from CDN...");
-
-                // SKIP SERVER ACTION - DIRECT CDN FETCH
-                let rate = 43.50; // fallback  
-                try {
-                    const cdnRes = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
-                    if (cdnRes.ok) {
-                        const cdnData = await cdnRes.json();
-                        if (cdnData?.usd?.['try'] && !isNaN(cdnData.usd['try']) && cdnData.usd['try'] > 0) {
-                            rate = cdnData.usd['try'];
-                            console.log("[CLIENT-AGREEMENTS] CDN rate:", rate);
-                        }
-                    }
-                } catch (err) {
-                    console.error("[CLIENT-AGREEMENTS] CDN fetch failed:", err);
-                }
-                console.log("[CLIENT-AGREEMENTS] Using exchange rate:", rate);
-
-                // FETCH PRICES DIRECTLY FROM SUPABASE - NO SERVER ACTION
+                // FETCH PRICES DIRECTLY FROM SUPABASE
                 const { createClient } = await import("@/lib/supabase/client");
                 const supabase = createClient();
 
                 let prices = {
-                    inbox: 19.99,
-                    ai: 79.99,
-                    ai_medium: 159.98,
-                    ai_pro: 289.96
+                    inbox: 895,
+                    ai: 3995,
+                    ai_medium: 6995,
+                    ai_pro: 9995
                 };
 
                 try {
                     const { data: priceData } = await supabase
                         .from('pricing')
-                        .select('product_key, monthly_price_usd')
+                        .select('product_key, monthly_price_try')
                         .eq('billing_cycle', 'monthly');
 
                     if (priceData && priceData.length > 0) {
                         const priceMap = priceData.reduce((acc: any, item: any) => {
-                            acc[item.product_key] = item.monthly_price_usd;
+                            acc[item.product_key] = item.monthly_price_try;
                             return acc;
                         }, {});
 
                         prices = {
-                            inbox: priceMap.uppypro_inbox || 19.99,
-                            ai: priceMap.uppypro_ai || 79.99,
-                            ai_medium: priceMap.uppypro_ai_medium || 159.98,
-                            ai_pro: priceMap.uppypro_ai_pro || 289.96
+                            inbox: priceMap.uppypro_inbox || 895,
+                            ai: priceMap.uppypro_ai || 3995,
+                            ai_medium: priceMap.uppypro_ai_medium || 6995,
+                            ai_pro: priceMap.uppypro_ai_pro || 9995
                         };
                     }
-                    console.log("[CLIENT-AGREEMENTS] Prices from Supabase:", prices);
                 } catch (error) {
                     console.error("[CLIENT-AGREEMENTS] Failed to fetch prices from Supabase:", error);
                 }
 
-                // Hybrid Fetching: If server returns fallback (44.00), try client-side fetch
-                if (rate === 44.00) {
-                    let clientFetched = false;
-
-                    // 1. Try jsDelivr CDN (Static JSON - Most Reliable)
-                    try {
-                        console.log("Server returned fallback, trying Client-side jsDelivr...");
-                        const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json");
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data?.usd?.['try']) {
-                                rate = data.usd['try'];
-                                clientFetched = true;
-                                console.log("Client-side jsDelivr success:", rate);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Client-side jsDelivr failed:", e);
-                    }
-
-                    // 2. Try TCMB Mirror (Truncgil) - Matches TCMB exactly
-                    if (!clientFetched) {
-                        try {
-                            console.log("Server returned fallback, trying Client-side Truncgil...");
-                            const res = await fetch("https://finans.truncgil.com/today.json");
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data?.USD?.Satış) {
-                                    const newRate = parseFloat(data.USD.Satış.replace(',', '.'));
-                                    if (!isNaN(newRate) && newRate > 0) {
-                                        rate = newRate;
-                                        clientFetched = true;
-                                        console.log("Client-side Truncgil success:", rate);
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.error("Client-side Truncgil failed:", e);
-                        }
-
-                        // 2. Try Open ER if Truncgil failed
-                        if (!clientFetched) {
-                            try {
-                                console.log("Trying Client-side Open ER...");
-                                const res = await fetch("https://open.er-api.com/v6/latest/USD");
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data?.rates?.TRY) {
-                                        rate = data.rates.TRY;
-                                        console.log("Client-side Open ER success:", rate);
-                                    }
-                                }
-                            } catch (clientError) {
-                                console.error("Client-side Open ER failed:", clientError);
-                            }
-                        }
-                    }
-                }
-
-                setExchangeRate(rate);
-
-                // Calculate TL prices
-                const inboxTL = prices.inbox * rate;
-                const aiStarterTL = prices.ai * rate;
-                const aiMediumTL = prices.ai_medium * rate;
-                const aiProTL = prices.ai_pro * rate;
-
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: inboxTL, priceUsd: prices.inbox },
-                    "ai_starter": { name: "UppyPro AI", price: aiStarterTL, priceUsd: prices.ai },
-                    "ai_medium": { name: "UppyPro AI Orta", price: aiMediumTL, priceUsd: prices.ai_medium },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: aiProTL, priceUsd: prices.ai_pro },
+                    "base": { name: "UppyPro Inbox", price: prices.inbox },
+                    "ai_starter": { name: "UppyPro AI", price: prices.ai },
+                    "ai_medium": { name: "UppyPro AI Orta", price: prices.ai_medium },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: prices.ai_pro },
                 });
             } catch (e) {
                 console.error("Pricing fetch error:", e);
-                // Fallback to old hardcoded if fails
-                setExchangeRate(44.00);
+                // Fallback
                 setDynamicPlans({
-                    "base": { name: "UppyPro Inbox", price: 879.56, priceUsd: 19.99 },
-                    "ai_starter": { name: "UppyPro AI", price: 3519.56, priceUsd: 79.99 },
-                    "ai_medium": { name: "UppyPro AI Orta", price: 7039.12, priceUsd: 159.98 },
-                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 12758.24, priceUsd: 289.96 },
+                    "base": { name: "UppyPro Inbox", price: 895 },
+                    "ai_starter": { name: "UppyPro AI", price: 3995 },
+                    "ai_medium": { name: "UppyPro AI Orta", price: 6995 },
+                    "ai_pro": { name: "UppyPro AI Profesyonel", price: 9995 },
                 });
             } finally {
                 setLoading(false);
@@ -735,10 +555,8 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
         plan: {
             name: selectedPlan.name,
             price: selectedPlan.price,
-            total: total,
-            priceUsd: selectedPlan.priceUsd
+            total: total
         },
-        exchangeRate: exchangeRate,
         date: new Date().toLocaleDateString('tr-TR')
     };
 

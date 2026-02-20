@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 export type EnterpriseInviteData = {
     billingType: 'corporate' | 'individual';
     companyName: string;
-    fullName: string; // If individual, this is the person's name. If corporate, this is the contact person's name.
+    fullName: string;
     contactName: string;
     email: string;
     phone: string;
@@ -17,7 +17,7 @@ export type EnterpriseInviteData = {
     address: string;
     city: string;
     district: string;
-    monthlyPrice: number; // In USD
+    planKey: string; // New field replacing monthlyPrice
 };
 
 export async function createEnterpriseInvite(data: EnterpriseInviteData) {
@@ -25,6 +25,20 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 
     try {
         console.log("Creating Enterprise Invite:", data);
+
+        // Fetch Price for selected plan
+        const { data: pricingData, error: priceError } = await supabaseAdmin
+            .from('pricing')
+            .select('monthly_price_try')
+            .eq('product_key', data.planKey)
+            .eq('billing_cycle', 'monthly')
+            .single();
+
+        if (priceError || !pricingData) {
+            throw new Error("Seçilen planın fiyat bilgisi bulunamadı.");
+        }
+
+        const priceTl = pricingData.monthly_price_try;
 
         // 1. Create User
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
@@ -37,7 +51,6 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const userId = userData.user.id;
 
         // 2. Create Tenant
-        // Use company name if corporate, else full name
         const tenantName = data.billingType === 'corporate' ? data.companyName : data.fullName;
 
         const { data: tenant, error: tenantError } = await supabaseAdmin
@@ -53,7 +66,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         // 3. Create Profile
         await supabaseAdmin.from("profiles").upsert({
             user_id: userId,
-            full_name: data.contactName, // Profile name is contact person
+            full_name: data.contactName,
             phone: data.phone
         });
 
@@ -64,9 +77,9 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             role: 'tenant_owner'
         });
 
-        // 5. Save Billing Info (Correct Table: billing_info)
+        // 5. Save Billing Info
         if (data.billingType === 'corporate') {
-            const { error: billingError } = await supabaseAdmin.from("billing_info").upsert({
+            await supabaseAdmin.from("billing_info").upsert({
                 tenant_id: tenant.id,
                 billing_type: 'company',
                 company_name: data.companyName,
@@ -78,11 +91,8 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
                 contact_email: data.email,
                 contact_phone: data.phone
             }, { onConflict: 'tenant_id' });
-
-            if (billingError) console.error("Billing Info Error:", billingError);
         } else {
-            // Individual billing
-            const { error: billingError } = await supabaseAdmin.from("billing_info").upsert({
+            await supabaseAdmin.from("billing_info").upsert({
                 tenant_id: tenant.id,
                 billing_type: 'individual',
                 full_name: data.fullName,
@@ -93,23 +103,26 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
                 contact_email: data.email,
                 contact_phone: data.phone
             }, { onConflict: 'tenant_id' });
-
-            if (billingError) console.error("Billing Info Error:", billingError);
         }
 
-        // 6. Create Subscription (Pending -> Custom Price USD)
+        // 6. Create Subscription
+        // We assume 'uppypro_inbox' is base, and 'planKey' is the AI/Tier level (e.g. corporate_medium)
+        // Or if corporate plan includes base, we set both? 
+        // Our system likely uses AI key for pricing tier.
+
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
-            status: 'pending', // Waiting for payment
+            status: 'pending',
             base_product_key: 'uppypro_inbox',
-            ai_product_key: 'uppypro_enterprise',
+            ai_product_key: data.planKey, // Use the selected plan key
             billing_cycle: 'monthly',
-            custom_price_usd: data.monthlyPrice
+            custom_price_usd: null // Clear USD
+            // We don't have custom_price_try yet in schema, relying on products.pricing table
         });
 
-        // 7. Generate Invite Token (Custom, not Supabase magic link)
+        // 7. Generate Invite Token
         const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
         await supabaseAdmin.from("enterprise_invite_tokens").insert({
             token,
@@ -119,7 +132,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             expires_at: expiresAt.toISOString()
         });
 
-        // 8. Send Email with invite link
+        // 8. Send Email
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
         const inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
 
@@ -133,7 +146,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 <div style="max-width:600px;margin:0 auto;padding:30px;background:#fff;border-radius:8px">
 <h2 style="color:#1e293b;margin:0 0 20px">Kurumsal Üyeliğiniz Hazır</h2>
 <p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.contactName}</b>, <b>${data.billingType === 'corporate' ? data.companyName : data.fullName}</b> için abonelik tanımlandı.</p>
-<p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal<br><b>Aylık:</b> $${data.monthlyPrice.toLocaleString('en-US')}</p>
+<p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal (${data.planKey.replace('uppypro_corporate_', '').toUpperCase()})<br><b>Aylık:</b> ${priceTl.toLocaleString('tr-TR')} TL + KDV</p>
 <a href="${inviteLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
 </div></body></html>`
         });

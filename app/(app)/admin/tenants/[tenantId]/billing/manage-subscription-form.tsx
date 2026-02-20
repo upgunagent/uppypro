@@ -15,54 +15,46 @@ interface Subscription {
     custom_price_usd?: number;
 }
 
-interface ManageSubscriptionFormProps {
-    tenantId: string;
-    subscription: Subscription | null;
-    inboxPrice: number; // USD
-    aiPrice: number;    // USD
-    usdRate: number;
-}
-
-export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiPrice, usdRate }: ManageSubscriptionFormProps) {
-    // Determine current selection
-    // simple logic: if enterprise key present -> enterprise
-    // else if ai key present -> ai
-    // else -> inbox
-
-    let initialPlan = 'inbox';
-    if (subscription?.ai_product_key === 'uppypro_enterprise') initialPlan = 'enterprise';
-    else if (subscription?.ai_product_key === 'uppypro_ai') initialPlan = 'ai';
-
-    // Init price from USD if available, else try fallback (legacy / 100 / rate?) or empty
-    let initialPriceStr = "";
-    if (subscription?.custom_price_usd) {
-        initialPriceStr = subscription.custom_price_usd.toString();
-    } else if (subscription?.custom_price_try) {
-        // Legacy fallback: Convert TR cent to USD roughly or just show 0 to force update
-        // user should update it clearly
-        initialPriceStr = (subscription.custom_price_try / 100 / usdRate).toFixed(2);
+export function ManageSubscriptionForm({ tenantId, subscription, pricing }: {
+    tenantId: string,
+    subscription: any,
+    pricing: {
+        inbox: number,
+        ai: number,
+        corporate_small: number,
+        corporate_medium: number,
+        corporate_large: number,
+        corporate_xl: number
     }
+}) {
+    // Determine current selection
+    let initialPlan = 'inbox';
+    if (subscription?.ai_product_key === 'uppypro_ai') initialPlan = 'ai';
+    else if (subscription?.ai_product_key === 'uppypro_corporate_small') initialPlan = 'corporate_small';
+    else if (subscription?.ai_product_key === 'uppypro_corporate_medium') initialPlan = 'corporate_medium';
+    else if (subscription?.ai_product_key === 'uppypro_corporate_large') initialPlan = 'corporate_large';
+    else if (subscription?.ai_product_key === 'uppypro_corporate_xl') initialPlan = 'corporate_xl';
 
     const [plan, setPlan] = useState(initialPlan);
-    const [price, setPrice] = useState(initialPriceStr);
+    const [price, setPrice] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
-        // Append extra logic if needed, but actions can handle raw formData
-        // Manually adding state values if they aren't controlled inputs in form (they are, but state ensures visuals)
-
         const res = await updateSubscription(formData);
 
         if (res?.error) {
             alert(res.error);
         } else {
-            // Success feedback
             router.refresh();
         }
         setLoading(false);
     }
+
+    const formatPrice = (amount: number) => {
+        return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(amount);
+    };
 
     return (
         <form action={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -73,74 +65,81 @@ export function ManageSubscriptionForm({ tenantId, subscription, inboxPrice, aiP
 
             <input type="hidden" name="tenantId" value={tenantId} />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Plan Selection Cards */}
-                <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'inbox' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900">UppyPro Inbox</span>
-                        <input type="radio" name="planType" value="inbox" className="sr-only" checked={plan === 'inbox'} onChange={() => setPlan('inbox')} />
-                        {plan === 'inbox' && <Check className="w-4 h-4 text-primary" />}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm text-slate-900 font-bold">${inboxPrice}</span>
-                        <span className="text-xs text-slate-500">≈ {new Intl.NumberFormat('tr-TR').format(inboxPrice * usdRate)} TL</span>
-                    </div>
-                </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Standard Plans */}
+                <PlanOption
+                    id="inbox"
+                    title="UppyPro Inbox"
+                    price={formatPrice(pricing.inbox)}
+                    selected={plan === 'inbox'}
+                    onSelect={() => setPlan('inbox')}
+                />
 
-                <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'ai' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900">UppyPro AI</span>
-                        <input type="radio" name="planType" value="ai" className="sr-only" checked={plan === 'ai'} onChange={() => setPlan('ai')} />
-                        {plan === 'ai' && <Check className="w-4 h-4 text-primary" />}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm text-slate-900 font-bold">${aiPrice}</span>
-                        <span className="text-xs text-slate-500">≈ {new Intl.NumberFormat('tr-TR').format(aiPrice * usdRate)} TL</span>
-                    </div>
-                </label>
+                <PlanOption
+                    id="ai"
+                    title="UppyPro AI"
+                    price={formatPrice(pricing.ai)}
+                    selected={plan === 'ai'}
+                    onSelect={() => setPlan('ai')}
+                />
 
-                <label className={`cursor-pointer border rounded-xl p-4 flex flex-col gap-2 transition-all ${plan === 'enterprise' ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900">UppyPro Kurumsal</span>
-                        <input type="radio" name="planType" value="enterprise" className="sr-only" checked={plan === 'enterprise'} onChange={() => setPlan('enterprise')} />
-                        {plan === 'enterprise' && <Check className="w-4 h-4 text-primary" />}
+                {/* Corporate Plans */}
+                <div className="col-span-1 md:col-span-2 border-t my-2 pt-4">
+                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Kurumsal Paketler</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <PlanOption
+                            id="corporate_small"
+                            title="Kurumsal Small"
+                            price={formatPrice(pricing.corporate_small)}
+                            selected={plan === 'corporate_small'}
+                            onSelect={() => setPlan('corporate_small')}
+                        />
+                        <PlanOption
+                            id="corporate_medium"
+                            title="Kurumsal Medium"
+                            price={formatPrice(pricing.corporate_medium)}
+                            selected={plan === 'corporate_medium'}
+                            onSelect={() => setPlan('corporate_medium')}
+                        />
+                        <PlanOption
+                            id="corporate_large"
+                            title="Kurumsal Large"
+                            price={formatPrice(pricing.corporate_large)}
+                            selected={plan === 'corporate_large'}
+                            onSelect={() => setPlan('corporate_large')}
+                        />
+                        <PlanOption
+                            id="corporate_xl"
+                            title="Kurumsal XL"
+                            price={formatPrice(pricing.corporate_xl)}
+                            selected={plan === 'corporate_xl'}
+                            onSelect={() => setPlan('corporate_xl')}
+                        />
                     </div>
-                    <span className="text-sm text-slate-500">Özel Teklif</span>
-                </label>
+                </div>
             </div>
 
-            {/* Custom Price Input for Enterprise */}
-            {plan === 'enterprise' && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Özel Aylık Ücret (USD)</label>
-                    <div className="relative">
-                        <Input
-                            type="number"
-                            name="customPrice"
-                            placeholder="Örn: 1000"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            required={plan === 'enterprise'}
-                        />
-                        <span className="absolute right-3 top-2.5 text-slate-400 text-sm">USD</span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                        Bu fiyat sadece bu işletme için geçerli olacaktır.
-                        {price && (
-                            <span className="text-orange-600 ml-1 font-bold">
-                                (≈ {new Intl.NumberFormat('tr-TR').format(Number(price) * usdRate)} TL)
-                            </span>
-                        )}
-                    </p>
-                </div>
-            )}
-
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-4 border-t">
                 <Button type="submit" disabled={loading}>
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Değişiklikleri Kaydet
                 </Button>
             </div>
         </form>
+    );
+}
+
+function PlanOption({ id, title, price, selected, onSelect, fullWidth }: { id: string, title: string, price: string, selected: boolean, onSelect: () => void, fullWidth?: boolean }) {
+    return (
+        <label className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-all ${selected ? 'border-primary ring-2 ring-primary/10 bg-primary/5' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'} ${fullWidth ? 'w-full' : ''}`}>
+            <div className="flex items-center gap-3">
+                <input type="radio" name="planType" value={id} className="w-4 h-4 text-primary border-slate-300 focus:ring-primary" checked={selected} onChange={onSelect} />
+                <div className="flex flex-col">
+                    <span className="font-semibold text-slate-900 text-sm">{title}</span>
+                    <span className="text-xs text-slate-500 font-medium">{price}</span>
+                </div>
+            </div>
+            {selected && <Check className="w-4 h-4 text-primary" />}
+        </label>
     );
 }

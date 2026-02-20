@@ -383,6 +383,45 @@ export async function retrySubscription(referenceCode: string): Promise<any> {
     }
 }
 
+export async function activateSubscription(subscriptionReferenceCode: string): Promise<any> {
+    const requestBody = JSON.stringify({
+        locale: IyzicoConfig.locale,
+        conversationId: IyzicoConfig.conversationId,
+        subscriptionReferenceCode: subscriptionReferenceCode
+    });
+
+    const randomString = generateRandomString();
+    const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}/activate`;
+
+    const authString = generateIyzicoV2Header(
+        uri,
+        IyzicoConfig.apiKey,
+        IyzicoConfig.secretKey,
+        randomString,
+        requestBody
+    );
+
+    console.log(`[IYZICO] Activating subscription ${subscriptionReferenceCode}`);
+
+    try {
+        const response = await fetch(uri, {
+            method: 'POST',
+            headers: getIyzicoHeaders(authString, randomString),
+            body: requestBody
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error: any) {
+        console.error('[IYZICO] Activate Exception:', error);
+        return {
+            status: 'failure',
+            errorMessage: error.message,
+            errorDetails: error
+        };
+    }
+}
+
 export async function getSubscriptionCardUpdateResult(token: string): Promise<any> {
     return await getSubscriptionCheckoutFormResult(token);
 }
@@ -668,6 +707,14 @@ export async function getSubscriptionDetails(subscriptionReferenceCode: string):
         });
 
         const result = await response.json();
+
+        if (result.status === 'success' && result.data) {
+            return {
+                ...result,
+                ...result.data
+            };
+        }
+
         return result;
     } catch (error: any) {
         console.error('[IYZICO] Get Subscription Details Exception:', error);

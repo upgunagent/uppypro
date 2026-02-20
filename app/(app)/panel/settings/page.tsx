@@ -87,7 +87,18 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
     // 3. Subscription Tab Content
     const { getUsdExchangeRate } = await import("@/lib/currency");
+    const { getSubscriptionDetails } = await import("@/lib/iyzico");
+    const { PaymentHistoryTable } = await import("@/components/subscription/payment-history-table");
+
     const usdRate = await getUsdExchangeRate();
+
+    let iyzicoSubscriptionDetails = null;
+    if (subscription?.iyzico_subscription_reference_code) {
+        const details = await getSubscriptionDetails(subscription.iyzico_subscription_reference_code);
+        if (details?.status === 'success') {
+            iyzicoSubscriptionDetails = details;
+        }
+    }
 
     const subscriptionTab = (
         <div className="space-y-6">
@@ -100,6 +111,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
                 priceUsd={pricing?.monthly_price_usd}
                 usdRate={usdRate}
             />
+
+            <div className="space-y-4">
+                <h3 className="font-bold text-lg text-slate-900">Ödeme Geçmişi</h3>
+                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} />
+            </div>
+
             <PaymentMethodsCard methods={paymentMethods || []} subscription={subscription} />
             <PasswordChangeCard />
         </div>

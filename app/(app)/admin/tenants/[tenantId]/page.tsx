@@ -58,28 +58,44 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const wa = channels?.find((c) => c.channel === "whatsapp");
     const ig = channels?.find((c) => c.channel === "instagram");
 
-    // Fetch Standard Pricing (USD) and Live Rate
+    // Fetch Standard Pricing (TL)
     const { data: prices } = await adminDb
         .from("pricing")
         .select("*")
-        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
+        .in("product_key", [
+            "uppypro_inbox",
+            "uppypro_ai",
+            "uppypro_corporate_small",
+            "uppypro_corporate_medium",
+            "uppypro_corporate_large",
+            "uppypro_corporate_xl"
+        ])
         .eq("billing_cycle", "monthly");
 
-    // Import dynamically to avoid top-level await issues if any, though standard import works
-    const { getUsdExchangeRate } = await import("@/lib/currency");
-    const usdRate = await getUsdExchangeRate();
+    const getPrice = (key: string) => prices?.find(p => p.product_key === key)?.monthly_price_try || 0;
 
-    const inboxPriceUsd = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
-    const aiPriceUsd = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
-
-    // Calculate TL estimate
-    const inboxPrice = Math.round(inboxPriceUsd * usdRate * 100); // in cents
-    const aiPrice = Math.round(aiPriceUsd * usdRate * 100); // in cents
+    const pricing = {
+        inbox: getPrice("uppypro_inbox"),
+        ai: getPrice("uppypro_ai"),
+        corporate_small: getPrice("uppypro_corporate_small"),
+        corporate_medium: getPrice("uppypro_corporate_medium"),
+        corporate_large: getPrice("uppypro_corporate_large"),
+        corporate_xl: getPrice("uppypro_corporate_xl")
+    };
 
     // Check Package for Header
     const sub = subscription;
-    const isEnterprise = sub?.ai_product_key === 'uppypro_enterprise';
+    const isEnterprise = sub?.ai_product_key?.includes('corporate') || sub?.ai_product_key === 'uppypro_enterprise';
     const isPro = sub?.ai_product_key === 'uppypro_ai';
+
+    // Determine current plan display name
+    let currentPlanName = "Inbox";
+    if (sub?.ai_product_key === 'uppypro_ai') currentPlanName = "UppyPro AI";
+    else if (sub?.ai_product_key === 'uppypro_corporate_small') currentPlanName = "Kurumsal (Small)";
+    else if (sub?.ai_product_key === 'uppypro_corporate_medium') currentPlanName = "Kurumsal (Medium)";
+    else if (sub?.ai_product_key === 'uppypro_corporate_large') currentPlanName = "Kurumsal (Large)";
+    else if (sub?.ai_product_key === 'uppypro_corporate_xl') currentPlanName = "Kurumsal (XL)";
+    else if (sub?.ai_product_key === 'uppypro_enterprise') currentPlanName = "Kurumsal (Özel)";
 
     // Composed Content
 
@@ -102,31 +118,36 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     // Tab 2: Profile (Billing Info)
     const profileTab = <AdminBillingForm billingInfo={billingInfo} tenantId={tenantId} ownerProfile={ownerProfile} />;
 
-    // Tab 3: Subscription
+    // 3. Subscription Tab Content
+    const { getUsdExchangeRate } = await import("@/lib/currency");
+    const { getSubscriptionDetails } = await import("@/lib/iyzico");
+    const { PaymentHistoryTable } = await import("@/components/subscription/payment-history-table");
+
+    // Fetch Iyzico Details if available
+    let iyzicoSubscriptionDetails = null;
+    if (subscription?.iyzico_subscription_reference_code) {
+        const details = await getSubscriptionDetails(subscription.iyzico_subscription_reference_code);
+        if (details?.status === 'success') {
+            iyzicoSubscriptionDetails = details;
+        }
+    }
+
     const subscriptionTab = (
         <div className="space-y-8">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <ManageSubscriptionForm
                     tenantId={tenantId}
                     subscription={subscription}
-                    inboxPrice={inboxPriceUsd}
-                    aiPrice={aiPriceUsd}
-                    usdRate={usdRate}
+                    pricing={pricing}
                 />
 
-                {/* Plan Summary Card - Reusing Logic from previous page manually or component */}
+                {/* Plan Summary Card */}
                 <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm h-fit">
                     <h3 className="font-bold text-lg text-slate-900 mb-6">Plan Özeti</h3>
                     <div className="space-y-4">
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                            <span className="text-slate-500">Ana Paket</span>
-                            <span className="font-medium text-slate-900">UppyPro Inbox</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                            <span className="text-slate-500">AI Paketi</span>
-                            <span className="font-medium text-slate-900">
-                                {isEnterprise ? "UppyPro Kurumsal" : isPro ? "UppyPro AI" : "Yok"}
-                            </span>
+                            <span className="text-slate-500">Mevcut Paket</span>
+                            <span className="font-medium text-slate-900">{currentPlanName}</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                             <span className="text-slate-500">Durum</span>
@@ -142,31 +163,20 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                             <span className="text-slate-500">Tanımlı Ücret</span>
                             <span className="font-bold text-lg text-slate-900">
                                 {sub?.custom_price_usd
-                                    ? (
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-purple-600">${sub.custom_price_usd} (Özel)</span>
-                                            <span className="text-xs text-slate-500 font-normal">
-                                                ≈ {(sub.custom_price_usd * usdRate).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL
-                                            </span>
-                                        </div>
-                                    )
-                                    : sub?.custom_price_try
-                                        ? (
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-purple-600">${(sub.custom_price_try / 100 / usdRate).toLocaleString('en-US', { maximumFractionDigits: 2 })} (TR Bazlı)</span>
-                                                <span className="text-xs text-slate-500 font-normal">
-                                                    = {(sub.custom_price_try / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
-                                                </span>
-                                            </div>
-                                        )
-                                        : (
-                                            <div className="flex flex-col items-end">
-                                                <span>${isPro ? aiPriceUsd : inboxPriceUsd}</span>
-                                                <span className="text-xs text-slate-500 font-normal">
-                                                    ≈ {new Intl.NumberFormat('tr-TR').format((isPro ? aiPriceUsd : inboxPriceUsd) * usdRate)} TL
-                                                </span>
-                                            </div>
-                                        )
+                                    ? <span className="text-purple-600">${sub.custom_price_usd} (Özel USD)</span>
+                                    : <span>
+                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(
+                                            (sub?.custom_price_try && sub.custom_price_try > 0)
+                                                ? sub.custom_price_try
+                                                : (pricing.inbox + (
+                                                    sub?.ai_product_key === 'uppypro_ai' ? pricing.ai :
+                                                        sub?.ai_product_key === 'uppypro_corporate_small' ? pricing.corporate_small :
+                                                            sub?.ai_product_key === 'uppypro_corporate_medium' ? pricing.corporate_medium :
+                                                                sub?.ai_product_key === 'uppypro_corporate_large' ? pricing.corporate_large :
+                                                                    sub?.ai_product_key === 'uppypro_corporate_xl' ? pricing.corporate_xl : 0
+                                                ))
+                                        )}
+                                    </span>
                                 }
                             </span>
                         </div>
@@ -174,38 +184,10 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                 </div>
             </div>
 
-            {/* Payment History */}
+            {/* Payment History (Iyzico) */}
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-lg text-slate-900 mb-6">Ödeme Geçmişi</h3>
-                <Table>
-                    <TableHeader className="bg-slate-50">
-                        <TableRow>
-                            <TableHead>Tarih</TableHead>
-                            <TableHead>Tutar</TableHead>
-                            <TableHead>Tip</TableHead>
-                            <TableHead>Durum</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {payments?.map((payment) => (
-                            <TableRow key={payment.id}>
-                                <TableCell>{new Date(payment.created_at).toLocaleDateString("tr-TR")}</TableCell>
-                                <TableCell>{(payment.amount / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" })}</TableCell>
-                                <TableCell className="capitalize">{payment.type}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50">Ödendi</Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {(!payments || payments.length === 0) && (
-                            <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center text-slate-500">
-                                    Kayıt bulunamadı.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                <h3 className="font-bold text-lg text-slate-900 mb-6">Ödeme Geçmişi (Iyzico)</h3>
+                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} />
             </div>
         </div>
     );

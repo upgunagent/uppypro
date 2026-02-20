@@ -292,7 +292,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
     const aiPriceVal = aiPrice || 79;
     const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
 
-    const formatPrice = (p: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(p);
+    const formatPrice = (p: number) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(p);
 
     return (
         <section id="pricing" className="py-12 md:py-24 bg-white relative overflow-hidden">
@@ -318,7 +318,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <p className="text-slate-100 text-sm mb-6">Küçük işletmeler ve butikler için.</p>
                         <div className="flex items-baseline gap-1 mb-6">
                             <span className="text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
-                            <span className="text-slate-200">/ay</span>
+                            <span className="text-slate-200 text-sm ml-1">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=base">
                             <Button className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
@@ -346,7 +346,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         <p className="text-slate-400 text-sm mb-6">Otomasyon isteyen büyüyen markalar.</p>
                         <div className="flex items-baseline gap-1 mb-6">
                             <span className="text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
-                            <span className="text-slate-500">/ay</span>
+                            <span className="text-slate-500 text-sm ml-1">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=ai_starter">
                             <Button className="w-full h-12 rounded-xl mb-8 bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-lg shadow-orange-500/25">

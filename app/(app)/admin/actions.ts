@@ -23,9 +23,7 @@ export async function updateSubscription(formData: FormData) {
     }
 
     const tenantId = formData.get("tenantId") as string;
-    const planType = formData.get("planType") as string; // 'inbox', 'ai', 'enterprise'
-    const customPriceRaw = formData.get("customPrice") as string; // '2499' (TL) -> need to convert to Kurus
-
+    const planType = formData.get("planType") as string;
     if (!tenantId || !planType) {
         return { error: "Missing required fields." };
     }
@@ -37,18 +35,17 @@ export async function updateSubscription(formData: FormData) {
 
     if (planType === 'ai') {
         aiProductKey = 'uppypro_ai';
-    } else if (planType === 'enterprise') {
-        aiProductKey = 'uppypro_enterprise';
-        if (customPriceRaw) {
-            // Treat input as USD direct value
-            customPrice = parseFloat(customPriceRaw);
-        }
+    } else if (planType === 'corporate_small') {
+        aiProductKey = 'uppypro_corporate_small';
+    } else if (planType === 'corporate_medium') {
+        aiProductKey = 'uppypro_corporate_medium';
+    } else if (planType === 'corporate_large') {
+        aiProductKey = 'uppypro_corporate_large';
+    } else if (planType === 'corporate_xl') {
+        aiProductKey = 'uppypro_corporate_xl';
     }
 
     // Update Subscription
-    // We assume an active subscription exists or needs to be created. 
-    // Ideally we blindly upsert/update the active one.
-
     const adminDb = createAdminClient();
 
     // First, find existing subscription
