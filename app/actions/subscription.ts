@@ -173,19 +173,23 @@ export async function cancelUserSubscription(reason: string, details?: string) {
     }
 
     // Call Iyzico
+    let iyzicoError: string | null = null;
     if (subscription.iyzico_subscription_reference_code) {
         try {
             const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
+            console.log("[CANCEL] Iyzico cancel result:", JSON.stringify(result));
             if (result.status !== 'success') {
-                return { error: "Iyzico iptal hatası: " + result.errorMessage };
+                // Iyzico hatası olabilir ama DB'de yine de iptal yap
+                iyzicoError = result.errorMessage || "Bilinmeyen Iyzico hatası";
+                console.warn(`[CANCEL] Iyzico cancel failed for ref ${subscription.iyzico_subscription_reference_code}: ${iyzicoError}. Proceeding with DB cancel.`);
             }
         } catch (e: any) {
-            console.error("Iyzico Cancel Error:", e);
-            return { error: "Ödeme sağlayıcı hatası: " + e.message };
+            iyzicoError = e.message;
+            console.error("[CANCEL] Iyzico Cancel Exception:", e);
         }
     }
 
-    // Update DB
+    // DB'de iptali her durumda yap
     const { error } = await adminDb
         .from("subscriptions")
         .update({
@@ -201,6 +205,15 @@ export async function cancelUserSubscription(reason: string, details?: string) {
     }
 
     revalidatePath("/panel/settings");
+
+    // Iyzico hatası varsa uyarı ile başarılı dön
+    if (iyzicoError) {
+        return {
+            success: true,
+            warning: `Aboneliğiniz iptal edildi, ancak ödeme sağlayıcı tarafında bir uyarı oluştu: ${iyzicoError}. Otomatik ödemeler durdurulamış olabilir, lütfen kontrol edin.`
+        };
+    }
+
     return { success: true };
 }
 
