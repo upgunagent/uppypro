@@ -29,7 +29,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         // Fetch Price for selected plan
         const { data: pricingData, error: priceError } = await supabaseAdmin
             .from('pricing')
-            .select('monthly_price_try')
+            .select('monthly_price_try, iyzico_pricing_plan_reference_code, products(name)')
             .eq('product_key', data.planKey)
             .eq('billing_cycle', 'monthly')
             .single();
@@ -39,6 +39,8 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         }
 
         const priceTl = pricingData.monthly_price_try;
+        const totalWithKdv = priceTl * 1.2;
+        const productName = (pricingData.products as any)?.name || `UppyPro Kurumsal (${data.planKey.replace('uppypro_corporate_', '').toUpperCase()})`;
 
         // 1. Create User
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
@@ -136,19 +138,89 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
         const inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
 
+        const logoUrl = `${baseUrl}/brand-logo-text.png`;
+        const formattedPrice = priceTl.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+        const formattedTotal = totalWithKdv.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+        const entityName = data.billingType === 'corporate' ? data.companyName : data.fullName;
+
         await resend.emails.send({
             from: EMAIL_FROM,
             to: data.email,
             subject: 'UppyPro Kurumsal Davet',
             html: `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:20px;font-family:Arial,sans-serif">
-<div style="max-width:600px;margin:0 auto;padding:30px;background:#fff;border-radius:8px">
-<h2 style="color:#1e293b;margin:0 0 20px">Kurumsal Üyeliğiniz Hazır</h2>
-<p style="color:#64748b;margin:0 0 20px">Sayın <b>${data.contactName}</b>, <b>${data.billingType === 'corporate' ? data.companyName : data.fullName}</b> için abonelik tanımlandı.</p>
-<p style="color:#64748b;margin:0 0 20px"><b>Paket:</b> UppyPro Kurumsal (${data.planKey.replace('uppypro_corporate_', '').toUpperCase()})<br><b>Aylık:</b> ${priceTl.toLocaleString('tr-TR')} TL + KDV</p>
-<a href="${inviteLink}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Aboneliği Başlat</a>
-</div></body></html>`
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurumsal Üyeliğiniz Hazır</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; color: #334155; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+        .header { background-color: #ffffff; padding: 40px 20px 20px 20px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .logo { max-height: 50px; margin-bottom: 20px; }
+        .header h1 { color: #0f172a; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .content { padding: 40px 30px; }
+        .greeting { font-size: 16px; color: #334155; margin-bottom: 24px; }
+        .details-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .details-title { font-weight: 600; color: #0f172a; margin-bottom: 16px; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .detail-label { color: #64748b; }
+        .detail-value { font-weight: 600; color: #0f172a; }
+        .message { font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px; }
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+        .info-box { background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #ea580c, #f97316); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="${logoUrl}" alt="UPGUN AI" class="logo">
+            <h1>Kurumsal Üyeliğiniz Hazır 🎉</h1>
+        </div>
+        <div class="content">
+            <p class="greeting">Sayın <strong>${data.contactName}</strong>,</p>
+            <p class="message"><strong>${entityName}</strong> için UppyPro kurumsal aboneliğiniz tanımlanmıştır. Aşağıdaki butona tıklayarak aboneliğinizi başlatabilirsiniz.</p>
+
+            <div class="details-card">
+                <div class="details-title">Abonelik Bilgileri</div>
+                <div class="detail-row">
+                    <span class="detail-label">Paket:</span>
+                    <span class="detail-value">${productName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Aylık Ücret:</span>
+                    <span class="detail-value">${formattedPrice} TL + KDV</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Toplam (KDV Dahil):</span>
+                    <span class="detail-value">${formattedTotal} TL / Ay</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                ℹ️ Aboneliğinizi başlatmak için aşağıdaki butona tıklayın. Sözleşme onayı ve ödeme adımlarını tamamladıktan sonra hesabınız aktif olacaktır.
+            </div>
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${inviteLink}" class="cta-button">Aboneliği Başlat →</a>
+            </div>
+
+            <p class="message" style="margin-top: 40px;">
+                Herhangi bir sorunuz olursa bizimle iletişime geçmekten çekinmeyin.
+                <br><br>
+                Saygılarımızla,<br>
+                <strong>UPGUN AI Ekibi</strong><br>
+                <a href="mailto:info@upgunai.com" style="color: #64748b; text-decoration: none; font-size: 14px;">info@upgunai.com</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p style="margin-bottom: 10px;">© ${new Date().getFullYear()} UPGUN AI. Tüm hakları saklıdır.</p>
+            <p>UPGUN AI - Office İstanbul, Nisbetiye Mh. Gazi Güçnar Sk. No: 4, Zincirlikuyu, Beşiktaş, İstanbul</p>
+        </div>
+    </div>
+</body>
+</html>`
         });
 
         return { success: true };

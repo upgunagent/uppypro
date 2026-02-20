@@ -1,7 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { EnterpriseInviteFlow } from "./invite-flow";
-import { getExchangeRate } from "@/actions/pricing";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -43,7 +42,6 @@ export default async function EnterpriseInvitePage({
     }
 
     // Check if subscription is already active
-    // We do this because we don't mark token as used immediately after payment anymore
     const { data: existingSub } = await adminDb
         .from("subscriptions")
         .select("status")
@@ -73,7 +71,6 @@ export default async function EnterpriseInvitePage({
         );
     }
 
-    // Check if already used logic (fallback)
     if (invite.used_at) {
         redirect("/login");
     }
@@ -102,10 +99,6 @@ export default async function EnterpriseInvitePage({
         );
     }
 
-    if (payment === 'fail') {
-        // Show error toast or message if redirected back with fail
-    }
-
     // Get billing info
     const { data: billingInfo } = await adminDb
         .from("billing_info")
@@ -113,14 +106,19 @@ export default async function EnterpriseInvitePage({
         .eq("tenant_id", invite.tenant_id)
         .single();
 
-    // Calculate Price
-    const priceUsd = subscription.custom_price_usd || 0;
-    const exchangeRate = await getExchangeRate();
+    // Fetch TL pricing from DB using the subscription's product key
+    const productKey = subscription.ai_product_key || 'uppypro_corporate_medium';
+    const { data: pricingData } = await adminDb
+        .from('pricing')
+        .select('monthly_price_try, iyzico_pricing_plan_reference_code, products(name)')
+        .eq('product_key', productKey)
+        .eq('billing_cycle', 'monthly')
+        .single();
 
-
-    // Calculate TL Price (Price USD * Rate * 1.20 VAT)
-    const priceTryExVat = priceUsd * exchangeRate;
-    const priceTryTotal = priceTryExVat * 1.20;
+    const basePriceTry = pricingData?.monthly_price_try || 0;
+    const totalPriceTry = basePriceTry * 1.2; // KDV dahil
+    const planName = (pricingData?.products as any)?.name || 'UppyPro Kurumsal';
+    const iyzicoPlanCode = pricingData?.iyzico_pricing_plan_reference_code || '';
 
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -128,9 +126,10 @@ export default async function EnterpriseInvitePage({
                 tenant={tenant}
                 billingInfo={billingInfo}
                 subscription={subscription}
-                priceUsd={priceUsd}
-                priceTry={priceTryTotal}
-                exchangeRate={exchangeRate}
+                planName={planName}
+                basePriceTry={basePriceTry}
+                totalPriceTry={totalPriceTry}
+                iyzicoPlanCode={iyzicoPlanCode}
                 inviteToken={token}
                 paymentError={payment === 'fail'}
             />

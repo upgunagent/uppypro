@@ -12,9 +12,10 @@ type EnterpriseInviteFlowProps = {
     tenant: any;
     billingInfo: any;
     subscription: any;
-    priceUsd: number;
-    priceTry: number;
-    exchangeRate: number;
+    planName: string;
+    basePriceTry: number;
+    totalPriceTry: number;
+    iyzicoPlanCode: string;
     inviteToken: string;
     paymentError?: boolean;
 };
@@ -23,9 +24,10 @@ export function EnterpriseInviteFlow({
     tenant,
     billingInfo,
     subscription,
-    priceUsd,
-    priceTry,
-    exchangeRate,
+    planName,
+    basePriceTry,
+    totalPriceTry,
+    iyzicoPlanCode,
     inviteToken,
     paymentError
 }: EnterpriseInviteFlowProps) {
@@ -36,7 +38,6 @@ export function EnterpriseInviteFlow({
     const [showKvkk, setShowKvkk] = useState(false);
     const [step, setStep] = useState<'agreements' | 'payment'>('agreements');
 
-    // Use billing info if available, otherwise fallback to tenant (though billing info should exist for corporate invites)
     const buyerName = billingInfo?.billing_type === 'individual'
         ? (billingInfo?.full_name || tenant.name)
         : (billingInfo?.company_name || tenant.name);
@@ -54,12 +55,15 @@ export function EnterpriseInviteFlow({
             tckn: billingInfo?.tckn,
         },
         plan: {
-            name: "UppyPro Kurumsal",
-            price: priceTry / 1.20, // Approx base price
-            total: priceTry,
+            name: planName,
+            price: basePriceTry,
+            total: totalPriceTry,
         },
         date: new Date().toLocaleDateString('tr-TR'),
     };
+
+    const formattedBase = basePriceTry.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+    const formattedTotal = totalPriceTry.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
 
     if (step === 'payment') {
         return (
@@ -86,19 +90,25 @@ export function EnterpriseInviteFlow({
                     </div>
                 )}
 
-                <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 mb-8 flex justify-between items-center">
-                    <div>
-                        <div className="text-sm text-orange-800 font-medium">Aylık Tutar</div>
-                        <div className="text-2xl font-bold text-orange-900">{priceTry.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL</div>
-                        <div className="text-xs text-orange-700 mt-1">({priceUsd} USD + KDV karşılığı)</div>
-                    </div>
+                <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 mb-8">
+                    <div className="text-sm text-orange-800 font-medium">Aylık Tutar</div>
+                    <div className="text-2xl font-bold text-orange-900">{formattedTotal} TL</div>
+                    <div className="text-xs text-orange-700 mt-1">({formattedBase} TL + KDV dahil)</div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 flex items-start gap-3">
+                    <div className="text-slate-400 mt-0.5">🔒</div>
+                    <p className="text-sm text-slate-600">
+                        Ödemeniz <strong>Iyzico</strong> güvencesiyle 256-bit SSL korumalı altyapı üzerinden alınacaktır. Kart bilgileriniz Iyzico tarafından saklanacaktır.
+                    </p>
                 </div>
 
                 <PaymentForm
                     tenantId={tenant.id}
-                    amount={priceTry}
+                    amount={totalPriceTry}
                     inviteToken={inviteToken}
                     userData={agreementData.buyer}
+                    pricingPlanReferenceCode={iyzicoPlanCode}
                 />
             </div>
         );
@@ -117,19 +127,15 @@ export function EnterpriseInviteFlow({
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8 space-y-4 text-sm text-slate-700">
                 <div className="flex justify-between border-b border-slate-200 pb-2">
                     <span>Hizmet:</span>
-                    <span className="font-semibold">UppyPro Kurumsal</span>
+                    <span className="font-semibold">{planName}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-200 pb-2">
-                    <span>Aylık Bedel (USD):</span>
-                    <span className="font-semibold">{priceUsd.toFixed(2)} USD + KDV</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                    <span>Güncel Kur (TCMB):</span>
-                    <span className="font-semibold">{exchangeRate.toFixed(4)} TL</span>
+                    <span>Aylık Bedel:</span>
+                    <span className="font-semibold">{formattedBase} TL + KDV</span>
                 </div>
                 <div className="flex justify-between pt-2 text-base">
-                    <span className="font-bold text-slate-900">Toplam (TL):</span>
-                    <span className="font-bold text-orange-600">{priceTry.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL</span>
+                    <span className="font-bold text-slate-900">Toplam (KDV Dahil):</span>
+                    <span className="font-bold text-orange-600">{formattedTotal} TL / Ay</span>
                 </div>
             </div>
 
@@ -145,7 +151,7 @@ export function EnterpriseInviteFlow({
                             Ön Bilgilendirme Formu
                         </span> ve <span className="font-medium text-slate-900 hover:underline" onClick={(e) => { e.preventDefault(); setShowDistanceAgreement(true); }}>
                             Mesafeli Satış Sözleşmesi
-                        </span>'ni okudum, onaylıyorum.
+                        </span>&apos;ni okudum, onaylıyorum.
                     </label>
                 </div>
 
@@ -158,7 +164,7 @@ export function EnterpriseInviteFlow({
                     <label htmlFor="kvkk" className="text-sm text-slate-600 leading-snug cursor-pointer select-none">
                         <span className="font-medium text-slate-900 hover:underline" onClick={(e) => { e.preventDefault(); setShowKvkk(true); }}>
                             KVKK Aydınlatma Metni
-                        </span>'ni okudum, anladım.
+                        </span>&apos;ni okudum, anladım.
                     </label>
                 </div>
             </div>
