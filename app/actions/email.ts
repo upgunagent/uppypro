@@ -167,14 +167,14 @@ interface SubscriptionWelcomeEmailProps {
     recipientEmail: string;
     recipientName: string;
     planName: string;
-    priceUsd: number;
+    priceFormatted: string;
     billingCycle: string;
     nextPaymentDate: string;
     agreementPdfBuffer?: Buffer;
 }
 
 export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEmailProps) {
-    const { recipientEmail, recipientName, planName, priceUsd, billingCycle, nextPaymentDate, agreementPdfBuffer } = props;
+    const { recipientEmail, recipientName, planName, priceFormatted, billingCycle, nextPaymentDate, agreementPdfBuffer } = props;
 
     const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
 
@@ -222,7 +222,7 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Ücret:</span>
-                    <span class="detail-value">$${priceUsd} / ${billingCycle === 'monthly' ? 'Ay' : 'Yıl'}</span>
+                    <span class="detail-value">${priceFormatted} / ${billingCycle === 'monthly' ? 'Ay' : 'Yıl'}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Sonraki Ödeme Tarihi:</span>

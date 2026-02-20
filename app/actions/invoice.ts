@@ -151,8 +151,11 @@ export async function uploadInvoice(formData: FormData) {
         return { error: "Eksik bilgi." };
     }
 
-    // Supabase Storage'a yükle
-    const fileName = `${tenantId}/${Date.now()}_${file.name}`;
+    // Dosya adını sanitize et (Türkçe karakter ve boşlukları temizle)
+    const safeName = file.name
+        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .replace(/_+/g, '_');
+    const fileName = `${tenantId}/${Date.now()}_${safeName}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     const { data: uploadData, error: uploadError } = await adminDb.storage

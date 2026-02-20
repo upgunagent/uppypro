@@ -161,6 +161,23 @@ export async function POST(request: Request) {
                     const buyerEmail = billingData?.contact_email || result.email || result.customerEmail || "musteri@example.com";
                     const pricePaid = result.paidPrice || 0;
 
+                    let finalPlanName = "UppyPro Abonelik";
+                    let finalPrice = pricePaid;
+
+                    if (pricingPlanReferenceCode) {
+                        const { data: pricingData } = await supabase
+                            .from('pricing')
+                            .select('monthly_price_try, products(name)')
+                            .eq('iyzico_pricing_plan_reference_code', pricingPlanReferenceCode)
+                            .single();
+
+                        if (pricingData) {
+                            finalPlanName = (pricingData.products as any)?.name || finalPlanName;
+                        }
+                    }
+
+                    const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice);
+
                     const agreementHtml = getDistanceSalesAgreementHtml({
                         buyer: {
                             name: buyerName,
@@ -174,9 +191,9 @@ export async function POST(request: Request) {
                             tckn: billingData?.tckn,
                         },
                         plan: {
-                            name: "UppyPro Abonelik",
-                            price: pricePaid / 1.2,
-                            total: pricePaid,
+                            name: finalPlanName,
+                            price: finalPrice / 1.2,
+                            total: finalPrice,
                             priceUsd: 0,
                         },
                         exchangeRate: 0,
@@ -225,8 +242,8 @@ export async function POST(request: Request) {
                     await sendSubscriptionWelcomeEmail({
                         recipientEmail: buyerEmail,
                         recipientName: buyerName,
-                        planName: "UppyPro Abonelik",
-                        priceUsd: 0,
+                        planName: finalPlanName,
+                        priceFormatted: formattedPriceToDisplay,
                         billingCycle: "monthly",
                         nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
                         agreementPdfBuffer: pdfBuffer || undefined

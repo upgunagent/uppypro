@@ -80,19 +80,17 @@ export function getDistanceSalesAgreementHtml(data: AgreementData): string {
 
     <h3>5. Fiyatlandırma ve Ödeme</h3>
     <p>5.1. Alıcı, ödeme adımına geçmeden önce gösterilen toplam bedeli onayladığını kabul eder.</p>
-    <p>5.2. Hizmet bedeli <strong>${data.plan.priceUsd.toFixed(2)} USD/Ay + KDV</strong> olarak belirlenmiştir. Tahsilat, işlem anındaki Türkiye Cumhuriyet Merkez Bankası (TCMB) Efektif Satış kuru üzerinden Türk Lirası'na (TL) çevrilerek yapılır.</p>
-    <p>5.3. İşbu sözleşmenin kurulduğu tarih itibarıyla <strong>1 USD = ${data.exchangeRate.toFixed(4)} TL</strong> kabul edilerek ilk dönem tahsilatı gerçekleştirilir.</p>
-    <p><strong>İlk Dönem Paket Bedeli (KDV Hariç):</strong> ${data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
-    <p><strong>İlk Dönem Tahsil Edilecek Tutar (KDV Dahil):</strong> ${data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+    <p>5.2. Hizmet bedeli <strong>${data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL/Ay + KDV</strong> olarak belirlenmiştir.</p>
+    <p>5.3. <strong>İlk Dönem Tahsil Edilecek Toplam Tutar (KDV Dahil):</strong> ${data.plan.total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
 
     <h3>6. Ödeme, Aylık Otomatik Yenileme ve Tahsilat</h3>
     <p>6.1. Ödeme iyzico güvencesi ile (veya seçilen altyapı) üzerinden alınır.</p>
     <p>6.2. <strong>Aylık Otomatik Yenileme:</strong> Abonelik, Alıcı iptal edene kadar her ay otomatik yenilenir.</p>
-    <p>6.3. <strong>Yenileme Dönemlerinde Fiyatlandırma:</strong> Sonraki aylarda yapılacak tahsilatlarda, paket bedeli olan <strong>${data.plan.priceUsd.toFixed(2)} USD</strong> (artı yürürlükteki KDV oranı), ilgili yenileme günündeki güncel TCMB Döviz Satış kuru üzerinden TL'ye çevrilerek tahsil edilir. Alıcı, kur değişimlerinden kaynaklanabilecek fiyat farkını peşinen kabul eder.</p>
+    <p>6.3. <strong>Yenileme Dönemlerinde Fiyatlandırma:</strong> Sonraki aylarda yapılacak yenilemelerde tahsilatlar, ilgili dönemdeki geçerli TL paket bedeli (artı yürürlükteki KDV oranı) üzerinden gerçekleştirilir.</p>
 
     <h3>7. Kurumsal Paket / Özel Abonelik Linki ile Satın Alma</h3>
     <p>7.1. Kurumsal paketlerde ücret, UPGUN AI tarafından Alıcı’ya özel olarak belirlenebilir ve Alıcı’ya e-posta ile “abonelik linki” gönderilebilir.</p>
-    <p>7.2. Bu link üzerinden Alıcı’ya; paket adı, dönem (aylık), ücret (USD/KDV hariç gösterim olabilir), ödeme anında uygulanacak TL’ye dönüşüm ve KDV dahil toplam tahsilat tutarı gösterilir ve onay alınır.</p>
+    <p>7.2. Bu link üzerinden Alıcı’ya; paket adı, periyot, ücret ve KDV dahil toplam tahsilat tutarı gösterilir ve onay alınır.</p>
     <p>7.3. Linkin güvenliği ve yetkisiz kişilerce paylaşılmaması Alıcı’nın sorumluluğundadır. UPGUN AI, makul şüphe halinde ek doğrulama isteyebilir.</p>
     <p>7.4. Alıcı, linkte belirtilen teklif şartlarını onaylayıp ödemeyi tamamladığında abonelik başlar.</p>
 
