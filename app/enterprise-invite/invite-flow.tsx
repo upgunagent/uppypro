@@ -96,13 +96,6 @@ export function EnterpriseInviteFlow({
                     <div className="text-xs text-orange-700 mt-1">({formattedBase} TL + KDV dahil)</div>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 flex items-start gap-3">
-                    <div className="text-slate-400 mt-0.5">🔒</div>
-                    <p className="text-sm text-slate-600">
-                        Ödemeniz <strong>Iyzico</strong> güvencesiyle 256-bit SSL korumalı altyapı üzerinden alınacaktır. Kart bilgileriniz Iyzico tarafından saklanacaktır.
-                    </p>
-                </div>
-
                 <PaymentForm
                     tenantId={tenant.id}
                     amount={totalPriceTry}

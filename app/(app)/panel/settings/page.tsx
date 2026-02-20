@@ -52,10 +52,15 @@ export default async function SettingsPage(props: SettingsPageProps) {
     let pricing = null;
     let allPrices = [];
 
-    // Always fetch pricing for standard plans
+    // Always fetch pricing for standard plans + the current subscription's plan
+    const productKeys = ['uppypro_inbox', 'uppypro_ai'];
+    if (subscription?.ai_product_key && !productKeys.includes(subscription.ai_product_key)) {
+        productKeys.push(subscription.ai_product_key);
+    }
+
     const { data: prices } = await supabase.from("pricing")
         .select("*")
-        .in("product_key", ['uppypro_inbox', 'uppypro_ai'])
+        .in("product_key", productKeys)
         .eq("billing_cycle", subscription?.billing_cycle || 'monthly');
 
     allPrices = prices || [];

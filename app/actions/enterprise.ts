@@ -203,7 +203,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             </div>
 
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${inviteLink}" class="cta-button">Aboneliği Başlat →</a>
+                <a href="${inviteLink}" style="display: inline-block; background: linear-gradient(135deg, #ea580c, #f97316); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px;">Aboneliği Başlat →</a>
             </div>
 
             <p class="message" style="margin-top: 40px;">
