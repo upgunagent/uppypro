@@ -161,16 +161,12 @@ export function SubscriptionCard({
         if (!cancelReason) return;
         setIsLoading(true);
         try {
-            const result = await cancelUserSubscription(cancelReason, cancelDetails) as any;
+            const result = await cancelUserSubscription(cancelReason, cancelDetails);
             if (result.error) {
                 toast({ variant: "destructive", title: "Hata", description: result.error });
                 return;
             }
-            if (result.warning) {
-                toast({ title: "Uyarı", description: result.warning });
-            } else {
-                toast({ title: "Başarılı", description: "Aboneliğiniz iptal edildi." });
-            }
+            toast({ title: "Başarılı", description: "Aboneliğiniz iptal edildi." });
             setIsCancelModalOpen(false);
             router.refresh();
         } catch (error) {

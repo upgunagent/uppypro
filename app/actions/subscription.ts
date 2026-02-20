@@ -173,23 +173,22 @@ export async function cancelUserSubscription(reason: string, details?: string) {
     }
 
     // Call Iyzico
-    let iyzicoError: string | null = null;
     if (subscription.iyzico_subscription_reference_code) {
         try {
             const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
             console.log("[CANCEL] Iyzico cancel result:", JSON.stringify(result));
             if (result.status !== 'success') {
-                // Iyzico hatası olabilir ama DB'de yine de iptal yap
-                iyzicoError = result.errorMessage || "Bilinmeyen Iyzico hatası";
-                console.warn(`[CANCEL] Iyzico cancel failed for ref ${subscription.iyzico_subscription_reference_code}: ${iyzicoError}. Proceeding with DB cancel.`);
+                const errorDetail = result.errorMessage || result.errorCode || "Bilinmeyen hata";
+                console.error(`[CANCEL] Iyzico cancel FAILED for ref ${subscription.iyzico_subscription_reference_code}:`, JSON.stringify(result));
+                return { error: `Iyzico iptal hatası: ${errorDetail} (Ref: ${subscription.iyzico_subscription_reference_code})` };
             }
         } catch (e: any) {
-            iyzicoError = e.message;
             console.error("[CANCEL] Iyzico Cancel Exception:", e);
+            return { error: "Ödeme sağlayıcı hatası: " + e.message };
         }
     }
 
-    // DB'de iptali her durumda yap
+    // Update DB
     const { error } = await adminDb
         .from("subscriptions")
         .update({
@@ -205,15 +204,6 @@ export async function cancelUserSubscription(reason: string, details?: string) {
     }
 
     revalidatePath("/panel/settings");
-
-    // Iyzico hatası varsa uyarı ile başarılı dön
-    if (iyzicoError) {
-        return {
-            success: true,
-            warning: `Aboneliğiniz iptal edildi, ancak ödeme sağlayıcı tarafında bir uyarı oluştu: ${iyzicoError}. Otomatik ödemeler durdurulamış olabilir, lütfen kontrol edin.`
-        };
-    }
-
     return { success: true };
 }
 

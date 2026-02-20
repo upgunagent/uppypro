@@ -196,14 +196,12 @@ export async function getSubscriptionCheckoutFormResult(token: string): Promise<
 }
 
 export async function cancelSubscription(subscriptionReferenceCode: string): Promise<any> {
+    // Iyzico SDK sample'a uygun: body'de sadece subscriptionReferenceCode
     const requestBody = JSON.stringify({
-        locale: IyzicoConfig.locale,
-        conversationId: IyzicoConfig.conversationId,
         subscriptionReferenceCode: subscriptionReferenceCode
     });
 
     const randomString = generateRandomString();
-    // Correct Endpoint for Subscription Cancel V2
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}/cancel`;
 
     const authString = generateIyzicoV2Header(
@@ -224,12 +222,14 @@ export async function cancelSubscription(subscriptionReferenceCode: string): Pro
         });
 
         const responseText = await response.text();
+        console.log(`[IYZICO] Cancel response status: ${response.status}, body: ${responseText}`);
+
         let result;
         try {
             result = JSON.parse(responseText);
         } catch (e) {
             console.error("Iyzico Cancel Invalid JSON Response:", responseText);
-            throw new Error(`Iyzico Cancel API Error: Server returned ${response.status} ${response.statusText}. Response starts with: ${responseText.slice(0, 100)}`);
+            throw new Error(`Iyzico Cancel API Error: Server returned ${response.status} ${response.statusText}. Response starts with: ${responseText.slice(0, 200)}`);
         }
 
         return result;
