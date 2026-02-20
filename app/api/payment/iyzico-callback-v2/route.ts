@@ -173,6 +173,7 @@ export async function POST(request: Request) {
 
                         if (pricingData) {
                             finalPlanName = (pricingData.products as any)?.name || finalPlanName;
+                            finalPrice = pricingData.monthly_price_try || finalPrice;
                         }
                     }
 
