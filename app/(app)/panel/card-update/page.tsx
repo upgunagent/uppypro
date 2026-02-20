@@ -22,13 +22,19 @@ export default function CardUpdatePage() {
                     setError(res.error);
                     setLoading(false);
                 } else if (res.checkoutFormContent) {
+                    // Iyzico bazen içeriği "popup" class'ı ile gönderir, bunu "responsive" olarak değiştirerek
+                    // sayfa içine gömülü (inline) açılmasını zorluyoruz.
+                    const responsiveContent = res.checkoutFormContent!
+                        .replace(/class="popup"/g, 'class="responsive"')
+                        .replace(/class='popup'/g, "class='responsive'");
+
                     // Inject script and content robustly
                     setTimeout(() => {
                         if (!checkoutFormRef.current) return;
                         checkoutFormRef.current.innerHTML = '';
 
                         const div = document.createElement('div');
-                        div.innerHTML = res.checkoutFormContent!;
+                        div.innerHTML = responsiveContent;
 
                         // Re-execute scripts
                         const scripts = div.querySelectorAll('script');
