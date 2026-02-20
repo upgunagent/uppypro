@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSubscriptionCheckoutFormResult } from "@/lib/iyzico";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDistanceSalesAgreementHtml } from "@/lib/agreement-generator";
 import { generatePdfBuffer } from "@/lib/pdf-generator";
 import { sendSubscriptionWelcomeEmail } from "@/app/actions/email";
 
@@ -179,11 +178,12 @@ export async function POST(request: Request) {
 
                     const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice);
 
-                    const agreementHtml = getDistanceSalesAgreementHtml({
+                    console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement with pdfmake...");
+                    const pdfBuffer = await generatePdfBuffer({
                         buyer: {
                             name: buyerName,
                             email: buyerEmail,
-                            phone: billingData?.contact_phone || result.buyer?.registrationAddress || "",
+                            phone: billingData?.contact_phone || "",
                             address: billingData?.address_full || tenantData.address || "Adres belirtilmedi",
                             city: billingData?.address_city || tenantData.city || "Şehir",
                             district: billingData?.address_district || tenantData.district || "İlçe",
@@ -195,14 +195,9 @@ export async function POST(request: Request) {
                             name: finalPlanName,
                             price: finalPrice / 1.2,
                             total: finalPrice,
-                            priceUsd: 0,
                         },
-                        exchangeRate: 0,
                         date: new Date().toLocaleDateString('tr-TR')
                     });
-
-                    console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement...");
-                    const pdfBuffer = await generatePdfBuffer(agreementHtml);
 
                     // --- Anlaşmayı Supabase Storage'a Kaydet ---
                     let agreementUrl = "";
