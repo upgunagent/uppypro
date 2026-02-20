@@ -4,8 +4,9 @@ import { useState, useEffect, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Send, FileText, Search, Loader2, Eye, Check, ExternalLink } from "lucide-react";
+import { Upload, Send, FileText, Search, Loader2, Eye, Check, ExternalLink, Info } from "lucide-react";
 import { InvoiceUploadDialog } from "@/components/admin/invoice-upload-dialog";
+import { BillingInfoDialog } from "@/components/admin/billing-info-dialog";
 
 function formatTurkeyDate(date: Date): string {
     return date.toLocaleString('tr-TR', {
@@ -29,6 +30,7 @@ interface Transaction {
     currency: string;
     paymentDate: string;
     orderStatus: string;
+    billingInfo: any | null;
     invoice: {
         id: string;
         invoice_pdf_url: string;
@@ -44,6 +46,10 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
     const [dateTo, setDateTo] = useState("");
     const [isPending, startTransition] = useTransition();
     const [uploadDialog, setUploadDialog] = useState<{ open: boolean; transaction: Transaction | null }>({
+        open: false,
+        transaction: null,
+    });
+    const [billingDialog, setBillingDialog] = useState<{ open: boolean; transaction: Transaction | null }>({
         open: false,
         transaction: null,
     });
@@ -245,6 +251,16 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setBillingDialog({ open: true, transaction: t })}
+                                                    className="h-8 px-2 text-slate-600 hover:text-blue-600"
+                                                    title="Fatura Bilgileri"
+                                                >
+                                                    <Info size={14} className="mr-1" />
+                                                    Bilgi
+                                                </Button>
                                                 {!t.invoice ? (
                                                     <Button
                                                         variant="ghost"
@@ -294,6 +310,15 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                     onClose={() => setUploadDialog({ open: false, transaction: null })}
                     transaction={uploadDialog.transaction}
                     onUploaded={handleRefresh}
+                />
+            )}
+
+            {/* Billing Info Dialog */}
+            {billingDialog.transaction && (
+                <BillingInfoDialog
+                    isOpen={billingDialog.open}
+                    onClose={() => setBillingDialog({ open: false, transaction: null })}
+                    transaction={billingDialog.transaction}
                 />
             )}
         </div>

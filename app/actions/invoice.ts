@@ -40,13 +40,25 @@ export async function getAllTransactions(filters?: {
     const tenantIds = subscriptions.map(s => s.tenant_id);
     const { data: billingInfos } = await adminDb
         .from("billing_info")
-        .select("tenant_id, contact_email")
+        .select("tenant_id, contact_email, billing_type, full_name, company_name, tax_office, tax_number, tckn, address_full, address_district, address_city")
         .in("tenant_id", tenantIds);
 
     const emailMap = new Map();
+    const billingMap = new Map();
     if (billingInfos) {
         for (const b of billingInfos) {
             emailMap.set(b.tenant_id, b.contact_email);
+            billingMap.set(b.tenant_id, {
+                billingType: b.billing_type,
+                fullName: b.full_name,
+                companyName: b.company_name,
+                taxOffice: b.tax_office,
+                taxNumber: b.tax_number,
+                tckn: b.tckn,
+                addressFull: b.address_full,
+                addressDistrict: b.address_district,
+                addressCity: b.address_city,
+            });
         }
     }
 
@@ -69,6 +81,7 @@ export async function getAllTransactions(filters?: {
                         tenantId: sub.tenant_id,
                         tenantName: tenant?.name || '-',
                         tenantEmail: emailMap.get(sub.tenant_id) || '-',
+                        billingInfo: billingMap.get(sub.tenant_id) || null,
                         planName: sub.ai_product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox',
                         amount: order.price,
                         currency: order.currencyCode || 'TRY',
