@@ -204,9 +204,13 @@ export function SubscriptionCard({
                 toast({ variant: "destructive", title: "Hata", description: result.error });
                 return;
             }
-            toast({ title: "Başarılı", description: `Paketiniz ${targetPlanName} olarak güncellendi.` });
-            setIsUpgradeModalOpen(false);
-            router.refresh();
+            if (result.checkoutFormContent) {
+                setCheckoutFormContent(result.checkoutFormContent);
+                setIsUpgradeModalOpen(false);
+                setTimeout(() => {
+                    setShowCheckoutInPage(true);
+                }, 350);
+            }
         } catch (error) {
             console.error(error);
             toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });

@@ -283,8 +283,9 @@ export async function retryUserPayment() {
 
 /**
  * Change Plan (Upgrade/Downgrade)
+ * Since Inbox and AI are different Iyzico products, we can't use the upgrade API.
+ * Instead: cancel the old subscription → create a new checkout form for the new plan.
  */
-// Updated Type Signature to allow string for generic plan upgrade
 export async function changeUserPlan(newProductKey: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -294,11 +295,13 @@ export async function changeUserPlan(newProductKey: string) {
     const adminDb = createAdminClient();
     const { data: member } = await adminDb
         .from("tenant_members")
-        .select("tenant_id")
+        .select("tenant_id, role")
         .eq("user_id", user.id)
         .single();
 
-    if (!member) return { error: "İşletme bulunamadı." };
+    if (!member || (member.role !== 'owner' && member.role !== 'admin' && member.role !== 'tenant_owner')) {
+        return { error: "Bu işlem için yetkiniz yok." };
+    }
 
     // 1. Get Current Subscription
     const { data: subscription } = await adminDb
@@ -312,39 +315,15 @@ export async function changeUserPlan(newProductKey: string) {
         return { error: "Aktif abonelik bulunamadı." };
     }
 
-    // SELF-HEALING (Kept as is)
-    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
-        try {
-            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
-            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
-            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
-
-            if (result.status === 'success' && subRefCode) {
-                await adminDb.from("subscriptions")
-                    .update({
-                        iyzico_subscription_reference_code: subRefCode,
-                        iyzico_customer_reference_code: result.customerReferenceCode,
-                        status: 'active'
-                    })
-                    .eq("id", subscription.id);
-                subscription.iyzico_subscription_reference_code = subRefCode;
-            }
-        } catch (e) { console.error("Self-healing failed:", e); }
-    }
-
-    if (!subscription.iyzico_subscription_reference_code) {
-        return { error: "Aktif abonelik bulunamadı (Ref Code Missing)." };
-    }
-
-    const currentKey = subscription.ai_product_key || subscription.base_product_key || 'inbox'; // Fallback
+    const currentKey = subscription.ai_product_key || 'uppypro_inbox';
     if (currentKey === newProductKey) {
         return { error: "Zaten bu pakettesiniz." };
     }
 
-    // 2. Find New Pricing Plan Code
+    // 2. Find New Pricing Plan
     const { data: price } = await adminDb
         .from("pricing")
-        .select("iyzico_pricing_plan_reference_code, product_key") // Select product_key to verify
+        .select("iyzico_pricing_plan_reference_code, product_key, monthly_price_try")
         .eq("product_key", newProductKey)
         .eq("billing_cycle", "monthly")
         .single();
@@ -353,37 +332,110 @@ export async function changeUserPlan(newProductKey: string) {
         return { error: "Yeni paket fiyat veya referans kodu bulunamadı." };
     }
 
-    // 3. Call Iyzico Upgrade
+    // SELF-HEALING: Ensure we have the correct ref code
+    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+        try {
+            const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
+            const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
+            const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
+            if (result.status === 'success' && subRefCode) {
+                await adminDb.from("subscriptions")
+                    .update({
+                        iyzico_subscription_reference_code: subRefCode,
+                        iyzico_customer_reference_code: result.customerReferenceCode,
+                    })
+                    .eq("id", subscription.id);
+                subscription.iyzico_subscription_reference_code = subRefCode;
+            }
+        } catch (e) { console.error("[PLAN-CHANGE] Self-healing failed:", e); }
+    }
+
+    // 3. Cancel old Iyzico subscription
+    if (subscription.iyzico_subscription_reference_code) {
+        try {
+            const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
+            console.log("[PLAN-CHANGE] Iyzico cancel result:", JSON.stringify(result));
+            if (result.status !== 'success') {
+                console.error("[PLAN-CHANGE] Cancel failed:", result.errorMessage);
+                return { error: `Mevcut abonelik iptal edilemedi: ${result.errorMessage}` };
+            }
+        } catch (e: any) {
+            console.error("[PLAN-CHANGE] Cancel exception:", e);
+            return { error: "Ödeme sağlayıcı hatası: " + e.message };
+        }
+    }
+
+    // 4. Get User Profile & Billing Info for new checkout form
+    const [{ data: profile }, { data: billingInfo }] = await Promise.all([
+        adminDb.from("profiles").select("*").eq("user_id", user.id).single(),
+        adminDb.from("billing_info").select("*").eq("tenant_id", member.tenant_id).single()
+    ]);
+
+    const userName = profile?.full_name || billingInfo?.full_name || user.email?.split('@')[0] || 'Ad Soyad';
+    const userPhone = profile?.phone || billingInfo?.contact_phone || '';
+    const userAddress = billingInfo?.address_full || 'Adres belirtilmedi';
+
+    let cleanedPhone = (userPhone || '').replace(/\D/g, '');
+    if (cleanedPhone.startsWith('0')) cleanedPhone = cleanedPhone.substring(1);
+    if (!cleanedPhone.startsWith('90')) cleanedPhone = '90' + cleanedPhone;
+    const gsmNumber = '+' + cleanedPhone;
+
+    // 5. Initialize new Iyzico subscription checkout
     try {
-        const result = await iyzicoUpgrade(
-            subscription.iyzico_subscription_reference_code,
-            price.iyzico_pricing_plan_reference_code
-        );
+        const { initializeSubscriptionCheckout } = await import("@/lib/iyzico");
+
+        const result = await initializeSubscriptionCheckout({
+            conversationId: member.tenant_id,
+            pricingPlanReferenceCode: price.iyzico_pricing_plan_reference_code,
+            subscriptionInitialStatus: 'ACTIVE',
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-callback-v2`,
+            customer: {
+                name: userName.split(' ')[0] || 'Ad',
+                surname: userName.split(' ').slice(1).join(' ') || 'Soyad',
+                email: user.email || '',
+                gsmNumber: gsmNumber,
+                identityNumber: billingInfo?.tckn || '11111111111',
+                billingAddress: {
+                    contactName: userName,
+                    city: billingInfo?.address_city || 'Istanbul',
+                    country: 'Turkey',
+                    address: userAddress,
+                    zipCode: billingInfo?.address_zip || '34000'
+                },
+                shippingAddress: {
+                    contactName: userName,
+                    city: billingInfo?.address_city || 'Istanbul',
+                    country: 'Turkey',
+                    address: userAddress,
+                    zipCode: billingInfo?.address_zip || '34000'
+                }
+            }
+        });
 
         if (result.status !== 'success') {
-            return { error: result.errorMessage || "Paket değişikliği başarısız." };
+            console.error("[PLAN-CHANGE] Checkout init error:", result.errorMessage);
+            return { error: `Ödeme formu başlatılamadı: ${result.errorMessage}` };
         }
 
-        // 4. Update DB
-        // We update ai_product_key if it's an AI plan, or base_product_key if it's base.
-        // For now, our architecture treats everything as 'ai_product_key' effectively for upgrades or we need logic.
-        // Assuming 'inbox' is base, others are 'ai' features or higher tiers.
-        // BUT logic suggests we mostly upgrade tiers.
-        // Let's simply update `ai_product_key` as that seems to be the main driver for feature flags in this app context.
-        // If it's a corporate plan, it replaces the current plan.
-
+        // 6. Update DB: mark as canceled (will be reactivated by callback) and save token
         await adminDb.from("subscriptions")
             .update({
+                status: 'canceled',
+                canceled_at: new Date().toISOString(),
+                cancel_reason: 'PLAN_CHANGE',
                 ai_product_key: newProductKey,
+                iyzico_checkout_token: result.token,
                 updated_at: new Date().toISOString()
             })
             .eq("id", subscription.id);
 
-        revalidatePath("/panel/settings");
-        return { success: true };
+        return {
+            checkoutFormContent: result.checkoutFormContent,
+            token: result.token
+        };
 
     } catch (e: any) {
-        console.error("Upgrade Error:", e);
+        console.error("[PLAN-CHANGE] Exception:", e);
         return { error: "Sistem hatası: " + e.message };
     }
 }
