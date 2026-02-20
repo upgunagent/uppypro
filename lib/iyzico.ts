@@ -242,22 +242,15 @@ export async function cancelSubscription(subscriptionReferenceCode: string): Pro
 }
 
 export async function updateSubscriptionCard(data: {
-    subscriptionReferenceCode?: string;
-    customerReferenceCode: string;
+    subscriptionReferenceCode: string;
     callbackUrl: string;
 }): Promise<{ token?: string; checkoutFormContent?: string; status: string; errorMessage?: string; errorDetails?: any }> {
     const payload: any = {
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
+        subscriptionReferenceCode: data.subscriptionReferenceCode,
         callbackUrl: data.callbackUrl
     };
-
-    if (data.subscriptionReferenceCode) {
-        payload.subscriptionReferenceCode = data.subscriptionReferenceCode;
-    }
-    if (data.customerReferenceCode) {
-        payload.customerReferenceCode = data.customerReferenceCode;
-    }
 
     const requestBody = JSON.stringify(payload);
 
@@ -272,6 +265,8 @@ export async function updateSubscriptionCard(data: {
         requestBody
     );
 
+    console.log('[IYZICO] Card update request:', { subscriptionReferenceCode: data.subscriptionReferenceCode, callbackUrl: data.callbackUrl });
+
     const response = await fetch(uri, {
         method: 'POST',
         headers: getIyzicoHeaders(authString, randomString),
@@ -279,6 +274,8 @@ export async function updateSubscriptionCard(data: {
     });
 
     const responseText = await response.text();
+    console.log('[IYZICO] Card update response status:', response.status);
+
     let result;
     try {
         result = JSON.parse(responseText);
@@ -286,6 +283,8 @@ export async function updateSubscriptionCard(data: {
         console.error("Iyzico Invalid JSON Response:", responseText);
         throw new Error(`Iyzico API Response Error (${uri}): ${responseText.slice(0, 100)}`);
     }
+
+    console.log('[IYZICO] Card update result:', { status: result.status, hasFormContent: !!result.checkoutFormContent, hasToken: !!result.token, error: result.errorMessage });
 
     if (result.status === 'success') {
         return {

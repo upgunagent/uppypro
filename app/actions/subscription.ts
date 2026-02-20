@@ -93,7 +93,6 @@ export async function initializeCardUpdate() {
     try {
         const result = await iyzicoUpdateCard({
             subscriptionReferenceCode: subscription.iyzico_subscription_reference_code,
-            customerReferenceCode: subscription.iyzico_customer_reference_code || "", // Fallback empty if missing, though it should exist
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/iyzico-card-update-callback`
         });
 
