@@ -307,7 +307,9 @@ export async function upgradeSubscription(subscriptionReferenceCode: string, new
         locale: IyzicoConfig.locale,
         conversationId: IyzicoConfig.conversationId,
         newPricingPlanReferenceCode: newPricingPlanReferenceCode,
-        subscriptionReferenceCode: subscriptionReferenceCode
+        subscriptionReferenceCode: subscriptionReferenceCode,
+        upgradePeriod: 'NOW',
+        useTrial: false
     });
 
     const randomString = generateRandomString();
