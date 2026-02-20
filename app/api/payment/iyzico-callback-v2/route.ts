@@ -76,6 +76,7 @@ export async function POST(request: Request) {
         }
 
         console.log(`[IYZICO-CALLBACK-V2] Processing TenantID: ${tenantId}, isReactivation: ${isReactivation}`);
+        console.log(`[IYZICO-CALLBACK-V2] Reference codes from result: subscriptionReferenceCode=${subscriptionReferenceCode}, customerReferenceCode=${customerReferenceCode}, pricingPlanReferenceCode=${pricingPlanReferenceCode}, referenceCode=${result.referenceCode}`);
 
         if (tenantId) {
             const now = new Date();
@@ -86,22 +87,31 @@ export async function POST(request: Request) {
             const cardBrand = result.cardAssociation;
             const cardAssociation = result.cardFamily;
 
-            // Update subscription to active
+            // subscriptionReferenceCode fallback: referenceCode alanını da kontrol et
+            const finalSubRefCode = subscriptionReferenceCode || result.referenceCode;
+
+            // Sadece geçerli değerleri güncelle (undefined/null olan alanları DB'de eski halinde bırak)
+            const updateData: any = {
+                status: 'active',
+                current_period_start: now.toISOString(),
+                current_period_end: nextMonth.toISOString(),
+                updated_at: now.toISOString(),
+                canceled_at: null,
+                cancel_at_period_end: false,
+                cancel_reason: null,
+            };
+
+            // Referans kodlarını sadece doluysa güncelle
+            if (finalSubRefCode) updateData.iyzico_subscription_reference_code = finalSubRefCode;
+            if (customerReferenceCode) updateData.iyzico_customer_reference_code = customerReferenceCode;
+            if (cardLast4) updateData.card_last4 = cardLast4;
+            if (cardBrand) updateData.card_brand = cardBrand;
+            if (cardAssociation) updateData.card_association = cardAssociation;
+
+            console.log(`[IYZICO-CALLBACK-V2] Updating subscription with: ${JSON.stringify(updateData)}`);
+
             await supabase.from('subscriptions')
-                .update({
-                    status: 'active',
-                    iyzico_subscription_reference_code: subscriptionReferenceCode,
-                    iyzico_customer_reference_code: customerReferenceCode,
-                    current_period_start: now.toISOString(),
-                    current_period_end: nextMonth.toISOString(),
-                    updated_at: now.toISOString(),
-                    canceled_at: null, // Clear canceled date
-                    cancel_at_period_end: false,
-                    cancel_reason: null,
-                    card_last4: cardLast4,
-                    card_brand: cardBrand,
-                    card_association: cardAssociation
-                })
+                .update(updateData)
                 .eq('tenant_id', tenantId);
 
             // --- REACTIVATION: Skip welcome email, redirect to settings ---

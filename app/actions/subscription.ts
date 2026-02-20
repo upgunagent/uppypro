@@ -143,36 +143,38 @@ export async function cancelUserSubscription(reason: string, details?: string) {
 
     const { data: subscription } = await adminDb
         .from("subscriptions")
-        .select("id, status, iyzico_subscription_reference_code, iyzico_checkout_token")
+        .select("id, status, iyzico_subscription_reference_code, iyzico_checkout_token, iyzico_customer_reference_code")
         .eq("tenant_id", member.tenant_id)
-        .in("status", ["active", "past_due"]) // Allow canceling past_due as well
+        .in("status", ["active", "past_due"])
         .single();
 
     if (!subscription) {
         return { error: "İptal edilecek abonelik bulunamadı." };
     }
 
-    // SELF-HEALING
-    if (!subscription.iyzico_subscription_reference_code && subscription.iyzico_checkout_token) {
+    // SELF-HEALING: Her zaman checkout token'dan güncel referans kodunu çek
+    if (subscription.iyzico_checkout_token) {
         try {
             const { getSubscriptionCheckoutFormResult } = await import("@/lib/iyzico");
             const result = await getSubscriptionCheckoutFormResult(subscription.iyzico_checkout_token);
             const subRefCode = result.subscriptionReferenceCode || result.referenceCode;
 
-            if (result.status === 'success' && subRefCode) {
+            console.log(`[CANCEL] Self-healing check - token: ${subscription.iyzico_checkout_token}, found subRefCode: ${subRefCode}, current DB ref: ${subscription.iyzico_subscription_reference_code}`);
+
+            if (result.status === 'success' && subRefCode && subRefCode !== subscription.iyzico_subscription_reference_code) {
+                console.log(`[CANCEL] Self-healing: Updating ref code from ${subscription.iyzico_subscription_reference_code} to ${subRefCode}`);
                 await adminDb.from("subscriptions")
                     .update({
                         iyzico_subscription_reference_code: subRefCode,
-                        iyzico_customer_reference_code: result.customerReferenceCode,
-                        status: 'active'
+                        iyzico_customer_reference_code: result.customerReferenceCode || subscription.iyzico_customer_reference_code,
                     })
                     .eq("id", subscription.id);
                 subscription.iyzico_subscription_reference_code = subRefCode;
             }
-        } catch (e) { console.error("Self-healing failed:", e); }
+        } catch (e) { console.error("[CANCEL] Self-healing failed:", e); }
     }
 
-    // Call Iyzico
+    // Call Iyzico Cancel
     if (subscription.iyzico_subscription_reference_code) {
         try {
             const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
