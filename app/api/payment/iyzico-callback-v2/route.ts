@@ -22,7 +22,6 @@ export async function POST(request: Request) {
         if (result.status !== 'success') {
             console.error("Iyzico Payment Failed (V2):", result.errorMessage);
             const failReason = result.errorMessage || "Unknown Iyzico Error";
-            // Redirect to fail page
             return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=fail&reason=${encodeURIComponent(failReason)}&source=v2`, 302);
         }
 
@@ -30,39 +29,53 @@ export async function POST(request: Request) {
         const customerReferenceCode = result.customerReferenceCode;
         const pricingPlanReferenceCode = result.pricingPlanReferenceCode;
 
-        // Update Subscription in DB
         const supabase = createAdminClient();
 
         // 1. Identify Tenant / User
-        // Primary: Conversation ID passed as Tenant ID
         let tenantId = result.conversationId;
+        let isReactivation = false; // Track if this is a reactivation
 
-        // Fallback: If conversationId is missing (which happens with Iyzico V2 GET sometimes),
-        // try to find the subscription by the token!
+        // Fallback: lookup by token
         if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
-            console.log(`[IYZICO-CALLBACK-V2] Tenant ID missing in result. Attempting lookup by Token: ${token}`);
+            console.log(`[IYZICO-CALLBACK-V2] Tenant ID missing. Attempting lookup by Token: ${token}`);
 
-            const supabase = createAdminClient();
             const { data: subData, error: subError } = await supabase
                 .from('subscriptions')
-                .select('tenant_id')
+                .select('tenant_id, status')
                 .eq('iyzico_checkout_token', token)
                 .single();
 
             if (subData && subData.tenant_id) {
-                console.log(`[IYZICO-CALLBACK-V2] FOUND Tenant ID via Token: ${subData.tenant_id}`);
+                console.log(`[IYZICO-CALLBACK-V2] FOUND Tenant ID via Token: ${subData.tenant_id}, Status: ${subData.status}`);
                 tenantId = subData.tenant_id;
+                // If the subscription was canceled, this is a reactivation
+                if (subData.status === 'canceled' || subData.status === 'pending_payment') {
+                    isReactivation = true;
+                }
             } else {
                 console.error(`[IYZICO-CALLBACK-V2] Could not find subscription by token: ${token}`, subError);
             }
         }
 
+        // Also check by tenantId if we got it from conversationId
+        if (tenantId && !isReactivation) {
+            const { data: existingSub } = await supabase
+                .from('subscriptions')
+                .select('status')
+                .eq('tenant_id', tenantId)
+                .eq('iyzico_checkout_token', token)
+                .single();
+
+            if (existingSub && (existingSub.status === 'canceled' || existingSub.status === 'pending_payment')) {
+                isReactivation = true;
+            }
+        }
+
         if (!tenantId) {
             console.error("[IYZICO-CALLBACK-V2] Tenant ID missing!");
-            // ... fallback to email lookup logic existing below ...
         }
-        // Log for debugging
-        console.log(`[IYZICO-CALLBACK-V2] Processing TenantID: ${tenantId}`);
+
+        console.log(`[IYZICO-CALLBACK-V2] Processing TenantID: ${tenantId}, isReactivation: ${isReactivation}`);
 
         if (tenantId) {
             const now = new Date();
@@ -73,6 +86,7 @@ export async function POST(request: Request) {
             const cardBrand = result.cardAssociation;
             const cardAssociation = result.cardFamily;
 
+            // Update subscription to active
             await supabase.from('subscriptions')
                 .update({
                     status: 'active',
@@ -81,32 +95,62 @@ export async function POST(request: Request) {
                     current_period_start: now.toISOString(),
                     current_period_end: nextMonth.toISOString(),
                     updated_at: now.toISOString(),
+                    canceled_at: null, // Clear canceled date
+                    cancel_at_period_end: false,
+                    cancel_reason: null,
                     card_last4: cardLast4,
                     card_brand: cardBrand,
                     card_association: cardAssociation
                 })
                 .eq('tenant_id', tenantId);
 
-            // --- SEND WELCOME EMAIL WITH PDF ---
+            // --- REACTIVATION: Skip welcome email, redirect to settings ---
+            if (isReactivation) {
+                console.log(`[IYZICO-CALLBACK-V2] Reactivation complete for tenant ${tenantId}. Redirecting to settings.`);
+
+                const { data: member } = await supabase
+                    .from('tenant_members')
+                    .select('user_id')
+                    .eq('tenant_id', tenantId)
+                    .in('role', ['tenant_owner', 'owner', 'admin'])
+                    .limit(1)
+                    .single();
+
+                const settingsUrl = `${process.env.NEXT_PUBLIC_APP_URL}/panel/settings?reactivated=true`;
+
+                if (member && member.user_id) {
+                    const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
+                    if (userData?.user?.email) {
+                        const { data: linkData } = await supabase.auth.admin.generateLink({
+                            type: 'magiclink',
+                            email: userData.user.email,
+                            options: { redirectTo: settingsUrl }
+                        });
+
+                        if (linkData?.properties?.action_link) {
+                            console.log(`[IYZICO-CALLBACK-V2] Reactivation magic link for ${userData.user.email}`);
+                            return NextResponse.redirect(linkData.properties.action_link, 302);
+                        }
+                    }
+                }
+
+                // Fallback: direct redirect
+                return NextResponse.redirect(settingsUrl, 302);
+            }
+
+            // --- NEW SUBSCRIPTION: Send welcome email ---
             try {
-                // 1. Fetch Tenant & Billing Info for the Agreement
                 const { data: tenantData } = await supabase.from('tenants').select('*').eq('id', tenantId).single();
                 const { data: billingData } = await supabase.from('billing_info').select('*').eq('tenant_id', tenantId).single();
 
                 if (tenantData) {
-                    // Normalize Data
                     const buyerName = billingData?.billing_type === 'individual'
                         ? (billingData?.full_name || tenantData.name)
                         : (billingData?.company_name || tenantData.name);
 
                     const buyerEmail = billingData?.contact_email || result.email || result.customerEmail || "musteri@example.com";
-
-                    // Mocking some data if not available in result directly, refetching from DB would be better but for speed:
-                    // We know the price from variables above or result
                     const pricePaid = result.paidPrice || 0;
-                    const currency = result.currency || 'TRY';
 
-                    // Generate HTML
                     const agreementHtml = getDistanceSalesAgreementHtml({
                         buyer: {
                             name: buyerName,
@@ -120,26 +164,24 @@ export async function POST(request: Request) {
                             tckn: billingData?.tckn,
                         },
                         plan: {
-                            name: "UppyPro Abonelik", // TODO: Fetch real plan name from DB if possible
-                            price: pricePaid / 1.2, // Approx
+                            name: "UppyPro Abonelik",
+                            price: pricePaid / 1.2,
                             total: pricePaid,
-                            priceUsd: 0, // Need to fetch or calculate
+                            priceUsd: 0,
                         },
                         exchangeRate: 0,
                         date: new Date().toLocaleDateString('tr-TR')
                     });
 
-                    // Generate PDF
                     console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement...");
                     const pdfBuffer = await generatePdfBuffer(agreementHtml);
 
-                    // Send Email
                     console.log(`[IYZICO-CALLBACK-V2] Sending Welcome Email to ${buyerEmail}...`);
                     await sendSubscriptionWelcomeEmail({
                         recipientEmail: buyerEmail,
                         recipientName: buyerName,
                         planName: "UppyPro Abonelik",
-                        priceUsd: 0, // Displayed in mail
+                        priceUsd: 0,
                         billingCycle: "monthly",
                         nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
                         agreementPdfBuffer: pdfBuffer
@@ -148,15 +190,9 @@ export async function POST(request: Request) {
                 }
             } catch (emailErr) {
                 console.error("[IYZICO-CALLBACK-V2] Failed to send welcome email:", emailErr);
-                // Do NOT block the flow, just log error
             }
 
-            // Also add payment record
-
-            // Also add payment record
-            // ... (Add payment record logic if needed, omitted for brevity but should be there)
-
-            // User Lookup & Magic Link Logic
+            // New subscription: User Lookup & Magic Link
             const { data: member } = await supabase
                 .from('tenant_members')
                 .select('user_id')
@@ -168,16 +204,14 @@ export async function POST(request: Request) {
 
             if (member && member.user_id) {
                 const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
-                if (userData && userData.user && userData.user.email) {
+                if (userData?.user?.email) {
                     const { data: linkData } = await supabase.auth.admin.generateLink({
                         type: 'magiclink',
                         email: userData.user.email,
-                        options: {
-                            redirectTo: targetUrl
-                        }
+                        options: { redirectTo: targetUrl }
                     });
 
-                    if (linkData && linkData.properties && linkData.properties.action_link) {
+                    if (linkData?.properties?.action_link) {
                         console.log(`[IYZICO-CALLBACK-V2] Generated Magic Link for ${userData.user.email}`);
                         return NextResponse.redirect(linkData.properties.action_link, 302);
                     }
@@ -185,7 +219,7 @@ export async function POST(request: Request) {
             }
         }
 
-        // FALLBACK: User Lookup by Email if Tenant ID method failed or missing
+        // FALLBACK: User Lookup by Email
         let targetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/complete-payment?status=success`;
 
         if (!tenantId || tenantId.length > 20) {
@@ -209,16 +243,14 @@ export async function POST(request: Request) {
 
                     if (member && member.user_id) {
                         const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
-                        if (userData && userData.user && userData.user.email) {
+                        if (userData?.user?.email) {
                             const { data: linkData } = await supabase.auth.admin.generateLink({
                                 type: 'magiclink',
                                 email: userData.user.email,
-                                options: {
-                                    redirectTo: targetUrl
-                                }
+                                options: { redirectTo: targetUrl }
                             });
 
-                            if (linkData && linkData.properties && linkData.properties.action_link) {
+                            if (linkData?.properties?.action_link) {
                                 console.log(`[IYZICO-CALLBACK-V2] Generated Magic Link for ${userData.user.email} (Email Fallback)`);
                                 return NextResponse.redirect(linkData.properties.action_link, 302);
                             }
@@ -228,12 +260,8 @@ export async function POST(request: Request) {
             }
         }
 
-        // Fail Redirect (If user lookup fails)
         console.log("[IYZICO-CALLBACK-V2] Session restoration failed - Fallback to standard redirect");
-
-        // DEBUG: Flatten result keys to understand what we actually got
         const debugInfo = `TID:${tenantId || 'NULL'}-Email:${(result.email || result.customerEmail || 'NULL')}-K:${Object.keys(result).filter(k => k !== 'checkoutFormContent').join(',')}`;
-
         return NextResponse.redirect(`${targetUrl}&reason=SessionRestoreFailed-${debugInfo}&source=v2`, 302);
 
     } catch (error: any) {
