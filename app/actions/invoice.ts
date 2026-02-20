@@ -145,10 +145,18 @@ export async function uploadInvoice(formData: FormData) {
     const subscriptionReferenceCode = formData.get("subscriptionReferenceCode") as string;
     const amount = parseFloat(formData.get("amount") as string);
     const planName = formData.get("planName") as string;
-    const paymentDate = formData.get("paymentDate") as string;
+    const paymentDateStr = formData.get("paymentDate") as string;
 
     if (!file || !tenantId || !orderReferenceCode) {
         return { error: "Eksik bilgi." };
+    }
+
+    // Convert potential UNIX timestamp to ISO string for Postgres
+    let paymentDateIso = paymentDateStr;
+    if (paymentDateStr && !isNaN(Number(paymentDateStr))) {
+        paymentDateIso = new Date(Number(paymentDateStr)).toISOString();
+    } else if (paymentDateStr) {
+        paymentDateIso = new Date(paymentDateStr).toISOString();
     }
 
     // Dosya adını sanitize et (Türkçe karakter ve boşlukları temizle)
@@ -184,7 +192,7 @@ export async function uploadInvoice(formData: FormData) {
             iyzico_subscription_reference_code: subscriptionReferenceCode,
             amount: amount,
             plan_name: planName,
-            payment_date: paymentDate,
+            payment_date: paymentDateIso,
             invoice_pdf_url: urlData.publicUrl,
             invoice_pdf_path: fileName,
             created_by: user.id,
