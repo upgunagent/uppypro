@@ -161,7 +161,7 @@ export async function POST(request: Request) {
                     const pricePaid = result.paidPrice || 0;
 
                     let finalPlanName = "UppyPro Abonelik";
-                    let finalPrice = pricePaid;
+                    let basePrice = pricePaid; // From Iyzico (might be 0 for subscriptions)
 
                     if (pricingPlanReferenceCode) {
                         const { data: pricingData } = await supabase
@@ -172,13 +172,16 @@ export async function POST(request: Request) {
 
                         if (pricingData) {
                             finalPlanName = (pricingData.products as any)?.name || finalPlanName;
-                            finalPrice = pricingData.monthly_price_try || finalPrice;
+                            basePrice = pricingData.monthly_price_try || basePrice;
                         }
                     }
 
-                    const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice) + ' (KDV Dahil)';
+                    // monthly_price_try is KDV-excluded base price. Actual charged = base * 1.20
+                    const totalWithKdv = basePrice * 1.2;
+                    const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalWithKdv) + ' (KDV Dahil)';
 
-                    console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement with pdfmake...");
+                    console.log(`[IYZICO-CALLBACK-V2] Price: base=${basePrice}, total=${totalWithKdv}, plan=${finalPlanName}`);
+                    console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement with pdfmake (VFS fonts)...");
                     const pdfBuffer = await generatePdfBuffer({
                         buyer: {
                             name: buyerName,
@@ -193,11 +196,12 @@ export async function POST(request: Request) {
                         },
                         plan: {
                             name: finalPlanName,
-                            price: finalPrice / 1.2,
-                            total: finalPrice,
+                            price: basePrice,
+                            total: totalWithKdv,
                         },
                         date: new Date().toLocaleDateString('tr-TR')
                     });
+                    console.log(`[IYZICO-CALLBACK-V2] PDF generation result: ${pdfBuffer ? pdfBuffer.length + ' bytes' : 'NULL (failed)'}`);
 
                     // --- Anlaşmayı Supabase Storage'a Kaydet ---
                     let agreementUrl = "";

@@ -1,4 +1,3 @@
-import path from 'path';
 import type { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
 
 export type AgreementPdfData = {
@@ -23,25 +22,30 @@ export type AgreementPdfData = {
 
 /**
  * Generates an agreement PDF buffer using pdfmake (pure JS, no Puppeteer/Chromium).
+ * Fonts are loaded from pdfmake's embedded VFS (base64 in JS) - zero filesystem access.
  */
 export async function generatePdfBuffer(data: AgreementPdfData): Promise<Buffer | null> {
     try {
         // Lazy-load pdfmake inside function to avoid Turbopack bundling issues
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const PdfPrinter = require('pdfmake');
-        const pdfmakeDir = path.dirname(require.resolve('pdfmake/package.json'));
-        const getFontPath = (f: string) => path.join(pdfmakeDir, 'fonts', 'Roboto', f);
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const pdfFontsModule = require('pdfmake/build/vfs_fonts');
 
+        // Extract VFS font data (Roboto fonts as base64 embedded in JS - no file system needed)
+        const vfs = pdfFontsModule.pdfMake ? pdfFontsModule.pdfMake.vfs : pdfFontsModule.vfs;
+
+        // Create font descriptors with Buffers directly (pdfmake accepts Buffers instead of file paths)
         const fonts = {
             Roboto: {
-                normal: getFontPath('Roboto-Regular.ttf'),
-                bold: getFontPath('Roboto-Medium.ttf'),
-                italics: getFontPath('Roboto-Italic.ttf'),
-                bolditalics: getFontPath('Roboto-MediumItalic.ttf'),
+                normal: Buffer.from(vfs['Roboto-Regular.ttf'], 'base64'),
+                bold: Buffer.from(vfs['Roboto-Medium.ttf'], 'base64'),
+                italics: Buffer.from(vfs['Roboto-Italic.ttf'], 'base64'),
+                bolditalics: Buffer.from(vfs['Roboto-MediumItalic.ttf'], 'base64'),
             },
         };
 
-        console.log('[PDF Generator] Font dir:', pdfmakeDir);
+        console.log('[PDF Generator] Loaded fonts from VFS (base64 embedded, no filesystem)');
         const printer = new PdfPrinter(fonts);
 
         const priceTL = data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

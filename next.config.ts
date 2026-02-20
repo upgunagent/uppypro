@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['pdfmake'],
+  serverExternalPackages: [],
 };
 
 export default nextConfig;
