@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { SubscriptionBlockOverlay } from "@/components/subscription-block-overlay";
 
 export default async function AppLayout({
     children,
@@ -16,10 +17,6 @@ export default async function AppLayout({
         redirect("/login");
     }
 
-    // Determine Role
-    // For MVP: Check tenant_members. If user is in tenant_members with agency_admin, they are admin.
-    // We need to fetch this.
-
     const { data: memberData } = await supabase
         .from("tenant_members")
         .select("role, tenant_id")
@@ -30,6 +27,36 @@ export default async function AppLayout({
     const role = memberData?.role || null;
     const tenantId = memberData?.tenant_id;
 
+    // Subscription enforcement (admin kullanıcılar hariç)
+    let subscriptionBlockReason: 'canceled' | 'past_due' | 'unpaid' | 'suspended' | null = null;
+
+    if (role !== 'agency_admin' && tenantId) {
+        const { data: subscription } = await supabase
+            .from("subscriptions")
+            .select("status, current_period_end")
+            .eq("tenant_id", tenantId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (subscription) {
+            const { status, current_period_end } = subscription;
+
+            if (status === 'canceled') {
+                subscriptionBlockReason = 'canceled';
+            } else if (['past_due', 'unpaid', 'suspended'].includes(status)) {
+                // 3 gün grace period: current_period_end + 3 gün geçtiyse engelle
+                if (current_period_end) {
+                    const gracePeriodEnd = new Date(current_period_end);
+                    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 3);
+                    if (new Date() > gracePeriodEnd) {
+                        subscriptionBlockReason = status as 'past_due' | 'unpaid' | 'suspended';
+                    }
+                }
+            }
+        }
+    }
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
@@ -37,6 +64,9 @@ export default async function AppLayout({
                 {children}
             </main>
             <MobileBottomNav />
+            {subscriptionBlockReason && (
+                <SubscriptionBlockOverlay reason={subscriptionBlockReason} />
+            )}
         </div>
     );
 }
