@@ -61,6 +61,29 @@ export function SubscriptionCard({
     const router = useRouter();
     const { toast } = useToast();
 
+    // Iyzico'nun DOM'a eklediği tüm kalıntıları temizle
+    const cleanupIyzicoDOM = () => {
+        // Container'ı temizle
+        if (checkoutRef.current) {
+            checkoutRef.current.innerHTML = '';
+        }
+        // Iyzico'nun body/document'a eklediği iframe, modal ve overlay'leri kaldır
+        const selectors = [
+            'iframe[src*="iyzico"]',
+            'iframe[src*="iyzipay"]',
+            'iframe[id*="iyzipay"]',
+            'iframe[id*="iyzico"]',
+            '[id*="iyzipay"]',
+            '[class*="iyzipay"]',
+            '[id*="iyzico-modal"]',
+            '[class*="iyzico-overlay"]',
+        ];
+        document.querySelectorAll(selectors.join(', ')).forEach(el => el.remove());
+        // body overflow lock'u kaldır (modal açıkken body'ye eklenir)
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    };
+
     // Iyzico checkout formunu Dialog kapatıldıktan SONRA sayfaya inject et
     useEffect(() => {
         if (!showCheckoutInPage || !checkoutFormContent) return;
@@ -88,10 +111,17 @@ export function SubscriptionCard({
             });
 
             checkoutRef.current.appendChild(div);
-        }, 300); // Dialog animasyonunun bitmesini bekle
+        }, 300);
 
         return () => clearTimeout(timer);
     }, [showCheckoutInPage, checkoutFormContent]);
+
+    // Component unmount olduğunda Iyzico kalıntılarını temizle
+    useEffect(() => {
+        return () => {
+            cleanupIyzicoDOM();
+        };
+    }, []);
 
     if (!subscription) {
         return (
@@ -236,6 +266,7 @@ export function SubscriptionCard({
                         variant="ghost"
                         size="sm"
                         onClick={() => {
+                            cleanupIyzicoDOM();
                             setShowCheckoutInPage(false);
                             setCheckoutFormContent("");
                         }}
@@ -368,8 +399,8 @@ export function SubscriptionCard({
                                                 <div
                                                     key={p.product_key}
                                                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                                            ? 'border-emerald-500 bg-emerald-50'
-                                                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                        ? 'border-emerald-500 bg-emerald-50'
+                                                        : 'border-slate-200 hover:border-slate-300 bg-white'
                                                         }`}
                                                     onClick={() => setSelectedReactivatePlan(p.product_key)}
                                                 >
