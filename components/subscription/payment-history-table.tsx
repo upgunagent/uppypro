@@ -29,7 +29,9 @@ export function PaymentHistoryTable({ orders }: PaymentHistoryTableProps) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                         {orders.map((order: any, index: number) => {
-                            const date = new Date(order.startPeriod || order.createdDate || Date.now());
+                            const rawDate = new Date(order.startPeriod || order.createdDate || Date.now());
+                            // Iyzico tarihleri Türkiye saatinde (UTC+3) döner ama JS UTC olarak parse eder
+                            const date = new Date(rawDate.getTime() + 3 * 60 * 60 * 1000);
                             const formattedDate = format(date, "d MMMM yyyy, HH:mm", { locale: tr });
                             const amount = order.price ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: order.currencyCode || 'TRY' }).format(order.price) : '-';
                             const status = order.orderStatus || order.paymentStatus || 'UNKNOWN';
