@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Calendar, Package, Tag, AlertTriangle, CheckCircle, RefreshCw, ArrowLeftRight, RotateCcw } from "lucide-react";
+import { Calendar, Package, Tag, AlertTriangle, RefreshCw, ArrowLeftRight, RotateCcw, X } from "lucide-react";
 import { getPackageName } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,7 +52,8 @@ export function SubscriptionCard({
 
     const [selectedReactivatePlan, setSelectedReactivatePlan] = useState<string>("");
     const [checkoutFormContent, setCheckoutFormContent] = useState<string>("");
-    const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+    // Dialog dışında, sayfada gösterilecek checkout formu
+    const [showCheckoutInPage, setShowCheckoutInPage] = useState(false);
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -60,28 +61,37 @@ export function SubscriptionCard({
     const router = useRouter();
     const { toast } = useToast();
 
-    // Render Iyzico checkout form when content is available
+    // Iyzico checkout formunu Dialog kapatıldıktan SONRA sayfaya inject et
     useEffect(() => {
-        if (checkoutFormContent && checkoutRef.current) {
+        if (!showCheckoutInPage || !checkoutFormContent) return;
+
+        // Kısa gecikme: Dialog kapanmasını bekle, sonra script'leri ekle
+        const timer = setTimeout(() => {
+            if (!checkoutRef.current) return;
             checkoutRef.current.innerHTML = '';
+
             const div = document.createElement('div');
             div.innerHTML = checkoutFormContent;
 
-            // Execute scripts
+            // Script'leri yeniden çalıştır
             const scripts = div.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
                 if (script.src) {
                     newScript.src = script.src;
+                    newScript.async = true;
                 } else {
                     newScript.textContent = script.textContent;
                 }
                 document.head.appendChild(newScript);
+                script.remove();
             });
 
             checkoutRef.current.appendChild(div);
-        }
-    }, [checkoutFormContent]);
+        }, 300); // Dialog animasyonunun bitmesini bekle
+
+        return () => clearTimeout(timer);
+    }, [showCheckoutInPage, checkoutFormContent]);
 
     if (!subscription) {
         return (
@@ -95,31 +105,27 @@ export function SubscriptionCard({
     const packageName = getPackageName(subscription);
     const isCanceled = status === 'canceled';
 
-    // Format price: Prioritize TL
+    // Fiyat formatla
     let formattedPrice = '-';
-
     if (customPriceUsd) {
-        // Business deal in USD (Legacy or specific agreement)
         formattedPrice = `$${customPriceUsd}`;
     } else if (customPriceTry) {
-        // Business deal in TL
         formattedPrice = `${(customPriceTry / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL + KDV`;
     } else if (price?.monthly_price_try) {
-        // Standard Plan TL
         formattedPrice = `${price.monthly_price_try.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} TL + KDV`;
     } else if (priceUsd) {
-        // Fallback Legacy USD
         formattedPrice = `$${priceUsd}`;
     }
 
-    const formattedEndDate = current_period_end ? new Date(current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+    const formattedEndDate = current_period_end
+        ? new Date(current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '-';
 
-    // Determine Upgrade/Downgrade Target
     const currentProductKey = ai_product_key || 'uppypro_inbox';
     const targetProductKey = currentProductKey === 'uppypro_ai' ? 'uppypro_inbox' : 'uppypro_ai';
     const targetPrice = allPrices?.find(p => p.product_key === targetProductKey);
     const targetPlanName = targetProductKey === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
-    const isUpgrade = targetProductKey === 'uppypro_ai'; // Inbox -> AI is upgrade
+    const isUpgrade = targetProductKey === 'uppypro_ai';
 
     const handleCancel = async () => {
         if (!cancelReason) return;
@@ -192,7 +198,12 @@ export function SubscriptionCard({
             }
             if (result.checkoutFormContent) {
                 setCheckoutFormContent(result.checkoutFormContent);
-                setShowCheckoutForm(true);
+                // Önce Dialog'u kapat, ardından sayfa içi formu göster
+                setIsReactivateModalOpen(false);
+                // Dialog kapanma animasyonu bittikten sonra göster
+                setTimeout(() => {
+                    setShowCheckoutInPage(true);
+                }, 350);
             }
         } catch (error) {
             console.error(error);
@@ -204,7 +215,6 @@ export function SubscriptionCard({
 
     const isRetryable = status === 'past_due' || status === 'unpaid' || status === 'suspended';
 
-    // Get status display info
     const getStatusBadge = () => {
         if (cancel_at_period_end) return null;
         if (isCanceled) {
@@ -215,6 +225,37 @@ export function SubscriptionCard({
         }
         return <Badge variant="destructive">{status}</Badge>;
     };
+
+    // Eğer checkout formu sayfa içinde gösterilecekse, kartın yerine checkout alanı render et
+    if (showCheckoutInPage) {
+        return (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h3 className="font-bold text-lg text-slate-900">Ödeme</h3>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setShowCheckoutInPage(false);
+                            setCheckoutFormContent("");
+                        }}
+                        className="text-slate-400 hover:text-slate-600"
+                    >
+                        <X className="w-4 h-4 mr-1" />
+                        İptal
+                    </Button>
+                </div>
+                <div className="p-6">
+                    {/* Iyzico Checkout Form — Dialog dışında, tam sayfa erişimi ile */}
+                    <div
+                        ref={checkoutRef}
+                        id="iyzipay-checkout-form"
+                        className="min-h-[500px]"
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -256,14 +297,14 @@ export function SubscriptionCard({
                     <p className="text-sm text-slate-500">Aylık Ücret</p>
                     <div className="flex items-center gap-2">
                         <Tag className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium text-slate-900">
-                            {formattedPrice}
-                        </span>
+                        <span className="font-medium text-slate-900">{formattedPrice}</span>
                     </div>
                 </div>
 
                 <div className="space-y-1">
-                    <p className="text-sm text-slate-500">{cancel_at_period_end ? 'Erişim Bitiş Tarihi' : isCanceled ? 'İptal Tarihi' : 'Sonraki Ödeme'}</p>
+                    <p className="text-sm text-slate-500">
+                        {cancel_at_period_end ? 'Erişim Bitiş Tarihi' : isCanceled ? 'İptal Tarihi' : 'Sonraki Ödeme'}
+                    </p>
                     <span className="font-medium text-slate-900">
                         {isCanceled && subscription.canceled_at
                             ? new Date(subscription.canceled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -289,13 +330,11 @@ export function SubscriptionCard({
                     </Button>
                 )}
 
-                {/* Reactivate Button (for canceled subscriptions) */}
+                {/* Reactivate Button */}
                 {isCanceled && (
                     <Dialog open={isReactivateModalOpen} onOpenChange={(open) => {
                         setIsReactivateModalOpen(open);
                         if (!open) {
-                            setShowCheckoutForm(false);
-                            setCheckoutFormContent("");
                             setSelectedReactivatePlan(currentProductKey);
                         }
                     }}>
@@ -308,85 +347,69 @@ export function SubscriptionCard({
                                 Aboneliği Yeniden Başlat
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className={showCheckoutForm ? "sm:max-w-2xl" : "sm:max-w-md"}>
-                            {!showCheckoutForm ? (
-                                <>
-                                    <DialogHeader>
-                                        <DialogTitle>Aboneliği Yeniden Başlat</DialogTitle>
-                                        <DialogDescription>
-                                            Aboneliğinizi tekrar başlatmak için bir paket seçin. Ödeme bilgileriniz güvenli bir şekilde Iyzico altyapısı üzerinden alınacaktır.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="py-4 space-y-4">
-                                        <div className="space-y-3">
-                                            <label className="text-sm font-medium text-slate-700">Paket Seçimi</label>
-                                            <div className="grid gap-3">
-                                                {allPrices.filter(p => p.product_key !== 'uppypro_enterprise').map((p) => {
-                                                    const planName = p.product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
-                                                    const planDescription = p.product_key === 'uppypro_ai'
-                                                        ? 'Yapay zeka destekli otomatik yanıtlar dahil'
-                                                        : 'Temel mesaj yönetimi özellikleri';
-                                                    const isSelected = selectedReactivatePlan === p.product_key;
-                                                    return (
-                                                        <div
-                                                            key={p.product_key}
-                                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                                                    ? 'border-emerald-500 bg-emerald-50'
-                                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                                                                }`}
-                                                            onClick={() => setSelectedReactivatePlan(p.product_key)}
-                                                        >
-                                                            <div className="flex justify-between items-center">
-                                                                <div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-bold text-slate-900">{planName}</span>
-                                                                        {p.product_key === currentProductKey && (
-                                                                            <Badge variant="secondary" className="text-xs bg-slate-100">Önceki Paketiniz</Badge>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-sm text-slate-500 mt-0.5">{planDescription}</p>
-                                                                </div>
-                                                                <div className="text-right">
-                                                                    <span className="font-bold text-lg text-slate-900">
-                                                                        {p.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
-                                                                    </span>
-                                                                    <span className="text-xs text-slate-500 block">+ KDV / ay</span>
-                                                                </div>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Aboneliği Yeniden Başlat</DialogTitle>
+                                <DialogDescription>
+                                    Aboneliğinizi tekrar başlatmak için bir paket seçin.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-slate-700">Paket Seçimi</label>
+                                    <div className="grid gap-3">
+                                        {allPrices.filter(p => p.product_key !== 'uppypro_enterprise').map((p) => {
+                                            const planName = p.product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
+                                            const planDescription = p.product_key === 'uppypro_ai'
+                                                ? 'Yapay zeka destekli otomatik yanıtlar dahil'
+                                                : 'Temel mesaj yönetimi özellikleri';
+                                            const isSelected = selectedReactivatePlan === p.product_key;
+                                            return (
+                                                <div
+                                                    key={p.product_key}
+                                                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                                                            ? 'border-emerald-500 bg-emerald-50'
+                                                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                        }`}
+                                                    onClick={() => setSelectedReactivatePlan(p.product_key)}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-slate-900">{planName}</span>
+                                                                {p.product_key === currentProductKey && (
+                                                                    <Badge variant="secondary" className="text-xs bg-slate-100">Önceki Paketiniz</Badge>
+                                                                )}
                                                             </div>
+                                                            <p className="text-sm text-slate-500 mt-0.5">{planDescription}</p>
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="font-bold text-lg text-slate-900">
+                                                                {p.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
+                                                            </span>
+                                                            <span className="text-xs text-slate-500 block">+ KDV / ay</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
 
-                                        <div className="bg-blue-50 p-3 rounded-md border border-blue-100 text-sm text-blue-800">
-                                            <strong>Bilgi:</strong> Yeni bir ödeme formu açılacak ve aboneliğiniz seçtiğiniz paketle yeniden başlatılacaktır.
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => setIsReactivateModalOpen(false)}>Vazgeç</Button>
-                                        <Button
-                                            className="bg-emerald-600 hover:bg-emerald-700"
-                                            onClick={handleReactivate}
-                                            disabled={!selectedReactivatePlan || isLoading}
-                                        >
-                                            {isLoading ? 'Hazırlanıyor...' : 'Devam Et'}
-                                        </Button>
-                                    </DialogFooter>
-                                </>
-                            ) : (
-                                <>
-                                    <DialogHeader>
-                                        <DialogTitle>Ödeme</DialogTitle>
-                                        <DialogDescription>
-                                            Kart bilgilerinizi girerek aboneliğinizi başlatabilirsiniz.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="py-2">
-                                        <div ref={checkoutRef} id="iyzipay-checkout-form" className="min-h-[400px]" />
-                                    </div>
-                                </>
-                            )}
+                                <div className="bg-blue-50 p-3 rounded-md border border-blue-100 text-sm text-blue-800">
+                                    <strong>Bilgi:</strong> Ödeme formu bu sayfada açılacak ve güvenli şekilde tamamlayabilirsiniz.
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsReactivateModalOpen(false)}>Vazgeç</Button>
+                                <Button
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                    onClick={handleReactivate}
+                                    disabled={!selectedReactivatePlan || isLoading}
+                                >
+                                    {isLoading ? 'Hazırlanıyor...' : 'Devam Et'}
+                                </Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 )}
@@ -414,9 +437,7 @@ export function SubscriptionCard({
                                         <span className="text-sm text-slate-500">Yeni Aylık Ücret</span>
                                         <span className="font-bold text-lg">
                                             {targetPrice.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
-                                            <span className="text-xs font-normal text-slate-500 ml-1">
-                                                + KDV
-                                            </span>
+                                            <span className="text-xs font-normal text-slate-500 ml-1">+ KDV</span>
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-500">
@@ -498,15 +519,15 @@ export function SubscriptionCard({
 
             {/* Scheduled Cancellation Message */}
             {cancel_at_period_end && (
-                <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="pt-4 border-t border-slate-100">
                     <p className="text-sm text-slate-500">
                         Aboneliğiniz <strong>{formattedEndDate}</strong> tarihinde sona erecektir.
                     </p>
                 </div>
             )}
 
-            {/* Canceled Subscription Message */}
-            {isCanceled && !showCheckoutForm && (
+            {/* Canceled Info */}
+            {isCanceled && (
                 <div className="pt-4 border-t border-slate-100">
                     <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                         <p className="text-sm text-red-800">
