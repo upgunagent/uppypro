@@ -1,6 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+
+function formatTurkeyDate(date: Date): string {
+    return date.toLocaleString('tr-TR', {
+        timeZone: 'Europe/Istanbul',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
 interface PaymentHistoryTableProps {
     orders: any[];
@@ -29,10 +38,8 @@ export function PaymentHistoryTable({ orders }: PaymentHistoryTableProps) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                         {orders.map((order: any, index: number) => {
-                            const rawDate = new Date(order.startPeriod || order.createdDate || Date.now());
-                            // Iyzico tarihleri Türkiye saatinde (UTC+3) döner ama JS UTC olarak parse eder
-                            const date = new Date(rawDate.getTime() + 3 * 60 * 60 * 1000);
-                            const formattedDate = format(date, "d MMMM yyyy, HH:mm", { locale: tr });
+                            const date = new Date(order.startPeriod || order.createdDate || Date.now());
+                            const formattedDate = formatTurkeyDate(date);
                             const amount = order.price ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: order.currencyCode || 'TRY' }).format(order.price) : '-';
                             const status = order.orderStatus || order.paymentStatus || 'UNKNOWN';
 
