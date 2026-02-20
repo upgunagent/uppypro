@@ -58,7 +58,10 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
         const matchesDateFrom = !dateFrom || new Date(t.paymentDate) >= new Date(dateFrom);
         const matchesDateTo = !dateTo || new Date(t.paymentDate) <= new Date(dateTo + 'T23:59:59');
 
-        return matchesSearch && matchesDateFrom && matchesDateTo;
+        // Sadece başarılı veya başarısız olanları göster, gelecekteki 'WAITING' siparişleri gizle
+        const isNotWaiting = t.orderStatus !== 'WAITING';
+
+        return matchesSearch && matchesDateFrom && matchesDateTo && isNotWaiting;
     });
 
     const handleRefresh = async () => {

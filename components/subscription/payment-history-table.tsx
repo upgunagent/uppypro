@@ -43,6 +43,17 @@ export function PaymentHistoryTable({ orders, invoices = [] }: PaymentHistoryTab
         }
     }
 
+    // Gelecekte tahsil edilecek olan "WAITING" (Bekleyen) siparişleri ödeme geçmişinde göstermiyoruz.
+    const pastOrders = orders.filter(o => o.orderStatus !== 'WAITING' && o.paymentStatus !== 'WAITING');
+
+    if (pastOrders.length === 0) {
+        return (
+            <div className="p-12 text-center border rounded-xl bg-slate-50 border-slate-200 border-dashed">
+                <p className="text-slate-500">Henüz bir ödeme geçmişi bulunmuyor.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="border rounded-xl overflow-hidden border-slate-200">
             <div className="overflow-x-auto">
@@ -57,7 +68,7 @@ export function PaymentHistoryTable({ orders, invoices = [] }: PaymentHistoryTab
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                        {orders.map((order: any, index: number) => {
+                        {pastOrders.map((order: any, index: number) => {
                             const date = new Date(order.startPeriod || order.createdDate || Date.now());
                             const formattedDate = formatTurkeyDate(date);
                             const amount = order.price ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: order.currencyCode || 'TRY' }).format(order.price) : '-';
