@@ -196,10 +196,8 @@ export async function getSubscriptionCheckoutFormResult(token: string): Promise<
 }
 
 export async function cancelSubscription(subscriptionReferenceCode: string): Promise<any> {
-    // Iyzico SDK sample'a uygun: body'de sadece subscriptionReferenceCode
-    const requestBody = JSON.stringify({
-        subscriptionReferenceCode: subscriptionReferenceCode
-    });
+    // Official iyzico SDK sends an EMPTY body for cancel - the ref code is only a path variable
+    const requestBody = JSON.stringify({});
 
     const randomString = generateRandomString();
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/subscriptions/${subscriptionReferenceCode}/cancel`;
