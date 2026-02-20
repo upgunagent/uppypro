@@ -186,6 +186,39 @@ export async function POST(request: Request) {
                     console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement...");
                     const pdfBuffer = await generatePdfBuffer(agreementHtml);
 
+                    // --- Anlaşmayı Supabase Storage'a Kaydet ---
+                    let agreementUrl = "";
+                    try {
+                        const fileName = `${tenantId}/agreement_${Date.now()}.pdf`;
+                        console.log(`[IYZICO-CALLBACK-V2] Uploading agreement to storage: ${fileName}`);
+
+                        const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('agreements')
+                            .upload(fileName, pdfBuffer, {
+                                contentType: 'application/pdf',
+                                upsert: false,
+                            });
+
+                        if (uploadError) {
+                            console.error("[IYZICO-CALLBACK-V2] Failed to upload agreement PDF:", uploadError);
+                        } else {
+                            const { data: urlData } = supabase.storage
+                                .from('agreements')
+                                .getPublicUrl(fileName);
+
+                            agreementUrl = urlData.publicUrl;
+                            console.log(`[IYZICO-CALLBACK-V2] Agreement saved temporarily. URL: ${agreementUrl}`);
+
+                            // Update subscription with the agreement URL
+                            await supabase.from('subscriptions')
+                                .update({ agreement_pdf_url: agreementUrl })
+                                .eq('tenant_id', tenantId);
+                        }
+                    } catch (storageErr) {
+                        console.error("[IYZICO-CALLBACK-V2] Exception saving agreement to storage:", storageErr);
+                    }
+                    // ------------------------------------------
+
                     console.log(`[IYZICO-CALLBACK-V2] Sending Welcome Email to ${buyerEmail}...`);
                     await sendSubscriptionWelcomeEmail({
                         recipientEmail: buyerEmail,

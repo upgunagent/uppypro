@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateTenantBillingInfo } from "../../actions";
 import { useState } from "react";
-import { Save, User, Loader2 } from "lucide-react";
+import { Save, User, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-export function AdminBillingForm({ billingInfo, tenantId, ownerProfile }: { billingInfo: any, tenantId: string, ownerProfile: any }) {
+export function AdminBillingForm({ billingInfo, tenantId, ownerProfile, subscription }: { billingInfo: any, tenantId: string, ownerProfile: any, subscription?: any }) {
     const [billingType, setBillingType] = useState<"company" | "individual">(billingInfo?.billing_type || "company");
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
@@ -45,11 +45,21 @@ export function AdminBillingForm({ billingInfo, tenantId, ownerProfile }: { bill
         <form action={handleSubmit} className="space-y-6">
             <input type="hidden" name="tenantId" value={tenantId} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-                <div className="col-span-1 md:col-span-2 flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                        <User className="text-primary w-5 h-5" />
+                <div className="col-span-1 md:col-span-2 flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <User className="text-primary w-5 h-5" />
+                        </div>
+                        <h3 className="font-bold text-lg text-slate-900">Hesap ve Fatura Bilgileri (Admin)</h3>
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900">Hesap ve Fatura Bilgileri (Admin)</h3>
+                    {subscription?.agreement_pdf_url && (
+                        <a href={subscription.agreement_pdf_url} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" type="button" size="sm" className="h-9 gap-1 text-slate-700 bg-white">
+                                <FileText className="w-4 h-4 text-blue-600" />
+                                Mesafeli Satış Sözleşmesi (PDF)
+                            </Button>
+                        </a>
+                    )}
                 </div>
 
                 {/* Common Fields */}

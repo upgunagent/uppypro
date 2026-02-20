@@ -116,7 +116,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const connectionTab = <AdminConnectionTabs channelsContent={channelsContent} aiContent={aiContent} />;
 
     // Tab 2: Profile (Billing Info)
-    const profileTab = <AdminBillingForm billingInfo={billingInfo} tenantId={tenantId} ownerProfile={ownerProfile} />;
+    const profileTab = <AdminBillingForm billingInfo={billingInfo} tenantId={tenantId} ownerProfile={ownerProfile} subscription={subscription} />;
 
     // 3. Subscription Tab Content
     const { getUsdExchangeRate } = await import("@/lib/currency");
