@@ -28,14 +28,26 @@ export async function getAllTransactions(filters?: {
             billing_cycle,
             tenants!inner (
                 id,
-                name,
-                owner_email
+                name
             )
         `)
         .not("iyzico_subscription_reference_code", "is", null);
 
     if (!subscriptions || subscriptions.length === 0) {
         return { transactions: [], error: null };
+    }
+
+    const tenantIds = subscriptions.map(s => s.tenant_id);
+    const { data: billingInfos } = await adminDb
+        .from("billing_info")
+        .select("tenant_id, contact_email")
+        .in("tenant_id", tenantIds);
+
+    const emailMap = new Map();
+    if (billingInfos) {
+        for (const b of billingInfos) {
+            emailMap.set(b.tenant_id, b.contact_email);
+        }
     }
 
     // 2. Her abonelik için Iyzico'dan order'ları çek
@@ -56,7 +68,7 @@ export async function getAllTransactions(filters?: {
                         subscriptionReferenceCode: sub.iyzico_subscription_reference_code,
                         tenantId: sub.tenant_id,
                         tenantName: tenant?.name || '-',
-                        tenantEmail: tenant?.owner_email || '-',
+                        tenantEmail: emailMap.get(sub.tenant_id) || '-',
                         planName: sub.ai_product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox',
                         amount: order.price,
                         currency: order.currencyCode || 'TRY',
@@ -198,8 +210,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
         .select(`
             *,
             tenants!inner (
-                name,
-                owner_email
+                name
             )
         `)
         .eq("id", invoiceId)
@@ -210,7 +221,17 @@ export async function sendInvoiceEmail(invoiceId: string) {
     }
 
     const tenant = invoice.tenants as any;
-    if (!tenant?.owner_email) {
+
+    // Fatura e-postası için billing_info tablosuna bak
+    const { data: billingInfo } = await adminDb
+        .from("billing_info")
+        .select("contact_email")
+        .eq("tenant_id", invoice.tenant_id)
+        .single();
+
+    const tenantEmail = billingInfo?.contact_email;
+
+    if (!tenantEmail) {
         return { error: "Kullanıcı e-posta adresi bulunamadı." };
     }
 
@@ -252,7 +273,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
     try {
         const emailPayload: any = {
             from: EMAIL_FROM,
-            to: [tenant.owner_email],
+            to: [tenantEmail],
             subject: `Faturanız - ${invoice.plan_name || 'UppyPro'} Abonelik Ödemesi`,
             html: htmlContent,
         };

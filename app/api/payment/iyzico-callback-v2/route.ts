@@ -49,7 +49,7 @@ export async function POST(request: Request) {
                 console.log(`[IYZICO-CALLBACK-V2] FOUND Tenant ID via Token: ${subData.tenant_id}, Status: ${subData.status}`);
                 tenantId = subData.tenant_id;
                 // If the subscription was canceled, this is a reactivation
-                if (subData.status === 'canceled' || subData.status === 'pending_payment') {
+                if (subData.status === 'canceled' || subData.status === 'past_due') {
                     isReactivation = true;
                 }
             } else {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
                 .eq('iyzico_checkout_token', token)
                 .single();
 
-            if (existingSub && (existingSub.status === 'canceled' || existingSub.status === 'pending_payment')) {
+            if (existingSub && (existingSub.status === 'canceled' || existingSub.status === 'past_due')) {
                 isReactivation = true;
             }
         }
@@ -188,34 +188,36 @@ export async function POST(request: Request) {
 
                     // --- Anlaşmayı Supabase Storage'a Kaydet ---
                     let agreementUrl = "";
-                    try {
-                        const fileName = `${tenantId}/agreement_${Date.now()}.pdf`;
-                        console.log(`[IYZICO-CALLBACK-V2] Uploading agreement to storage: ${fileName}`);
+                    if (pdfBuffer) {
+                        try {
+                            const fileName = `${tenantId}/agreement_${Date.now()}.pdf`;
+                            console.log(`[IYZICO-CALLBACK-V2] Uploading agreement to storage: ${fileName}`);
 
-                        const { data: uploadData, error: uploadError } = await supabase.storage
-                            .from('agreements')
-                            .upload(fileName, pdfBuffer, {
-                                contentType: 'application/pdf',
-                                upsert: false,
-                            });
-
-                        if (uploadError) {
-                            console.error("[IYZICO-CALLBACK-V2] Failed to upload agreement PDF:", uploadError);
-                        } else {
-                            const { data: urlData } = supabase.storage
+                            const { data: uploadData, error: uploadError } = await supabase.storage
                                 .from('agreements')
-                                .getPublicUrl(fileName);
+                                .upload(fileName, pdfBuffer, {
+                                    contentType: 'application/pdf',
+                                    upsert: false,
+                                });
 
-                            agreementUrl = urlData.publicUrl;
-                            console.log(`[IYZICO-CALLBACK-V2] Agreement saved temporarily. URL: ${agreementUrl}`);
+                            if (uploadError) {
+                                console.error("[IYZICO-CALLBACK-V2] Failed to upload agreement PDF:", uploadError);
+                            } else {
+                                const { data: urlData } = supabase.storage
+                                    .from('agreements')
+                                    .getPublicUrl(fileName);
 
-                            // Update subscription with the agreement URL
-                            await supabase.from('subscriptions')
-                                .update({ agreement_pdf_url: agreementUrl })
-                                .eq('tenant_id', tenantId);
+                                agreementUrl = urlData.publicUrl;
+                                console.log(`[IYZICO-CALLBACK-V2] Agreement saved temporarily. URL: ${agreementUrl}`);
+
+                                // Update subscription with the agreement URL
+                                await supabase.from('subscriptions')
+                                    .update({ agreement_pdf_url: agreementUrl })
+                                    .eq('tenant_id', tenantId);
+                            }
+                        } catch (storageErr) {
+                            console.error("[IYZICO-CALLBACK-V2] Exception saving agreement to storage:", storageErr);
                         }
-                    } catch (storageErr) {
-                        console.error("[IYZICO-CALLBACK-V2] Exception saving agreement to storage:", storageErr);
                     }
                     // ------------------------------------------
 
@@ -227,7 +229,7 @@ export async function POST(request: Request) {
                         priceUsd: 0,
                         billingCycle: "monthly",
                         nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
-                        agreementPdfBuffer: pdfBuffer
+                        agreementPdfBuffer: pdfBuffer || undefined
                     });
                     console.log("[IYZICO-CALLBACK-V2] Welcome Email Sent successfully.");
                 }

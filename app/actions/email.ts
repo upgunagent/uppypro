@@ -170,7 +170,7 @@ interface SubscriptionWelcomeEmailProps {
     priceUsd: number;
     billingCycle: string;
     nextPaymentDate: string;
-    agreementPdfBuffer: Buffer;
+    agreementPdfBuffer?: Buffer;
 }
 
 export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEmailProps) {
@@ -256,18 +256,23 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
     `;
 
     try {
-        const { data, error } = await resend.emails.send({
+        const emailPayload: any = {
             from: EMAIL_FROM,
             to: [recipientEmail],
             subject: 'Aboneliğiniz Başladı - UppyPro',
             html: htmlContent,
-            attachments: [
+        };
+
+        if (agreementPdfBuffer) {
+            emailPayload.attachments = [
                 {
                     filename: 'Mesafeli_Satis_Sozlesmesi.pdf',
                     content: agreementPdfBuffer
                 }
-            ]
-        });
+            ];
+        }
+
+        const { data, error } = await resend.emails.send(emailPayload);
 
         if (error) {
             console.error("Welcome Email Error:", error);
