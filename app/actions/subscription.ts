@@ -97,7 +97,7 @@ export async function initializeCardUpdate() {
         });
 
         if (result.status !== 'success') {
-            return { error: result.errorMessage || "Kart güncelleme başlatılamadı." };
+            return { error: `Kart güncelleme başlatılamadı. Hata: ${result.errorMessage || "Bilinmiyor"} - Detay: ${JSON.stringify(result.errorDetails || result)}` };
         }
 
         // Save Token for Callback Identification

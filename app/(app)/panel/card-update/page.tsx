@@ -22,20 +22,31 @@ export default function CardUpdatePage() {
                     setError(res.error);
                     setLoading(false);
                 } else if (res.checkoutFormContent) {
-                    // Inject script and content
-                    if (checkoutFormRef.current) {
-                        checkoutFormRef.current.innerHTML = res.checkoutFormContent!;
+                    // Inject script and content robustly
+                    setTimeout(() => {
+                        if (!checkoutFormRef.current) return;
+                        checkoutFormRef.current.innerHTML = '';
 
-                        // Execute scripts
-                        const scripts = checkoutFormRef.current.querySelectorAll("script");
-                        scripts.forEach(oldScript => {
-                            const newScript = document.createElement("script");
-                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                            oldScript.parentNode?.replaceChild(newScript, oldScript);
+                        const div = document.createElement('div');
+                        div.innerHTML = res.checkoutFormContent!;
+
+                        // Re-execute scripts
+                        const scripts = div.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            const newScript = document.createElement('script');
+                            if (script.src) {
+                                newScript.src = script.src;
+                                newScript.async = true;
+                            } else {
+                                newScript.textContent = script.textContent;
+                            }
+                            document.head.appendChild(newScript);
+                            script.remove();
                         });
-                    }
-                    setLoading(false);
+
+                        checkoutFormRef.current.appendChild(div);
+                        setLoading(false);
+                    }, 300);
                 }
             } catch (e: any) {
                 console.error(e);
@@ -44,7 +55,25 @@ export default function CardUpdatePage() {
             }
         };
 
+        const cleanupIyzicoDOM = () => {
+            const selectors = [
+                'script[src*="iyzipay"]',
+                'script[src*="iyzico"]',
+                'iframe[src*="iyzipay"]',
+                'iframe[src*="iyzico"]',
+                '#iyzipay-checkout-form',
+                '.iyzico-popup'
+            ];
+            document.querySelectorAll(selectors.join(', ')).forEach(el => el.remove());
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        };
+
         init();
+
+        return () => {
+            cleanupIyzicoDOM();
+        };
     }, []);
 
     const handleBack = () => {
