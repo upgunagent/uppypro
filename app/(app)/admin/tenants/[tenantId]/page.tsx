@@ -122,6 +122,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const { getUsdExchangeRate } = await import("@/lib/currency");
     const { getSubscriptionDetails } = await import("@/lib/iyzico");
     const { PaymentHistoryTable } = await import("@/components/subscription/payment-history-table");
+    const { getInvoicesForTenant } = await import("@/app/actions/invoice");
 
     // Fetch Iyzico Details if available
     let iyzicoSubscriptionDetails = null;
@@ -131,6 +132,9 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
             iyzicoSubscriptionDetails = details;
         }
     }
+
+    // Fatura bilgilerini çek
+    const tenantInvoices = await getInvoicesForTenant(tenantId);
 
     const subscriptionTab = (
         <div className="space-y-8">
@@ -187,7 +191,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
             {/* Payment History (Iyzico) */}
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-6">Ödeme Geçmişi (Iyzico)</h3>
-                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} />
+                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} invoices={tenantInvoices} />
             </div>
         </div>
     );

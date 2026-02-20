@@ -89,6 +89,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
     const { getUsdExchangeRate } = await import("@/lib/currency");
     const { getSubscriptionDetails } = await import("@/lib/iyzico");
     const { PaymentHistoryTable } = await import("@/components/subscription/payment-history-table");
+    const { getInvoicesForTenant } = await import("@/app/actions/invoice");
 
     const usdRate = await getUsdExchangeRate();
 
@@ -99,6 +100,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
             iyzicoSubscriptionDetails = details;
         }
     }
+
+    // Fatura bilgilerini çek
+    const invoices = await getInvoicesForTenant(member.tenant_id);
 
     const subscriptionTab = (
         <div className="space-y-6">
@@ -114,7 +118,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
             <div className="space-y-4">
                 <h3 className="font-bold text-lg text-slate-900">Ödeme Geçmişi</h3>
-                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} />
+                <PaymentHistoryTable orders={iyzicoSubscriptionDetails?.orders || []} invoices={invoices} />
             </div>
 
             <PaymentMethodsCard methods={paymentMethods || []} subscription={subscription} />

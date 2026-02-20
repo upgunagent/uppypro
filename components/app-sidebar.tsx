@@ -15,7 +15,8 @@ import {
     MessageCircle,
     UserCircle,
     Tag,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    Receipt
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -148,6 +149,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     const adminLinks = [
         { href: "/admin/tenants", label: "İşletmeler", icon: Users },
+        { href: "/admin/transactions", label: "İşlemler", icon: Receipt },
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
         { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
         { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
