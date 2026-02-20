@@ -176,7 +176,7 @@ export async function POST(request: Request) {
                         }
                     }
 
-                    const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice);
+                    const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(finalPrice) + ' (KDV Dahil)';
 
                     console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement with pdfmake...");
                     const pdfBuffer = await generatePdfBuffer({
@@ -244,7 +244,7 @@ export async function POST(request: Request) {
                         nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
                         agreementPdfBuffer: pdfBuffer || undefined
                     });
-                    console.log("[IYZICO-CALLBACK-V2] Welcome Email Sent successfully.");
+                    console.log(`[IYZICO-CALLBACK-V2] Welcome Email Sent successfully. PDF attached: ${!!pdfBuffer}`);
                 }
             } catch (emailErr) {
                 console.error("[IYZICO-CALLBACK-V2] Failed to send welcome email:", emailErr);

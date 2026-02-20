@@ -1,20 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const PdfPrinter = require('pdfmake');
 import path from 'path';
 import type { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
-
-function getFontPath(fileName: string) {
-    return path.join(process.cwd(), 'node_modules', 'pdfmake', 'fonts', 'Roboto', fileName);
-}
-
-const fonts = {
-    Roboto: {
-        normal: getFontPath('Roboto-Regular.ttf'),
-        bold: getFontPath('Roboto-Medium.ttf'),
-        italics: getFontPath('Roboto-Italic.ttf'),
-        bolditalics: getFontPath('Roboto-MediumItalic.ttf'),
-    },
-};
 
 export type AgreementPdfData = {
     buyer: {
@@ -41,6 +26,22 @@ export type AgreementPdfData = {
  */
 export async function generatePdfBuffer(data: AgreementPdfData): Promise<Buffer | null> {
     try {
+        // Lazy-load pdfmake inside function to avoid Turbopack bundling issues
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const PdfPrinter = require('pdfmake');
+        const pdfmakeDir = path.dirname(require.resolve('pdfmake/package.json'));
+        const getFontPath = (f: string) => path.join(pdfmakeDir, 'fonts', 'Roboto', f);
+
+        const fonts = {
+            Roboto: {
+                normal: getFontPath('Roboto-Regular.ttf'),
+                bold: getFontPath('Roboto-Medium.ttf'),
+                italics: getFontPath('Roboto-Italic.ttf'),
+                bolditalics: getFontPath('Roboto-MediumItalic.ttf'),
+            },
+        };
+
+        console.log('[PDF Generator] Font dir:', pdfmakeDir);
         const printer = new PdfPrinter(fonts);
 
         const priceTL = data.plan.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

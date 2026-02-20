@@ -267,9 +267,10 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
             emailPayload.attachments = [
                 {
                     filename: 'Mesafeli_Satis_Sozlesmesi.pdf',
-                    content: agreementPdfBuffer
+                    content: agreementPdfBuffer.toString('base64')
                 }
             ];
+            console.log(`[EMAIL] Attaching PDF (${agreementPdfBuffer.length} bytes)`);
         }
 
         const { data, error } = await resend.emails.send(emailPayload);
