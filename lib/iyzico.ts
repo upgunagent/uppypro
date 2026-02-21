@@ -255,6 +255,8 @@ export async function updateSubscriptionCard(data: {
     const requestBody = JSON.stringify(payload);
 
     const randomString = generateRandomString();
+
+    // As per Iyzico sample code: IyzipaySubscriptionSamples.js L259
     const uri = `${IyzicoConfig.baseUrl}/v2/subscription/card-update/checkoutform/initialize/with-subscription`;
 
     const authString = generateIyzicoV2Header(

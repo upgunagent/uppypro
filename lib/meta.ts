@@ -292,6 +292,65 @@ export async function processIncomingMedia(
     }
 }
 
+/**
+ * Upload Instagram profile picture to Supabase Storage for permanent URL.
+ * Downloads the photo from the Instagram CDN URL and uploads it to the
+ * 'profile-pics' bucket with a stable filename per IG user ID.
+ * Returns the permanent Supabase public URL, or null on failure.
+ */
+export async function uploadProfilePic(
+    igUserId: string,
+    cdnUrl: string
+): Promise<string | null> {
+    const supabaseWithAdmin = createAdminClient();
+
+    try {
+        // 1. Download from Instagram CDN
+        const res = await fetch(cdnUrl);
+        if (!res.ok) {
+            console.error(`[Profile Pic] Download failed: ${res.status} for user ${igUserId}`);
+            return null;
+        }
+
+        const buffer = await res.arrayBuffer();
+        const contentType = res.headers.get("content-type") || "image/jpeg";
+
+        // 2. Determine extension
+        let ext = "jpg";
+        if (contentType.includes("png")) ext = "png";
+        else if (contentType.includes("webp")) ext = "webp";
+
+        // 3. Upload to Supabase Storage (upsert: same filename per user)
+        const filePath = `${igUserId}.${ext}`;
+
+        const { error: uploadError } = await supabaseWithAdmin
+            .storage
+            .from("profile-pics")
+            .upload(filePath, buffer, {
+                contentType: contentType,
+                upsert: true // Overwrite if exists (profile pic may change)
+            });
+
+        if (uploadError) {
+            console.error("[Profile Pic] Upload failed:", uploadError);
+            return null;
+        }
+
+        // 4. Get permanent public URL
+        const { data: { publicUrl } } = supabaseWithAdmin
+            .storage
+            .from("profile-pics")
+            .getPublicUrl(filePath);
+
+        console.log(`[Profile Pic] Saved for user ${igUserId}: ${publicUrl}`);
+        return publicUrl;
+
+    } catch (err) {
+        console.error("[Profile Pic] Exception:", err);
+        return null;
+    }
+}
+
 export async function editMessageInChannel(
     tenantId: string,
     recipientId: string,

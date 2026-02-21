@@ -15,6 +15,57 @@ export default function CardUpdatePage() {
     const { toast } = useToast();
 
     useEffect(() => {
+        // Add CSS to force Iyzico popup to render inline within our container
+        const style = document.createElement('style');
+        style.id = 'iyzico-inline-override';
+        style.textContent = `
+            /* Hide Iyzico's overlay/backdrop */
+            .iyzico-overlay,
+            .iyzi-popup-overlay,
+            div[style*="position: fixed"][style*="z-index"][style*="background"] {
+                display: none !important;
+            }
+
+            /* Force the Iyzico popup container to render inline */
+            #iyzipay-checkout-form-modal,
+            .iyzico-modal,
+            .iyzi-checkout-modal,
+            div[class*="popup"] > div,
+            #iyzipay-checkout-form iframe {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: 500px !important;
+                margin: 0 auto !important;
+                z-index: 1 !important;
+                box-shadow: none !important;
+            }
+
+            /* Target the Iyzico checkout iframe specifically */
+            #iyzico-card-update-container iframe,
+            #iyzipay-checkout-form iframe {
+                position: relative !important;
+                width: 100% !important;
+                min-height: 500px !important;
+                border: none !important;
+                border-radius: 12px !important;
+            }
+
+            /* Prevent body scroll lock from Iyzico */
+            body.iyzico-popup-active,
+            body[style*="overflow: hidden"] {
+                overflow: auto !important;
+                padding-right: 0 !important;
+            }
+        `;
+        document.head.appendChild(style);
+
         const init = async () => {
             try {
                 const res = await initializeCardUpdate();
@@ -22,35 +73,46 @@ export default function CardUpdatePage() {
                     setError(res.error);
                     setLoading(false);
                 } else if (res.checkoutFormContent) {
-                    // Iyzico bazen içeriği "popup" class'ı ile gönderir, bunu "responsive" olarak değiştirerek
-                    // sayfa içine gömülü (inline) açılmasını zorluyoruz.
-                    const responsiveContent = res.checkoutFormContent!
-                        .replace(/class="popup"/g, 'class="responsive"')
-                        .replace(/class='popup'/g, "class='responsive'");
-
-                    // Inject script and content robustly
                     setTimeout(() => {
-                        if (!checkoutFormRef.current) return;
-                        checkoutFormRef.current.innerHTML = '';
+                        const container = checkoutFormRef.current;
+                        if (!container) return;
 
-                        const div = document.createElement('div');
-                        div.innerHTML = responsiveContent;
+                        container.innerHTML = res.checkoutFormContent || '';
 
                         // Re-execute scripts
-                        const scripts = div.querySelectorAll('script');
+                        const scripts = container.querySelectorAll('script');
                         scripts.forEach(script => {
                             const newScript = document.createElement('script');
+
+                            // Copy all attributes from the original script
+                            Array.from(script.attributes).forEach(attr => {
+                                newScript.setAttribute(attr.name, attr.value);
+                            });
+
                             if (script.src) {
                                 newScript.src = script.src;
                                 newScript.async = true;
                             } else {
                                 newScript.textContent = script.textContent;
                             }
-                            document.head.appendChild(newScript);
+
+                            container.appendChild(newScript);
                             script.remove();
                         });
 
-                        checkoutFormRef.current.appendChild(div);
+                        // After Iyzico loads, move its popup content into our container
+                        setTimeout(() => {
+                            moveIyzicoPopupInline();
+                        }, 1500);
+
+                        // Keep checking and moving popup content
+                        const interval = setInterval(() => {
+                            moveIyzicoPopupInline();
+                        }, 500);
+
+                        // Stop checking after 10 seconds
+                        setTimeout(() => clearInterval(interval), 10000);
+
                         setLoading(false);
                     }, 300);
                 }
@@ -61,16 +123,32 @@ export default function CardUpdatePage() {
             }
         };
 
-        const cleanupIyzicoDOM = () => {
-            const selectors = [
-                'script[src*="iyzipay"]',
-                'script[src*="iyzico"]',
-                'iframe[src*="iyzipay"]',
-                'iframe[src*="iyzico"]',
-                '#iyzipay-checkout-form',
-                '.iyzico-popup'
-            ];
-            document.querySelectorAll(selectors.join(', ')).forEach(el => el.remove());
+        const moveIyzicoPopupInline = () => {
+            const container = checkoutFormRef.current;
+            if (!container) return;
+
+            // Find Iyzico's popup iframe or content that was injected into body
+            const iframes = document.querySelectorAll('iframe[src*="iyzipay"], iframe[src*="iyzico"]');
+            iframes.forEach(iframe => {
+                // If iframe is not inside our container, move it there
+                if (!container.contains(iframe)) {
+                    const iframeEl = iframe as HTMLIFrameElement;
+                    iframeEl.style.position = 'relative';
+                    iframeEl.style.width = '100%';
+                    iframeEl.style.minHeight = '500px';
+                    iframeEl.style.border = 'none';
+                    iframeEl.style.borderRadius = '12px';
+                    iframeEl.style.zIndex = '1';
+                    container.appendChild(iframeEl);
+                }
+            });
+
+            // Hide overlays
+            document.querySelectorAll('.iyzico-overlay, .iyzi-popup-overlay').forEach(el => {
+                (el as HTMLElement).style.display = 'none';
+            });
+
+            // Fix body overflow
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         };
@@ -78,7 +156,23 @@ export default function CardUpdatePage() {
         init();
 
         return () => {
-            cleanupIyzicoDOM();
+            // Cleanup
+            const styleEl = document.getElementById('iyzico-inline-override');
+            if (styleEl) styleEl.remove();
+
+            const selectors = [
+                'script[src*="iyzipay"]',
+                'script[src*="iyzico"]',
+                'iframe[src*="iyzipay"]',
+                'iframe[src*="iyzico"]',
+                '#iyzipay-checkout-form',
+                '.iyzico-popup',
+                '.iyzico-overlay',
+                '.iyzi-popup-overlay'
+            ];
+            document.querySelectorAll(selectors.join(', ')).forEach(el => el.remove());
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
         };
     }, []);
 

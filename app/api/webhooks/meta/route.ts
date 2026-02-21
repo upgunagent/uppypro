@@ -187,9 +187,21 @@ export async function POST(request: Request) {
                             if (profileData.username) {
                                 eventData.sender_name = profileData.username;
                             }
-                            // Store profile pic temporarily in eventData to use during conversation create/update
+                            // Download profile pic to Supabase Storage for permanent URL
                             if (profileData.profile_pic) {
-                                (eventData as any).profile_pic = profileData.profile_pic;
+                                try {
+                                    const { uploadProfilePic } = await import("@/lib/meta");
+                                    const permanentUrl = await uploadProfilePic(eventData.sender_id, profileData.profile_pic);
+                                    if (permanentUrl) {
+                                        (eventData as any).profile_pic = permanentUrl;
+                                    } else {
+                                        // Fallback to CDN URL if upload fails
+                                        (eventData as any).profile_pic = profileData.profile_pic;
+                                    }
+                                } catch (uploadErr) {
+                                    console.error("Failed to upload profile pic:", uploadErr);
+                                    (eventData as any).profile_pic = profileData.profile_pic;
+                                }
                             }
                         } catch (e) {
                             console.error("Failed to fetch IG profile:", e);

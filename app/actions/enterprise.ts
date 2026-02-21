@@ -169,7 +169,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         .message { font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px; }
         .footer { background-color: #f8fafc; padding: 30px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
         .info-box { background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
-        .cta-button { display: inline-block; background: linear-gradient(135deg, #ea580c, #f97316); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; }
+        .cta-button { display: inline-block; background-color: #ea580c; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; border: 1px solid #ea580c; }
     </style>
 </head>
 <body>
@@ -203,7 +203,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
             </div>
 
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${inviteLink}" style="display: inline-block; background: linear-gradient(135deg, #ea580c, #f97316); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px;">Aboneliği Başlat →</a>
+                <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; border: 1px solid #ea580c;">Aboneliği Başlat →</a>
             </div>
 
             <p class="message" style="margin-top: 40px;">

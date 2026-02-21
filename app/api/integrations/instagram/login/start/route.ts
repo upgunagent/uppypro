@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     // 3. Construct Instagram OAuth URL
     const appId = process.env.IG_APP_ID;
     const redirectUri = process.env.IG_REDIRECT_URI || `${new URL(request.url).origin}/api/integrations/instagram/login/callback`;
-    const scope = "instagram_basic,instagram_business_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_read_engagement,business_management";
+    const scope = "instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_show_list,pages_read_engagement,business_management";
     // Scope note: 'instagram_manage_messages' is key for DM. 
     // 'business_management' might be needed depending on the app review.
 
