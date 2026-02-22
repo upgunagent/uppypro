@@ -16,7 +16,8 @@ import {
     UserCircle,
     Tag,
     Calendar as CalendarIcon,
-    Receipt
+    Receipt,
+    Lock
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -211,7 +212,14 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-100 flex items-center">
+                <div className="p-4 border-t border-slate-100 flex flex-col gap-2 mt-auto">
+                    <Link
+                        href="/admin/password"
+                        className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
+                    >
+                        <Lock size={20} />
+                        <span>Şifre Değiştir</span>
+                    </Link>
                     <button
                         onClick={handleLogout}
                         className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
