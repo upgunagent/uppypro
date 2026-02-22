@@ -3,13 +3,16 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
-export async function updatePricing(productKey: string, priceTry: number) {
+export async function updatePricing(productKey: string, priceTry: number, iyzicoCode: string) {
     const admin = createAdminClient();
 
     // priceTry received as normal number
     const { error } = await admin
         .from('pricing')
-        .update({ monthly_price_try: priceTry })
+        .update({
+            monthly_price_try: priceTry,
+            iyzico_pricing_plan_reference_code: iyzicoCode
+        })
         .eq('product_key', productKey)
         .eq('billing_cycle', 'monthly');
 

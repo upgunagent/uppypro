@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createEnterpriseInvite } from "@/app/actions/enterprise";
+import { getProductPrices } from "@/app/actions/pricing";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Send } from "lucide-react";
 
@@ -12,6 +13,13 @@ export default function EnterpriseInvitePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [billingType, setBillingType] = useState<'corporate' | 'individual'>('corporate');
+    const [prices, setPrices] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        getProductPrices().then(setPrices).catch(console.error);
+    }, []);
+
+    const formatPrice = (p: number) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0 }).format(p);
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
@@ -44,6 +52,13 @@ export default function EnterpriseInvitePage() {
             (document.getElementById("invite-form") as HTMLFormElement)?.reset();
         }
     }
+
+    const plans = [
+        { key: 'uppypro_corporate_small', name: 'Small', price: `${formatPrice(prices.uppypro_corporate_small || 4995)} TL + KDV` },
+        { key: 'uppypro_corporate_medium', name: 'Medium', price: `${formatPrice(prices.uppypro_corporate_medium || 6995)} TL + KDV` },
+        { key: 'uppypro_corporate_large', name: 'Large', price: `${formatPrice(prices.uppypro_corporate_large || 9995)} TL + KDV` },
+        { key: 'uppypro_corporate_xl', name: 'XL', price: `${formatPrice(prices.uppypro_corporate_xl || 12995)} TL + KDV` }
+    ];
 
     return (
         <div className="p-8 max-w-2xl">
@@ -157,12 +172,7 @@ export default function EnterpriseInvitePage() {
                     <div className="space-y-4 pt-4 border-t border-slate-100">
                         <Label className="text-lg font-semibold block">Paket Seçimi</Label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[
-                                { key: 'uppypro_corporate_small', name: 'Small', price: '4.995 TL + KDV' },
-                                { key: 'uppypro_corporate_medium', name: 'Medium', price: '6.995 TL + KDV' },
-                                { key: 'uppypro_corporate_large', name: 'Large', price: '9.995 TL + KDV' },
-                                { key: 'uppypro_corporate_xl', name: 'XL', price: '12.995 TL + KDV' }
-                            ].map((plan) => (
+                            {plans.map((plan) => (
                                 <label key={plan.key} className="flex flex-col space-y-1 cursor-pointer border p-4 rounded-lg has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 hover:bg-slate-50 transition-colors relative">
                                     <div className="flex items-center justify-between">
                                         <span className="font-bold text-slate-900">{plan.name}</span>

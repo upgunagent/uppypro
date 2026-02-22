@@ -93,7 +93,9 @@ export function LandingFooter() {
                             </li>
                             <li className="flex items-start gap-3">
                                 <Phone className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                                <a href="tel:+905334906252" className="hover:text-primary transition-colors">+90 533 490 62 52</a>
+                                <a href="tel:+905334906252" className="hover:text-primary transition-colors">
+                                    +90 533 490 62 52 <span className="text-slate-400 text-sm ml-1">(Whatsapp Destek Hattı)</span>
+                                </a>
                             </li>
                             <li className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />

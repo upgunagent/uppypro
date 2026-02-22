@@ -22,32 +22,85 @@ export default async function AdminPricingPage() {
     const { data: prices } = await supabase
         .from("pricing")
         .select("*")
-        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
+        .in("product_key", ["uppypro_inbox", "base_inbox", "inbox", "uppypro_ai", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
         .eq("billing_cycle", "monthly");
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_usd || 19;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_usd || 79;
+    const getPriceData = (key: string, defaultPrice: number) => {
+        // Handle alternative keys for inbox just in case
+        const found = prices?.find(p => p.product_key === key || (key === 'uppypro_inbox' && (p.product_key === 'base_inbox' || p.product_key === 'inbox')));
+        return {
+            price: found?.monthly_price_try || defaultPrice,
+            code: found?.iyzico_pricing_plan_reference_code || "",
+            // Use the actual product key from DB if it exists (e.g., base_inbox instead of uppypro_inbox) so updates go to the right row
+            key: found?.product_key || key
+        };
+    };
+
+    const inbox = getPriceData("uppypro_inbox", 895);
+    const ai = getPriceData("uppypro_ai", 4794);
+    const cSmall = getPriceData("uppypro_corporate_small", 5994);
+    const cMedium = getPriceData("uppypro_corporate_medium", 8394);
+    const cLarge = getPriceData("uppypro_corporate_large", 11994);
+    const cXL = getPriceData("uppypro_corporate_xl", 15594);
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiyatlandırma Yönetimi (USD)</h1>
+        <div className="p-8 max-w-5xl mx-auto">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiyatlandırma Yönetimi</h1>
             <p className="text-slate-500 mb-8">
-                Paketlerin aylık **Dolar ($)** ücretlerini güncelleyin. Sistem tahsilat anında güncel kur ile TL'ye çevirecektir.
+                Paketlerin aylık ücretlerini (TL) ve İyzico referans kodlarını güncelleyin.
+                Değişiklikler ana sayfa ve kurumsal davet sayfasındaki fiyatları doğrudan etkileyecektir.
+                Yeni bir İyzico planı oluşturduğunuzda referans kodunu buradan güncellemeyi unutmayın!
             </p>
 
             <div className="grid gap-6">
                 <PricingForm
                     label="UppyPro Inbox"
-                    productKey="uppypro_inbox"
-                    currentPrice={inboxPrice}
-                    description="Küçük işletmeler için temel paket."
+                    productKey={inbox.key}
+                    currentPrice={inbox.price}
+                    currentCode={inbox.code}
+                    description="Küçük işletmeler için temel paket fiyatı."
                 />
 
                 <PricingForm
                     label="UppyPro AI"
-                    productKey="uppypro_ai"
-                    currentPrice={aiPrice}
-                    description="Otomasyon ve AI asistan içeren paket."
+                    productKey={ai.key}
+                    currentPrice={ai.price}
+                    currentCode={ai.code}
+                    description="Otomasyon ve AI asistan içeren paket fiyatı."
+                />
+
+                <h3 className="text-xl font-bold text-slate-800 mt-6 border-b pb-2">Kurumsal Paketler</h3>
+
+                <PricingForm
+                    label="Kurumsal (Small)"
+                    productKey={cSmall.key}
+                    currentPrice={cSmall.price}
+                    currentCode={cSmall.code}
+                    description="Small seviye kurumsal işletme paketi."
+                />
+
+                <PricingForm
+                    label="Kurumsal (Medium)"
+                    productKey={cMedium.key}
+                    currentPrice={cMedium.price}
+                    currentCode={cMedium.code}
+                    description="Medium seviye kurumsal işletme paketi."
+                />
+
+                <PricingForm
+                    label="Kurumsal (Large)"
+                    productKey={cLarge.key}
+                    currentPrice={cLarge.price}
+                    currentCode={cLarge.code}
+                    description="Large seviye kurumsal işletme paketi."
+                />
+
+                <PricingForm
+                    label="Kurumsal (XL)"
+                    productKey={cXL.key}
+                    currentPrice={cXL.price}
+                    currentCode={cXL.code}
+                    description="XL seviye kurumsal işletme paketi."
                 />
             </div>
         </div>

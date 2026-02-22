@@ -2,21 +2,15 @@ import { LandingHeader, LandingFooter } from "@/components/landing/layout";
 import { HeroSection } from "@/components/landing/hero";
 import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/components/landing/sections";
 import { SolutionsSection } from "@/components/landing/solutions";
-
-import { createClient } from "@/lib/supabase/client";
+import { getProductPrices } from "@/app/actions/pricing";
 
 export const dynamic = 'force-dynamic';
 
 export default async function LandingPage() {
-    const supabase = createClient();
-    const { data: prices } = await supabase
-        .from("pricing")
-        .select("*")
-        .in("product_key", ["uppypro_inbox", "uppypro_ai"])
-        .eq("billing_cycle", "monthly");
+    const prices = await getProductPrices();
 
-    const inboxPrice = prices?.find(p => p.product_key === "uppypro_inbox")?.monthly_price_try || 895;
-    const aiPrice = prices?.find(p => p.product_key === "uppypro_ai")?.monthly_price_try || 3995;
+    const inboxPrice = prices?.uppypro_inbox || prices?.base_inbox || prices?.inbox || 895;
+    const aiPrice = prices?.ai || prices?.uppypro_ai || 4794;
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-orange-100 selection:text-orange-900">
