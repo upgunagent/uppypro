@@ -93,7 +93,7 @@ export function LandingFooter() {
                             </li>
                             <li className="flex items-start gap-3">
                                 <Phone className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                                <a href="tel:+905332076252" className="hover:text-primary transition-colors">+90 533 207 62 52</a>
+                                <a href="tel:+905334906252" className="hover:text-primary transition-colors">+90 533 490 62 52</a>
                             </li>
                             <li className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
@@ -108,7 +108,7 @@ export function LandingFooter() {
                             <Link href="https://www.instagram.com/upgunai/" target="_blank" className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors group">
                                 <Instagram className="w-5 h-5 text-gray-600 group-hover:text-pink-600 transition-colors" />
                             </Link>
-                            <Link href="#" className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 transition-colors group">
+                            <Link href="https://wa.me/905334906252" target="_blank" className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 transition-colors group">
                                 <MessageCircle className="w-5 h-5 text-green-600 group-hover:text-green-700 transition-colors" />
                             </Link>
                         </div>

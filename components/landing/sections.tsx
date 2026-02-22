@@ -558,7 +558,7 @@ export function ContactSection() {
                         <div className="pt-4 text-center space-y-3">
                             <p className="text-xs text-slate-400">Dilerseniz direkt WhatsApp üzerinden de yazabilirsiniz.</p>
                             <Button asChild variant="outline" className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold h-10 rounded-xl cursor-pointer">
-                                <Link href="https://wa.me/905332076252" target="_blank">
+                                <Link href="https://wa.me/905334906252" target="_blank">
                                     <MessageSquare className="w-4 h-4 mr-2" />
                                     WhatsApp'tan Yaz
                                 </Link>
