@@ -59,7 +59,6 @@ export default async function TenantListPage() {
                     <h1 className="text-3xl font-bold text-slate-900">İşletmeler</h1>
                     <p className="text-slate-500">Sistemdeki tüm işletmelerin listesi ve durumu.</p>
                 </div>
-                <Button>Yeni İşletme Ekle</Button>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -82,7 +81,7 @@ export default async function TenantListPage() {
                             const corporateSize = sub?.ai_product_key?.replace('uppypro_corporate_', '').toUpperCase();
 
                             return (
-                                <TableRow key={tenant.id} className="hover:bg-slate-50/50">
+                                <TableRow key={tenant.id} className="hover:bg-orange-50/50 transition-colors">
                                     <TableCell className="font-medium">
                                         <div className="flex flex-col">
                                             <span className="text-slate-900 font-semibold">{tenant.name}</span>
@@ -98,7 +97,7 @@ export default async function TenantListPage() {
                                                             Kurumsal{corporateSize && corporateSize !== 'ENTERPRISE' ? ` (${corporateSize.charAt(0) + corporateSize.slice(1).toLowerCase()})` : ''}
                                                         </Badge>
                                                     ) : isPro ? (
-                                                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Pro AI</Badge>
+                                                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none">Pro AI</Badge>
                                                     ) : (
                                                         <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100">Inbox</Badge>
                                                     )}
@@ -109,7 +108,7 @@ export default async function TenantListPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
+                                        <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100 border-none' : ''}>
                                             {sub?.status === 'active' ? "Aktif" : (sub?.status || "Pasif")}
                                         </Badge>
                                     </TableCell>
@@ -118,7 +117,7 @@ export default async function TenantListPage() {
                                             {tenant.marketing_consent ? (
                                                 <CheckCircle2 className="text-green-600 w-5 h-5" />
                                             ) : (
-                                                <XCircle className="text-red-400 w-5 h-5" />
+                                                <XCircle className="text-slate-300 w-5 h-5" />
                                             )}
                                         </div>
                                     </TableCell>
@@ -135,7 +134,7 @@ export default async function TenantListPage() {
                         })}
                         {tenants?.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center text-slate-500">
+                                <TableCell colSpan={6} className="h-24 text-center text-slate-500">
                                     Kayıtlı işletme bulunamadı.
                                 </TableCell>
                             </TableRow>

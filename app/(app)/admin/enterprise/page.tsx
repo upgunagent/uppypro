@@ -137,7 +137,7 @@ export default function EnterpriseInvitePage() {
                         <textarea
                             name="address"
                             required
-                            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="Açık adres..."
                             rows={3}
                         />
@@ -183,7 +183,7 @@ export default function EnterpriseInvitePage() {
                     </div>
 
                     <div className="pt-4">
-                        <Button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800">
+                        <Button type="submit" disabled={loading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm">
                             {loading ? <Loader2 className="animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                             Davet Gönder
                         </Button>

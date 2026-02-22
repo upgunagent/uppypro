@@ -53,14 +53,14 @@ export function PricingForm({ label, productKey, currentPrice, description }: Pr
                         type="number"
                         value={price}
                         onChange={(e) => setPrice(Number(e.target.value))}
-                        className="pr-8 font-mono text-right font-bold text-lg"
+                        className="pr-8 font-mono text-right font-bold text-lg focus-visible:ring-orange-500"
                     />
                     <span className="absolute right-3 top-2.5 text-slate-400 font-medium text-sm">USD</span>
                 </div>
                 <Button
                     onClick={handleUpdate}
                     disabled={loading}
-                    className="bg-slate-900 hover:bg-slate-800"
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Güncelle"}
                 </Button>

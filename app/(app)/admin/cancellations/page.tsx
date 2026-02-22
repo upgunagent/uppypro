@@ -89,7 +89,7 @@ export default async function CancellationsPage() {
                             const isCanceled = sub.status === 'canceled';
 
                             return (
-                                <TableRow key={sub.id} className="hover:bg-slate-50/50">
+                                <TableRow key={sub.id} className="hover:bg-orange-50/50 transition-colors">
                                     <TableCell className="font-medium">
                                         <div className="flex flex-col">
                                             <span className="text-slate-900 font-semibold">{tenant?.name || "Bilinmeyen İşletme"}</span>
@@ -136,7 +136,7 @@ export default async function CancellationsPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Link href={`/admin/tenants/${tenant?.id}/billing`}>
-                                            <Button variant="ghost" size="sm">
+                                            <Button variant="ghost" size="sm" className="hover:bg-orange-50 hover:text-orange-600">
                                                 Yönet <ArrowRight className="w-4 h-4 ml-1" />
                                             </Button>
                                         </Link>

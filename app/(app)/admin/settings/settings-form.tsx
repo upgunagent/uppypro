@@ -17,7 +17,7 @@ const initialState: any = {
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
-        <Button type="submit" disabled={pending} className="w-full">
+        <Button type="submit" disabled={pending} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm">
             {pending ? (
                 <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -65,6 +65,7 @@ export function SettingsForm({ currentWebhookUrl }: { currentWebhookUrl: string 
                     name="webhookUrl"
                     defaultValue={currentWebhookUrl}
                     placeholder="https://n8n.your-domain.com/webhook/..."
+                    className="focus-visible:ring-orange-500"
                 />
             </div>
 

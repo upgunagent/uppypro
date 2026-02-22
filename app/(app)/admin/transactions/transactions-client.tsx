@@ -133,7 +133,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                 placeholder="İşletme adı veya e-posta..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9"
+                                className="pl-9 focus-visible:ring-orange-500"
                             />
                         </div>
                     </div>
@@ -143,6 +143,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                             type="date"
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
+                            className="focus-visible:ring-orange-500"
                         />
                     </div>
                     <div className="min-w-[160px]">
@@ -151,9 +152,10 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
+                            className="focus-visible:ring-orange-500"
                         />
                     </div>
-                    <Button variant="outline" onClick={handleRefresh} disabled={isPending} className="h-10">
+                    <Button variant="outline" onClick={handleRefresh} disabled={isPending} className="h-10 border-slate-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200">
                         {isPending ? <Loader2 size={16} className="animate-spin" /> : "Yenile"}
                     </Button>
                 </div>
@@ -164,7 +166,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                 <a
                     href="/api/invoices/preview"
                     target="_blank"
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    className="text-sm text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium transition-colors"
                 >
                     <Eye size={14} />
                     Mail Şablonu Önizle
@@ -197,7 +199,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                 </tr>
                             ) : (
                                 filtered.map((t, index) => (
-                                    <tr key={t.orderReferenceCode || index} className="hover:bg-slate-50/50">
+                                    <tr key={t.orderReferenceCode || index} className="hover:bg-orange-50/50 transition-colors">
                                         <td className="px-4 py-3 text-slate-900 font-medium whitespace-nowrap">
                                             {formatTurkeyDate(new Date(t.paymentDate))}
                                         </td>
@@ -208,7 +210,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                             {t.tenantEmail}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
                                                 {t.planName}
                                             </Badge>
                                         </td>
@@ -234,7 +236,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                                     <a
                                                         href={t.invoice.invoice_pdf_url}
                                                         target="_blank"
-                                                        className="text-blue-600 hover:text-blue-700"
+                                                        className="text-orange-600 hover:text-orange-700"
                                                         title="Faturayı Görüntüle"
                                                     >
                                                         <FileText size={16} />
@@ -255,7 +257,7 @@ export function TransactionsClient({ initialTransactions }: { initialTransaction
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => setBillingDialog({ open: true, transaction: t })}
-                                                    className="h-8 px-2 text-slate-600 hover:text-blue-600"
+                                                    className="h-8 px-2 text-slate-600 hover:text-orange-600 hover:bg-orange-50"
                                                     title="Fatura Bilgileri"
                                                 >
                                                     <Info size={14} className="mr-1" />

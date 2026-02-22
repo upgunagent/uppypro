@@ -158,40 +158,48 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Helper for Sidebar Items
     // Helper for Sidebar Items
-    const SidebarItem = ({ href, icon: Icon, label, isActive, count, gradient = "bg-slate-100", iconColor = "text-slate-600" }: any) => (
+    const SidebarItem = ({ href, icon: Icon, label, isActive, count, gradient = "bg-orange-50 text-orange-600", iconColor = "text-orange-600" }: any) => (
         <Link
             href={href}
             className={clsx(
-                "group relative flex flex-col items-center justify-center w-[54px] h-[54px] rounded-[20px] transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95",
-                gradient,
-                isActive ? "ring-[3px] ring-offset-2 ring-slate-200 scale-105" : "opacity-90 hover:opacity-100"
+                "group relative flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200",
+                isActive
+                    ? `bg-orange-50 text-orange-600 font-semibold shadow-sm border-r-4 border-orange-500`
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             )}
         >
-            <Icon size={28} strokeWidth={2.5} className={clsx("transition-transform", iconColor)} />
+            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={clsx("flex-shrink-0 mr-3 transition-colors", isActive ? "text-orange-600" : "text-slate-500 group-hover:text-slate-700")} />
+
+            <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
 
             {/* Notification Badge */}
             {count > 0 && (
-                <div className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[22px] h-[22px] px-1 bg-red-600 border-[2px] border-white text-white text-[11px] font-bold rounded-full shadow-lg z-10 animate-in zoom-in">
+                <div className="flex-shrink-0 ml-2 inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-sm animate-in zoom-in">
                     {count > 99 ? '99+' : count}
                 </div>
             )}
-
-            {/* Hover Tooltip */}
-            <div className="absolute left-[64px] px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-lg opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                {label}
-                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-900 border-b-[4px] border-b-transparent"></div>
-            </div>
         </Link>
     );
 
     // Agency Admin View
     if (role === "agency_admin") {
         return (
-            <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
-                <div className="mb-8 p-2 rounded-xl bg-primary/5 text-primary">
-                    <LayoutDashboard size={24} />
+            <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 py-6 z-50 shadow-sm">
+                <div className="px-6 mb-8 flex items-center justify-center">
+                    <Link href="/admin/tenants" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                        <Image
+                            src="/brand-logo.png"
+                            alt="UppyPro"
+                            width={300}
+                            height={120}
+                            className="h-24 w-auto object-contain"
+                            priority
+                        />
+                    </Link>
                 </div>
-                <nav className="flex-1 space-y-4 w-full flex flex-col items-center">
+
+                <div className="px-4 mb-2 text-xs font-bold tracking-wider text-slate-400 uppercase">Yönetim Paneli</div>
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
                     {adminLinks.map((link) => (
                         <SidebarItem
                             key={link.href}
@@ -202,16 +210,14 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         />
                     ))}
                 </nav>
-                <div className="p-4 border-t border-slate-100 w-full flex justify-center">
+
+                <div className="p-4 border-t border-slate-100 flex items-center">
                     <button
                         onClick={handleLogout}
-                        className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                        className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
                     >
                         <LogOut size={20} />
-                        <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                            Çıkış Yap
-                            <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
-                        </div>
+                        <span>Çıkış Yap</span>
                     </button>
                 </div>
             </div>
@@ -220,39 +226,41 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Tenant/User View
     return (
-        <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
-            <div className="mb-8 hover:scale-105 transition-transform duration-300">
+        <div className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col h-screen fixed left-0 top-0 py-6 z-50 shadow-sm">
+            <div className="px-6 mb-8 flex items-center gap-4 hover:scale-[1.02] transition-transform duration-300">
                 {avatarUrl ? (
                     <Image
                         src={avatarUrl}
                         alt="Profile"
-                        width={60}
-                        height={60}
-                        className="w-[60px] h-[60px] object-cover rounded-full drop-shadow-sm border-2 border-slate-100"
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 object-cover rounded-full drop-shadow-sm border border-slate-200"
                         priority
                     />
                 ) : (
                     <Image
                         src="/brand-logo.png"
                         alt="UP"
-                        width={60}
-                        height={60}
-                        className="w-[60px] h-[60px] object-contain drop-shadow-sm"
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 object-contain drop-shadow-sm"
                         priority
                     />
                 )}
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">İşletme Hesabı</p>
+                    <p className="text-xs text-slate-500 truncate">UppyPro Panel</p>
+                </div>
             </div>
 
-            <div className="flex-1 w-full space-y-6 flex flex-col items-center">
-                {/* Main Navigation */}
-                <div className="space-y-6 flex flex-col items-center w-full">
+            <div className="flex-1 w-full flex flex-col px-3 overflow-y-auto">
+                <div className="mb-2 px-2 text-xs font-bold tracking-wider text-slate-400 uppercase">Gelen Kutusu</div>
+                <div className="space-y-1 mb-6">
                     <SidebarItem
                         href="/panel/inbox?tab=all"
                         icon={MessageSquare}
                         label="Tüm Mesajlar"
                         isActive={pathname.includes('/inbox') && currentTab === 'all'}
-                        gradient="bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/20"
-                        iconColor="text-white"
                         count={counts.all}
                     />
                     <SidebarItem
@@ -260,8 +268,6 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         icon={MessageCircle}
                         label="WhatsApp"
                         isActive={pathname.includes('/inbox') && currentTab === 'whatsapp'}
-                        gradient="bg-gradient-to-tr from-green-500 to-emerald-600 shadow-green-500/20"
-                        iconColor="text-white"
                         count={counts.whatsapp}
                     />
                     <SidebarItem
@@ -269,47 +275,40 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         icon={Instagram}
                         label="Instagram"
                         isActive={pathname.includes('/inbox') && currentTab === 'instagram'}
-                        gradient="bg-gradient-to-tr from-rose-500 via-red-500 to-orange-500 shadow-orange-500/20"
-                        iconColor="text-white"
                         count={counts.instagram}
+                    />
+                </div>
+
+                <div className="mb-2 px-2 text-xs font-bold tracking-wider text-slate-400 uppercase">Yönetim</div>
+                <div className="space-y-1">
+                    <SidebarItem
+                        href="/panel/calendar"
+                        icon={CalendarIcon}
+                        label="Takvim"
+                        isActive={pathname.startsWith("/panel/calendar")}
+                    />
+                    <SidebarItem
+                        href="/panel/customers"
+                        icon={Users}
+                        label="Müşteriler"
+                        isActive={pathname.startsWith("/panel/customers")}
+                    />
+                    <SidebarItem
+                        href="/panel/settings"
+                        icon={Settings}
+                        label="Ayarlar"
+                        isActive={pathname.startsWith("/panel/settings")}
                     />
                 </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 w-full space-y-4 flex flex-col items-center">
-                <SidebarItem
-                    href="/panel/calendar"
-                    icon={CalendarIcon}
-                    label="Takvim"
-                    isActive={pathname.startsWith("/panel/calendar")}
-                    gradient="bg-sky-500 shadow-sky-500/20"
-                    iconColor="text-white"
-                />
-                <SidebarItem
-                    href="/panel/customers"
-                    icon={Users}
-                    label="Müşteriler"
-                    isActive={pathname.startsWith("/panel/customers")}
-                    gradient="bg-orange-500 shadow-orange-500/20"
-                    iconColor="text-white"
-                />
-                <SidebarItem
-                    href="/panel/settings"
-                    icon={Settings}
-                    label="Ayarlar"
-                    isActive={pathname.startsWith("/panel/settings")}
-                    gradient="bg-purple-500 shadow-purple-500/20"
-                    iconColor="text-white"
-                />
+            <div className="p-4 border-t border-slate-100 flex items-center mt-auto">
                 <button
                     onClick={handleLogout}
-                    className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                    className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
                 >
                     <LogOut size={20} />
-                    <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                        Çıkış Yap
-                        <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
-                    </div>
+                    <span>Çıkış Yap</span>
                 </button>
             </div>
         </div>
