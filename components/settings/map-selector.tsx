@@ -23,10 +23,15 @@ function MapController({ position, setPosition, onLocationChange }: any) {
 
     useEffect(() => {
         // Modal animasyonu bitince boyutları yeniden hesapla
-        const timer = setTimeout(() => {
-            map.invalidateSize();
-        }, 100);
-        return () => clearTimeout(timer);
+        // Tailwind/Radix Dialog animasyonu genelde 300ms sürer, garanti etmek için birkaç kez tetikliyoruz.
+        const timer1 = setTimeout(() => map.invalidateSize(), 150);
+        const timer2 = setTimeout(() => map.invalidateSize(), 400);
+        const timer3 = setTimeout(() => map.invalidateSize(), 800);
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            clearTimeout(timer3);
+        }
     }, [map]);
 
     useMapEvents({
@@ -68,21 +73,24 @@ export default function MapSelector({ initialLat, initialLng, onLocationChange }
     }, [initialLat, initialLng]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <MapContainer
-            center={center}
-            zoom={13}
-            scrollWheelZoom={true}
-            style={{ height: '100%', width: '100%', zIndex: 0 }}
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapController
-                position={position}
-                setPosition={setPosition}
-                onLocationChange={onLocationChange}
-            />
-        </MapContainer>
+        <>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <MapContainer
+                center={center}
+                zoom={13}
+                scrollWheelZoom={true}
+                style={{ height: '100%', width: '100%', zIndex: 0 }}
+            >
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapController
+                    position={position}
+                    setPosition={setPosition}
+                    onLocationChange={onLocationChange}
+                />
+            </MapContainer>
+        </>
     );
 }
