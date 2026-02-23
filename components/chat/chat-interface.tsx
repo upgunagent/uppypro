@@ -724,10 +724,15 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                                 <MapPin size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-red-900 truncate">
-                                                    {msg.payload.name || msg.payload.address || "Konum Paylaşıldı"}
+                                                <p className="text-sm font-bold text-red-900 truncate">
+                                                    {msg.payload.name || "Konum Paylaşıldı"}
                                                 </p>
-                                                <p className="text-xs text-red-700 mt-0.5">
+                                                {msg.payload.address && (
+                                                    <p className="text-xs text-red-800 line-clamp-2 mt-0.5 leading-tight">
+                                                        {msg.payload.address}
+                                                    </p>
+                                                )}
+                                                <p className="text-[11px] font-semibold text-red-600 mt-1 uppercase tracking-wide">
                                                     Haritada Gör
                                                 </p>
                                             </div>
