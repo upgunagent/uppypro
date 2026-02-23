@@ -34,7 +34,7 @@ interface ChatInterfaceProps {
     tenantLocations?: any[];
 }
 
-export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic, tenantLocations = [] }: ChatInterfaceProps) {
+export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic, tenantLocations: initialLocations = [] }: ChatInterfaceProps) {
     const router = useRouter();
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
@@ -43,6 +43,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const [tenantLocations, setTenantLocations] = useState<any[]>(initialLocations);
 
     // Message Search State
     const [messageSearchQuery, setMessageSearchQuery] = useState("");
@@ -83,7 +85,8 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     // 1. Message Prop Sync
     useEffect(() => {
         setMessages(initialMessages);
-    }, [initialMessages]);
+        setTenantLocations(initialLocations || []);
+    }, [initialMessages, initialLocations]);
 
     // 2. Conversation Init
     useEffect(() => {

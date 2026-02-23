@@ -79,7 +79,8 @@ export default function MapSelector({ initialLat, initialLng, onLocationChange }
                 center={center}
                 zoom={13}
                 scrollWheelZoom={true}
-                style={{ height: '100%', width: '100%', zIndex: 0 }}
+                className="w-full z-0"
+                style={{ minHeight: '400px', height: '100%', width: '100%' }}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
