@@ -149,6 +149,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                                 platform={selectedConversation.channel || 'whatsapp'}
                                 customerName={selectedConversation.customer_handle || selectedConversation.external_thread_id || 'Bilinmeyen Kullanıcı'}
                                 profilePic={selectedConversation.profile_pic}
+                                tenantId={selectedConversation.tenant_id}
                             />
                         </div>
                     </div>

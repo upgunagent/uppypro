@@ -38,6 +38,8 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
         .select("*")
         .eq("tenant_id", conversation.tenant_id);
 
+    console.log("SERVER FETCHED LOCATIONS:", locations, "FOR TENANT:", conversation.tenant_id);
+
     return (
         <div className="max-w-4xl mx-auto h-full flex flex-col">
             <ChatInterface
@@ -49,6 +51,7 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
                 customerName={conversation.customer_handle || conversation.external_thread_id}
                 profilePic={conversation.profile_pic}
                 tenantLocations={locations || []}
+                tenantId={conversation.tenant_id}
             />
         </div>
     );

@@ -32,10 +32,26 @@ interface ChatInterfaceProps {
     customerName: string;
     profilePic?: string;
     tenantLocations?: any[];
+    tenantId: string;
 }
 
-export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic, tenantLocations: initialLocations = [] }: ChatInterfaceProps) {
+export default function ChatInterface({
+    conversationId,
+    initialMessages,
+    conversationMode,
+    aiOperational,
+    platform,
+    customerName,
+    profilePic,
+    tenantLocations: initialLocations,
+    tenantId
+}: ChatInterfaceProps) {
     const router = useRouter();
+    // Default array fallback for safety
+    const safeLocations = initialLocations || [];
+    console.log("ChatInterface received tenantLocations:", initialLocations);
+    console.log("SafeLocations applied:", safeLocations);
+
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -44,7 +60,7 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    const [tenantLocations, setTenantLocations] = useState<any[]>(initialLocations);
+    const [tenantLocations, setTenantLocations] = useState<any[]>(safeLocations);
 
     // Message Search State
     const [messageSearchQuery, setMessageSearchQuery] = useState("");
@@ -85,8 +101,26 @@ export default function ChatInterface({ conversationId, initialMessages, convers
     // 1. Message Prop Sync
     useEffect(() => {
         setMessages(initialMessages);
-        setTenantLocations(initialLocations || []);
-    }, [initialMessages, initialLocations]);
+    }, [initialMessages]);
+
+    // tenantLocations Props Sync (Client-Side Fetch to bypass stale SSR cache)
+    useEffect(() => {
+        const fetchLocations = async () => {
+            const { getTenantLocations } = await import('@/app/actions/locations');
+            try {
+                const data = await getTenantLocations(tenantId);
+                if (data) {
+                    setTenantLocations(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch tenant locations:", error);
+            }
+        };
+
+        if (showLocationPicker) {
+            fetchLocations();
+        }
+    }, [showLocationPicker, tenantId]);
 
     // 2. Conversation Init
     useEffect(() => {

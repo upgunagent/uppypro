@@ -38,7 +38,7 @@ export async function addTenantLocation(tenantId: string, locationData: { title:
         throw new Error(error.message);
     }
 
-    revalidatePath("/panel/settings");
+    revalidatePath("/panel", "layout");
     return data;
 }
 
@@ -54,6 +54,6 @@ export async function deleteTenantLocation(locationId: string) {
         throw new Error(error.message);
     }
 
-    revalidatePath("/panel/settings");
+    revalidatePath("/panel", "layout");
     return true;
 }
