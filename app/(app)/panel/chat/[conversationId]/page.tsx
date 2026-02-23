@@ -32,6 +32,12 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
         .eq("conversation_id", resolvedParams.conversationId)
         .order("created_at", { ascending: true });
 
+    // Fetch Locations
+    const { data: locations } = await supabase
+        .from("tenant_locations")
+        .select("*")
+        .eq("tenant_id", conversation.tenant_id);
+
     return (
         <div className="max-w-4xl mx-auto h-full flex flex-col">
             <ChatInterface
@@ -42,6 +48,7 @@ export default async function ChatPage({ params }: { params: Promise<{ conversat
                 platform={conversation.channel || 'whatsapp'} // Default to whatsapp if null, or handle as needed
                 customerName={conversation.customer_handle || conversation.external_thread_id}
                 profilePic={conversation.profile_pic}
+                tenantLocations={locations || []}
             />
         </div>
     );

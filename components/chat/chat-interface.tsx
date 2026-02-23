@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -20,6 +20,7 @@ interface Message {
     created_at: string;
     message_type?: string;
     media_url?: string;
+    payload?: any;
 }
 
 interface ChatInterfaceProps {
@@ -30,15 +31,17 @@ interface ChatInterfaceProps {
     platform: string;
     customerName: string;
     profilePic?: string;
+    tenantLocations?: any[];
 }
 
-export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic }: ChatInterfaceProps) {
+export default function ChatInterface({ conversationId, initialMessages, conversationMode, aiOperational, platform, customerName, profilePic, tenantLocations = [] }: ChatInterfaceProps) {
     const router = useRouter();
     const [messages, setMessages] = useState(initialMessages);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Message Search State
@@ -406,6 +409,28 @@ export default function ChatInterface({ conversationId, initialMessages, convers
         }
     };
 
+    const handleDownloadMedia = async (url: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+
+            let ext = url.split('.').pop()?.split('?')[0] || 'media';
+            if (ext.length > 5) ext = 'media';
+
+            link.download = `media-${Date.now()}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank');
+        }
+    };
+
     // Focus State for Mobile Keyboard Handling
     const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -418,12 +443,28 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
                     onClick={() => setLightboxMedia(null)}
                 >
-                    <button
-                        className="absolute top-4 right-4 text-white/50 hover:text-white p-2"
-                        onClick={() => setLightboxMedia(null)}
-                    >
-                        <X size={32} />
-                    </button>
+                    <div className="absolute top-4 right-4 flex items-center gap-3">
+                        <button
+                            className="bg-black/50 text-white/80 hover:text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadMedia(lightboxMedia.url);
+                            }}
+                            title="İndir"
+                        >
+                            <Download size={22} />
+                        </button>
+                        <button
+                            className="bg-black/50 text-white/80 hover:text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setLightboxMedia(null);
+                            }}
+                            title="Kapat"
+                        >
+                            <X size={22} />
+                        </button>
+                    </div>
 
                     <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
                         {lightboxMedia.type === 'image' ? (
@@ -561,91 +602,169 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                     backgroundSize: '600px',
                 }}
             >
-                {filteredMessages.map((msg) => {
+                {filteredMessages.map((msg, index) => {
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
                     const isEditing = editingId === msg.id;
                     const canEdit = false;
 
+                    const msgDate = new Date(msg.created_at);
+                    const msgDateString = msgDate.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' });
+
+                    let showDateSeparator = false;
+                    if (index === 0) {
+                        showDateSeparator = true;
+                    } else {
+                        const prevMsgDate = new Date(filteredMessages[index - 1].created_at);
+                        const prevMsgDateString = prevMsgDate.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' });
+                        if (msgDateString !== prevMsgDateString) {
+                            showDateSeparator = true;
+                        }
+                    }
+
                     return (
-                        <div key={msg.id} className={clsx("flex flex-col max-w-[70%]", (isMe || isBot) ? "ml-auto items-end" : "mr-auto items-start")}>
-                            {/* Sender Label */}
-                            <span className="text-xs text-gray-600 mb-1 ml-1 font-medium">
-                                {isMe ? "Siz" : isBot ? "Dijital Asistan" : customerName}
-                            </span>
+                        <div key={msg.id} className="w-full flex flex-col">
+                            {showDateSeparator && (
+                                <div className="flex justify-center my-4 w-full">
+                                    <div className="bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-lg shadow-sm text-xs font-bold text-slate-700 border border-slate-200">
+                                        {msgDateString}
+                                    </div>
+                                </div>
+                            )}
+                            <div className={clsx("flex flex-col max-w-[70%]", (isMe || isBot) ? "ml-auto items-end" : "mr-auto items-start")}>
+                                {/* Sender Label */}
+                                <span className="text-xs text-gray-600 mb-1 ml-1 font-medium">
+                                    {isMe ? "Siz" : isBot ? "Dijital Asistan" : customerName}
+                                </span>
 
-                            {/* Bubble */}
-                            <div className={clsx(
-                                "rounded-lg text-sm relative group shadow-sm",
-                                (msg.message_type === 'image' || msg.message_type === 'video')
-                                    ? "p-1 bg-white overflow-hidden"
-                                    : [
-                                        "px-2 py-1.5 min-w-[120px]",
-                                        isBot
-                                            ? "bg-yellow-50 text-gray-900 rounded-tr-none"
-                                            : isMe
-                                                ? "bg-[#d9fdd3] text-gray-900 rounded-tr-none"
-                                                : "bg-white text-gray-900 rounded-tl-none"
-                                    ]
-                            )}>
-                                {msg.message_type === 'image' && msg.media_url ? (
-                                    <div className="cursor-pointer" onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}>
-                                        <img
-                                            src={msg.media_url}
-                                            alt="Gelen Fotoğraf"
-                                            className="max-w-[240px] rounded block hover:opacity-90 transition-opacity"
-                                            onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
-                                        />
-                                    </div>
-                                ) : msg.message_type === 'video' && msg.media_url ? (
-                                    <div
-                                        className="cursor-pointer max-w-[240px] relative"
-                                        onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'video' })}
-                                    >
-                                        <video
-                                            src={msg.media_url}
-                                            className="w-full rounded pointer-events-none block"
-                                            onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
-                                            muted
-                                            preload="metadata"
-                                        />
-                                    </div>
-                                ) : msg.message_type === 'audio' && msg.media_url ? (
-                                    <div className="mb-1 min-w-[200px] flex items-center">
-                                        <audio src={msg.media_url} controls className="w-full h-8" />
-                                    </div>
-                                ) : null}
-
-                                {msg.text && !['image', 'video', 'audio'].includes(msg.message_type || '') && (
-                                    isEditing ? (
-                                        <div className="flex flex-col gap-2 min-w-[200px]">
-                                            <textarea
-                                                value={editValue}
-                                                onChange={e => setEditValue(e.target.value)}
-                                                className="bg-white border border-gray-300 rounded p-2 text-gray-900 w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-green-500"
-                                                rows={3}
+                                {/* Bubble */}
+                                <div className={clsx(
+                                    "rounded-lg text-sm relative group shadow-sm",
+                                    (msg.message_type === 'image' || msg.message_type === 'video')
+                                        ? "p-1 bg-white overflow-hidden"
+                                        : [
+                                            "px-2 py-1.5 min-w-[120px]",
+                                            isBot
+                                                ? "bg-yellow-50 text-gray-900 rounded-tr-none"
+                                                : isMe
+                                                    ? "bg-[#d9fdd3] text-gray-900 rounded-tr-none"
+                                                    : "bg-white text-gray-900 rounded-tl-none"
+                                        ]
+                                )}>
+                                    {msg.message_type === 'image' && msg.media_url ? (
+                                        <div className="cursor-pointer" onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'image' })}>
+                                            <img
+                                                src={msg.media_url}
+                                                alt="Gelen Fotoğraf"
+                                                className="max-w-[240px] rounded block hover:opacity-90 transition-opacity"
+                                                onLoad={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
                                             />
-                                            <div className="flex justify-end gap-2">
-                                                <button onClick={() => setEditingId(null)} className="p-1 hover:bg-gray-100 rounded text-gray-500">
-                                                    <X size={14} />
-                                                </button>
-                                                <button onClick={handleEditSave} className="p-1 hover:bg-gray-100 rounded text-green-600">
-                                                    <Check size={14} />
-                                                </button>
-                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className={clsx("whitespace-pre-wrap relative text-sm leading-relaxed", canEdit ? "pr-6" : "")}>
-                                            {msg.text}
-                                            <div className="float-right ml-2 mt-2 flex items-center gap-1">
-                                                <span className="text-[10px] text-gray-500">
-                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                                {isMe && <Check size={12} className="text-blue-500" />}
-                                            </div>
+                                    ) : msg.message_type === 'video' && msg.media_url ? (
+                                        <div
+                                            className="cursor-pointer max-w-[240px] relative"
+                                            onClick={() => setLightboxMedia({ url: msg.media_url!, type: 'video' })}
+                                        >
+                                            <video
+                                                src={msg.media_url}
+                                                className="w-full rounded pointer-events-none block"
+                                                onLoadedMetadata={() => scrollRef.current!.scrollTop = scrollRef.current!.scrollHeight}
+                                                muted
+                                                preload="metadata"
+                                            />
                                         </div>
-                                    )
-                                )}
+                                    ) : msg.message_type === 'audio' && msg.media_url ? (
+                                        <div className="mb-1 min-w-[200px] flex items-center">
+                                            <audio src={msg.media_url} controls className="w-full h-8" />
+                                        </div>
+                                    ) : msg.message_type === 'document' && msg.media_url ? (
+                                        <a
+                                            href={msg.media_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 p-3 bg-white/50 border border-slate-200 rounded-lg hover:bg-white/80 transition-colors cursor-pointer w-[240px]"
+                                        >
+                                            <div className="bg-red-100 p-2 rounded-lg text-red-600 shrink-0">
+                                                <FileText size={20} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-slate-700 truncate" title={
+                                                    (() => {
+                                                        if (msg.text && msg.text.trim() && msg.text !== '[Document]' && msg.text !== '[Belge]' && !msg.text.startsWith('http')) return msg.text;
+                                                        try {
+                                                            const url = new URL(msg.media_url!);
+                                                            const parts = url.pathname.split('/');
+                                                            return decodeURIComponent(parts[parts.length - 1] || 'Belge');
+                                                        } catch (e) { return 'Belge'; }
+                                                    })()
+                                                }>
+                                                    {(() => {
+                                                        if (msg.text && msg.text.trim() && msg.text !== '[Document]' && msg.text !== '[Belge]' && !msg.text.startsWith('http')) return msg.text;
+                                                        try {
+                                                            const url = new URL(msg.media_url!);
+                                                            const parts = url.pathname.split('/');
+                                                            return decodeURIComponent(parts[parts.length - 1] || 'Belge');
+                                                        } catch (e) { return 'Belge'; }
+                                                    })()}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    Aç veya İndir
+                                                </p>
+                                            </div>
+                                            <Download size={16} className="text-slate-400 shrink-0" />
+                                        </a>
+                                    ) : msg.message_type === 'location' && msg.payload ? (
+                                        <a
+                                            href={msg.payload.url || `https://www.google.com/maps/search/?api=1&query=${msg.payload.latitude},${msg.payload.longitude}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors cursor-pointer min-w-[200px]"
+                                        >
+                                            <div className="bg-red-200 p-2 rounded-lg text-red-700 shrink-0">
+                                                <MapPin size={20} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-red-900 truncate">
+                                                    {msg.payload.name || msg.payload.address || "Konum Paylaşıldı"}
+                                                </p>
+                                                <p className="text-xs text-red-700 mt-0.5">
+                                                    Haritada Gör
+                                                </p>
+                                            </div>
+                                        </a>
+                                    ) : null}
+
+                                    {msg.text && !['image', 'video', 'audio', 'document', 'location'].includes(msg.message_type || '') && (
+                                        isEditing ? (
+                                            <div className="flex flex-col gap-2 min-w-[200px]">
+                                                <textarea
+                                                    value={editValue}
+                                                    onChange={e => setEditValue(e.target.value)}
+                                                    className="bg-white border border-gray-300 rounded p-2 text-gray-900 w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-green-500"
+                                                    rows={3}
+                                                />
+                                                <div className="flex justify-end gap-2">
+                                                    <button onClick={() => setEditingId(null)} className="p-1 hover:bg-gray-100 rounded text-gray-500">
+                                                        <X size={14} />
+                                                    </button>
+                                                    <button onClick={handleEditSave} className="p-1 hover:bg-gray-100 rounded text-green-600">
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={clsx("whitespace-pre-wrap relative text-sm leading-relaxed", canEdit ? "pr-6" : "")}>
+                                                {msg.text}
+                                                <div className="float-right ml-2 mt-2 flex items-center gap-1">
+                                                    <span className="text-[10px] text-gray-500">
+                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                    {isMe && <Check size={12} className="text-blue-500" />}
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );
@@ -721,6 +840,65 @@ export default function ChatInterface({ conversationId, initialMessages, convers
                                 lazyLoadEmojis={true}
                                 emojiStyle={EmojiStyle.NATIVE}
                             />
+                        </div>
+                    </>
+                )}
+
+                {showLocationPicker && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowLocationPicker(false)} />
+                        <div className="absolute bottom-full left-10 z-50 mb-2 shadow-2xl rounded-xl overflow-hidden border border-slate-200 bg-white w-64 max-h-64 overflow-y-auto">
+                            <div className="p-3 bg-red-50 border-b border-red-100 flex items-center gap-2">
+                                <MapPin className="text-red-500" size={16} />
+                                <span className="font-semibold text-slate-700 text-sm">Kayıtlı Konumlar</span>
+                            </div>
+                            {tenantLocations?.length === 0 ? (
+                                <div className="p-4 text-center text-xs text-slate-500">Kayıtlı konum bulunamadı. İşletme Ayarları'ndan ekleyebilirsiniz.</div>
+                            ) : (
+                                <div className="flex flex-col">
+                                    {tenantLocations?.map((loc) => (
+                                        <button
+                                            key={loc.id}
+                                            type="button"
+                                            className="text-left p-3 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-100 flex flex-col gap-1 cursor-pointer"
+                                            onClick={async () => {
+                                                setShowLocationPicker(false);
+                                                setSending(true);
+                                                try {
+                                                    const textToSend = loc.title;
+                                                    const payloadToSend = {
+                                                        latitude: loc.latitude,
+                                                        longitude: loc.longitude,
+                                                        name: loc.title,
+                                                        address: loc.address,
+                                                        url: loc.url
+                                                    };
+
+                                                    const optimisticMsg: Message = {
+                                                        id: "temp-" + Date.now(),
+                                                        text: textToSend,
+                                                        sender: "HUMAN",
+                                                        created_at: new Date().toISOString(),
+                                                        message_type: 'location',
+                                                        payload: payloadToSend
+                                                    };
+                                                    setMessages((prev) => [...prev, optimisticMsg]);
+
+                                                    await sendMessage(conversationId, textToSend, undefined, 'location', undefined, payloadToSend);
+                                                } catch (err: any) {
+                                                    console.error("Location Send Failed:", err);
+                                                    alert("Konum gönderilirken hata oluştu: " + err.message);
+                                                } finally {
+                                                    setSending(false);
+                                                }
+                                            }}
+                                        >
+                                            <span className="font-semibold text-slate-800 text-sm">{loc.title}</span>
+                                            <span className="text-xs text-slate-500 line-clamp-1">{loc.address}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
@@ -801,7 +979,17 @@ export default function ChatInterface({ conversationId, initialMessages, convers
 
                         <button
                             type="button"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            onClick={() => { setShowEmojiPicker(false); setShowLocationPicker(!showLocationPicker); }}
+                            className="p-2 pr-1 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
+                            disabled={sending}
+                            title="Konum Gönder"
+                        >
+                            <MapPin className="w-5 h-5" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => { setShowLocationPicker(false); setShowEmojiPicker(!showEmojiPicker); }}
                             className="p-2 rounded-full transition-all duration-200 hover:scale-110 hover:bg-yellow-50"
                         >
                             <span className="text-xl leading-none">🙂</span>

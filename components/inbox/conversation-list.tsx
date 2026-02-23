@@ -229,7 +229,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-3 px-5 py-3 custom-scrollbar">
 
                 <AnimatePresence initial={false} mode='popLayout'>
                     {filteredConversations.map((conv) => {
@@ -263,12 +263,18 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                     className="block relative group cursor-pointer"
                                 >
                                     <div className={clsx(
-                                        "p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden shadow-md group-hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] duration-200",
+                                        "p-4 rounded-xl transition-all flex items-center justify-between cursor-pointer pr-12 relative overflow-hidden group-hover:shadow-lg duration-200",
+                                        isSelected ? "scale-[1.03] shadow-2xl z-20 border-[3px] border-slate-900" : "border shadow-md hover:scale-[1.02] active:scale-[0.98]",
                                         conv.channel === 'instagram'
-                                            ? "bg-gradient-to-r from-red-500 via-red-700 to-rose-900 border-transparent shadow-red-500/20 text-white"
+                                            ? "bg-gradient-to-r from-red-500 via-red-700 to-rose-900 text-white"
                                             : conv.channel === 'whatsapp'
-                                                ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 border-transparent shadow-green-500/20 text-white"
-                                                : (isSelected ? "bg-slate-50 border-primary ring-1 ring-primary/20 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300")
+                                                ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white"
+                                                : (isSelected ? "bg-slate-50 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300"),
+                                        ((conv.channel === 'instagram' || conv.channel === 'whatsapp') && !isSelected) && "border-transparent",
+                                        (conv.channel === 'instagram' && !isSelected) && "shadow-red-500/20",
+                                        (conv.channel === 'whatsapp' && !isSelected) && "shadow-green-500/20",
+                                        (conv.channel === 'instagram' && isSelected) && "shadow-red-500/40",
+                                        (conv.channel === 'whatsapp' && isSelected) && "shadow-green-500/40"
                                     )}>
 
                                         {/* Selection Ring for Gradient Cards */}

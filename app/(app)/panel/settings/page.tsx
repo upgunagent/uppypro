@@ -7,6 +7,7 @@ import { AiSettingsForm } from "./ai-settings-form";
 import { SubscriptionCard } from "./subscription-card";
 import { PaymentMethodsCard } from "./payment-methods-card";
 import { PasswordChangeCard } from "./password-change-card";
+import { LocationsCard } from "@/components/settings/locations-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
@@ -37,7 +38,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
         { data: agentSettings },
         { data: billingInfo },
         { data: subscription },
-        { data: paymentMethods }
+        { data: paymentMethods },
+        { data: tenant_locations }
     ] = await Promise.all([
         supabase.from("tenants").select("*").eq("id", member.tenant_id).single(),
         supabase.from("profiles").select("*").eq("user_id", user.id).single(),
@@ -45,7 +47,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
         supabase.from("agent_settings").select("*").eq("tenant_id", member.tenant_id).single(),
         supabase.from("billing_info").select("*").eq("tenant_id", member.tenant_id).single(),
         supabase.from("subscriptions").select("*").eq("tenant_id", member.tenant_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("payment_methods").select("*").eq("tenant_id", member.tenant_id)
+        supabase.from("payment_methods").select("*").eq("tenant_id", member.tenant_id),
+        supabase.from("tenant_locations").select("*").eq("tenant_id", member.tenant_id).order("created_at", { ascending: false })
     ]);
 
     // Fetch pricing for both plans to support upgrade/downgrade UI
@@ -88,7 +91,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
     const connectionTab = <ConnectionTabs channelsContent={channelsContent} aiContent={aiContent} />;
 
     // 2. Profile/Billing Tab Content
-    const profileTab = <BillingForm billingInfo={billingInfo} profile={profile} />;
+    const profileTab = (
+        <div className="space-y-6">
+            <BillingForm billingInfo={billingInfo} profile={profile} />
+            <LocationsCard tenantId={member.tenant_id} initialLocations={tenant_locations || []} />
+        </div>
+    );
 
     // 3. Subscription Tab Content
     const { getUsdExchangeRate } = await import("@/lib/currency");

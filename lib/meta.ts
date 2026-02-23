@@ -14,7 +14,8 @@ export async function sendToChannel(
     text: string,
     type: string = 'text',
     mediaUrl?: string,
-    filename?: string
+    filename?: string,
+    payload?: any
 ): Promise<SendMessageResult> {
     const supabaseWithAdmin = createAdminClient();
 
@@ -100,6 +101,19 @@ export async function sendToChannel(
                     to: recipientId,
                     type: "text",
                     text: { body: text }
+                };
+            } else if (type === 'location' && payload) {
+                body = {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: recipientId,
+                    type: "location",
+                    location: {
+                        latitude: payload.latitude,
+                        longitude: payload.longitude,
+                        name: payload.title || payload.name,
+                        address: payload.address
+                    }
                 };
             } else if (mediaUrl) {
                 // WhatsApp Media Types: image, video, audio, document

@@ -1,9 +1,9 @@
-
 import { AppSidebar } from "@/components/app-sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SubscriptionBlockOverlay } from "@/components/subscription-block-overlay";
+import { clsx } from "clsx";
 
 export default async function AppLayout({
     children,
@@ -60,7 +60,10 @@ export default async function AppLayout({
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
-            <main className="flex-1 ml-0 md:ml-64 flex flex-col h-[100dvh] overflow-y-auto pb-16 md:pb-0 md:mb-0">
+            <main className={clsx(
+                "flex-1 ml-0 flex flex-col h-[100dvh] overflow-y-auto pb-16 md:pb-0 md:mb-0",
+                role === "agency_admin" ? "md:ml-64" : "md:ml-20"
+            )}>
                 {children}
             </main>
             <MobileBottomNav />

@@ -61,7 +61,8 @@ export async function POST(request: Request) {
                 timestamp: '',
                 type: 'text',
                 media_url: null as string | null,
-                media_type: null as string | null
+                media_type: null as string | null,
+                payload: null as any
             };
             let channel: 'whatsapp' | 'instagram' = 'whatsapp';
             let recipientId = null; // To find tenant
@@ -112,6 +113,16 @@ export async function POST(request: Request) {
                     eventData.media_url = (msg.audio || msg.voice)?.id;
                     eventData.media_type = (msg.audio || msg.voice)?.mime_type;
                     eventData.text = "[Audio]";
+                } else if (msgType === 'location') {
+                    eventData.type = 'location';
+                    eventData.text = msg.location?.name || msg.location?.address || "[Konum]";
+                    eventData.payload = {
+                        latitude: msg.location?.latitude,
+                        longitude: msg.location?.longitude,
+                        name: msg.location?.name,
+                        address: msg.location?.address,
+                        url: msg.location?.url
+                    };
                 } else {
                     eventData.text = `[${msgType}]`;
                     eventData.type = 'text';
@@ -327,7 +338,8 @@ export async function POST(request: Request) {
                     external_message_id: eventData.external_msg_id,
                     message_type: eventData.type,
                     media_url: eventData.media_url,
-                    media_type: eventData.media_type
+                    media_type: eventData.media_type,
+                    payload: eventData.payload
                 });
 
             if (msgError) {

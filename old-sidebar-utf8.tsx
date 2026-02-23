@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -15,9 +15,7 @@ import {
     MessageCircle,
     UserCircle,
     Tag,
-    Calendar as CalendarIcon,
-    Receipt,
-    Lock
+    Calendar as CalendarIcon
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -93,54 +91,6 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     }, [tenantId]);
 
 
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        const supabase = createClient();
-        let channel: any;
-
-        const getProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // Initial fetch
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('avatar_url')
-                .eq('user_id', user.id)
-                .single();
-
-            if (profile?.avatar_url) {
-                setAvatarUrl(profile.avatar_url);
-            }
-
-            // Realtime subscription
-            channel = supabase
-                .channel(`sidebar-profile:${user.id}`)
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'profiles',
-                        filter: `user_id=eq.${user.id}`
-                    },
-                    (payload: any) => {
-                        // null check is important because user might remove photo
-                        setAvatarUrl(payload.new.avatar_url);
-                    }
-                )
-                .subscribe();
-        };
-
-        getProfile();
-
-        return () => {
-            if (channel) supabase.removeChannel(channel);
-        };
-    }, []);
-
-
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
@@ -149,38 +99,14 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     };
 
     const adminLinks = [
-        { href: "/admin/tenants", label: "İşletmeler", icon: Users },
-        { href: "/admin/transactions", label: "İşlemler", icon: Receipt },
+        { href: "/admin/tenants", label: "─░┼şletmeler", icon: Users },
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
-        { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
-        { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
-        { href: "/admin/settings", label: "Ayarlar", icon: Settings },
+        { href: "/admin/pricing", label: "Fiyatland─▒rma", icon: Tag },
     ];
 
-    const AdminSidebarItem = ({ href, icon: Icon, label, isActive, count }: any) => (
-        <Link
-            href={href}
-            className={clsx(
-                "group relative flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200",
-                isActive
-                    ? `bg-orange-50 text-orange-600 font-semibold shadow-sm border-r-4 border-orange-500`
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            )}
-        >
-            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={clsx("flex-shrink-0 mr-3 transition-colors", isActive ? "text-orange-600" : "text-slate-500 group-hover:text-slate-700")} />
-
-            <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
-
-            {/* Notification Badge */}
-            {count > 0 && (
-                <div className="flex-shrink-0 ml-2 inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-sm animate-in zoom-in">
-                    {count > 99 ? '99+' : count}
-                </div>
-            )}
-        </Link>
-    );
-
-    const TenantSidebarItem = ({ href, icon: Icon, label, isActive, count, gradient = "bg-slate-100", iconColor = "text-slate-600" }: any) => (
+    // Helper for Sidebar Items
+    // Helper for Sidebar Items
+    const SidebarItem = ({ href, icon: Icon, label, isActive, count, gradient = "bg-slate-100", iconColor = "text-slate-600" }: any) => (
         <Link
             href={href}
             className={clsx(
@@ -209,24 +135,13 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     // Agency Admin View
     if (role === "agency_admin") {
         return (
-            <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 py-6 z-50 shadow-sm">
-                <div className="px-6 mb-8 flex items-center justify-center">
-                    <Link href="/admin/tenants" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <Image
-                            src="/brand-logo.png"
-                            alt="UppyPro"
-                            width={300}
-                            height={120}
-                            className="h-24 w-auto object-contain"
-                            priority
-                        />
-                    </Link>
+            <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+                <div className="mb-8 p-2 rounded-xl bg-primary/5 text-primary">
+                    <LayoutDashboard size={24} />
                 </div>
-
-                <div className="px-4 mb-2 text-xs font-bold tracking-wider text-slate-400 uppercase">Yönetim Paneli</div>
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+                <nav className="flex-1 space-y-4 w-full flex flex-col items-center">
                     {adminLinks.map((link) => (
-                        <AdminSidebarItem
+                        <SidebarItem
                             key={link.href}
                             href={link.href}
                             icon={link.icon}
@@ -235,21 +150,16 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         />
                     ))}
                 </nav>
-
-                <div className="p-4 border-t border-slate-100 flex flex-col gap-2 mt-auto">
-                    <Link
-                        href="/admin/password"
-                        className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
-                    >
-                        <Lock size={20} />
-                        <span>Şifre Değiştir</span>
-                    </Link>
+                <div className="p-4 border-t border-slate-100 w-full flex justify-center">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
+                        className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                     >
                         <LogOut size={20} />
-                        <span>Çıkış Yap</span>
+                        <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                            ├ç─▒k─▒┼ş Yap
+                            <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -258,42 +168,31 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Tenant/User View
     return (
-        <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+        <div className="w-20 bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
             <div className="mb-8 hover:scale-105 transition-transform duration-300">
-                {avatarUrl ? (
-                    <Image
-                        src={avatarUrl}
-                        alt="Profile"
-                        width={60}
-                        height={60}
-                        className="w-[60px] h-[60px] object-cover rounded-full drop-shadow-sm border border-slate-200"
-                        priority
-                    />
-                ) : (
-                    <Image
-                        src="/brand-logo.png"
-                        alt="UP"
-                        width={60}
-                        height={60}
-                        className="w-[60px] h-[60px] object-contain drop-shadow-sm"
-                        priority
-                    />
-                )}
+                <Image
+                    src="/brand-logo.png"
+                    alt="UP"
+                    width={60}
+                    height={60}
+                    className="w-[60px] h-[60px] object-contain drop-shadow-sm"
+                    priority
+                />
             </div>
 
             <div className="flex-1 w-full space-y-6 flex flex-col items-center">
                 {/* Main Navigation */}
                 <div className="space-y-6 flex flex-col items-center w-full">
-                    <TenantSidebarItem
+                    <SidebarItem
                         href="/panel/inbox?tab=all"
                         icon={MessageSquare}
-                        label="Tüm Mesajlar"
+                        label="T├╝m Mesajlar"
                         isActive={pathname.includes('/inbox') && currentTab === 'all'}
                         gradient="bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/20"
                         iconColor="text-white"
                         count={counts.all}
                     />
-                    <TenantSidebarItem
+                    <SidebarItem
                         href="/panel/inbox?tab=whatsapp"
                         icon={MessageCircle}
                         label="WhatsApp"
@@ -302,7 +201,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         iconColor="text-white"
                         count={counts.whatsapp}
                     />
-                    <TenantSidebarItem
+                    <SidebarItem
                         href="/panel/inbox?tab=instagram"
                         icon={Instagram}
                         label="Instagram"
@@ -315,7 +214,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
             </div>
 
             <div className="p-4 border-t border-slate-100 w-full space-y-4 flex flex-col items-center">
-                <TenantSidebarItem
+                <SidebarItem
                     href="/panel/calendar"
                     icon={CalendarIcon}
                     label="Takvim"
@@ -323,15 +222,15 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     gradient="bg-sky-500 shadow-sky-500/20"
                     iconColor="text-white"
                 />
-                <TenantSidebarItem
+                <SidebarItem
                     href="/panel/customers"
                     icon={Users}
-                    label="Müşteriler"
+                    label="M├╝┼şteriler"
                     isActive={pathname.startsWith("/panel/customers")}
                     gradient="bg-orange-500 shadow-orange-500/20"
                     iconColor="text-white"
                 />
-                <TenantSidebarItem
+                <SidebarItem
                     href="/panel/settings"
                     icon={Settings}
                     label="Ayarlar"
@@ -345,7 +244,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                 >
                     <LogOut size={20} />
                     <div className="absolute left-14 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                        Çıkış Yap
+                        ├ç─▒k─▒┼ş Yap
                         <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-800 border-b-[4px] border-b-transparent"></div>
                     </div>
                 </button>
