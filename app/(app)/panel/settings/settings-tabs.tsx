@@ -44,7 +44,7 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, defau
     );
 }
 
-export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent: ReactNode, aiContent: ReactNode }) {
+export function ConnectionTabs({ channelsContent, templatesContent, aiContent }: { channelsContent: ReactNode, templatesContent: ReactNode, aiContent: ReactNode }) {
     return (
         <Tabs defaultValue="channels" className="w-full space-y-6">
             <div className="border-b border-slate-200">
@@ -54,6 +54,12 @@ export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent
                         className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
                     >
                         İletişim Kanalları
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="templates"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        WhatsApp Şablonları
                     </TabsTrigger>
                     <TabsTrigger
                         value="ai"
@@ -66,6 +72,10 @@ export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent
 
             <TabsContent value="channels" className="outline-none pt-4">
                 {channelsContent}
+            </TabsContent>
+
+            <TabsContent value="templates" className="outline-none pt-4">
+                {templatesContent}
             </TabsContent>
 
             <TabsContent value="ai" className="outline-none pt-4">

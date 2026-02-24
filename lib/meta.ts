@@ -115,6 +115,70 @@ export async function sendToChannel(
                         address: payload.address
                     }
                 };
+            } else if (type === 'template' && payload) {
+                // SPECIAL HANDLER: WhatsApp Cloud API frequently fails to asynchronously download CDN links without returning an error.
+                // To guarantee delivery, we intercept header media links and manually upload them to WhatsApp to get a verified Media ID.
+                if (payload.components) {
+                    for (let comp of payload.components) {
+                        if (comp.type === 'header' && comp.parameters) {
+                            for (let param of comp.parameters) {
+                                if ((param.type === 'image' || param.type === 'video' || param.type === 'document') && param[param.type]?.link) {
+                                    const mediaLink = param[param.type].link;
+                                    try {
+                                        console.log("[Meta Send] Uploading template media to WA first...", mediaLink);
+                                        const response = await fetch(mediaLink);
+                                        if (response.ok) {
+                                            const blob = await response.blob();
+                                            const formData = new FormData();
+                                            formData.append("messaging_product", "whatsapp");
+                                            formData.append("file", blob, mediaLink.split('/').pop() || "media_file");
+
+                                            // Ensure senderId is available correctly
+                                            const senderId = identifiers?.phone_number_id;
+
+                                            if (senderId) {
+                                                const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${senderId}/media`, {
+                                                    method: "POST",
+                                                    headers: { "Authorization": `Bearer ${accessToken}` },
+                                                    body: formData
+                                                });
+                                                const uploadData = await uploadRes.json();
+
+                                                if (uploadData.id) {
+                                                    console.log("[Meta Send] Successfully uploaded media, WA ID:", uploadData.id);
+                                                    // Replace link parameter with id
+                                                    delete param[param.type].link;
+                                                    param[param.type].id = uploadData.id;
+                                                } else {
+                                                    console.error("[Meta Send] Failed to get media ID from WA:", uploadData.error);
+                                                    const errMsg = uploadData.error?.error_data?.details || uploadData.error?.message || "WhatsApp API Medya yükleme reddedildi.";
+                                                    return { success: false, error: `Medya Şablonu Hatası: ${errMsg} (Eğer resim gönderiyorsanız WhatsApp limiti 5MB'dır.)` };
+                                                }
+                                            }
+                                        } else {
+                                            return { success: false, error: `Medya Şablonu Hatası: Dosya Supabase üzerinden okunamadı (Sunucu Yanıtı: ${response.status})` };
+                                        }
+                                    } catch (e: any) {
+                                        console.error("[Meta Send] Exception uploading media to WA:", e);
+                                        return { success: false, error: `Medya Şablonu Sistemsel Hata: ${e.message}` };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                body = {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: recipientId,
+                    type: "template",
+                    template: {
+                        name: payload.name,
+                        language: { code: payload.language || "tr" },
+                        components: payload.components || []
+                    }
+                };
             } else if (mediaUrl) {
                 // WhatsApp Media Types: image, video, audio, document
                 // Note: 'voice' is also a type but 'audio' is safer for general files.

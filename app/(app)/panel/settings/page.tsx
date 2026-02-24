@@ -8,6 +8,7 @@ import { SubscriptionCard } from "./subscription-card";
 import { PaymentMethodsCard } from "./payment-methods-card";
 import { PasswordChangeCard } from "./password-change-card";
 import { LocationsCard } from "@/components/settings/locations-card";
+import { TemplatesCard } from "@/components/settings/templates-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
@@ -87,8 +88,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
         </div>
     );
     const aiContent = <AiSettingsForm settings={agentSettings} subscription={subscription} />;
+    const templatesContent = <TemplatesCard tenantId={member.tenant_id} />;
 
-    const connectionTab = <ConnectionTabs channelsContent={channelsContent} aiContent={aiContent} />;
+    const connectionTab = <ConnectionTabs channelsContent={channelsContent} templatesContent={templatesContent} aiContent={aiContent} />;
 
     // 2. Profile/Billing Tab Content
     const profileTab = (

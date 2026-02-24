@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { useMemo } from "react";
+import { TemplatePickerModal } from "./template-picker-modal";
 
 interface Message {
     id: string;
@@ -58,6 +59,7 @@ export default function ChatInterface({
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [tenantLocations, setTenantLocations] = useState<any[]>(safeLocations);
@@ -774,9 +776,67 @@ export default function ChatInterface({
                                                 </p>
                                             </div>
                                         </a>
+                                    ) : msg.message_type === 'template' && msg.payload?.fullTemplate ? (
+                                        <div className="flex flex-col gap-2 min-w-[200px] max-w-[300px] text-sm">
+                                            {/* Render Header Media */}
+                                            {msg.payload.fullTemplate.uppypro_media && (
+                                                <div className="w-full relative rounded-md overflow-hidden bg-slate-200 flex items-center justify-center mb-1">
+                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "IMAGE" && (
+                                                        <img src={msg.payload.fullTemplate.uppypro_media.file_url} alt="Şablon Görseli" className="max-h-[200px] object-contain w-full" />
+                                                    )}
+                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "VIDEO" && (
+                                                        <video src={msg.payload.fullTemplate.uppypro_media.file_url} controls className="max-h-[200px] w-full" />
+                                                    )}
+                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "DOCUMENT" && (
+                                                        <a href={msg.payload.fullTemplate.uppypro_media.file_url} target="_blank" className="flex items-center justify-center p-3 text-slate-600 bg-slate-100 w-full hover:bg-slate-200 transition-colors">
+                                                            <FileText size={24} className="mr-2 text-red-500" />
+                                                            <span className="text-xs truncate font-medium">Belgeyi Görüntüle</span>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Render Body */}
+                                            <div className="whitespace-pre-wrap leading-relaxed">
+                                                {(() => {
+                                                    let bodyText = msg.payload.fullTemplate.components?.find((c: any) => c.type === "BODY")?.text || "";
+                                                    if (msg.payload.variables) {
+                                                        Object.entries(msg.payload.variables).forEach(([k, v]) => {
+                                                            if (k.startsWith('body_')) {
+                                                                const index = k.split('_')[1];
+                                                                bodyText = bodyText.replace(new RegExp(`\\{\\{${index}\\}\\}`, 'g'), String(v));
+                                                            }
+                                                        });
+                                                    }
+                                                    return bodyText;
+                                                })()}
+                                            </div>
+
+                                            {/* Render Buttons */}
+                                            {msg.payload.fullTemplate.components?.find((c: any) => c.type === "BUTTONS") && (
+                                                <div className="flex flex-col gap-1.5 mt-2 border-t pt-2 border-slate-200/60">
+                                                    {msg.payload.fullTemplate.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => {
+                                                        return (
+                                                            <div key={idx} className="bg-white/60 border border-slate-100 rounded-lg p-2 text-center text-blue-600 font-semibold text-xs flex items-center justify-center gap-1.5 opacity-90">
+                                                                {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5" />}
+                                                                {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5" />}
+                                                                {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5" />}
+                                                                {btn.text}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )}
+                                            <div className="float-right ml-2 mt-1 flex justify-end items-center gap-1">
+                                                <span className="text-[10px] text-gray-500">
+                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {isMe && <Check size={12} className="text-blue-500" />}
+                                            </div>
+                                        </div>
                                     ) : null}
 
-                                    {msg.text && !['image', 'video', 'audio', 'document', 'location'].includes(msg.message_type || '') && (
+                                    {msg.text && !['image', 'video', 'audio', 'document', 'location', 'template'].includes(msg.message_type || '') && (
                                         isEditing ? (
                                             <div className="flex flex-col gap-2 min-w-[200px]">
                                                 <textarea
@@ -1021,6 +1081,16 @@ export default function ChatInterface({
 
                         <button
                             type="button"
+                            onClick={() => { setShowLocationPicker(false); setShowEmojiPicker(false); setShowTemplatePicker(true); }}
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all duration-200 hover:scale-110"
+                            disabled={sending}
+                            title="Şablon Gönder"
+                        >
+                            <FileText className="w-5 h-5" />
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => { setShowEmojiPicker(false); setShowLocationPicker(!showLocationPicker); }}
                             className="p-2 pr-1 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
                             disabled={sending}
@@ -1098,6 +1168,42 @@ export default function ChatInterface({
                 initialProfilePic={activeProfilePic}
                 onClearChat={handleClearChat}
                 onDeleteChat={handleDeleteChat}
+            />
+
+            <TemplatePickerModal
+                open={showTemplatePicker}
+                onOpenChange={setShowTemplatePicker}
+                tenantId={tenantId}
+                onSelectTemplate={async (name, language, components, fullTemplate, variables) => {
+                    setSending(true);
+                    try {
+                        const payload = {
+                            name,
+                            language,
+                            components,
+                            fullTemplate,
+                            variables
+                        };
+                        const displayTitle = "Şablon Gönderildi\nSeçilen Şablon Adı: " + name;
+
+                        const optimisticMsg: Message = {
+                            id: "temp-" + Date.now(),
+                            text: displayTitle,
+                            sender: "HUMAN",
+                            created_at: new Date().toISOString(),
+                            message_type: 'template',
+                            payload: payload
+                        };
+                        setMessages((prev) => [...prev, optimisticMsg]);
+
+                        const { sendMessage } = await import("@/app/actions/chat");
+                        await sendMessage(conversationId, displayTitle, undefined, 'template', undefined, payload);
+                    } catch (err: any) {
+                        alert("Şablon gönderilirken hata oluştu: " + err.message);
+                    } finally {
+                        setSending(false);
+                    }
+                }}
             />
         </div >
     );
