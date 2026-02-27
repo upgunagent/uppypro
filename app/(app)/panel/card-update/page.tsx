@@ -15,57 +15,6 @@ export default function CardUpdatePage() {
     const { toast } = useToast();
 
     useEffect(() => {
-        // Add CSS to force Iyzico popup to render inline within our container
-        const style = document.createElement('style');
-        style.id = 'iyzico-inline-override';
-        style.textContent = `
-            /* Hide Iyzico's overlay/backdrop */
-            .iyzico-overlay,
-            .iyzi-popup-overlay,
-            div[style*="position: fixed"][style*="z-index"][style*="background"] {
-                display: none !important;
-            }
-
-            /* Force the Iyzico popup container to render inline */
-            #iyzipay-checkout-form-modal,
-            .iyzico-modal,
-            .iyzi-checkout-modal,
-            div[class*="popup"] > div,
-            #iyzipay-checkout-form iframe {
-                position: relative !important;
-                top: auto !important;
-                left: auto !important;
-                right: auto !important;
-                bottom: auto !important;
-                transform: none !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                min-height: 500px !important;
-                margin: 0 auto !important;
-                z-index: 1 !important;
-                box-shadow: none !important;
-            }
-
-            /* Target the Iyzico checkout iframe specifically */
-            #iyzico-card-update-container iframe,
-            #iyzipay-checkout-form iframe {
-                position: relative !important;
-                width: 100% !important;
-                min-height: 500px !important;
-                border: none !important;
-                border-radius: 12px !important;
-            }
-
-            /* Prevent body scroll lock from Iyzico */
-            body.iyzico-popup-active,
-            body[style*="overflow: hidden"] {
-                overflow: auto !important;
-                padding-right: 0 !important;
-            }
-        `;
-        document.head.appendChild(style);
-
         const init = async () => {
             try {
                 const res = await initializeCardUpdate();
@@ -73,106 +22,63 @@ export default function CardUpdatePage() {
                     setError(res.error);
                     setLoading(false);
                 } else if (res.checkoutFormContent) {
-                    setTimeout(() => {
-                        const container = checkoutFormRef.current;
-                        if (!container) return;
+                    const container = document.createElement("div");
+                    container.innerHTML = res.checkoutFormContent;
 
-                        container.innerHTML = res.checkoutFormContent || '';
-
-                        // Re-execute scripts
-                        const scripts = container.querySelectorAll('script');
-                        scripts.forEach(script => {
-                            const newScript = document.createElement('script');
-
-                            // Copy all attributes from the original script
-                            Array.from(script.attributes).forEach(attr => {
-                                newScript.setAttribute(attr.name, attr.value);
-                            });
-
-                            if (script.src) {
-                                newScript.src = script.src;
-                                newScript.async = true;
-                            } else {
-                                newScript.textContent = script.textContent;
-                            }
-
-                            container.appendChild(newScript);
-                            script.remove();
+                    // Execute Iyzico scripts safely in order
+                    const scripts = Array.from(container.querySelectorAll('script'));
+                    for (const script of scripts) {
+                        const newScript = document.createElement('script');
+                        Array.from(script.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
                         });
 
-                        // After Iyzico loads, move its popup content into our container
-                        setTimeout(() => {
-                            moveIyzicoPopupInline();
-                        }, 1500);
+                        if (script.src) {
+                            newScript.src = script.src;
+                            newScript.async = false; // Strictly sequential
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
 
-                        // Keep checking and moving popup content
-                        const interval = setInterval(() => {
-                            moveIyzicoPopupInline();
-                        }, 500);
+                        document.body.appendChild(newScript);
+                    }
 
-                        // Stop checking after 10 seconds
-                        setTimeout(() => clearInterval(interval), 10000);
-
-                        setLoading(false);
-                    }, 300);
+                    setLoading(false);
                 }
             } catch (e: any) {
                 console.error(e);
-                setError("Beklenmeyen bir hata oluştu.");
+                setError("Beklenmeyen bir hata oluştu: " + e.message);
                 setLoading(false);
             }
-        };
-
-        const moveIyzicoPopupInline = () => {
-            const container = checkoutFormRef.current;
-            if (!container) return;
-
-            // Find Iyzico's popup iframe or content that was injected into body
-            const iframes = document.querySelectorAll('iframe[src*="iyzipay"], iframe[src*="iyzico"]');
-            iframes.forEach(iframe => {
-                // If iframe is not inside our container, move it there
-                if (!container.contains(iframe)) {
-                    const iframeEl = iframe as HTMLIFrameElement;
-                    iframeEl.style.position = 'relative';
-                    iframeEl.style.width = '100%';
-                    iframeEl.style.minHeight = '500px';
-                    iframeEl.style.border = 'none';
-                    iframeEl.style.borderRadius = '12px';
-                    iframeEl.style.zIndex = '1';
-                    container.appendChild(iframeEl);
-                }
-            });
-
-            // Hide overlays
-            document.querySelectorAll('.iyzico-overlay, .iyzi-popup-overlay').forEach(el => {
-                (el as HTMLElement).style.display = 'none';
-            });
-
-            // Fix body overflow
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
         };
 
         init();
 
         return () => {
-            // Cleanup
-            const styleEl = document.getElementById('iyzico-inline-override');
-            if (styleEl) styleEl.remove();
-
+            // Cleanup on unmount
             const selectors = [
                 'script[src*="iyzipay"]',
                 'script[src*="iyzico"]',
                 'iframe[src*="iyzipay"]',
                 'iframe[src*="iyzico"]',
-                '#iyzipay-checkout-form',
                 '.iyzico-popup',
-                '.iyzico-overlay',
-                '.iyzi-popup-overlay'
+                '.iyzi-popup-overlay',
+                '.iyzico-overlay'
             ];
             document.querySelectorAll(selectors.join(', ')).forEach(el => el.remove());
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
+
+            // Unset global Iyzico vars if they leak safely
+            if (typeof window !== 'undefined') {
+                try {
+                    (window as any).iyziInit = undefined;
+                    (window as any).iyziUcsInit = undefined;
+                    (window as any).iyziSubscriptionInit = undefined;
+                } catch (e) {
+                    // Ignore strict mode deletion errors
+                }
+            }
         };
     }, []);
 
@@ -192,16 +98,18 @@ export default function CardUpdatePage() {
                 </div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[400px] relative">
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[400px] relative flex flex-col items-center justify-center text-center">
                 {loading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10">
+                    <div className="flex flex-col items-center">
                         <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-                        <p className="text-slate-500 font-medium">Güvenli ödeme sayfası yükleniyor...</p>
+                        <h3 className="text-lg font-bold text-slate-900">Ödeme Sistemi Bağlanıyor</h3>
+                        <p className="text-slate-500 font-medium mt-2">Iyzico güvenli kart güncelleme formu açılır pencere (popup) olarak başlatılıyor...</p>
+                        <p className="text-xs text-slate-400 mt-4">Eğer popup açılmazsa tarayıcınızın engelleyici ayarlarını kontrol edin.</p>
                     </div>
                 )}
 
-                {error ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                {error && (
+                    <div className="flex flex-col items-center justify-center space-y-4">
                         <div className="p-3 bg-red-100 rounded-full">
                             <ShieldCheck className="w-8 h-8 text-red-600" />
                         </div>
@@ -213,8 +121,17 @@ export default function CardUpdatePage() {
                             Geri Dön
                         </Button>
                     </div>
-                ) : (
-                    <div id="iyzipay-checkout-form" className="responsive" ref={checkoutFormRef}></div>
+                )}
+
+                {!loading && !error && (
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-2">
+                            <ShieldCheck className="w-8 h-8 text-green-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900">Güvenli Bağlantı Kuruldu</h3>
+                        <p className="text-slate-600 max-w-md">Eğer ekranınızda popup açılmazsa aşağıdaki alanda form yüklenecektir.</p>
+                        <div id="iyzipay-checkout-form" className="popup" ref={checkoutFormRef}></div>
+                    </div>
                 )}
             </div>
 

@@ -83,12 +83,16 @@ export default function NotificationsPage() {
             .on(
                 "postgres_changes",
                 {
-                    event: "INSERT",
+                    event: "*",
                     schema: "public",
                     table: "notifications"
                 },
-                () => {
-                    fetchNotifications();
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        fetchNotifications();
+                    } else if (payload.eventType === 'DELETE') {
+                        setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
+                    }
                 }
             )
             .subscribe();
