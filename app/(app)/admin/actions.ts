@@ -51,20 +51,30 @@ export async function updateSubscription(formData: FormData) {
     // First, find existing subscription
     const { data: sub } = await adminDb
         .from("subscriptions")
-        .select("id")
+        .select("id, ai_product_key, status")
         .eq("tenant_id", tenantId)
         .maybeSingle();
 
     if (sub) {
+        const wasFree = sub.ai_product_key === 'uppypro_corporate_free';
+        const isNowPaid = aiProductKey && aiProductKey !== 'uppypro_corporate_free';
+
+        const updatePayload: any = {
+            base_product_key: baseProductKey,
+            ai_product_key: aiProductKey,
+            custom_price_usd: customPrice,
+            custom_price_try: null, // Clear old TRY price
+            updated_at: new Date().toISOString()
+        };
+
+        if (wasFree && isNowPaid) {
+            updatePayload.status = 'pending_payment';
+            updatePayload.iyzico_subscription_reference_code = null;
+        }
+
         const { error } = await adminDb
             .from("subscriptions")
-            .update({
-                base_product_key: baseProductKey,
-                ai_product_key: aiProductKey,
-                custom_price_usd: customPrice,
-                custom_price_try: null, // Clear old TRY price
-                updated_at: new Date().toISOString()
-            })
+            .update(updatePayload)
             .eq("id", sub.id);
 
         if (error) return { error: error.message };

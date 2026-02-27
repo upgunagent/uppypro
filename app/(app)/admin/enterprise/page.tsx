@@ -57,7 +57,8 @@ export default function EnterpriseInvitePage() {
         { key: 'uppypro_corporate_small', name: 'Small', price: `${formatPrice(prices.uppypro_corporate_small || 4995)} TL + KDV` },
         { key: 'uppypro_corporate_medium', name: 'Medium', price: `${formatPrice(prices.uppypro_corporate_medium || 6995)} TL + KDV` },
         { key: 'uppypro_corporate_large', name: 'Large', price: `${formatPrice(prices.uppypro_corporate_large || 9995)} TL + KDV` },
-        { key: 'uppypro_corporate_xl', name: 'XL', price: `${formatPrice(prices.uppypro_corporate_xl || 12995)} TL + KDV` }
+        { key: 'uppypro_corporate_xl', name: 'XL', price: `${formatPrice(prices.uppypro_corporate_xl || 12995)} TL + KDV` },
+        { key: 'uppypro_corporate_free', name: 'Kurumsal Ücretsiz', price: 'Ücretsiz' }
     ];
 
     return (

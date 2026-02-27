@@ -26,21 +26,28 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
     try {
         console.log("Creating Enterprise Invite:", data);
 
-        // Fetch Price for selected plan
-        const { data: pricingData, error: priceError } = await supabaseAdmin
-            .from('pricing')
-            .select('monthly_price_try, iyzico_pricing_plan_reference_code, products(name)')
-            .eq('product_key', data.planKey)
-            .eq('billing_cycle', 'monthly')
-            .single();
+        const isFreePlan = data.planKey === 'uppypro_corporate_free';
+        let priceTl = 0;
+        let totalWithKdv = 0;
+        let productName = "UppyPro Kurumsal Ücretsiz";
 
-        if (priceError || !pricingData) {
-            throw new Error("Seçilen planın fiyat bilgisi bulunamadı.");
+        if (!isFreePlan) {
+            // Fetch Price for selected plan
+            const { data: pricingData, error: priceError } = await supabaseAdmin
+                .from('pricing')
+                .select('monthly_price_try, iyzico_pricing_plan_reference_code, products(name)')
+                .eq('product_key', data.planKey)
+                .eq('billing_cycle', 'monthly')
+                .single();
+
+            if (priceError || !pricingData) {
+                throw new Error("Seçilen planın fiyat bilgisi bulunamadı.");
+            }
+
+            priceTl = pricingData.monthly_price_try;
+            totalWithKdv = priceTl * 1.2;
+            productName = (pricingData.products as any)?.name || `UppyPro Kurumsal (${data.planKey.replace('uppypro_corporate_', '').toUpperCase()})`;
         }
-
-        const priceTl = pricingData.monthly_price_try;
-        const totalWithKdv = priceTl * 1.2;
-        const productName = (pricingData.products as any)?.name || `UppyPro Kurumsal (${data.planKey.replace('uppypro_corporate_', '').toUpperCase()})`;
 
         // 1. Create User
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
@@ -114,34 +121,64 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
 
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
-            status: 'pending',
+            status: isFreePlan ? 'active' : 'pending',
             base_product_key: 'uppypro_inbox',
             ai_product_key: data.planKey, // Use the selected plan key
             billing_cycle: 'monthly',
-            custom_price_usd: null // Clear USD
-            // We don't have custom_price_try yet in schema, relying on products.pricing table
+            custom_price_usd: null, // Clear USD
+            // Start the period immediately if it's a free plan
+            ...(isFreePlan ? {
+                current_period_start: new Date().toISOString(),
+                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            } : {})
         });
 
-        // 7. Generate Invite Token
-        const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-        await supabaseAdmin.from("enterprise_invite_tokens").insert({
-            token,
-            tenant_id: tenant.id,
-            user_id: userId,
-            email: data.email,
-            expires_at: expiresAt.toISOString()
-        });
-
-        // 8. Send Email
+        // 7. Generate Link
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
-        const inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
+        let inviteLink = "";
+
+        if (isFreePlan) {
+            // Free plan users don't need checkout. Directly send a password setup link.
+            const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                type: "recovery",
+                email: data.email,
+                options: {
+                    redirectTo: `${baseUrl}/update-password`
+                }
+            });
+
+            if (linkError || !linkData) {
+                throw new Error(`Şifre belirleme linki oluşturulamadı: ${linkError?.message}`);
+            }
+            inviteLink = linkData.properties.action_link;
+        } else {
+            // Generate Invite Token for Paid Checkout
+            const token = crypto.randomUUID();
+            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            await supabaseAdmin.from("enterprise_invite_tokens").insert({
+                token,
+                tenant_id: tenant.id,
+                user_id: userId,
+                email: data.email,
+                expires_at: expiresAt.toISOString()
+            });
+
+            inviteLink = `${baseUrl}/enterprise-invite?token=${token}`;
+        }
 
         const logoUrl = `${baseUrl}/brand-logo-text.png`;
-        const formattedPrice = priceTl.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
-        const formattedTotal = totalWithKdv.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
         const entityName = data.billingType === 'corporate' ? data.companyName : data.fullName;
+
+        const formattedPrice = isFreePlan ? "Ücretsiz" : priceTl.toLocaleString('tr-TR', { minimumFractionDigits: 0 }) + " TL + KDV";
+        const formattedTotal = isFreePlan ? "0" : totalWithKdv.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+        const ctaText = isFreePlan ? "Hesabı Aktifleştir →" : "Aboneliği Başlat →";
+        const emailMessage = isFreePlan
+            ? `<strong>${entityName}</strong> için UppyPro kurumsal aboneliğiniz tanımlanmıştır. Aşağıdaki butona tıklayarak hemen şifrenizi belirleyip giriş yapabilirsiniz.`
+            : `<strong>${entityName}</strong> için UppyPro kurumsal aboneliğiniz tanımlanmıştır. Aşağıdaki butona tıklayarak aboneliğinizi başlatabilirsiniz.`;
+        const infoMessage = isFreePlan
+            ? "ℹ️ Hesabınızı kullanmaya başlamak için butonla şifrenizi belirlemeniz yeterlidir. Kredi kartı gerekmez."
+            : "ℹ️ Aboneliğinizi başlatmak için aşağıdaki butona tıklayın. Sözleşme onayı ve ödeme adımlarını tamamladıktan sonra hesabınız aktif olacaktır.";
 
         await resend.emails.send({
             from: EMAIL_FROM,
@@ -180,7 +217,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         </div>
         <div class="content">
             <p class="greeting">Sayın <strong>${data.contactName}</strong>,</p>
-            <p class="message"><strong>${entityName}</strong> için UppyPro kurumsal aboneliğiniz tanımlanmıştır. Aşağıdaki butona tıklayarak aboneliğinizi başlatabilirsiniz.</p>
+            <p class="message">${emailMessage}</p>
 
             <div class="details-card">
                 <div class="details-title">Abonelik Bilgileri</div>
@@ -190,20 +227,20 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Aylık Ücret:</span>
-                    <span class="detail-value">${formattedPrice} TL + KDV</span>
+                    <span class="detail-value">${formattedPrice}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Toplam (KDV Dahil):</span>
-                    <span class="detail-value">${formattedTotal} TL / Ay</span>
+                    <span class="detail-value">${formattedTotal} ${isFreePlan ? 'TL' : 'TL / Ay'}</span>
                 </div>
             </div>
 
             <div class="info-box">
-                ℹ️ Aboneliğinizi başlatmak için aşağıdaki butona tıklayın. Sözleşme onayı ve ödeme adımlarını tamamladıktan sonra hesabınız aktif olacaktır.
+                ${infoMessage}
             </div>
 
             <div style="text-align: center; margin: 32px 0;">
-                <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; border: 1px solid #ea580c;">Aboneliği Başlat →</a>
+                <a href="${inviteLink}" style="display: inline-block; background-color: #ea580c; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; border: 1px solid #ea580c;">${ctaText}</a>
             </div>
 
             <p class="message" style="margin-top: 40px;">

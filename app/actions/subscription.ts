@@ -13,6 +13,74 @@ import {
 /**
  * Initialize Card Update Checkout Form
  */
+import { initializeSubscriptionPayment } from "./payment";
+
+export async function initializeFirstSubscription() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Oturum açmanız gerekiyor." };
+
+    const adminDb = createAdminClient();
+
+    // Find Tenant
+    const { data: member } = await adminDb
+        .from("tenant_members")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .single();
+    if (!member) return { error: "İşletme kaydı bulunamadı." };
+
+    // Find Active but Awaiting Subscription
+    const { data: subscription } = await adminDb
+        .from("subscriptions")
+        .select("*")
+        .eq("tenant_id", member.tenant_id)
+        .single();
+
+    if (!subscription || subscription.iyzico_subscription_reference_code) {
+        return { error: "Bu hesaba ait geçerli bir bekleme (Upgrade) aboneliği bulunamadı veya halihazırda ödeme yöntemi girilmiş." };
+    }
+
+    // Get pricing plan reference code
+    const { data: pricingData } = await adminDb
+        .from('pricing')
+        .select('iyzico_pricing_plan_reference_code')
+        .eq('product_key', subscription.ai_product_key)
+        .eq('billing_cycle', 'monthly')
+        .single();
+
+    if (!pricingData?.iyzico_pricing_plan_reference_code) {
+        return { error: "Paket Iyzico kodu getirilemedi." };
+    }
+
+    const { data: billingInfo } = await adminDb
+        .from("billing_info")
+        .select("*")
+        .eq("tenant_id", member.tenant_id)
+        .single();
+
+    const result = await initializeSubscriptionPayment({
+        tenantId: member.tenant_id,
+        pricingPlanReferenceCode: pricingData.iyzico_pricing_plan_reference_code,
+        user: {
+            id: user.id,
+            email: billingInfo?.contact_email || user.email || '',
+            name: billingInfo?.full_name || billingInfo?.company_name || 'Isim Yok',
+            phone: billingInfo?.contact_phone || '05555555555',
+            address: billingInfo?.address_full || 'Adres Girilmedi',
+            identityNumber: billingInfo?.tckn || '11111111111'
+        }
+    });
+
+    if (result.error) return { error: result.error };
+
+    return { checkoutFormContent: result.checkoutFormContent };
+}
+
+/**
+ * Initialize Card Update Checkout Form
+ */
 export async function initializeCardUpdate() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

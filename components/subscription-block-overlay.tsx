@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 interface SubscriptionBlockOverlayProps {
-    reason: 'canceled' | 'past_due' | 'unpaid' | 'suspended';
+    reason: 'canceled' | 'past_due' | 'unpaid' | 'suspended' | 'pending_payment';
 }
 
 export function SubscriptionBlockOverlay({ reason }: SubscriptionBlockOverlayProps) {
@@ -17,6 +17,7 @@ export function SubscriptionBlockOverlay({ reason }: SubscriptionBlockOverlayPro
     }
 
     const isCanceled = reason === 'canceled';
+    const isPendingPayment = reason === 'pending_payment';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
@@ -26,13 +27,15 @@ export function SubscriptionBlockOverlay({ reason }: SubscriptionBlockOverlayPro
                 </div>
 
                 <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                    {isCanceled ? 'Aboneliğiniz İptal Edildi' : 'Ödeme Gecikmiş'}
+                    {isCanceled ? 'Aboneliğiniz İptal Edildi' : isPendingPayment ? 'Ödeme Yöntemi Gerekli' : 'Ödeme Gecikmiş'}
                 </h2>
 
                 <p className="text-slate-600 mb-6 leading-relaxed">
                     {isCanceled
                         ? 'Aboneliğiniz iptal edilmiştir. Paneli kullanmaya devam etmek için lütfen aboneliğinizi yeniden başlatın.'
-                        : 'Abonelik ödemeniz gecikmiştir. Hizmetlerinizin kesintisiz devam etmesi için lütfen ödemenizi güncelleyin.'
+                        : isPendingPayment
+                            ? 'Aboneliğiniz ücretli bir pakete yükseltilmiştir. Kullanıma devam etmek için lütfen kredi kartı bilgilerinizi girerek aboneliğinizi aktifleştirin.'
+                            : 'Abonelik ödemeniz gecikmiştir. Hizmetlerinizin kesintisiz devam etmesi için lütfen ödemenizi güncelleyin.'
                     }
                 </p>
 
@@ -42,7 +45,7 @@ export function SubscriptionBlockOverlay({ reason }: SubscriptionBlockOverlayPro
                         className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-colors"
                     >
                         <RotateCcw className="w-4 h-4" />
-                        {isCanceled ? 'Aboneliği Yeniden Başlat' : 'Ödeme Bilgilerini Güncelle'}
+                        {isCanceled ? 'Aboneliği Yeniden Başlat' : isPendingPayment ? 'Kart Bilgisi Girin' : 'Ödeme Bilgilerini Güncelle'}
                     </Link>
                     <Link
                         href="/panel/settings?tab=subscription"

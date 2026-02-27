@@ -12,6 +12,9 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
+    const isFreePlan = subscription?.ai_product_key === 'uppypro_corporate_free';
+    const isPendingPayment = subscription?.status === 'pending_payment';
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
@@ -66,6 +69,38 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
         }
     };
 
+    const handleStartSubscription = async () => {
+        setLoading(true);
+        try {
+            const { initializeFirstSubscription } = await import("@/app/actions/subscription");
+            const res = await initializeFirstSubscription();
+            if (res.error) {
+                toast({ variant: "destructive", title: "Hata", description: res.error });
+                setLoading(false);
+            } else if (res.checkoutFormContent) {
+                const container = document.createElement("div");
+                container.innerHTML = res.checkoutFormContent;
+
+                const scripts = Array.from(container.querySelectorAll('script'));
+                for (const script of scripts) {
+                    const newScript = document.createElement('script');
+                    Array.from(script.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    if (script.src) {
+                        newScript.src = script.src;
+                        newScript.async = false;
+                    } else {
+                        newScript.textContent = script.textContent;
+                    }
+                    document.body.appendChild(newScript);
+                }
+            }
+        } catch (e: any) {
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
+        } finally {
+            setTimeout(() => setLoading(false), 2000);
+        }
+    };
+
     return (
         <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
@@ -75,7 +110,17 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
                     </div>
                     <div>
                         <h3 className="font-bold text-lg text-slate-900">Ödeme Yöntemi</h3>
-                        {subscription?.card_last4 ? (
+                        {isPendingPayment ? (
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-red-600">Ödeme Yöntemi Eksik</span>
+                                <span className="text-xs text-slate-500">Aboneliğinizi başlatmak için kart ekleyin.</span>
+                            </div>
+                        ) : isFreePlan ? (
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-slate-700">Ücretsiz Şirket Planı</span>
+                                <span className="text-xs text-slate-500">Bu plan için kredi kartı zorunlu değildir.</span>
+                            </div>
+                        ) : subscription?.card_last4 ? (
                             <div className="flex flex-col">
                                 <span className="text-sm font-medium text-slate-700">
                                     {subscription.card_brand} **** {subscription.card_last4}
@@ -90,18 +135,30 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
                     </div>
                 </div>
 
-                <Button variant="outline" size="sm" onClick={handleUpdateCard} disabled={loading}>
-                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                    {!loading ? "Kartı Güncelle" : "Bağlanıyor..."}
-                    {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
-                </Button>
+                {!isFreePlan && !isPendingPayment && (
+                    <Button variant="outline" size="sm" onClick={handleUpdateCard} disabled={loading}>
+                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {!loading ? "Kartı Güncelle" : "Bağlanıyor..."}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+                    </Button>
+                )}
+                {isPendingPayment && (
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={handleStartSubscription} disabled={loading}>
+                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {!loading ? "Kart Ekle ve Başlat" : "Bağlanıyor..."}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+                    </Button>
+                )}
             </div>
             {/* Modal için taşıyıcı, sayfada kalacak */}
             <div id="iyzipay-checkout-form" className="popup hidden"></div>
 
             <div className="text-sm text-slate-500 italic">
-                Aboneliğinizin devam etmesi için kredi kartı bilgilerinizin güncel olması gerekmektedir.
-                Iyzico altyapısı sayesinde kart bilgileriniz tarafımızca saklanmadan, güvenle işlenir.
+                {isPendingPayment
+                    ? "Satın alınan yeni paketinizin işleme alınabilmesi için lütfen kredi kartı bilgilerinizi giriniz."
+                    : isFreePlan
+                        ? "Mevcut ücretsiz planınız kapsamında sistemimizi kullanmaya devam edebilirsiniz."
+                        : "Aboneliğinizin devam etmesi için kredi kartı bilgilerinizin güncel olması gerekmektedir. Iyzico altyapısı sayesinde kart bilgileriniz tarafımızca saklanmadan, güvenle işlenir."}
             </div>
         </div>
     );

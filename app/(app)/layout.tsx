@@ -29,7 +29,7 @@ export default async function AppLayout({
     const tenantId = memberData?.tenant_id;
 
     // Subscription enforcement (admin kullanıcılar hariç)
-    let subscriptionBlockReason: 'canceled' | 'past_due' | 'unpaid' | 'suspended' | null = null;
+    let subscriptionBlockReason: 'canceled' | 'past_due' | 'unpaid' | 'suspended' | 'pending_payment' | null = null;
 
     if (role !== 'agency_admin' && tenantId) {
         const { data: subscription } = await supabase
@@ -45,6 +45,8 @@ export default async function AppLayout({
 
             if (status === 'canceled') {
                 subscriptionBlockReason = 'canceled';
+            } else if (status === 'pending_payment') {
+                subscriptionBlockReason = 'pending_payment';
             } else if (['past_due', 'unpaid', 'suspended'].includes(status)) {
                 // 3 gün grace period: current_period_end + 3 gün geçtiyse engelle
                 if (current_period_end) {

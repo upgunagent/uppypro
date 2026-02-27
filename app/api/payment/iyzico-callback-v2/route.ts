@@ -47,8 +47,8 @@ export async function POST(request: Request) {
             if (subData && subData.tenant_id) {
                 console.log(`[IYZICO-CALLBACK-V2] FOUND Tenant ID via Token: ${subData.tenant_id}, Status: ${subData.status}`);
                 tenantId = subData.tenant_id;
-                // If the subscription was canceled, this is a reactivation
-                if (subData.status === 'canceled' || subData.status === 'past_due') {
+                // If the subscription was canceled or pending payment, this is a reactivation
+                if (subData.status === 'canceled' || subData.status === 'past_due' || subData.status === 'pending_payment') {
                     isReactivation = true;
                 }
             } else {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
                 .eq('iyzico_checkout_token', token)
                 .single();
 
-            if (existingSub && (existingSub.status === 'canceled' || existingSub.status === 'past_due')) {
+            if (existingSub && (existingSub.status === 'canceled' || existingSub.status === 'past_due' || existingSub.status === 'pending_payment')) {
                 isReactivation = true;
             }
         }
