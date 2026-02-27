@@ -9,6 +9,10 @@ import { Loader2, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+// Auth client'ı component dışında bir kez başlatıyoruz. 
+// Bu sayede her render'da (tuş vuruşunda) yeni istemci oluşmaz ve oturum takibi kopmaz.
+const supabase = createClient();
+
 export default function UpdatePasswordPage() {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -16,9 +20,6 @@ export default function UpdatePasswordPage() {
     const { toast } = useToast();
     const router = useRouter();
     const [isSessionReady, setIsSessionReady] = useState(false);
-
-    // Auth client'ı component mount olduğunda başlatıyoruz ki URL'deki #access_token değerini parse etsin.
-    const supabase = createClient();
 
     useEffect(() => {
         // Sayfa yüklendiğinde Auth state dinleyicisini aç ve hash'i kontrol et
