@@ -122,14 +122,16 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
             status: isFreePlan ? 'active' : 'pending',
-            base_product_key: 'uppypro_inbox',
+            // Free ücretsiz kurumsal pakette kurumsal base key atanmalı
+            // Yoksa kullanıcı inbox paketi gibi görünür ve corporate özelliklerine erişemez.
+            base_product_key: isFreePlan ? 'uppypro_corporate' : 'uppypro_inbox',
             ai_product_key: data.planKey, // Use the selected plan key
             billing_cycle: 'monthly',
             custom_price_usd: null, // Clear USD
             // Start the period immediately if it's a free plan
             ...(isFreePlan ? {
                 current_period_start: new Date().toISOString(),
-                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 yıllık
             } : {})
         });
 
