@@ -1,20 +1,21 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, CreditCard, User, Plug, MessageSquare } from "lucide-react";
+import { Link, CreditCard, User, Plug, MessageSquare, Users } from "lucide-react";
 import { ReactNode } from "react";
 
 interface SettingsTabsProps {
     connectionTab: ReactNode;
     profileTab: ReactNode;
     subscriptionTab: ReactNode;
+    employeeTab: ReactNode;
     defaultValue?: string;
 }
 
-export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, defaultValue = "connections" }: SettingsTabsProps) {
+export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, employeeTab, defaultValue = "connections" }: SettingsTabsProps) {
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-[600px] h-12 bg-slate-100 p-1">
+            <TabsList className="grid w-full grid-cols-4 lg:w-[800px] h-12 bg-slate-100 p-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
                     <Plug className="w-4 h-4 mr-2" />
                     Bağlantı Ayarları
@@ -26,6 +27,10 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, defau
                 <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Abonelik
+                </TabsTrigger>
+                <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+                    <Users className="w-4 h-4 mr-2" />
+                    Çalışanlar
                 </TabsTrigger>
             </TabsList>
 
@@ -39,6 +44,10 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, defau
 
             <TabsContent value="subscription" className="space-y-6 outline-none">
                 {subscriptionTab}
+            </TabsContent>
+
+            <TabsContent value="employees" className="space-y-6 outline-none">
+                {employeeTab}
             </TabsContent>
         </Tabs>
     );

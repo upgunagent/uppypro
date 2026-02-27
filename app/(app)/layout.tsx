@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SubscriptionBlockOverlay } from "@/components/subscription-block-overlay";
+import { NotificationSoundListener } from "@/components/notification-sound-listener";
 import { clsx } from "clsx";
 
 export default async function AppLayout({
@@ -60,6 +61,10 @@ export default async function AppLayout({
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <AppSidebar role={role} tenantId={tenantId} />
+            {/* Global notification sound listener - works on all pages */}
+            {role !== "agency_admin" && tenantId && (
+                <NotificationSoundListener tenantId={tenantId} />
+            )}
             <main className={clsx(
                 "flex-1 ml-0 flex flex-col h-[100dvh] overflow-y-auto pb-16 md:pb-0 md:mb-0",
                 role === "agency_admin" ? "md:ml-64" : "md:ml-20"

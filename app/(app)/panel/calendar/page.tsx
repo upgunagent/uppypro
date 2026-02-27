@@ -42,6 +42,13 @@ export default async function CalendarPage() {
     // But we can pass some initial data or just let the client component fetch.
     // For simplicity with big-calendar, client-side fetching based on view range is common.
 
+    // Fetch Employees for this tenant
+    const { data: employees } = await supabase
+        .from("tenant_employees")
+        .select("*")
+        .eq("tenant_id", member.tenant_id)
+        .order("name", { ascending: true });
+
     return (
         <div className="h-[calc(100vh-4rem)] p-6 bg-slate-50 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-6">
@@ -52,7 +59,12 @@ export default async function CalendarPage() {
             </div>
 
             <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 overflow-hidden">
-                <CalendarView tenantId={member.tenant_id} userId={user.id} profile={businessProfile} />
+                <CalendarView
+                    tenantId={member.tenant_id}
+                    userId={user.id}
+                    profile={businessProfile}
+                    initialEmployees={employees || []}
+                />
             </div>
         </div>
     );

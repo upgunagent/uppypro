@@ -8,10 +8,17 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, ChevronRight, Calendar as CalIcon } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Calendar as CalIcon, Users } from "lucide-react";
 import { DaySummaryDialog } from "./day-summary-dialog";
 import { EventDialog } from "./event-dialog";
 import { clsx } from "clsx";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 // Setup Localizer
 const locales = {
@@ -41,12 +48,14 @@ interface CalendarViewProps {
     tenantId: string;
     userId: string;
     profile?: any; // Business Profile
+    initialEmployees: any[];
 }
 
-export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
+export function CalendarView({ tenantId, userId, profile, initialEmployees }: CalendarViewProps) {
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<View>(Views.MONTH);
     const [date, setDate] = useState(new Date());
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("all");
 
     // Dialog State
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -66,7 +75,7 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
 
         const { data, error } = await supabase
             .from("calendar_events")
-            .select("*, customers(full_name, company_name)")
+            .select("*, customers(full_name, company_name), tenant_employees(id, name, title)")
             .eq("tenant_id", tenantId)
             .order('start_time', { ascending: true });
 
@@ -209,7 +218,7 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
         };
 
         return (
-            <div className="flex items-center justify-between mb-4 border-b pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 border-b pb-4 gap-4">
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={goToBack}><ChevronLeft className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={goToCurrent}>Bugün</Button>
@@ -217,36 +226,61 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
                     <div className="ml-4">{label()}</div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                    <button
-                        onClick={() => toolbar.onView('month')}
-                        className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'month' ? "bg-amber-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
-                    >
-                        Ay
-                    </button>
-                    <button
-                        onClick={() => toolbar.onView('week')}
-                        className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'week' ? "bg-blue-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
-                    >
-                        Hafta
-                    </button>
-                    <button
-                        onClick={() => toolbar.onView('day')}
-                        className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'day' ? "bg-emerald-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
-                    >
-                        Gün
-                    </button>
-                </div>
+                <div className="flex items-center gap-4 flex-wrap w-full sm:w-auto">
+                    {/* Employee Filter */}
+                    <div className="flex items-center gap-2 min-w-[200px]">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Personel Seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tüm Personeller</SelectItem>
+                                {initialEmployees.map((emp) => (
+                                    <SelectItem key={emp.id} value={emp.id}>
+                                        {emp.name} {emp.title ? `(${emp.title})` : ''}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                <Button
-                    onClick={() => { setSelectedEvent(null); setSelectedSlot(null); setIsDialogOpen(true); }}
-                    className="bg-orange-600 hover:bg-orange-700 ml-4 w-10 h-10 p-0 rounded-lg flex items-center justify-center shadow-md transition-transform hover:scale-105"
-                >
-                    <Plus className="w-6 h-6 text-white" strokeWidth={3} />
-                </Button>
+                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => toolbar.onView('month')}
+                            className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'month' ? "bg-amber-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
+                        >
+                            Ay
+                        </button>
+                        <button
+                            onClick={() => toolbar.onView('week')}
+                            className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'week' ? "bg-blue-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
+                        >
+                            Hafta
+                        </button>
+                        <button
+                            onClick={() => toolbar.onView('day')}
+                            className={clsx("px-3 py-1.5 text-sm rounded-md transition-all font-medium", view === 'day' ? "bg-emerald-500 shadow text-white" : "text-slate-500 hover:text-slate-900")}
+                        >
+                            Gün
+                        </button>
+                    </div>
+
+                    <Button
+                        onClick={() => { setSelectedEvent(null); setSelectedSlot(null); setIsDialogOpen(true); }}
+                        className="bg-orange-600 hover:bg-orange-700 w-10 h-10 p-0 rounded-lg flex items-center justify-center shadow-md transition-transform hover:scale-105"
+                    >
+                        <Plus className="w-6 h-6 text-white" strokeWidth={3} />
+                    </Button>
+                </div>
             </div>
         );
     };
+
+    // Filter events based on selected employee
+    const displayedEvents = selectedEmployeeId === "all"
+        ? events
+        : events.filter(e => e.resource.employee_id === selectedEmployeeId);
 
     return (
         <div className="h-full">
@@ -266,7 +300,7 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
 
             <Calendar
                 localizer={localizer}
-                events={events}
+                events={displayedEvents}
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: "100%" }}
@@ -279,7 +313,11 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
                 onSelectEvent={handleSelectEvent}
                 dayPropGetter={dayPropGetter}
                 slotPropGetter={slotPropGetter}
-                tooltipAccessor={(event) => `${event.title}\n${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`}
+                tooltipAccessor={(event) => {
+                    const empName = event.resource?.tenant_employees?.name;
+                    const empText = empName ? `\n👤 Personel: ${empName}` : '';
+                    return `${event.title}\n${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}${empText}`;
+                }}
                 eventPropGetter={(event) => {
                     const colorMap: any = {
                         blue: '#3b82f6',
@@ -321,13 +359,15 @@ export function CalendarView({ tenantId, userId, profile }: CalendarViewProps) {
                 initialSlot={selectedSlot}
                 tenantId={tenantId}
                 profile={profile}
+                employees={initialEmployees}
+                preselectedEmployeeId={selectedEmployeeId === "all" ? undefined : selectedEmployeeId}
             />
 
             <DaySummaryDialog
                 isOpen={isDaySummaryOpen}
                 onClose={() => setIsDaySummaryOpen(false)}
                 date={summaryDate}
-                events={events} // Pass all events, dialog filters them
+                events={displayedEvents} // Pass filtered events
                 onSelectEvent={(event) => {
                     setIsDaySummaryOpen(false); // Close summary
                     handleSelectEvent(event);   // Open edit dialog

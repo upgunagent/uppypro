@@ -17,11 +17,12 @@ import {
     Tag,
     Calendar as CalendarIcon,
     Receipt,
-    Lock
+    Lock,
+    Bell
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface SidebarProps {
     role: "agency_admin" | "tenant_owner" | "tenant_agent" | null;
@@ -34,6 +35,10 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const currentTab = searchParams.get('tab') || 'all';
     const router = useRouter();
     const [counts, setCounts] = useState({ all: 0, whatsapp: 0, instagram: 0 });
+    const [notificationCount, setNotificationCount] = useState(0);
+    const prevNotifCountRef = useRef(0);
+    const userInteractedRef = useRef(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         if (!tenantId) return;
@@ -89,6 +94,70 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         return () => {
             supabase.removeChannel(channel);
             clearInterval(interval);
+        };
+    }, [tenantId]);
+
+    // Track user interaction for autoplay policy
+    useEffect(() => {
+        const handler = () => {
+            userInteractedRef.current = true;
+            import('@/lib/notification-sound').then(({ initNotificationSound }) => {
+                if (initNotificationSound) initNotificationSound();
+            });
+        };
+        document.addEventListener('click', handler, { once: true });
+        document.addEventListener('keydown', handler, { once: true });
+        return () => {
+            document.removeEventListener('click', handler);
+            document.removeEventListener('keydown', handler);
+        };
+    }, []);
+
+    // Notification count + realtime + sound
+    useEffect(() => {
+        if (!tenantId) return;
+        const supabase = createClient();
+
+        const fetchNotifCount = async () => {
+            const { count } = await supabase
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .or(`tenant_id.eq.${tenantId},tenant_id.is.null`)
+                .eq('is_read', false);
+
+            const newCount = count || 0;
+            // Play sound if new notifications arrived
+            if (newCount > prevNotifCountRef.current && prevNotifCountRef.current >= 0 && userInteractedRef.current) {
+                import('@/lib/notification-sound').then(({ playNotificationSound }) => {
+                    playNotificationSound();
+                });
+            }
+            prevNotifCountRef.current = newCount;
+            setNotificationCount(newCount);
+        };
+
+        fetchNotifCount();
+
+        const notifChannel = supabase
+            .channel(`sidebar-notifications:${tenantId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'notifications'
+                },
+                () => {
+                    fetchNotifCount();
+                }
+            )
+            .subscribe();
+
+        const notifInterval = setInterval(fetchNotifCount, 15000);
+
+        return () => {
+            supabase.removeChannel(notifChannel);
+            clearInterval(notifInterval);
         };
     }, [tenantId]);
 
@@ -154,6 +223,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/enterprise", label: "Kurumsal", icon: Building2 },
         { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
         { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
+        { href: "/admin/notifications", label: "Bildirim Gönder", icon: Bell },
         { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 
@@ -330,6 +400,15 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     isActive={pathname.startsWith("/panel/customers")}
                     gradient="bg-orange-500 shadow-orange-500/20"
                     iconColor="text-white"
+                />
+                <TenantSidebarItem
+                    href="/panel/notifications"
+                    icon={Bell}
+                    label="Bildirimler"
+                    isActive={pathname.startsWith("/panel/notifications")}
+                    gradient="bg-amber-500 shadow-amber-500/20"
+                    iconColor="text-white"
+                    count={notificationCount}
                 />
                 <TenantSidebarItem
                     href="/panel/settings"

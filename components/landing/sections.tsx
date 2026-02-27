@@ -50,7 +50,7 @@ export function FeaturesSection() {
                 <div className="space-y-4">
                     <h4 className="text-xl font-bold text-slate-800">Randevu Süreçlerinizi Otopilota Alın</h4>
                     <p>
-                        "Ne zaman müsaitsiniz?" döngüsüne ve unutulan randevulara son verin. Uppypro Takvim, sohbeti saniyeler içinde kesinleşmiş bir randevuya dönüştürür.
+                        "Ne zaman müsaitsiniz?" döngüsüne ve unutulan randevulara son verin. Uppypro Takvim, sohbeti saniyeler içinde kesinleşmiş bir randevuya dönüştürür. Siz ve ekibiniz için ayrı takvimler oluşturun, tek panelden tüm çalışanlarınızın randevularını takip edin.
                     </p>
 
                     <h5 className="text-lg font-semibold text-orange-600 mt-4">Neler Yapabilirsiniz?</h5>
@@ -58,7 +58,7 @@ export function FeaturesSection() {
                         <li><strong>Sohbet İçinde Anında Planlama:</strong> Uygulamadan çıkmadan, müşteriyle konuşurken tek tıkla randevuyu oluşturun.</li>
                         <li><strong>Otomatik CRM Kaydı:</strong> Randevu oluşturulan her müşteri için sistem otomatik bir "Müşteri Kartı" açar ve veritabanınıza işler. Müşteri listeniz kendiliğinden büyür.</li>
                         <li><strong>Akıllı Bildirimler:</strong> Randevu kesinleştiğinde onay maili otomatik gider; böylece "gelmedi" (no-show) oranları azalır.</li>
-                        <li><strong>UppyPro AI ve Kurumsal Paket Ayrıcalığı:</strong> Siz uyurken bile randevu alın! Yapay zeka asistanımız, gelen taleplere göre randevu oluşturur, değişiklik yapar ve iptal süreçlerini sizin yerinize, hatasız yönetir.</li>
+                        <li><strong>UppyPro AI ve Kurumsal Paket Ayrıcalığı:</strong> Çoklu çalışan yönetimi ve yapay zeka asistanı ile işletmenizdeki her bir personel için ayrı takvimler oluşturun; tüm çalışanlarınız kendi randevularını kolayca takip edip yönetsin. Üstelik UppyPro AI Asistanı, gelen müşteri taleplerine göre tüm çalışanlarınızın takvimleri için 7/24 otomatik randevu oluşturur, iptal ve değişiklik süreçlerini hatasız bir şekilde sizin yerinize organize eder.</li>
                     </ul>
                 </div>
             ),
@@ -80,7 +80,7 @@ export function FeaturesSection() {
                     <h5 className="text-lg font-semibold text-orange-600 mt-4">Neler Yapar?</h5>
                     <ul className="space-y-2 list-disc pl-5">
                         <li><strong>7/24 Kesintisiz Hizmet:</strong> Siz ve ekibiniz uyurken, dijital asistanınız Instagram ve WhatsApp’tan gelen soruları saniyeler içinde yanıtlar, potansiyel müşterileri kaçırmaz.</li>
-                        <li><strong>Tam Yetkili Randevu Yönetimi:</strong> Sadece boşluk doldurmaz; randevu oluşturur, değişiklik taleplerini yönetir ve iptalleri takvime işler. Hata yapmaz, çifte rezervasyona izin vermez.</li>
+                        <li><strong>Tam Yetkili Randevu Yönetimi:</strong> Sadece boşluk doldurmaz; sizin ve ekibinizin ayrı ayrı randevularını oluşturur, değişiklik taleplerini yönetir ve iptalleri takvime işler. Hata yapmaz, çifte rezervasyona izin vermez.</li>
                         <li><strong>Satış ve CRM Uzmanı:</strong> Müşteriyle sohbet ederken iletişim bilgilerini toplar, otomatik olarak CRM’e kaydeder ve satış hunisine dahil eder.</li>
                         <li><strong>İşletmenize Özel Eğitim:</strong> Firmanızın kurallarını, fiyatlarını ve dilini öğrenir. Robotik değil, personeliniz gibi doğal konuşur.</li>
                     </ul>

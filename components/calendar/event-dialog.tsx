@@ -23,6 +23,8 @@ interface EventDialogProps {
     tenantId: string;
     defaultCustomerId?: string; // Optional default customer for create mode
     profile?: { full_name: string; avatar_url?: string; company_name?: string; phone?: string };
+    employees?: any[]; // The list of tenant employees
+    preselectedEmployeeId?: string; // If a filter is currently active in CalendarView
 }
 
 interface Customer {
@@ -33,13 +35,14 @@ interface Customer {
     phone?: string;
 }
 
-export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenantId, defaultCustomerId, profile }: EventDialogProps) {
+export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenantId, defaultCustomerId, profile, employees = [], preselectedEmployeeId }: EventDialogProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false); // For Popover
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [color, setColor] = useState("blue"); // Default color
+    const [employeeId, setEmployeeId] = useState<string>("");
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
     const [customerId, setCustomerId] = useState<string | "manual">("manual");
@@ -71,6 +74,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                 setStartTime(format(new Date(event.start_time), "yyyy-MM-dd'T'HH:mm"));
                 setEndTime(format(new Date(event.end_time), "yyyy-MM-dd'T'HH:mm"));
                 setCustomerId(event.customer_id || "manual");
+                setEmployeeId(event.employee_id || "");
                 setGuestName(event.guest_name || "");
                 setGuestPhone(""); // Phone not stored in event, only used for creation
                 setGuestEmail(""); // Email not stored in event
@@ -99,6 +103,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                 setStartTime(format(start, "yyyy-MM-dd'T'HH:mm"));
                 setEndTime(format(end, "yyyy-MM-dd'T'HH:mm"));
                 setCustomerId(defaultCustomerId || "manual");
+                setEmployeeId(preselectedEmployeeId || (employees.length === 1 ? employees[0].id : ""));
                 setGuestName("");
                 setGuestPhone("");
                 setGuestEmail("");
@@ -114,18 +119,19 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                 setStartTime(format(now, "yyyy-MM-dd'T'HH:mm"));
                 setEndTime(format(end, "yyyy-MM-dd'T'HH:mm"));
                 setCustomerId(defaultCustomerId || "manual");
+                setEmployeeId(preselectedEmployeeId || (employees.length === 1 ? employees[0].id : ""));
                 setGuestName("");
                 setGuestPhone("");
                 setGuestEmail("");
             }
         }
-    }, [isOpen, event, initialSlot, tenantId, defaultCustomerId]);
+    }, [isOpen, event, initialSlot, tenantId, defaultCustomerId, preselectedEmployeeId, employees]);
 
     const isPast = event?.end_time ? new Date(event.end_time) < new Date() : false;
 
     const handleSaveEvent = async () => {
         // If past, validation might differ (we only update description)
-        if (!isPast && (!title || !startTime || !endTime)) return alert("Lütfen başlık ve tarihleri giriniz.");
+        if (!isPast && (!title || !startTime || !endTime || !employeeId)) return alert("Lütfen başlık, tarihler ve personel bilgilerini eksiksiz giriniz.");
 
         setLoading(true);
         const supabase = createClient();
@@ -189,6 +195,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
             // Base Payload
             payload = {
                 tenant_id: tenantId,
+                employee_id: employeeId,
                 title,
                 description,
                 start_time: startISO,
@@ -277,7 +284,8 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                         businessPhone: profile?.phone,
                         eventTitle: title,
                         startTime: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
-                        endTime: endTime ? new Date(endTime).toISOString() : new Date().toISOString()
+                        endTime: endTime ? new Date(endTime).toISOString() : new Date().toISOString(),
+                        employeeName: employees.find(e => e.id === employeeId)?.name
                     }).then(res => {
                         if (!res.success) {
                             console.error("Email send failed", res.error);
@@ -380,6 +388,27 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                                 className="bg-slate-50 border-slate-200 focus:bg-white focus:border-orange-500 transition-all font-medium text-slate-700 shadow-sm"
                             />
                         </div>
+                    </div>
+
+                    {/* Employee Selection */}
+                    <div className="space-y-2">
+                        <label className="text-xs uppercase font-semibold text-slate-500">Personel *</label>
+                        <select
+                            value={employeeId}
+                            onChange={(e) => setEmployeeId(e.target.value)}
+                            disabled={isPast || employees.length === 0}
+                            className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="" disabled>Personel Seçiniz...</option>
+                            {employees.map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.name} {emp.title ? `(${emp.title})` : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {employees.length === 0 && (
+                            <p className="text-xs text-rose-500">Önce ayarlardan personel eklemelisiniz.</p>
+                        )}
                     </div>
 
                     {/* Customer or Guest */}

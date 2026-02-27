@@ -60,10 +60,11 @@ interface AppointmentEmailProps {
     eventTitle: string;
     startTime: string; // ISO String or formatted
     endTime: string;
+    employeeName?: string; // Added employee name
 }
 
 export async function sendAppointmentEmail(props: AppointmentEmailProps) {
-    const { recipientEmail, recipientName, businessName, businessLogoUrl, businessPhone, eventTitle, startTime, endTime } = props;
+    const { recipientEmail, recipientName, businessName, businessLogoUrl, businessPhone, eventTitle, startTime, endTime, employeeName } = props;
 
     // Formatting date using Intl
     const startDate = new Date(startTime);
@@ -123,6 +124,7 @@ export async function sendAppointmentEmail(props: AppointmentEmailProps) {
                 <h2 class="event-title">${eventTitle}</h2>
                 <p class="event-details">📅 ${formattedDate}</p>
                 <p class="event-details">⏰ ${formattedStartTime} - ${formattedEndTime}</p>
+                ${employeeName ? `<p class="event-details" style="margin-top: 10px;">👤 <strong>Personel:</strong> ${employeeName}</p>` : ''}
             </div>
 
             <p class="message">

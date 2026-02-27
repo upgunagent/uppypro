@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
-import { Calendar, Users, Settings, LogOut, MessageSquare } from "lucide-react";
+import { Calendar, Users, Settings, LogOut, MessageSquare, Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -50,6 +50,12 @@ export function MobileBottomNav() {
                 icon={Users}
                 label="Müşteriler"
                 isActive={pathname.startsWith("/panel/customers")}
+            />
+            <NavItem
+                href="/panel/notifications"
+                icon={Bell}
+                label="Bildirimler"
+                isActive={pathname.startsWith("/panel/notifications")}
             />
             <NavItem
                 href="/panel/settings"
