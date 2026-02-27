@@ -122,9 +122,9 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
             status: isFreePlan ? 'active' : 'pending',
-            // Free ücretsiz kurumsal pakette kurumsal base key atanmalı
-            // Yoksa kullanıcı inbox paketi gibi görünür ve corporate özelliklerine erişemez.
-            base_product_key: isFreePlan ? 'uppypro_corporate' : 'uppypro_inbox',
+            // base_product_key = uppypro_inbox (tek geçerli FK değeri)
+            // Plan özellikleri ai_product_key üzerinden belirlenir
+            base_product_key: 'uppypro_inbox',
             ai_product_key: data.planKey, // Use the selected plan key
             billing_cycle: 'monthly',
             custom_price_usd: null, // Clear USD

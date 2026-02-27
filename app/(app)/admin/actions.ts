@@ -35,23 +35,19 @@ export async function updateSubscription(formData: FormData) {
 
     if (planType === 'ai') {
         aiProductKey = 'uppypro_ai';
-        baseProductKey = 'uppypro_inbox';
     } else if (planType === 'corporate_free') {
         aiProductKey = 'uppypro_corporate_free';
-        baseProductKey = 'uppypro_corporate'; // Kurumsal base key
     } else if (planType === 'corporate_small') {
         aiProductKey = 'uppypro_corporate_small';
-        baseProductKey = 'uppypro_corporate';
     } else if (planType === 'corporate_medium') {
         aiProductKey = 'uppypro_corporate_medium';
-        baseProductKey = 'uppypro_corporate';
     } else if (planType === 'corporate_large') {
         aiProductKey = 'uppypro_corporate_large';
-        baseProductKey = 'uppypro_corporate';
     } else if (planType === 'corporate_xl') {
         aiProductKey = 'uppypro_corporate_xl';
-        baseProductKey = 'uppypro_corporate';
     }
+    // base_product_key her zaman uppypro_inbox kalır (FK kısıtlaması)
+    // Plan adı ve özellikler ai_product_key üzerinden belirlenir
 
     // Update Subscription
     const adminDb = createAdminClient();
