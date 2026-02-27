@@ -115,23 +115,20 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         }
 
         // 6. Create Subscription
-        // We assume 'uppypro_inbox' is base, and 'planKey' is the AI/Tier level (e.g. corporate_medium)
-        // Or if corporate plan includes base, we set both? 
-        // Our system likely uses AI key for pricing tier.
+        // Üretsiz plan: ai_product_key = 'uppypro_corporate_free'
+        // Bu key, products + pricing tablolarına SQL ile eklenmeli (Supabase'den).
 
         await supabaseAdmin.from("subscriptions").insert({
             tenant_id: tenant.id,
             status: isFreePlan ? 'active' : 'pending',
-            // base_product_key = uppypro_inbox (tek geçerli FK değeri)
-            // Plan özellikleri ai_product_key üzerinden belirlenir
             base_product_key: 'uppypro_inbox',
-            ai_product_key: data.planKey, // Use the selected plan key
+            ai_product_key: isFreePlan ? 'uppypro_corporate_free' : data.planKey,
             billing_cycle: 'monthly',
-            custom_price_usd: null, // Clear USD
-            // Start the period immediately if it's a free plan
+            custom_price_usd: null,
+            custom_price_try: null,
             ...(isFreePlan ? {
                 current_period_start: new Date().toISOString(),
-                current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 yıllık
+                current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
             } : {})
         });
 
