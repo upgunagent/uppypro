@@ -9,39 +9,50 @@ import { Loader2, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-// Auth client'ı component dışında bir kez başlatıyoruz. 
-// Bu sayede her render'da (tuş vuruşunda) yeni istemci oluşmaz ve oturum takibi kopmaz.
+// Supabase client'ı component dışında stabilize et
 const supabase = createClient();
 
 export default function UpdatePasswordPage() {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [loading, setLoading] = useState(false);
+    const [sessionReady, setSessionReady] = useState(false);
+    const [sessionError, setSessionError] = useState("");
     const { toast } = useToast();
     const router = useRouter();
-    const [isSessionReady, setIsSessionReady] = useState(false);
 
     useEffect(() => {
-        // Sayfa yüklendiğinde Auth state dinleyicisini aç ve hash'i kontrol et
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                setIsSessionReady(true);
-                // URL'yi temizle (Güvenlik ve temiz görünüm için hash'i kaldır)
-                if (window.location.hash) {
-                    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        // URL hash'inden access_token ve refresh_token değerlerini çıkart
+        // (Supabase recovery / magic link implicit flow)
+        const hash = window.location.hash.substring(1); // '#' karakterini at
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+            // Hash bulundu, oturumu manuel olarak aç
+            supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error("setSession error:", error);
+                        setSessionError("Oturum açılamadı: " + error.message);
+                    } else if (data.session) {
+                        setSessionReady(true);
+                        // Hash'i URL'den temizle (güvenlik)
+                        window.history.replaceState(null, "", window.location.pathname);
+                    }
+                });
+        } else {
+            // Hash yoksa mevcut oturumu kontrol et (zaten giriş yapılmış olabilir)
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    setSessionReady(true);
+                } else {
+                    setSessionError("Geçersiz veya süresi dolmuş link. Lütfen yeni bir davet isteyin.");
                 }
-            }
-        });
-
-        // Hash yoksa bile kontrol et
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                setIsSessionReady(true);
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, [supabase]);
+            });
+        }
+    }, []);
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,7 +76,6 @@ export default function UpdatePasswordPage() {
 
             toast({ title: "Başarılı", description: "Şifreniz belirlendi. Panele yönlendiriliyorsunuz..." });
 
-            // Redirect to panel after short delay
             setTimeout(() => {
                 router.push("/panel/inbox");
             }, 1000);
@@ -89,33 +99,39 @@ export default function UpdatePasswordPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleUpdate} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>Yeni Şifre</Label>
-                        <Input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="******"
-                            required
-                        />
+                {sessionError ? (
+                    <div className="text-center text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 text-sm">
+                        {sessionError}
                     </div>
-                    <div className="space-y-2">
-                        <Label>Şifre Tekrar</Label>
-                        <Input
-                            type="password"
-                            value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
-                            placeholder="******"
-                            required
-                        />
-                    </div>
+                ) : (
+                    <form onSubmit={handleUpdate} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Yeni Şifre</Label>
+                            <Input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="******"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Şifre Tekrar</Label>
+                            <Input
+                                type="password"
+                                value={confirm}
+                                onChange={(e) => setConfirm(e.target.value)}
+                                placeholder="******"
+                                required
+                            />
+                        </div>
 
-                    <Button type="submit" disabled={loading || !isSessionReady} className="w-full mt-4 bg-slate-900 hover:bg-slate-800">
-                        {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                        {!isSessionReady && !loading ? "Oturum Bekleniyor..." : "Şifreyi Kaydet ve Giriş Yap"}
-                    </Button>
-                </form>
+                        <Button type="submit" disabled={loading || !sessionReady} className="w-full mt-4 bg-slate-900 hover:bg-slate-800">
+                            {loading ? <Loader2 className="animate-spin mr-2" /> : null}
+                            {!sessionReady && !loading ? "Oturum Açılıyor..." : "Şifreyi Kaydet ve Giriş Yap"}
+                        </Button>
+                    </form>
+                )}
             </div>
         </div>
     );
