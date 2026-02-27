@@ -28,13 +28,6 @@ export async function GET(request: Request) {
                 monthly_price_try: 0,
                 monthly_price_usd: 0,
                 iyzico_pricing_plan_reference_code: null,
-            },
-            {
-                product_key: "uppypro_corporate_free",
-                billing_cycle: "yearly",
-                monthly_price_try: 0,
-                monthly_price_usd: 0,
-                iyzico_pricing_plan_reference_code: null,
             }
         ])
         .select();
