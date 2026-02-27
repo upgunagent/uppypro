@@ -16,6 +16,9 @@ export default function UpdatePasswordPage() {
     const { toast } = useToast();
     const router = useRouter();
 
+    // Auth client'ı component mount olduğunda başlatıyoruz ki URL'deki #access_token değerini parse etsin.
+    const supabase = createClient();
+
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -30,7 +33,6 @@ export default function UpdatePasswordPage() {
         }
 
         setLoading(true);
-        const supabase = createClient();
 
         try {
             const { error } = await supabase.auth.updateUser({ password });
