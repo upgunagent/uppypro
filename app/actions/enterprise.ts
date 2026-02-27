@@ -142,10 +142,11 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
                 type: "recovery",
                 email: data.email,
                 options: {
-                    // PKCE flow: link must go through /auth/callback first so Supabase
-                    // can exchange the code for a session cookie. After that, the user
-                    // lands on /update-password where they can set their password.
-                    redirectTo: `${baseUrl}/auth/callback?next=/update-password`
+                    // Supabase recovery linkleri implicit flow kullanır (token hash'te gelir).
+                    // Auth callback route sadece PKCE ?code= parametresini işliyor ve hash'i göremez.
+                    // Bu yüzden doğrudan /update-password'a yönlendiriyoruz;
+                    // bu sayfa setSession() ile hash'teki token'ı okuyarak oturumu başlatıyor.
+                    redirectTo: `${baseUrl}/update-password`
                 }
             });
 
