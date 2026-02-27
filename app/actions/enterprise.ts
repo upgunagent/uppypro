@@ -143,7 +143,10 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
                 type: "recovery",
                 email: data.email,
                 options: {
-                    redirectTo: `${baseUrl}/update-password`
+                    // PKCE flow: link must go through /auth/callback first so Supabase
+                    // can exchange the code for a session cookie. After that, the user
+                    // lands on /update-password where they can set their password.
+                    redirectTo: `${baseUrl}/auth/callback?next=/update-password`
                 }
             });
 
