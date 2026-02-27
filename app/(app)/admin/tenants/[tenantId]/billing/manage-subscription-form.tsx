@@ -30,6 +30,7 @@ export function ManageSubscriptionForm({ tenantId, subscription, pricing }: {
     // Determine current selection
     let initialPlan = 'inbox';
     if (subscription?.ai_product_key === 'uppypro_ai') initialPlan = 'ai';
+    else if (subscription?.ai_product_key === 'uppypro_corporate_free') initialPlan = 'corporate_free';
     else if (subscription?.ai_product_key === 'uppypro_corporate_small') initialPlan = 'corporate_small';
     else if (subscription?.ai_product_key === 'uppypro_corporate_medium') initialPlan = 'corporate_medium';
     else if (subscription?.ai_product_key === 'uppypro_corporate_large') initialPlan = 'corporate_large';
@@ -87,6 +88,14 @@ export function ManageSubscriptionForm({ tenantId, subscription, pricing }: {
                 <div className="col-span-1 md:col-span-2 border-t my-2 pt-4">
                     <h4 className="text-sm font-semibold text-slate-900 mb-3">Kurumsal Paketler</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Ücretsiz kurumsal plan - sadece gösterim için, amaç buradan ücretliye geçiş */}
+                        <PlanOption
+                            id="corporate_free"
+                            title="Kurumsal Ücretsiz"
+                            price="Ücretsiz"
+                            selected={plan === 'corporate_free'}
+                            onSelect={() => setPlan('corporate_free')}
+                        />
                         <PlanOption
                             id="corporate_small"
                             title="Kurumsal Small"
