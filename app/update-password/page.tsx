@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,32 @@ export default function UpdatePasswordPage() {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+    const [isSessionReady, setIsSessionReady] = useState(false);
 
     // Auth client'ı component mount olduğunda başlatıyoruz ki URL'deki #access_token değerini parse etsin.
     const supabase = createClient();
+
+    useEffect(() => {
+        // Sayfa yüklendiğinde Auth state dinleyicisini aç ve hash'i kontrol et
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                setIsSessionReady(true);
+                // URL'yi temizle (Güvenlik ve temiz görünüm için hash'i kaldır)
+                if (window.location.hash) {
+                    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+                }
+            }
+        });
+
+        // Hash yoksa bile kontrol et
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                setIsSessionReady(true);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [supabase]);
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,9 +110,9 @@ export default function UpdatePasswordPage() {
                         />
                     </div>
 
-                    <Button type="submit" disabled={loading} className="w-full mt-4 bg-slate-900 hover:bg-slate-800">
+                    <Button type="submit" disabled={loading || !isSessionReady} className="w-full mt-4 bg-slate-900 hover:bg-slate-800">
                         {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                        Şifreyi Kaydet ve Giriş Yap
+                        {!isSessionReady && !loading ? "Oturum Bekleniyor..." : "Şifreyi Kaydet ve Giriş Yap"}
                     </Button>
                 </form>
             </div>
