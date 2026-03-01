@@ -25,12 +25,20 @@ export default async function AdminPricingPage() {
         .in("product_key", ["uppypro_inbox", "base_inbox", "inbox", "uppypro_ai", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
         .eq("billing_cycle", "monthly");
 
+    // Fetch Product Reference Codes
+    const { data: products } = await supabase
+        .from("products")
+        .select("key, iyzico_product_reference_code")
+        .in("key", ["uppypro_inbox", "base_inbox", "uppypro_ai", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"]);
+
     const getPriceData = (key: string, defaultPrice: number) => {
         // Handle alternative keys for inbox just in case
         const found = prices?.find(p => p.product_key === key || (key === 'uppypro_inbox' && (p.product_key === 'base_inbox' || p.product_key === 'inbox')));
+        const productFound = products?.find(p => p.key === key || (key === 'uppypro_inbox' && p.key === 'base_inbox'));
         return {
             price: found?.monthly_price_try || defaultPrice,
             code: found?.iyzico_pricing_plan_reference_code || "",
+            productCode: productFound?.iyzico_product_reference_code || "",
             // Use the actual product key from DB if it exists (e.g., base_inbox instead of uppypro_inbox) so updates go to the right row
             key: found?.product_key || key
         };
@@ -58,6 +66,7 @@ export default async function AdminPricingPage() {
                     productKey={inbox.key}
                     currentPrice={inbox.price}
                     currentCode={inbox.code}
+                    currentProductCode={inbox.productCode}
                     description="Küçük işletmeler için temel paket fiyatı."
                 />
 
@@ -66,6 +75,7 @@ export default async function AdminPricingPage() {
                     productKey={ai.key}
                     currentPrice={ai.price}
                     currentCode={ai.code}
+                    currentProductCode={ai.productCode}
                     description="Otomasyon ve AI asistan içeren paket fiyatı."
                 />
 
@@ -76,6 +86,7 @@ export default async function AdminPricingPage() {
                     productKey={cSmall.key}
                     currentPrice={cSmall.price}
                     currentCode={cSmall.code}
+                    currentProductCode={cSmall.productCode}
                     description="Small seviye kurumsal işletme paketi."
                 />
 
@@ -84,6 +95,7 @@ export default async function AdminPricingPage() {
                     productKey={cMedium.key}
                     currentPrice={cMedium.price}
                     currentCode={cMedium.code}
+                    currentProductCode={cMedium.productCode}
                     description="Medium seviye kurumsal işletme paketi."
                 />
 
@@ -92,6 +104,7 @@ export default async function AdminPricingPage() {
                     productKey={cLarge.key}
                     currentPrice={cLarge.price}
                     currentCode={cLarge.code}
+                    currentProductCode={cLarge.productCode}
                     description="Large seviye kurumsal işletme paketi."
                 />
 
@@ -100,6 +113,7 @@ export default async function AdminPricingPage() {
                     productKey={cXL.key}
                     currentPrice={cXL.price}
                     currentCode={cXL.code}
+                    currentProductCode={cXL.productCode}
                     description="XL seviye kurumsal işletme paketi."
                 />
             </div>

@@ -3,21 +3,35 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
-export async function updatePricing(productKey: string, priceTry: number, iyzicoCode: string) {
+export async function updatePricing(
+    productKey: string,
+    priceTry: number,
+    iyzicoCode: string,
+    iyzicoProductCode?: string
+) {
     const admin = createAdminClient();
 
-    // priceTry received as normal number
+    // 1. pricing tablosunu güncelle (plan ref kodu + fiyat)
     const { error } = await admin
         .from('pricing')
         .update({
             monthly_price_try: priceTry,
-            iyzico_pricing_plan_reference_code: iyzicoCode
+            iyzico_pricing_plan_reference_code: iyzicoCode || null
         })
         .eq('product_key', productKey)
         .eq('billing_cycle', 'monthly');
 
     if (error) {
         return { error: error.message };
+    }
+
+    // 2. Ürün ref kodu varsa products tablosunu da güncelle
+    if (iyzicoProductCode !== undefined) {
+        await admin
+            .from('products')
+            .update({ iyzico_product_reference_code: iyzicoProductCode || null })
+            .eq('key', productKey);
+        // Hata olsa bile devam et (products tablosu isteğe bağlı)
     }
 
     revalidatePath('/');
