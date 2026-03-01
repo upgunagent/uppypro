@@ -42,7 +42,19 @@ export async function initializeFirstSubscription() {
         return { error: "Bu hesaba ait geçerli bir bekleme (Upgrade) aboneliği bulunamadı veya halihazırda ödeme yöntemi girilmiş." };
     }
 
-    // Get pricing plan reference code
+    // Üretsiz planda ücretsiz key varsa kart eklenemez - admin önce ücretli plana geçirmelidir
+    const FREE_PLAN_KEYS = ['uppypro_corporate_free'];
+    if (!subscription.ai_product_key || FREE_PLAN_KEYS.includes(subscription.ai_product_key)) {
+        return { error: "Üretsiz plan için kart bilgisi gerekli değil. Lütfen admin panelinden ücretli bir pakete geçiş yapın." };
+    }
+
+    const { data: billingInfo } = await adminDb
+        .from("billing_info")
+        .select("*")
+        .eq("tenant_id", member.tenant_id)
+        .single();
+
+    // Get pricing plan reference code for the paid plan
     const { data: pricingData } = await adminDb
         .from('pricing')
         .select('iyzico_pricing_plan_reference_code')
@@ -51,14 +63,8 @@ export async function initializeFirstSubscription() {
         .single();
 
     if (!pricingData?.iyzico_pricing_plan_reference_code) {
-        return { error: "Paket Iyzico kodu getirilemedi." };
+        return { error: `Paket Iyzico kodu getirilemedi (${subscription.ai_product_key}). Lütfen admin Fiyatlandırma sayfasında bu paketin Iyzico referans kodunu güncelleyin.` };
     }
-
-    const { data: billingInfo } = await adminDb
-        .from("billing_info")
-        .select("*")
-        .eq("tenant_id", member.tenant_id)
-        .single();
 
     const result = await initializeSubscriptionPayment({
         tenantId: member.tenant_id,
