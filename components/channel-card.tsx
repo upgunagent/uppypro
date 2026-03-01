@@ -14,6 +14,7 @@ declare global {
     interface Window {
         FB: any;
         fbAsyncInit: () => void;
+        __fbSDKReady?: boolean;
     }
 }
 
@@ -24,38 +25,11 @@ interface ChannelCardProps {
 
 type WizardStep = "idle" | "launching" | "waiting_meta" | "processing" | "success" | "error";
 
-// Module-level init flag
-let _fbReady = false;
-
-function initFBSDK(appId: string) {
-    if (_fbReady || window.FB) {
-        if (window.FB && !_fbReady) {
-            window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v21.0" });
-            _fbReady = true;
-        }
-        return;
-    }
-
-    window.fbAsyncInit = function () {
-        window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v21.0" });
-        _fbReady = true;
-    };
-
-    if (!document.getElementById("facebook-jssdk")) {
-        const script = document.createElement("script");
-        script.id = "facebook-jssdk";
-        script.src = "https://connect.facebook.net/en_US/sdk.js";
-        script.async = true;
-        document.head.appendChild(script);
-    }
-}
-
 export function ChannelCard({ type, connection }: ChannelCardProps) {
     const isConnected = connection?.status === "connected";
     const [loading, setLoading] = useState(false);
     const [wizardStep, setWizardStep] = useState<WizardStep>("idle");
     const [wizardError, setWizardError] = useState<string>("");
-    const [sdkReady, setSdkReady] = useState(false);
     const [showLegacyDialog, setShowLegacyDialog] = useState(false);
     const [showLegacyToggle, setShowLegacyToggle] = useState(false);
     const router = useRouter();
@@ -70,31 +44,6 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_CONFIG_ID!;
     const isWhatsApp = type === "whatsapp";
 
-    // Preload FB SDK when WhatsApp card mounts — so it's ready to use synchronously on click
-    useEffect(() => {
-        if (!isWhatsApp) return;
-
-        const checkReady = () => {
-            if (_fbReady && window.FB) {
-                setSdkReady(true);
-                return true;
-            }
-            return false;
-        };
-
-        if (checkReady()) return;
-
-        initFBSDK(APP_ID);
-
-        // Poll until FB is initialized (max 10s)
-        const interval = setInterval(() => {
-            if (checkReady()) clearInterval(interval);
-        }, 200);
-
-        const timeout = setTimeout(() => clearInterval(interval), 10000);
-        return () => { clearInterval(interval); clearTimeout(timeout); };
-    }, [isWhatsApp, APP_ID]);
-
     // sessionInfoListener: captures waba_id & phone_number_id from Meta popup
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
@@ -105,13 +54,18 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
 
             try {
                 const data = JSON.parse(event.data);
+                console.log("[ES] Message from Meta:", data);
+
                 if (data.type === "WA_EMBEDDED_SIGNUP") {
                     if (data.event === "FINISH") {
                         const { phone_number_id, waba_id } = data.data;
                         (window as any).__embeddedSignupInfo = { phone_number_id, waba_id };
+                        console.log("[ES] FINISH — waba_id:", waba_id, "phone_number_id:", phone_number_id);
                     } else if (data.event === "CANCEL") {
+                        console.log("[ES] User cancelled signup");
                         setWizardStep("idle");
                     } else if (data.event === "ERROR") {
+                        console.error("[ES] Error from Meta:", data.data);
                         setWizardError(data.data?.error_message || "Meta'dan hata geldi.");
                         setWizardStep("error");
                     }
@@ -148,24 +102,32 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         }
     }, [router]);
 
-    // Synchronous launch — FB.login() called directly from click (no async/await)
+    // Launch Embedded Signup — SYNCHRONOUS from click handler, no async gap
     const launchEmbeddedSignup = useCallback(() => {
+        console.log("[ES] Button clicked");
+        console.log("[ES] window.FB:", !!window.FB);
+        console.log("[ES] __fbSDKReady:", !!(window as any).__fbSDKReady);
+        console.log("[ES] APP_ID:", APP_ID);
+        console.log("[ES] CONFIG_ID:", CONFIG_ID);
+
         if (!window.FB) {
-            setWizardError("Facebook SDK henüz yüklenmedi, 5 saniye bekleyip tekrar deneyin.");
+            setWizardError("Facebook SDK henüz yüklenmedi. Lütfen sayfayı yenileyip tekrar deneyin.");
             setWizardStep("error");
             return;
         }
 
-        // Always call FB.init() before FB.login() — it's safe to call multiple times
+        // Always re-init — FB.init is idempotent and this guarantees initialization
         try {
             window.FB.init({
                 appId: APP_ID,
-                autoLogAppEvents: true,
+                cookie: true,
                 xfbml: true,
                 version: "v21.0",
             });
+            console.log("[ES] FB.init() called successfully");
         } catch (e: any) {
-            setWizardError("FB init hatası: " + e.message);
+            console.error("[ES] FB.init() error:", e);
+            setWizardError("FB SDK init hatası: " + e.message);
             setWizardStep("error");
             return;
         }
@@ -175,10 +137,13 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         delete (window as any).__embeddedSignupInfo;
 
         // MUST be synchronous — no await between click and this call
+        console.log("[ES] Calling FB.login with config_id:", CONFIG_ID);
         window.FB.login(
             function (response: any) {
+                console.log("[ES] FB.login response:", JSON.stringify(response));
                 if (response.authResponse?.code) {
                     const sessionInfo = (window as any).__embeddedSignupInfo;
+                    console.log("[ES] sessionInfo:", sessionInfo);
 
                     if (!sessionInfo?.waba_id || !sessionInfo?.phone_number_id) {
                         setWizardError("WhatsApp hesap bilgileri alınamadı. Lütfen tekrar deneyin.");
@@ -192,6 +157,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                         sessionInfo.phone_number_id
                     );
                 } else {
+                    console.log("[ES] User cancelled or no auth response");
                     setWizardStep("idle");
                 }
             },
@@ -201,8 +167,6 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 override_default_response_type: true,
                 extras: {
                     setup: {},
-                    featureType: "",
-                    sessionInfoVersion: "3",
                 },
             }
         );
