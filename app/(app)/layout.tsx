@@ -63,30 +63,6 @@ export default async function AppLayout({
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
-            {/* Facebook JS SDK - WhatsApp Embedded Signup için */}
-            <Script
-                id="facebook-sdk"
-                strategy="afterInteractive"
-                dangerouslySetInnerHTML={{
-                    __html: `
-                        window.fbAsyncInit = function() {
-                            FB.init({
-                                appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}',
-                                autoLogAppEvents: true,
-                                xfbml: true,
-                                version: 'v21.0'
-                            });
-                        };
-                    `
-                }}
-            />
-            <Script
-                id="facebook-sdk-lib"
-                strategy="afterInteractive"
-                src="https://connect.facebook.net/en_US/sdk.js"
-                crossOrigin="anonymous"
-                async
-            />
             <AppSidebar role={role} tenantId={tenantId} />
             {/* Global notification sound listener - works on all pages */}
             {role !== "agency_admin" && tenantId && (

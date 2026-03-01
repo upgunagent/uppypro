@@ -10,13 +10,9 @@ import { connectChannelAction, disconnectChannelAction, type ConnectPayload } fr
 import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
 
-// Facebook SDK type declarations
 declare global {
     interface Window {
-        FB: {
-            init: (options: object) => void;
-            login: (callback: (response: any) => void, options: object) => void;
-        };
+        FB: any;
         fbAsyncInit: () => void;
     }
 }
@@ -27,6 +23,42 @@ interface ChannelCardProps {
 }
 
 type WizardStep = "idle" | "launching" | "waiting_meta" | "processing" | "success" | "error";
+
+// Loads the FB SDK dynamically and resolves when FB.init() is complete
+function loadFacebookSDK(appId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        // Already loaded and initialized
+        if (window.FB) {
+            resolve();
+            return;
+        }
+
+        // Define fbAsyncInit BEFORE loading the script
+        window.fbAsyncInit = function () {
+            window.FB.init({
+                appId: appId,
+                autoLogAppEvents: true,
+                xfbml: true,
+                version: "v21.0",
+            });
+            resolve();
+        };
+
+        // Check if script already exists (maybe loading)
+        if (document.getElementById("facebook-jssdk")) {
+            // Script tag exists but not initialized yet — wait for fbAsyncInit
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.id = "facebook-jssdk";
+        script.src = "https://connect.facebook.net/en_US/sdk.js";
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => reject(new Error("Facebook SDK yüklenemedi"));
+        document.head.appendChild(script);
+    });
+}
 
 export function ChannelCard({ type, connection }: ChannelCardProps) {
     const isConnected = connection?.status === "connected";
@@ -43,66 +75,24 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const [wabaId, setWabaId] = useState("");
     const [pageId, setPageId] = useState("");
 
-    const CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_CONFIG_ID;
+    const APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!;
+    const CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_CONFIG_ID!;
     const isWhatsApp = type === "whatsapp";
 
-    // --- WhatsApp Embedded Signup ---
-    const launchEmbeddedSignup = useCallback(() => {
-        if (!window.FB) {
-            setWizardError("Facebook SDK yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
-            setWizardStep("error");
-            return;
-        }
-
-        setWizardStep("waiting_meta");
-        setWizardError("");
-
-        window.FB.login(
-            function (response: any) {
-                if (response.authResponse) {
-                    const { code } = response.authResponse;
-
-                    // sessionInfoListener callback verileri
-                    const sessionInfo = (window as any).__embeddedSignupSessionInfo;
-
-                    if (!sessionInfo?.waba_id || !sessionInfo?.phone_number_id) {
-                        // Fallback: code var ama session info yok — manual entry gerekebilir
-                        setWizardError("WhatsApp hesap bilgileri alınamadı. Lütfen tekrar deneyin.");
-                        setWizardStep("error");
-                        return;
-                    }
-
-                    handleEmbeddedSignupCallback(code, sessionInfo.waba_id, sessionInfo.phone_number_id);
-                } else {
-                    // Kullanıcı popup'ı kapattı
-                    setWizardStep("idle");
-                }
-            },
-            {
-                config_id: CONFIG_ID,
-                response_type: "code",
-                override_default_response_type: true,
-                extras: {
-                    setup: {},
-                    featureType: "",
-                    sessionInfoVersion: "3",
-                },
-            }
-        );
-    }, [CONFIG_ID]);
-
-    // sessionInfoListener — Meta SDK popup'tan WABA ve phone id bilgilerini yakalar
+    // sessionInfoListener: captures waba_id & phone_number_id from Meta popup
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
+            if (
+                event.origin !== "https://www.facebook.com" &&
+                event.origin !== "https://web.facebook.com"
+            ) return;
 
             try {
                 const data = JSON.parse(event.data);
                 if (data.type === "WA_EMBEDDED_SIGNUP") {
                     if (data.event === "FINISH") {
                         const { phone_number_id, waba_id } = data.data;
-                        // Store session info for FB.login callback
-                        (window as any).__embeddedSignupSessionInfo = { phone_number_id, waba_id };
+                        (window as any).__embeddedSignupInfo = { phone_number_id, waba_id };
                     } else if (data.event === "CANCEL") {
                         setWizardStep("idle");
                     } else if (data.event === "ERROR") {
@@ -119,7 +109,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         return () => window.removeEventListener("message", handleMessage);
     }, []);
 
-    const handleEmbeddedSignupCallback = async (code: string, wabaId: string, phoneNumberId: string) => {
+    const handleEmbeddedSignupCallback = useCallback(async (code: string, wabaId: string, phoneNumberId: string) => {
         setWizardStep("processing");
         try {
             const res = await fetch("/api/whatsapp/embedded-signup", {
@@ -135,14 +125,64 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
             }
 
             setWizardStep("success");
-            setTimeout(() => {
-                router.refresh();
-            }, 1500);
+            setTimeout(() => router.refresh(), 1500);
         } catch (error: any) {
             setWizardError(error.message || "Beklenmeyen bir hata oluştu.");
             setWizardStep("error");
         }
-    };
+    }, [router]);
+
+    const launchEmbeddedSignup = useCallback(async () => {
+        setWizardStep("launching");
+        setWizardError("");
+
+        try {
+            // Load SDK first — guarantees FB is ready
+            await loadFacebookSDK(APP_ID);
+        } catch {
+            setWizardError("Facebook SDK yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+            setWizardStep("error");
+            return;
+        }
+
+        setWizardStep("waiting_meta");
+
+        // Clear previous session info
+        delete (window as any).__embeddedSignupInfo;
+
+        window.FB.login(
+            function (response: any) {
+                if (response.authResponse?.code) {
+                    const sessionInfo = (window as any).__embeddedSignupInfo;
+
+                    if (!sessionInfo?.waba_id || !sessionInfo?.phone_number_id) {
+                        setWizardError("WhatsApp hesap bilgileri alınamadı. Lütfen tekrar deneyin.");
+                        setWizardStep("error");
+                        return;
+                    }
+
+                    handleEmbeddedSignupCallback(
+                        response.authResponse.code,
+                        sessionInfo.waba_id,
+                        sessionInfo.phone_number_id
+                    );
+                } else {
+                    // User cancelled or denied
+                    setWizardStep("idle");
+                }
+            },
+            {
+                config_id: CONFIG_ID,
+                response_type: "code",
+                override_default_response_type: true,
+                extras: {
+                    setup: {},
+                    featureType: "",
+                    sessionInfoVersion: "3",
+                },
+            }
+        );
+    }, [APP_ID, CONFIG_ID, handleEmbeddedSignupCallback]);
 
     // --- Instagram OAuth ---
     const handleOAuthLogin = () => {
@@ -179,7 +219,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         try {
             await disconnectChannelAction(type);
             router.refresh();
-        } catch (error) {
+        } catch {
             alert("Bağlantı kesilemedi.");
         } finally {
             setLoading(false);
@@ -190,20 +230,18 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const cardClass = isWhatsApp
         ? "bg-gradient-to-br from-green-500 to-emerald-700 text-white shadow-xl shadow-green-900/20 border-green-400/20"
         : "bg-gradient-to-br from-red-500 via-rose-600 to-rose-800 text-white shadow-xl shadow-red-900/20 border-red-400/20";
-
     const buttonClass = isWhatsApp
         ? "bg-white text-emerald-700 hover:bg-emerald-50"
         : "bg-white text-rose-700 hover:bg-rose-50";
-
     const Icon = isWhatsApp ? MessageCircle : Instagram;
 
-    const displayIdentifier = type === "instagram" && connection?.meta_identifiers?.username
-        ? `@${connection.meta_identifiers.username}`
-        : connection?.meta_identifiers?.display_phone_number
-            ? connection.meta_identifiers.display_phone_number
-            : connection?.meta_identifiers?.mock_id || "ID: ***";
+    const displayIdentifier =
+        type === "instagram" && connection?.meta_identifiers?.username
+            ? `@${connection.meta_identifiers.username}`
+            : connection?.meta_identifiers?.display_phone_number ||
+            connection?.meta_identifiers?.mock_id ||
+            "ID: ***";
 
-    // WhatsApp Wizard Content
     const renderWhatsAppContent = () => {
         if (isConnected) {
             return (
@@ -216,9 +254,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                         )}
                     </div>
                     <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDisconnect}
+                        variant="ghost" size="sm" onClick={handleDisconnect}
                         className="w-full h-9 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20"
                         disabled={loading}
                     >
@@ -252,8 +288,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                     </button>
                     {showLegacyToggle && (
                         <Button
-                            size="sm"
-                            variant="ghost"
+                            size="sm" variant="ghost"
                             onClick={() => setShowLegacyDialog(true)}
                             className="w-full h-8 text-xs text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20"
                         >
@@ -264,11 +299,23 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
             );
         }
 
-        if (wizardStep === "waiting_meta" || wizardStep === "launching") {
+        if (wizardStep === "launching") {
             return (
                 <div className="flex items-center gap-3 py-2">
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
-                    <p className="text-sm text-white/90 font-medium">Meta penceresi açıldı...</p>
+                    <p className="text-sm text-white/90 font-medium">Facebook SDK yükleniyor...</p>
+                </div>
+            );
+        }
+
+        if (wizardStep === "waiting_meta") {
+            return (
+                <div className="flex items-center gap-3 py-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    <div>
+                        <p className="text-sm text-white/90 font-medium">Meta penceresi açıldı</p>
+                        <p className="text-xs text-white/60">Lütfen Meta adımlarını tamamlayın</p>
+                    </div>
                 </div>
             );
         }
@@ -321,7 +368,6 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 "p-6 rounded-2xl border flex flex-col justify-between min-h-[15rem] relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]",
                 cardClass
             )}>
-                {/* Decorative Pattern */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
 
                 <div className="flex justify-between items-start z-10 relative">
@@ -367,16 +413,14 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 </div>
             </div>
 
-            {/* Legacy Manual Connect Dialog (WhatsApp) */}
+            {/* Legacy Manual Connect Dialog */}
             <SimpleDialog
                 isOpen={showLegacyDialog}
                 onClose={() => setShowLegacyDialog(false)}
                 title="WhatsApp Manuel Bağla"
             >
                 <form onSubmit={handleConnectLegacy} className="space-y-4">
-                    <p className="text-sm text-gray-500 mb-4">
-                        Meta Developer Portal'dan aldığınız bilgileri giriniz.
-                    </p>
+                    <p className="text-sm text-gray-500 mb-4">Meta Developer Portal'dan aldığınız bilgileri giriniz.</p>
                     <div className="space-y-2">
                         <Label>Phone Number ID</Label>
                         <Input required value={phoneId} onChange={e => setPhoneId(e.target.value)} placeholder="100609..." />
