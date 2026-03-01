@@ -15,7 +15,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
+  // Use NEXT_PUBLIC_FACEBOOK_APP_ID, but gracefully fall back to IG_APP_ID if it's missing in Vercel.
+  // This works because layout.tsx is a Server Component.
+  const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.IG_APP_ID || "";
 
   return (
     <html lang="tr" className="dark">
