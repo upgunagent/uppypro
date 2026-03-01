@@ -50,14 +50,14 @@ export function PricingForm({ label, productKey, currentPrice, currentCode = "",
             </div>
 
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-                <div className="flex flex-col gap-1 w-full sm:w-64">
+                <div className="flex flex-col gap-1 w-full sm:w-80">
                     <label className="text-xs text-slate-500 font-medium">İyzico Plan Referans Kodu (İsteğe Bağlı)</label>
                     <Input
                         type="text"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
-                        placeholder="Örn: a12a8c6c-..."
-                        className="font-mono text-sm focus-visible:ring-orange-500"
+                        placeholder="Örn: a12a8c6c-7fda-4be7-b845-fd74bcXXXXXX"
+                        className="font-mono text-xs focus-visible:ring-orange-500"
                     />
                 </div>
 
