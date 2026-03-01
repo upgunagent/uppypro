@@ -102,7 +102,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         }
     }, [router]);
 
-    // Launch Embedded Signup — SYNCHRONOUS from click handler, no async gap
+    // Launch Embedded Signup — waits for SDK readiness, then calls FB.login synchronously
     const launchEmbeddedSignup = useCallback(() => {
         console.log("[ES] Button clicked");
         console.log("[ES] window.FB:", !!window.FB);
@@ -110,66 +110,70 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         console.log("[ES] APP_ID:", APP_ID);
         console.log("[ES] CONFIG_ID:", CONFIG_ID);
 
-        if (!window.FB) {
-            setWizardError("Facebook SDK henüz yüklenmedi. Lütfen sayfayı yenileyip tekrar deneyin.");
-            setWizardStep("error");
-            return;
-        }
+        const doLogin = () => {
+            console.log("[ES] Calling FB.login with config_id:", CONFIG_ID);
+            setWizardStep("waiting_meta");
+            setWizardError("");
+            delete (window as any).__embeddedSignupInfo;
 
-        // Always re-init — FB.init is idempotent and this guarantees initialization
-        try {
-            window.FB.init({
-                appId: APP_ID,
-                cookie: true,
-                xfbml: true,
-                version: "v21.0",
-            });
-            console.log("[ES] FB.init() called successfully");
-        } catch (e: any) {
-            console.error("[ES] FB.init() error:", e);
-            setWizardError("FB SDK init hatası: " + e.message);
-            setWizardStep("error");
-            return;
-        }
+            window.FB.login(
+                function (response: any) {
+                    console.log("[ES] FB.login response:", JSON.stringify(response));
+                    if (response.authResponse?.code) {
+                        const sessionInfo = (window as any).__embeddedSignupInfo;
+                        console.log("[ES] sessionInfo:", sessionInfo);
 
-        setWizardStep("waiting_meta");
-        setWizardError("");
-        delete (window as any).__embeddedSignupInfo;
+                        if (!sessionInfo?.waba_id || !sessionInfo?.phone_number_id) {
+                            setWizardError("WhatsApp hesap bilgileri alınamadı. Lütfen tekrar deneyin.");
+                            setWizardStep("error");
+                            return;
+                        }
 
-        // MUST be synchronous — no await between click and this call
-        console.log("[ES] Calling FB.login with config_id:", CONFIG_ID);
-        window.FB.login(
-            function (response: any) {
-                console.log("[ES] FB.login response:", JSON.stringify(response));
-                if (response.authResponse?.code) {
-                    const sessionInfo = (window as any).__embeddedSignupInfo;
-                    console.log("[ES] sessionInfo:", sessionInfo);
-
-                    if (!sessionInfo?.waba_id || !sessionInfo?.phone_number_id) {
-                        setWizardError("WhatsApp hesap bilgileri alınamadı. Lütfen tekrar deneyin.");
-                        setWizardStep("error");
-                        return;
+                        handleEmbeddedSignupCallback(
+                            response.authResponse.code,
+                            sessionInfo.waba_id,
+                            sessionInfo.phone_number_id
+                        );
+                    } else {
+                        console.log("[ES] User cancelled or no auth response");
+                        setWizardStep("idle");
                     }
-
-                    handleEmbeddedSignupCallback(
-                        response.authResponse.code,
-                        sessionInfo.waba_id,
-                        sessionInfo.phone_number_id
-                    );
-                } else {
-                    console.log("[ES] User cancelled or no auth response");
-                    setWizardStep("idle");
-                }
-            },
-            {
-                config_id: CONFIG_ID,
-                response_type: "code",
-                override_default_response_type: true,
-                extras: {
-                    setup: {},
                 },
+                {
+                    config_id: CONFIG_ID,
+                    response_type: "code",
+                    override_default_response_type: true,
+                    extras: {
+                        setup: {},
+                    },
+                }
+            );
+        };
+
+        // If SDK is already ready, call login immediately (keeps synchronous click chain)
+        if (window.FB && (window as any).__fbSDKReady) {
+            doLogin();
+            return;
+        }
+
+        // SDK not ready yet — poll for up to 3 seconds
+        console.log("[ES] SDK not ready, waiting...");
+        setWizardStep("launching");
+        let attempts = 0;
+        const maxAttempts = 30; // 30 x 100ms = 3 seconds
+        const poll = setInterval(() => {
+            attempts++;
+            if (window.FB && (window as any).__fbSDKReady) {
+                clearInterval(poll);
+                console.log("[ES] SDK became ready after", attempts * 100, "ms");
+                doLogin();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(poll);
+                console.error("[ES] SDK did not become ready after 3 seconds");
+                setWizardError("Facebook SDK yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+                setWizardStep("error");
             }
-        );
+        }, 100);
     }, [APP_ID, CONFIG_ID, handleEmbeddedSignupCallback]);
 
     // --- Instagram OAuth ---

@@ -5,7 +5,7 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SubscriptionBlockOverlay } from "@/components/subscription-block-overlay";
 import { NotificationSoundListener } from "@/components/notification-sound-listener";
 import { clsx } from "clsx";
-import Script from "next/script";
+
 
 export default async function AppLayout({
     children,
@@ -61,35 +61,11 @@ export default async function AppLayout({
         }
     }
 
-    const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
+
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
-            {/* Facebook JS SDK — global load with beforeInteractive */}
-            <Script
-                id="fb-sdk-init"
-                strategy="beforeInteractive"
-                dangerouslySetInnerHTML={{
-                    __html: `
-                        window.fbAsyncInit = function() {
-                            FB.init({
-                                appId: '${fbAppId}',
-                                cookie: true,
-                                xfbml: true,
-                                version: 'v21.0'
-                            });
-                            window.__fbSDKReady = true;
-                            console.log('[FB SDK] ✅ Initialized successfully');
-                        };
-                    `,
-                }}
-            />
-            <Script
-                id="facebook-jssdk"
-                strategy="beforeInteractive"
-                src="https://connect.facebook.net/en_US/sdk.js"
-                crossOrigin="anonymous"
-            />
+
 
             <AppSidebar role={role} tenantId={tenantId} />
             {/* Global notification sound listener - works on all pages */}
