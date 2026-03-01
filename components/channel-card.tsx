@@ -40,7 +40,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const [wabaId, setWabaId] = useState("");
     const [pageId, setPageId] = useState("");
 
-    const APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!;
+
     const CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_CONFIG_ID!;
     const isWhatsApp = type === "whatsapp";
 
@@ -107,7 +107,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         console.log("[ES] Button clicked");
         console.log("[ES] window.FB:", !!window.FB);
         console.log("[ES] __fbSDKReady:", !!(window as any).__fbSDKReady);
-        console.log("[ES] APP_ID:", APP_ID);
+
         console.log("[ES] CONFIG_ID:", CONFIG_ID);
 
         const doLogin = () => {
@@ -174,7 +174,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                 setWizardStep("error");
             }
         }, 100);
-    }, [APP_ID, CONFIG_ID, handleEmbeddedSignupCallback]);
+    }, [CONFIG_ID, handleEmbeddedSignupCallback]);
 
     // --- Instagram OAuth ---
     const handleOAuthLogin = () => {
