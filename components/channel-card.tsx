@@ -24,54 +24,30 @@ interface ChannelCardProps {
 
 type WizardStep = "idle" | "launching" | "waiting_meta" | "processing" | "success" | "error";
 
-// Module-level flag — survives re-renders, ensures init called exactly once
+// Module-level init flag
 let _fbReady = false;
 
-function loadFacebookSDK(appId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        // Fast path: already initialized
-        if (_fbReady && window.FB) {
-            resolve();
-            return;
+function initFBSDK(appId: string) {
+    if (_fbReady || window.FB) {
+        if (window.FB && !_fbReady) {
+            window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v21.0" });
+            _fbReady = true;
         }
+        return;
+    }
 
-        const doInit = () => {
-            try {
-                window.FB.init({
-                    appId,
-                    autoLogAppEvents: true,
-                    xfbml: true,
-                    version: "v21.0",
-                });
-                _fbReady = true;
-                resolve();
-            } catch (e: any) {
-                reject(new Error("FB.init() hatası: " + e.message));
-            }
-        };
+    window.fbAsyncInit = function () {
+        window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v21.0" });
+        _fbReady = true;
+    };
 
-        // SDK script loaded but init not yet called
-        if (window.FB) {
-            doInit();
-            return;
-        }
-
-        // Set fbAsyncInit BEFORE script load so SDK picks it up
-        window.fbAsyncInit = doInit;
-
-        // Script already in DOM (prev attempt) — fbAsyncInit will fire when ready
-        if (document.getElementById("facebook-jssdk")) {
-            return;
-        }
-
+    if (!document.getElementById("facebook-jssdk")) {
         const script = document.createElement("script");
         script.id = "facebook-jssdk";
         script.src = "https://connect.facebook.net/en_US/sdk.js";
         script.async = true;
-        script.defer = true;
-        script.onerror = () => reject(new Error("Facebook SDK yüklenemedi. İnternet bağlantınızı kontrol edin."));
         document.head.appendChild(script);
-    });
+    }
 }
 
 export function ChannelCard({ type, connection }: ChannelCardProps) {
@@ -79,6 +55,7 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const [loading, setLoading] = useState(false);
     const [wizardStep, setWizardStep] = useState<WizardStep>("idle");
     const [wizardError, setWizardError] = useState<string>("");
+    const [sdkReady, setSdkReady] = useState(false);
     const [showLegacyDialog, setShowLegacyDialog] = useState(false);
     const [showLegacyToggle, setShowLegacyToggle] = useState(false);
     const router = useRouter();
@@ -92,6 +69,31 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     const APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!;
     const CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_CONFIG_ID!;
     const isWhatsApp = type === "whatsapp";
+
+    // Preload FB SDK when WhatsApp card mounts — so it's ready to use synchronously on click
+    useEffect(() => {
+        if (!isWhatsApp) return;
+
+        const checkReady = () => {
+            if (_fbReady && window.FB) {
+                setSdkReady(true);
+                return true;
+            }
+            return false;
+        };
+
+        if (checkReady()) return;
+
+        initFBSDK(APP_ID);
+
+        // Poll until FB is initialized (max 10s)
+        const interval = setInterval(() => {
+            if (checkReady()) clearInterval(interval);
+        }, 200);
+
+        const timeout = setTimeout(() => clearInterval(interval), 10000);
+        return () => { clearInterval(interval); clearTimeout(timeout); };
+    }, [isWhatsApp, APP_ID]);
 
     // sessionInfoListener: captures waba_id & phone_number_id from Meta popup
     useEffect(() => {
@@ -146,24 +148,33 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         }
     }, [router]);
 
-    const launchEmbeddedSignup = useCallback(async () => {
-        setWizardStep("launching");
-        setWizardError("");
+    // Synchronous launch — FB.login() called directly from click (no async/await)
+    const launchEmbeddedSignup = useCallback(() => {
+        if (!window.FB) {
+            setWizardError("Facebook SDK henüz yüklenmedi, 5 saniye bekleyip tekrar deneyin.");
+            setWizardStep("error");
+            return;
+        }
 
+        // Always call FB.init() before FB.login() — it's safe to call multiple times
         try {
-            // Load SDK first — guarantees FB is ready
-            await loadFacebookSDK(APP_ID);
-        } catch {
-            setWizardError("Facebook SDK yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+            window.FB.init({
+                appId: APP_ID,
+                autoLogAppEvents: true,
+                xfbml: true,
+                version: "v21.0",
+            });
+        } catch (e: any) {
+            setWizardError("FB init hatası: " + e.message);
             setWizardStep("error");
             return;
         }
 
         setWizardStep("waiting_meta");
-
-        // Clear previous session info
+        setWizardError("");
         delete (window as any).__embeddedSignupInfo;
 
+        // MUST be synchronous — no await between click and this call
         window.FB.login(
             function (response: any) {
                 if (response.authResponse?.code) {
@@ -181,7 +192,6 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                         sessionInfo.phone_number_id
                     );
                 } else {
-                    // User cancelled or denied
                     setWizardStep("idle");
                 }
             },
