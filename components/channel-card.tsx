@@ -24,29 +24,43 @@ interface ChannelCardProps {
 
 type WizardStep = "idle" | "launching" | "waiting_meta" | "processing" | "success" | "error";
 
-// Loads the FB SDK dynamically and resolves when FB.init() is complete
+// Module-level flag — survives re-renders, ensures init called exactly once
+let _fbReady = false;
+
 function loadFacebookSDK(appId: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        // Already loaded and initialized
-        if (window.FB) {
+        // Fast path: already initialized
+        if (_fbReady && window.FB) {
             resolve();
             return;
         }
 
-        // Define fbAsyncInit BEFORE loading the script
-        window.fbAsyncInit = function () {
-            window.FB.init({
-                appId: appId,
-                autoLogAppEvents: true,
-                xfbml: true,
-                version: "v21.0",
-            });
-            resolve();
+        const doInit = () => {
+            try {
+                window.FB.init({
+                    appId,
+                    autoLogAppEvents: true,
+                    xfbml: true,
+                    version: "v21.0",
+                });
+                _fbReady = true;
+                resolve();
+            } catch (e: any) {
+                reject(new Error("FB.init() hatası: " + e.message));
+            }
         };
 
-        // Check if script already exists (maybe loading)
+        // SDK script loaded but init not yet called
+        if (window.FB) {
+            doInit();
+            return;
+        }
+
+        // Set fbAsyncInit BEFORE script load so SDK picks it up
+        window.fbAsyncInit = doInit;
+
+        // Script already in DOM (prev attempt) — fbAsyncInit will fire when ready
         if (document.getElementById("facebook-jssdk")) {
-            // Script tag exists but not initialized yet — wait for fbAsyncInit
             return;
         }
 
@@ -55,7 +69,7 @@ function loadFacebookSDK(appId: string): Promise<void> {
         script.src = "https://connect.facebook.net/en_US/sdk.js";
         script.async = true;
         script.defer = true;
-        script.onerror = () => reject(new Error("Facebook SDK yüklenemedi"));
+        script.onerror = () => reject(new Error("Facebook SDK yüklenemedi. İnternet bağlantınızı kontrol edin."));
         document.head.appendChild(script);
     });
 }
