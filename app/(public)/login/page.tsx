@@ -29,13 +29,11 @@ export default async function LoginPage() {
                             <span className="text-orange-500">Uppy</span>
                             <span className="text-black">Pro</span>
                         </h1>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-medium">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                            </span>
-                            Yapay Zeka Destekli Müşteri Paneli
-                        </div>
+                        <img
+                            src="/meta-partner-badge.png"
+                            alt="Meta Business Partner"
+                            className="h-16 w-auto object-contain mb-2"
+                        />
 
                         <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                             <span className="relative inline-block">
