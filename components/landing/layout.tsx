@@ -12,7 +12,7 @@ export function LandingHeader() {
                     <img
                         src="/brand-logo-text.png"
                         alt="UPGUN AI Logo"
-                        className="h-12 w-auto object-contain" // Adjusted height for text logo
+                        className="h-12 w-auto object-contain"
                     />
                 </Link>
 
@@ -33,7 +33,6 @@ export function LandingHeader() {
                             İşletme Girişi
                         </Button>
                     </Link>
-
                 </div>
             </div>
         </header>

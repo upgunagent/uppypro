@@ -29,11 +29,6 @@ export default async function LoginPage() {
                             <span className="text-orange-500">Uppy</span>
                             <span className="text-black">Pro</span>
                         </h1>
-                        <img
-                            src="/meta-partner-badge.png"
-                            alt="Meta Business Partner"
-                            className="h-16 w-auto object-contain mb-2"
-                        />
 
                         <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                             <span className="relative inline-block">

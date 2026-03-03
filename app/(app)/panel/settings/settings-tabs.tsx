@@ -16,19 +16,19 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, emplo
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-4 lg:w-[800px] h-12 bg-slate-100 p-1">
-                <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+                <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Plug className="w-4 h-4 mr-2" />
                     Bağlantı Ayarları
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+                <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <User className="w-4 h-4 mr-2" />
                     Kişisel/Firma
                 </TabsTrigger>
-                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Abonelik
                 </TabsTrigger>
-                <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all">
+                <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Users className="w-4 h-4 mr-2" />
                     Çalışanlar
                 </TabsTrigger>

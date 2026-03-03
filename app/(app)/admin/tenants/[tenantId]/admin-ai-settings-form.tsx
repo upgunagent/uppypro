@@ -52,6 +52,22 @@ export function AdminAiSettingsForm({ settings, tenantId }: { settings: any, ten
                     <div className="flex-1">
                         <h3 className="font-bold text-lg text-slate-900">AI Asistan Ayarları (Admin)</h3>
                         <p className="text-sm text-slate-500">İşletme için AI asistan davranışlarını yapılandırın.</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tenant ID:</span>
+                            <code
+                                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-mono cursor-pointer transition-colors active:scale-95"
+                                title="Kopyalamak için tıklayın"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(tenantId);
+                                    toast({
+                                        title: "Kopyalandı",
+                                        description: "Tenant ID panoya kopyalandı.",
+                                    });
+                                }}
+                            >
+                                {tenantId}
+                            </code>
+                        </div>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor="ai-mode" className="text-slate-700 min-w-[3rem] text-right">

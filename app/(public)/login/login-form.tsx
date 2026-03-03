@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useState, useEffect } from "react";
 
 const initialState = {
     error: "",
@@ -16,8 +18,36 @@ export function LoginForm() {
     const urlMessage = searchParams.get("message");
     const [state, formAction, isPending] = useActionState(signInAction, initialState);
 
+    // Güvenlik: Başarısız giriş denemesini zorla tetiklemek için ek bir state
+    const [submitCount, setSubmitCount] = useState(0);
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [turnstileToken, setTurnstileToken] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Form her hata döndürdüğünde veya submit tetiklendiğinde kontrol et
+    useEffect(() => {
+        if (state?.error && !isPending) {
+            setFailedAttempts(prev => prev + 1);
+            setTurnstileToken("");
+            console.log("Failed attempt detected. Total:", failedAttempts + 1);
+        }
+    }, [state?.error, submitCount]);
+
+    const handleAction = (formData: FormData) => {
+        setSubmitCount(prev => prev + 1);
+        formAction(formData);
+    };
+
+    const showTurnstile = failedAttempts >= 2;
+    // Eğer Turnstile ekrandaysa ancak henüz token alınmamışsa formu göndermeyi engelle
+    const isReadyToSubmit = !showTurnstile || turnstileToken !== "";
+
     return (
-        <form className="space-y-5" action={formAction}>
+        <form className="space-y-5" action={handleAction}>
             <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700" htmlFor="email">
                     E-posta Adresi
@@ -60,7 +90,20 @@ export function LoginForm() {
                 </div>
             )}
 
-            <Button disabled={isPending} type="submit" className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium text-base shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+            {isMounted && showTurnstile && (
+                <div className="flex justify-center w-full py-2">
+                    <Turnstile
+                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                        onSuccess={(token) => setTurnstileToken(token)}
+                        onError={() => setTurnstileToken("")}
+                        onExpire={() => setTurnstileToken("")}
+                    />
+                    {/* Token'ı form datası olarak arka uca göndermek için gizli input */}
+                    <input type="hidden" name="cf-turnstile-response" value={turnstileToken} />
+                </div>
+            )}
+
+            <Button disabled={isPending || !isReadyToSubmit} type="submit" className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium text-base shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                 {isPending ? "Giriş Yapılıyor..." : "Giriş Yap"}
             </Button>
         </form>
