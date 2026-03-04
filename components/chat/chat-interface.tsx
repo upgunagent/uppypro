@@ -1330,7 +1330,7 @@ export default function ChatInterface({
                                                 handleSend(e as unknown as React.FormEvent);
                                             }
                                         }}
-                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin..."}
+                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin (Belge gönderilemez)..." : "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin..."}
                                         className="w-full bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 rounded-md focus-visible:ring-1 focus-visible:outline-none focus:outline-none focus-visible:ring-orange-500 focus-visible:border-orange-500 text-base md:text-[15px] pr-[220px] py-2.5 pl-3 resize-none shadow-sm transition-all"
                                     />
                                     {currentMode === 'HUMAN' && (
