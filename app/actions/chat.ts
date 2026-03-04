@@ -157,7 +157,7 @@ export async function editMessage(messageId: string, newText: string, conversati
         // 1. Get Message & Conv Details
         const { data: msg, error } = await supabase
             .from("messages")
-            .select("*, conversations(tenant_id, channel)")
+            .select("*, conversations(tenant_id, channel, external_thread_id)")
             .eq("id", messageId)
             .single();
 
@@ -171,26 +171,23 @@ export async function editMessage(messageId: string, newText: string, conversati
 
         // 2. External Edit (WhatsApp Only)
         const conv = msg.conversations as any;
+        let warningMsg = undefined;
 
         if (conv?.channel === 'whatsapp') {
             if (diffMins > 15) return { success: false, error: "WhatsApp mesajları sadece 15 dakika içinde düzenlenebilir." };
 
-            if (msg.external_message_id) {
-                if (process.env.MOCK_META_SEND !== "true") {
-                    const result = await editMessageInChannel(
-                        conv.tenant_id,
-                        conv.external_thread_id, // Pass recipient (phone number)
-                        'whatsapp',
-                        msg.external_message_id,
-                        newText
-                    );
-                    if (!result.success) return { success: false, error: "WhatsApp düzenleme hatası: " + result.error };
-                }
-            } else {
-                return { success: false, error: "Bu mesajın WhatsApp ID'si bulunamadı (Eski mesaj olabilir), düzenlenemez." };
-            }
+            // Orijinalinde burada editMessageInChannel ile Meta API'ye istek atılıyordu.
+            // Ancak Meta'nın resmi WhatsApp Cloud API dokümantasyonu, işletme hesaplarından
+            // gönderilen mesajların sonradan değiştirilmesini (edit) desteklememektedir.
+            // Bu yüzden Meta API çağrısı "Unsupported put request" veya "JSON schema constraint" 
+            // hataları vermekteydi (Çünkü API Endpoint'i bunu kabul etmiyor).
+            // Çözüm olarak: Sadece kendi veritabanımızda güncelleyip, Instagram'daki gibi uyarı veriyoruz.
+            warningMsg = "Not: Resmi WhatsApp Cloud API şu anda gönderilen mesajların sonradan değiştirilmesini desteklememektedir. Değişiklik sadece sizin panelinize yansıdı, müşterinin WhatsApp uygulamasında mesaj değişmedi.";
+
+        } else if (conv?.channel === 'instagram') {
+            warningMsg = "Not: Instagram doğrudan mesaj düzenlemeyi henüz desteklememektedir. Değişiklik sadece panelinize yansıdı, müşterinin ekranında değişmedi.";
         } else {
-            return { success: false, error: "Sadece WhatsApp mesajları düzenlenebilir." };
+            return { success: false, error: "Bu kanal için düzenleme desteklenmiyor." };
         }
 
         // 3. Local Update
@@ -202,7 +199,7 @@ export async function editMessage(messageId: string, newText: string, conversati
         if (updateError) return { success: false, error: "Veritabanı güncellenemedi" };
 
         revalidatePath(`/panel/chat/${conversationId}`);
-        return { success: true };
+        return { success: true, warning: warningMsg };
 
     } catch (err: any) {
         console.error("Edit Action Error:", err);

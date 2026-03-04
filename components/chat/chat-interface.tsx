@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus } from "lucide-react";
+import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -15,6 +15,10 @@ import { useMemo } from "react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { CannedResponsesPicker, CannedResponse } from "./canned-responses-picker";
 import { AiCorrectButton } from "./ai-correct-button";
+import TextareaAutosize from 'react-textarea-autosize';
+import { TranslateButton } from "./translate-button";
+import Image from "next/image";
+import { toast } from "sonner";
 
 interface Message {
     id: string;
@@ -64,12 +68,30 @@ export default function ChatInterface({
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [showCannedPicker, setShowCannedPicker] = useState(false);
     const [selectedCannedMedia, setSelectedCannedMedia] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState<string>("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [tenantLocations, setTenantLocations] = useState<any[]>(safeLocations);
 
     // Message Search State
     const [messageSearchQuery, setMessageSearchQuery] = useState("");
+
+    // Translation State
+    const [translations, setTranslations] = useState<Record<string, { text: string, detectedLanguage?: string }>>({});
+    const [translatingMessageId, setTranslatingMessageId] = useState<string | null>(null);
+
+    const lastDetectedLanguage = useMemo(() => {
+        // Find the most recent detected language from translations
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            const trans = translations[msg.id];
+            if (trans && trans.detectedLanguage) {
+                return trans.detectedLanguage;
+            }
+        }
+        return null;
+    }, [translations, messages]);
 
     const filteredMessages = useMemo(() => {
         if (!messageSearchQuery.trim()) return messages;
@@ -78,8 +100,6 @@ export default function ChatInterface({
     }, [messages, messageSearchQuery]);
 
     // Edit State
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editValue, setEditValue] = useState("");
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [activeProfilePic, setActiveProfilePic] = useState<string | undefined>(profilePic);
 
@@ -134,26 +154,26 @@ export default function ChatInterface({
         markConversationAsRead(conversationId);
     }, [conversationId, profilePic]);
 
-    const handleEditSave = async () => {
-        if (!editingId || !editValue.trim()) return;
-        const currentId = editingId;
-        const newVal = editValue;
 
-        // Close UI
+    const handleEditSave = async (msgId: string, originalText: string) => {
+        const newText = editValue.trim();
+        if (!newText || newText === originalText) {
+            setEditingId(null);
+            return;
+        }
+
+        // Optimistic update
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: newText } : m));
         setEditingId(null);
-        setMenuOpenId(null);
 
-        // Optimistic Update
-        setMessages(prev => prev.map(m => m.id === currentId ? { ...m, text: newVal } : m));
-
-        try {
-            const res = await editMessage(currentId, newVal, conversationId);
-            if (!res.success) {
-                alert("Düzenleme başarısız: " + res.error);
-            }
-        } catch (err: any) {
-            console.error("Edit failed", err);
-            alert("Beklenmedik hata: " + err.message);
+        const result = await editMessage(msgId, newText, conversationId);
+        if (!result.success) {
+            // Revert
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: originalText } : m));
+            alert(result.error || "Düzenleme başarısız.");
+        } else if (result.warning) {
+            // Show warning for cases like Instagram edits
+            alert(result.warning);
         }
     };
 
@@ -270,6 +290,40 @@ export default function ChatInterface({
             alert("Hata: " + error.message);
         }
     };
+
+    const handleTranslateMessage = async (messageId: string, text: string) => {
+        if (!text) return;
+        setTranslatingMessageId(messageId);
+        try {
+            const res = await fetch('/api/ai/correct', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, action: 'translate_to_turkish' })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Çeviri başarısız oldu.');
+            }
+
+            const data = await res.json();
+            if (data.translatedText) {
+                setTranslations(prev => ({
+                    ...prev,
+                    [messageId]: {
+                        text: data.translatedText,
+                        detectedLanguage: data.detectedLanguage
+                    }
+                }));
+            }
+        } catch (e: any) {
+            console.error('Translation error:', e);
+            toast.error("Çeviri Hatası", { description: e.message });
+        } finally {
+            setTranslatingMessageId(null);
+        }
+    };
+
 
     // Smart Scroll
     useEffect(() => {
@@ -595,7 +649,7 @@ export default function ChatInterface({
                     </div>
 
                     <div className="flex items-center gap-2 hidden sm:flex">
-                        <div className={clsx("w-3 h-3 rounded-full", currentMode === "BOT" ? "bg-green-500 shadow-green-500/50 shadow-lg" : "bg-red-500")}></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500 shadow-green-500/50 shadow-lg"></div>
                         <span className="font-bold text-sm text-slate-600">
                             {currentMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
                         </span>
@@ -671,9 +725,12 @@ export default function ChatInterface({
                     const isMe = msg.sender === "HUMAN";
                     const isBot = msg.sender === "BOT";
                     const isEditing = editingId === msg.id;
-                    const canEdit = false;
 
+                    // 15 dk kuralı
                     const msgDate = new Date(msg.created_at);
+                    const isWithin15Minutes = (Date.now() - msgDate.getTime()) < 15 * 60 * 1000;
+                    const canEdit = isMe && !['image', 'video', 'audio', 'document', 'location', 'template'].includes(msg.message_type || '') && !!msg.text && isWithin15Minutes;
+
                     const msgDateString = msgDate.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' });
 
                     let showDateSeparator = false;
@@ -863,34 +920,92 @@ export default function ChatInterface({
                                     ) : null}
 
                                     {msg.text && !['image', 'video', 'audio', 'document', 'location', 'template'].includes(msg.message_type || '') && (
-                                        isEditing ? (
-                                            <div className="flex flex-col gap-2 min-w-[200px]">
-                                                <textarea
-                                                    value={editValue}
-                                                    onChange={e => setEditValue(e.target.value)}
-                                                    className="bg-white border border-gray-300 rounded p-2 text-gray-900 w-full text-sm resize-none focus:outline-none focus:ring-1 focus:ring-green-500"
-                                                    rows={3}
-                                                />
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setEditingId(null)} className="p-1 hover:bg-gray-100 rounded text-gray-500">
-                                                        <X size={14} />
-                                                    </button>
-                                                    <button onClick={handleEditSave} className="p-1 hover:bg-gray-100 rounded text-green-600">
-                                                        <Check size={14} />
-                                                    </button>
-                                                </div>
+                                        <div className={clsx("relative whitespace-pre-wrap text-sm leading-relaxed group/bubble", isEditing && "outline outline-2 outline-green-500 rounded")}>
+                                            <div
+                                                contentEditable={isEditing}
+                                                suppressContentEditableWarning
+                                                onInput={e => setEditValue((e.target as HTMLDivElement).innerText)}
+                                                ref={el => { if (isEditing && el && el.innerText !== editValue) { el.innerText = editValue; /* place cursor at end */ const range = document.createRange(); const sel = window.getSelection(); range.selectNodeContents(el); range.collapse(false); sel?.removeAllRanges(); sel?.addRange(range); } }}
+                                                className={clsx("focus:outline-none", isEditing && "cursor-text")}
+                                                style={isEditing ? { minHeight: '1.5em' } : undefined}
+                                            >
+                                                {isEditing ? undefined : msg.text}
                                             </div>
-                                        ) : (
-                                            <div className={clsx("whitespace-pre-wrap relative text-sm leading-relaxed", canEdit ? "pr-6" : "")}>
-                                                {msg.text}
-                                                <div className="float-right ml-2 mt-2 flex items-center gap-1">
-                                                    <span className="text-[10px] text-gray-500">
-                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                    {isMe && <Check size={12} className="text-blue-500" />}
-                                                </div>
+                                            <div className="float-right ml-2 mt-2 flex items-center gap-1 relative z-10">
+                                                {isEditing ? (
+                                                    <>
+                                                        <button onClick={() => setEditingId(null)} className="p-1 hover:bg-gray-100 rounded text-gray-500">
+                                                            <X size={14} />
+                                                        </button>
+                                                        <button onClick={() => handleEditSave(msg.id, msg.text || "")} className="p-1 hover:bg-gray-100 rounded text-green-600">
+                                                            <Check size={14} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-[10px] text-gray-500">
+                                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                        {isMe && <Check size={12} className="text-blue-500" />}
+                                                    </>
+                                                )}
                                             </div>
-                                        )
+                                            {/* --- INBOUND TRANSLATION UI START --- */}
+                                            {msg.sender === "CUSTOMER" && (
+                                                <div className="mt-2 pt-2 border-t border-slate-200/50 flex flex-col gap-1.5 w-full">
+                                                    {translatingMessageId === msg.id ? (
+                                                        <div className="flex items-center gap-1.5 text-xs text-blue-500 animate-pulse">
+                                                            <Sparkles className="w-3 h-3" />
+                                                            <span>Çevriliyor...</span>
+                                                        </div>
+                                                    ) : translations[msg.id] ? (
+                                                        <div className="text-[13px] text-slate-700 bg-white/50 rounded p-2 italic border border-slate-100/50 shadow-sm relative pr-6">
+                                                            {translations[msg.id].text}
+                                                            {translations[msg.id].detectedLanguage && (
+                                                                <span className="block text-[10px] text-slate-400 not-italic mt-1">
+                                                                    Otomatik Algılanan Dil: <strong className="text-slate-500">{translations[msg.id].detectedLanguage}</strong>
+                                                                </span>
+                                                            )}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setTranslations(prev => {
+                                                                        const copy = { ...prev };
+                                                                        delete copy[msg.id];
+                                                                        return copy;
+                                                                    });
+                                                                }}
+                                                                className="absolute top-1.5 right-1.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/50 transition-colors"
+                                                                title="Çeviriyi Kapat"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleTranslateMessage(msg.id, msg.text || "");
+                                                            }}
+                                                            className="flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-blue-600 transition-colors self-start px-1.5 py-0.5 rounded hover:bg-blue-50"
+                                                        >
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-languages"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>
+                                                            Çevir
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {/* --- INBOUND TRANSLATION UI END --- */}
+                                            {canEdit && !isEditing && (
+                                                <button
+                                                    onClick={() => { setEditingId(msg.id); setEditValue(msg.text || ""); }}
+                                                    className="absolute top-1 right-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-1.5 shadow-sm hover:bg-white text-gray-600 hover:text-green-600 z-20 flex items-center gap-1"
+                                                    title="Düzenle (15 dk içinde)"
+                                                >
+                                                    <Edit2 size={13} />
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -1095,43 +1210,65 @@ export default function ChatInterface({
                         }}
                     />
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 md:gap-2">
                         <button
                             type="button"
                             onClick={() => document.getElementById('file-upload')?.click()}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-all duration-200 hover:scale-110"
+                            className="p-1 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 shrink-0"
                             disabled={sending}
+                            title="Dosya Ekleme"
                         >
-                            <Paperclip className="w-5 h-5" />
+                            <Image src="/icons/atac_v2.png" alt="Dosya Ekleme" width={32} height={32} className="drop-shadow-sm" />
                         </button>
 
                         <button
                             type="button"
                             onClick={() => { setShowLocationPicker(false); setShowEmojiPicker(false); setShowTemplatePicker(true); }}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all duration-200 hover:scale-110"
+                            className="p-1 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 shrink-0"
                             disabled={sending}
-                            title="Şablon Gönder"
+                            title="WhatsApp Şablonları"
                         >
-                            <FileText className="w-5 h-5" />
+                            <Image src="/icons/whatsapp_sablon_v2.png" alt="WhatsApp Şablonları" width={32} height={32} className="drop-shadow-sm" />
                         </button>
 
                         <button
                             type="button"
                             onClick={() => { setShowEmojiPicker(false); setShowLocationPicker(!showLocationPicker); }}
-                            className="p-2 pr-1 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
+                            className="p-1 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 shrink-0"
                             disabled={sending}
-                            title="Konum Gönder"
+                            title="Konum"
                         >
-                            <MapPin className="w-5 h-5" />
+                            <Image src="/icons/konum_v2.png" alt="Konum" width={32} height={32} className="drop-shadow-sm" />
                         </button>
 
                         <button
                             type="button"
                             onClick={() => { setShowLocationPicker(false); setShowEmojiPicker(!showEmojiPicker); }}
-                            className="p-2 rounded-full transition-all duration-200 hover:scale-110 hover:bg-yellow-50"
+                            className="p-1 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 hover:bg-orange-50/50 shrink-0"
+                            title="Emojiler"
                         >
-                            <span className="text-xl leading-none">🙂</span>
+                            <Image src="/icons/emoji_v3.png" alt="Emojiler" width={32} height={32} className="drop-shadow-sm" />
                         </button>
+
+                        <CannedResponsesPicker
+                            tenantId={tenantId}
+                            open={showCannedPicker}
+                            onOpenChange={setShowCannedPicker}
+                            onSelect={(resp) => {
+                                setInput(resp.content);
+                                setSelectedCannedMedia(resp.media_url || null);
+                                setShowCannedPicker(false);
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setShowCannedPicker((prev) => !prev)}
+                                title="Hazır Cevap Şablonları"
+                                className="p-1 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 shrink-0"
+                            >
+                                <Image src="/icons/hazir_cevap_v2.png" alt="Hazır Cevaplar" width={32} height={32} className="drop-shadow-sm" />
+                            </button>
+                        </CannedResponsesPicker>
                     </div>
 
                     {isRecording ? (
@@ -1159,26 +1296,6 @@ export default function ChatInterface({
                         </div>
                     ) : (
                         <>
-                            {/* Kısayol (Canned) Picker Butonu + Popover */}
-                            <CannedResponsesPicker
-                                tenantId={tenantId}
-                                open={showCannedPicker}
-                                onOpenChange={setShowCannedPicker}
-                                onSelect={(resp) => {
-                                    setInput(resp.content);
-                                    setSelectedCannedMedia(resp.media_url || null);
-                                    setShowCannedPicker(false);
-                                }}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCannedPicker((prev) => !prev)}
-                                    title="Hazır Cevaplar"
-                                    className="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors shrink-0 border border-slate-200 bg-white"
-                                >
-                                    <MessageSquarePlus className="w-4 h-4" />
-                                </button>
-                            </CannedResponsesPicker>
 
                             {/* Medya önizlemesi (canned response'dan geliyorsa) */}
                             <div className="flex-1 relative flex flex-col gap-1">
@@ -1192,7 +1309,9 @@ export default function ChatInterface({
                                     </div>
                                 )}
                                 <div className="relative flex items-center">
-                                    <Input
+                                    <TextareaAutosize
+                                        minRows={1}
+                                        maxRows={6}
                                         value={input}
                                         onChange={(e) => {
                                             const val = e.target.value;
@@ -1205,28 +1324,47 @@ export default function ChatInterface({
                                         }}
                                         onFocus={() => setIsInputFocused(true)}
                                         onBlur={() => setIsInputFocused(false)}
-                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın veya '/' ile hazır cevap seçin..."}
-                                        className="w-full bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500 text-base md:text-sm pr-28"
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSend(e as unknown as React.FormEvent);
+                                            }
+                                        }}
+                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin..."}
+                                        className="w-full bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 rounded-md focus-visible:ring-1 focus-visible:outline-none focus:outline-none focus-visible:ring-orange-500 focus-visible:border-orange-500 text-base md:text-[15px] pr-[220px] py-2.5 pl-3 resize-none shadow-sm transition-all"
                                     />
-                                    <AiCorrectButton
-                                        input={input}
-                                        onCorrected={setInput}
-                                        isEnabled={true}
-                                    />
+                                    {currentMode === 'HUMAN' && (
+                                        <div className="absolute right-3 bottom-1.5 flex items-center gap-1.5 z-10 bg-[#f0f2f5] pl-1 pr-1 rounded-md">
+                                            <TranslateButton
+                                                input={input}
+                                                onTranslated={setInput}
+                                                detectedLanguage={lastDetectedLanguage}
+                                            />
+                                            <AiCorrectButton
+                                                input={input}
+                                                onCorrected={setInput}
+                                                isEnabled={true}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Ses Kaydetme - Sağ Taraf */}
+                            {!isRecording && !input.trim() && (
+                                <button
+                                    type="button"
+                                    onClick={startRecording}
+                                    className="h-10 w-10 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center shrink-0"
+                                    title="Ses Kaydetme"
+                                    disabled={sending}
+                                >
+                                    <Image src="/icons/seskayit_v2.png" alt="Ses Kaydetme" width={24} height={24} className="drop-shadow-sm object-contain" />
+                                </button>
+                            )}
                         </>
                     )}
 
-                    {!isRecording && !input.trim() && (
-                        <button
-                            type="button"
-                            onClick={startRecording}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                        </button>
-                    )}
                     {input.trim() && (
                         <Button type="submit" disabled={sending || currentMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
                             <Send className="w-4 h-4" />
