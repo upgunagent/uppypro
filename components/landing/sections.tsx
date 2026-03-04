@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X } from "lucide-react";
+import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
@@ -125,11 +125,118 @@ export function FeaturesSection() {
                         <li><strong>Canlı İzleme:</strong> Arkanıza yaslanın ve dijital asistanınızın müşterilerle nasıl satış odaklı konuştuğunu canlı olarak izleyin.</li>
                         <li><strong>Tek Tıkla Müdahale:</strong> Kritik bir soru mu geldi? "Devral" butonuna basarak sohbeti yapay zekadan alın, siz yanıtlayın. İşiniz bitince tekrar "Devret" diyerek asistanınıza bırakın.</li>
                         <li><strong>Esnek Çalışma Modu:</strong> İsterseniz mesai saatlerinde siz, akşamları asistanınız çalışsın; isterseniz 7/24 asistanınız yönetsin, siz sadece denetleyin.</li>
-                        <li><strong>Akıllı Yönlendirme:</strong> Müşteri ısrarla bir yetkiliyle görüşmek isterse, asistanınız inatlaşmaz; iletişim bilgilerini alır, notunu düşer ve size "Müşteri sizi bekliyor" bildirimi gönderir.</li>
+                        <li><strong>Akıllı Yönlendirme:</strong> Müşteri ısrarla bir yetkiliyle görüşmek isterse, asistanınız inatlaşmaz; iletişim bilgilerini alır, notunu düşer ve size sesli bir uyarı ile birlikte <span className="text-red-500 font-bold">"Müşteri sizi bekliyor"</span> bildirimi gönderir.</li>
                     </ul>
                 </div>
             ),
             image: "/features/handover-dashboard.png"
+        },
+        {
+            id: 5,
+            icon: <MessageCircle className="w-6 h-6 text-white" />,
+            color: "bg-teal-500",
+            title: "WhatsApp Şablonları",
+            desc: "Önceden onaylanmış şablonlar sayesinde listelerinize veya yeni müşterilere 24 saat kuralı takılmadan ulaşın.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">İlk Mesajı Siz Atın, Satış Performansınızı Katlayın</h4>
+                    <p>
+                        WhatsApp'ın sıkı 24 Saat Kuralı'na (24H Rule) takılmayın! İşletmenizin onaylı şablonları ile yeni müşterilere ulaşabilir veya eski müşterilerinizi kampanyalardan haberdar edebilirsiniz.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Resmi Meta Onayı:</strong> Şablonlarınız doğrudan Meta API üzerinden onaylanır, güvenli sınırların içinde risk almadan etkileşimi başlatırsınız.</li>
+                        <li><strong>Kişiselleştirilmiş İletişim:</strong> Şablonlarınızı dinamik değişkenler ekleyerek müşterinin ismine veya ilgilendiği ürüne özel hâle getirin.</li>
+                        <li><strong>Tek Tıkla Toplu Mesaj:</strong> Binlerce kişilik listenize tanıtım, indirim kodları veya hatırlatmalar gönderip trafiğinizi anında artırın.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/whatsapp-templates.jpg"
+        },
+        {
+            id: 6,
+            icon: <Reply className="w-6 h-6 text-white" />,
+            color: "bg-indigo-500",
+            title: "Hazır Cevaplar",
+            desc: "Aynı sorulara saniyeler içinde zengin içeriklerle yanıt verin, zamandan tasarruf sağlayın.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Sürekli Aynı Şeyleri Yazmaya Son Verin</h4>
+                    <p>
+                        "Fiyat nedir?", "Konumunuz nerede?", "İban alabilir miyim?" gibi sık sorulan soruları cevaplamak personelinizin tüm gününü almasın. Uppypro üzerinden kurguladığınız Hazır Cevaplar (Canned Responses) ile hızı ikiye katlayın.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Zengin İçerik Desteği:</strong> Sadece metin değil, her bir hazır cevap için resim, video veya döküman tanımlayın, tek bir tuşla medyalı içerik paylaşın.</li>
+                        <li><strong>Arama ve Hızlı Kullanım:</strong> Sohbet kutusunda "/" tuşuna basarak sistemdeki tüm yanıtlarınızı aratın, doğru içeriği anında gönderin.</li>
+                        <li><strong>Ekip Çapında Standart:</strong> Hazır cevap listesini tüm personellerinizle paylaşın; şirketiniz için yazım, üslup ve kalite standardını güvenceye alın.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/quick-replies_v3.jpg"
+        },
+        {
+            id: 7,
+            icon: <Wand2 className="w-6 h-6 text-white" />,
+            color: "bg-pink-500",
+            title: "Metin Düzeltme & İyileştirme",
+            desc: "Yazdığınız kelimeleri tek bir butonla kusursuz bir kurumsal dille ve sıfır hata ile gönderin.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Profesyonelliğinizi Metinlerinizle Gösterin</h4>
+                    <p>
+                        Yazışırken yapılan noktalama veya harf hataları marka algınıza zarar verebilir. Bazen de aceleyle yazılmış kısa bir metin karşı tarafa soğuk görünebilir.
+                        Uppypro AI'nın akıllı yazım düzenleme özelliği bütün bu riskleri ortadan kaldırıyor.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Yazım ile Noktalama:</strong> İsterseniz yazdığınız metni kendi tarzında koruyarak sadece imla hatalarını ayıklar.</li>
+                        <li><strong>Kurumsal Dile Çevir:</strong> "yarın gondeririz" yazdığınızda bunu saniyeler içinde "Siparişinizi yarın kargoya teslim etmeyi planlıyoruz, bilginize." formatına çevirir.</li>
+                        <li><strong>Otomatik Önizleme:</strong> Değişikliğin anında panelinize yansıtılması sayesinde onaylayıp tek tıkla müşteriye yollayın. Zaman kazanın.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/text-correction_v2.jpg"
+        },
+        {
+            id: 8,
+            icon: <Globe className="w-6 h-6 text-white" />,
+            color: "bg-blue-500",
+            title: "Her Dilde Çeviri",
+            desc: "Dünyanın her yerindeki müşterilerinizle, onların dilinden konuşarak sınırları kaldırın.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Tüm Dünya Müşteriniz Olabilir</h4>
+                    <p>
+                        Yabancı müşterilerle iletişim kurmak hiç bu kadar kolay olmamıştı. Uppypro AI, globalleşen pazarınızda dil bariyerini tamamen ortadan kaldırır.
+                        Hem gelen mesajları anlar, hem de sizin cevaplarınızı karşı tarafın dilinde kusursuzca iletir.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Akıllı Dil Algılama:</strong> Müşterinizin hangi dilde yazdığını saniyeler içinde anlar ve size Türkçe tercümesi ile birlikte gösterir.</li>
+                        <li><strong>Tek Tıkla Karşı Dilde Yanıt:</strong> Kendi dilinizde cevabınızı yazın, menüden müşterinin dilini seçin; sistem anında o dildeki profesyonel karşılığını göndersin.</li>
+                        <li><strong>Evrensel Satış Gücü:</strong> İspanyolca, Fransızca, Arapça, Rusça fark etmeksizin; işletmenizi anında uluslararası müşteri kabul edebilir hâle getirin.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/translation.jpg"
+        },
+        {
+            id: 9,
+            icon: <Lock className="w-6 h-6 text-white" />,
+            color: "bg-slate-700",
+            title: "Güvenlik",
+            desc: "Uçtan uça koruma, anti-spam kontrolü ve akıllı aktivite takibi ile sızmalara karşı korunun.",
+            longDesc: (
+                <div className="space-y-4">
+                    <h4 className="text-xl font-bold text-slate-800">Hesabınızın Güvenliği En Üst Seviyede</h4>
+                    <p>
+                        Şirket verileriniz ve müşteri iletişiminiz paha biçilmezdir. Uppypro'nun sunduğu kurumsal düzey güvenlik altyapısı sayesinde gözünüz arkada kalmaz. Yüksek trafikli WhatsApp hatlarında spam saldırılarını filtrelemek, sadece ilk adımımızdır.
+                    </p>
+                    <ul className="space-y-2 list-disc pl-5">
+                        <li><strong>Bot Savunması (Anti-Spam):</strong> Sahte numaralardan gelen spam ve bot saldırılarını yapay zeka sayesinde anında durdurur. Hesabınızın kalitesini (quality rating) düşmekten korur.</li>
+                        <li><strong>Akıllı Aktivite Takibi:</strong> Müşterileriniz ile temsilcileriniz arasındaki diyaloglarda gerçekleşebilecek anomali, küfür veya KVKK (kişisel veri) ihlallerini analiz eder ve yöneticilere sinyal çakar.</li>
+                        <li><strong>Kurumsal Uçtan Uca Koruma:</strong> Sunucularımızda saklanan tüm müşteri yazılı ve görsel medya diyalogları, şifrelenmiş katmanlar arkasında tutularak dışarıdan yetkisiz erişimi tamamen imkansız kılar.</li>
+                    </ul>
+                </div>
+            ),
+            image: "/features/security.jpg"
         }
     ];
 
@@ -144,87 +251,234 @@ export function FeaturesSection() {
                     </p>
                 </div>
 
+                {/* ROW 1 (0-4) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {features.map((f, i) => (
-                        <div key={i} className="contents md:block">
-                            <motion.div
-                                onClick={() => setActiveFeature(activeFeature === i ? null : i)}
-                                animate={{
-                                    scale: activeFeature === i ? 1.05 : 1,
-                                    borderColor: activeFeature === i ? "rgb(251 146 60)" : "rgb(241 245 249)",
-                                    zIndex: activeFeature === i ? 10 : 0
-                                }}
-                                whileHover={{
-                                    x: [0, -5, 5, -5, 5, 0],
-                                    transition: { duration: 0.5 }
-                                }}
-                                className={clsx(
-                                    "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
-                                    activeFeature === i
-                                        ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
-                                        : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
-                                )}
-                            >
-                                <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === i ? "scale-110" : "group-hover:scale-105")}>
-                                    {f.icon}
-                                </div>
-                                <h3 className={clsx("text-lg font-bold mb-2", activeFeature === i ? "text-orange-600" : "text-slate-900")}>
-                                    {f.title}
-                                </h3>
-                                <p className="text-slate-500 text-xs leading-relaxed">
-                                    {f.desc}
-                                </p>
+                    {features.slice(0, 5).map((f, i) => {
+                        const originalIndex = i;
+                        return (
+                            <div key={originalIndex} className="contents md:block">
+                                <motion.div
+                                    onClick={() => setActiveFeature(activeFeature === originalIndex ? null : originalIndex)}
+                                    animate={{
+                                        scale: activeFeature === originalIndex ? 1.05 : 1,
+                                        borderColor: activeFeature === originalIndex ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                        zIndex: activeFeature === originalIndex ? 10 : 0
+                                    }}
+                                    whileHover={{
+                                        x: [0, -5, 5, -5, 5, 0],
+                                        transition: { duration: 0.5 }
+                                    }}
+                                    className={clsx(
+                                        "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                        activeFeature === originalIndex
+                                            ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                            : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                    )}
+                                >
+                                    <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === originalIndex ? "scale-110" : "group-hover:scale-105")}>
+                                        {f.icon}
+                                    </div>
+                                    <h3 className={clsx("text-lg font-bold mb-2", activeFeature === originalIndex ? "text-orange-600" : "text-slate-900")}>
+                                        {f.title}
+                                    </h3>
+                                    <p className="text-slate-500 text-xs leading-relaxed">
+                                        {f.desc}
+                                    </p>
 
-                                {/* Active Indicator Arrow */}
-                                {activeFeature === i && (
-                                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
-                                )}
-                            </motion.div>
+                                    {/* Active Indicator Arrow */}
+                                    {activeFeature === originalIndex && (
+                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                                    )}
+                                </motion.div>
 
-                            {/* Mobile Inline Detail Panel */}
-                            <AnimatePresence>
-                                {activeFeature === i && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
-                                    >
-                                        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-                                            <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
-                                                <img
-                                                    src={f.image}
-                                                    alt={f.title}
-                                                    className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
-                                                />
-                                            </div>
-                                            <div className="p-6">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
-                                                        {f.icon}
+                                {/* Mobile Inline Detail Panel */}
+                                <AnimatePresence>
+                                    {activeFeature === originalIndex && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
+                                        >
+                                            <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
+                                                <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
+                                                    <img
+                                                        src={f.image}
+                                                        alt={f.title}
+                                                        className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
+                                                    />
+                                                </div>
+                                                <div className="p-6">
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
+                                                            {f.icon}
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-slate-900">
+                                                            {f.title}
+                                                        </h3>
                                                     </div>
-                                                    <h3 className="text-xl font-bold text-slate-900">
-                                                        {f.title}
-                                                    </h3>
-                                                </div>
-                                                <div className="text-slate-600 text-sm leading-relaxed mb-6">
-                                                    {f.longDesc}
+                                                    <div className="text-slate-600 text-sm leading-relaxed mb-6">
+                                                        {f.longDesc}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )
+                    })}
                 </div>
 
-                {/* Shared Detail Panel (Desktop Only) */}
+                {/* Shared Detail Panel (Desktop Only) for ROW 1 */}
                 <div className="hidden md:block">
                     <AnimatePresence mode="wait">
-                        {activeFeature !== null && (
+                        {activeFeature !== null && activeFeature >= 0 && activeFeature <= 4 && (
                             <motion.div
-                                key="detail-panel"
+                                key="detail-panel-1"
+                                initial={{ opacity: 0, y: -20, height: 0 }}
+                                animate={{ opacity: 1, y: 0, height: "auto" }}
+                                exit={{ opacity: 0, y: -20, height: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="overflow-hidden mt-8 mb-8"
+                            >
+                                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+                                    <div className="grid lg:grid-cols-2 gap-0">
+                                        {/* Image Section */}
+                                        <div className="bg-slate-50 p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100">
+                                            <motion.img
+                                                key={features[activeFeature].image}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ duration: 0.4, delay: 0.1 }}
+                                                src={features[activeFeature].image}
+                                                alt={features[activeFeature].title}
+                                                className="rounded-xl shadow-lg max-h-[360px] w-auto object-contain"
+                                            />
+                                        </div>
+
+                                        {/* Content Section */}
+                                        <div className="p-8 lg:p-12 flex flex-col justify-center">
+                                            <motion.div
+                                                key={features[activeFeature].title}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.4, delay: 0.2 }}
+                                            >
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                        {features[activeFeature].icon}
+                                                    </div>
+                                                    <h3 className="text-2xl font-bold text-slate-900">
+                                                        {features[activeFeature].title}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="text-slate-600 text-lg leading-relaxed mb-8">
+                                                    {features[activeFeature].longDesc}
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setActiveFeature(null)}
+                                                    className="text-sm font-bold text-slate-400 hover:text-orange-600 flex items-center gap-2 transition-colors"
+                                                >
+                                                    Kapat <span className="text-xs">✕</span>
+                                                </button>
+                                            </motion.div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+
+                {/* ROW 2 (5-9) */}
+                <div className={clsx("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4", (activeFeature === null || activeFeature > 4) ? "mt-4" : "mt-8")}>
+                    {features.slice(5, 10).map((f, i) => {
+                        const originalIndex = i + 5;
+                        return (
+                            <div key={originalIndex} className="contents md:block">
+                                <motion.div
+                                    onClick={() => setActiveFeature(activeFeature === originalIndex ? null : originalIndex)}
+                                    animate={{
+                                        scale: activeFeature === originalIndex ? 1.05 : 1,
+                                        borderColor: activeFeature === originalIndex ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                        zIndex: activeFeature === originalIndex ? 10 : 0
+                                    }}
+                                    whileHover={{
+                                        x: [0, -5, 5, -5, 5, 0],
+                                        transition: { duration: 0.5 }
+                                    }}
+                                    className={clsx(
+                                        "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                        activeFeature === originalIndex
+                                            ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                            : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                    )}
+                                >
+                                    <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === originalIndex ? "scale-110" : "group-hover:scale-105")}>
+                                        {f.icon}
+                                    </div>
+                                    <h3 className={clsx("text-lg font-bold mb-2", activeFeature === originalIndex ? "text-orange-600" : "text-slate-900")}>
+                                        {f.title}
+                                    </h3>
+                                    <p className="text-slate-500 text-xs leading-relaxed">
+                                        {f.desc}
+                                    </p>
+
+                                    {/* Active Indicator Arrow */}
+                                    {activeFeature === originalIndex && (
+                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                                    )}
+                                </motion.div>
+
+                                {/* Mobile Inline Detail Panel */}
+                                <AnimatePresence>
+                                    {activeFeature === originalIndex && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
+                                        >
+                                            <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
+                                                <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
+                                                    <img
+                                                        src={f.image}
+                                                        alt={f.title}
+                                                        className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
+                                                    />
+                                                </div>
+                                                <div className="p-6">
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
+                                                            {f.icon}
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-slate-900">
+                                                            {f.title}
+                                                        </h3>
+                                                    </div>
+                                                    <div className="text-slate-600 text-sm leading-relaxed mb-6">
+                                                        {f.longDesc}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Shared Detail Panel (Desktop Only) for ROW 2 */}
+                <div className="hidden md:block">
+                    <AnimatePresence mode="wait">
+                        {activeFeature !== null && activeFeature >= 5 && activeFeature <= 9 && (
+                            <motion.div
+                                key="detail-panel-2"
                                 initial={{ opacity: 0, y: -20, height: 0 }}
                                 animate={{ opacity: 1, y: 0, height: "auto" }}
                                 exit={{ opacity: 0, y: -20, height: 0 }}
@@ -242,7 +496,7 @@ export function FeaturesSection() {
                                                 transition={{ duration: 0.4, delay: 0.1 }}
                                                 src={features[activeFeature].image}
                                                 alt={features[activeFeature].title}
-                                                className="rounded-xl shadow-lg max-h-[300px] w-auto object-contain"
+                                                className="rounded-xl shadow-lg max-h-[360px] w-auto object-contain"
                                             />
                                         </div>
 

@@ -83,7 +83,7 @@ export function HeroSection() {
                             <img
                                 src="/meta-partner-badge.png"
                                 alt="Meta Business Partner"
-                                className="mb-4 hidden lg:block w-[60%]"
+                                className="mb-4 hidden lg:block w-[48%]"
                             />
 
                             <div className="relative w-full flex justify-center lg:justify-end">
