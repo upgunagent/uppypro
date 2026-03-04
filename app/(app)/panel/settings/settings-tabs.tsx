@@ -9,13 +9,14 @@ interface SettingsTabsProps {
     profileTab: ReactNode;
     subscriptionTab: ReactNode;
     employeeTab: ReactNode;
+    chatSettingsTab: ReactNode;
     defaultValue?: string;
 }
 
-export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, employeeTab, defaultValue = "connections" }: SettingsTabsProps) {
+export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[800px] h-12 bg-slate-100 p-1">
+            <TabsList className="grid w-full grid-cols-5 lg:w-[1000px] h-12 bg-slate-100 p-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Plug className="w-4 h-4 mr-2" />
                     Bağlantı Ayarları
@@ -31,6 +32,10 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, emplo
                 <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Users className="w-4 h-4 mr-2" />
                     Çalışanlar
+                </TabsTrigger>
+                <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Chat Ayarları
                 </TabsTrigger>
             </TabsList>
 
@@ -48,6 +53,10 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, emplo
 
             <TabsContent value="employees" className="space-y-6 outline-none">
                 {employeeTab}
+            </TabsContent>
+
+            <TabsContent value="chat" className="space-y-6 outline-none">
+                {chatSettingsTab}
             </TabsContent>
         </Tabs>
     );

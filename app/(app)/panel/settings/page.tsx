@@ -10,6 +10,7 @@ import { PasswordChangeCard } from "./password-change-card";
 import { LocationsCard } from "@/components/settings/locations-card";
 import { TemplatesCard } from "@/components/settings/templates-card";
 import { EmployeeSettingsTab } from "@/components/settings/employee-settings-tab";
+import { ChatSettingsTab } from "./chat-settings-tab";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
@@ -42,7 +43,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
         { data: subscription },
         { data: paymentMethods },
         { data: tenant_locations },
-        { data: employees }
+        { data: employees },
+        { data: cannedResponses }
     ] = await Promise.all([
         supabase.from("tenants").select("*").eq("id", member.tenant_id).single(),
         supabase.from("profiles").select("*").eq("user_id", user.id).single(),
@@ -52,7 +54,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
         supabase.from("subscriptions").select("*").eq("tenant_id", member.tenant_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from("payment_methods").select("*").eq("tenant_id", member.tenant_id),
         supabase.from("tenant_locations").select("*").eq("tenant_id", member.tenant_id).order("created_at", { ascending: false }),
-        supabase.from("tenant_employees").select("*").eq("tenant_id", member.tenant_id).order("name", { ascending: true })
+        supabase.from("tenant_employees").select("*").eq("tenant_id", member.tenant_id).order("name", { ascending: true }),
+        supabase.from("canned_responses").select("*").eq("tenant_id", member.tenant_id).order("shortcut", { ascending: true })
     ]);
 
     // Fetch pricing for both plans to support upgrade/downgrade UI
@@ -152,6 +155,15 @@ export default async function SettingsPage(props: SettingsPageProps) {
         />
     );
 
+    // 5. Chat Settings Tab Content
+    const chatSettingsTab = (
+        <ChatSettingsTab
+            tenantId={member.tenant_id}
+            initialAiEnabled={tenant?.ai_auto_correct_enabled ?? true}
+            initialResponses={cannedResponses || []}
+        />
+    );
+
     return (
         <div className="space-y-8 p-8 max-w-[1200px]">
             <div className="flex items-center justify-between">
@@ -170,6 +182,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
                 profileTab={profileTab}
                 subscriptionTab={subscriptionTab}
                 employeeTab={employeeTab}
+                chatSettingsTab={chatSettingsTab}
             />
         </div>
     );

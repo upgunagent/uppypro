@@ -1,11 +1,34 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin"; // Needed for upsert if user RLS is strict
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+// HTML helper: popup'tan parent'a postMessage gönderir ve kapanır
+function popupResponse(type: "IG_OAUTH_SUCCESS" | "IG_OAUTH_ERROR", message?: string) {
+    const payload = JSON.stringify({ type, message: message || "" });
+    const isSuccess = type === "IG_OAUTH_SUCCESS";
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bağlanıyor...</title>
+    <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;}
+    .box{text-align:center;padding:2rem;border-radius:1rem;background:white;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:320px;}
+    .icon{font-size:3rem;margin-bottom:1rem;}
+    h2{margin:.5rem 0;font-size:1.25rem;}
+    p{color:#64748b;font-size:.875rem;margin:.25rem 0 0;}
+    </style></head><body>
+    <div class="box">
+        <div class="icon">${isSuccess ? "✅" : "❌"}</div>
+        <h2>${isSuccess ? "Bağlantı Başarılı!" : "Bağlantı Hatası"}</h2>
+        <p>${isSuccess ? "Instagram hesabınız bağlandı. Bu pencere kapanıyor..." : (message || "Bir hata oluştu.")}</p>
+    </div>
+    <script>
+        try { if (window.opener) { window.opener.postMessage(${payload}, window.location.origin); } } catch(e){}
+        setTimeout(() => window.close(), ${isSuccess ? 1500 : 4000});
+    </script>
+    </body></html>`;
+    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
-    const state = searchParams.get("state"); // "tenantId:nonce"
+    const state = searchParams.get("state");
     const error = searchParams.get("error");
     const errorReason = searchParams.get("error_reason");
     const errorDescription = searchParams.get("error_description");
@@ -17,25 +40,22 @@ export async function GET(request: Request) {
 
     if (error || !code || !state) {
         console.error("Callback Error Query:", { error, errorReason, errorDescription });
-        return redirect("/panel/settings?error=instagram_auth_failed");
+        return popupResponse("IG_OAUTH_ERROR", errorDescription || "Instagram yetkilendirmesi başarısız.");
     }
 
-    const [tenantId, nonce] = state.split(":");
+    const [tenantId] = state.split(":");
     console.log("Tenant ID from State:", tenantId);
 
     if (!tenantId) {
-        return redirect("/panel/settings?error=invalid_state");
+        return popupResponse("IG_OAUTH_ERROR", "Geçersiz durum parametresi.");
     }
 
-    // Verify session
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        console.warn("User Session not found");
-        return redirect("/login"); // Session expired
+        return popupResponse("IG_OAUTH_ERROR", "Oturum süresi doldu. Lütfen tekrar giriş yapın.");
     }
 
-    // Double check user belongs to this tenant
     const { data: member } = await supabase
         .from("tenant_members")
         .select("tenant_id")
@@ -44,8 +64,7 @@ export async function GET(request: Request) {
         .single();
 
     if (!member) {
-        console.error("User does not belong to tenant:", tenantId);
-        return redirect("/panel/settings?error=unauthorized_tenant");
+        return popupResponse("IG_OAUTH_ERROR", "Yetkisiz erişim.");
     }
 
     const appId = process.env.IG_APP_ID;
@@ -53,15 +72,11 @@ export async function GET(request: Request) {
     const redirectUri = process.env.IG_REDIRECT_URI || `${new URL(request.url).origin}/api/integrations/instagram/login/callback`;
 
     if (!appId || !appSecret) {
-        console.error("Missing Env Vars");
-        return new Response("Missing IG env vars", { status: 500 });
+        return popupResponse("IG_OAUTH_ERROR", "Sunucu yapılandırma hatası.");
     }
 
     try {
-        // 1. Exchange Code for Access Token (Facebook Graph API)
-        console.log("Exchange Code for Token...");
-        console.log("Redirect URI:", redirectUri);
-
+        // 1. Exchange Code for Access Token
         const tokenRes = await fetch(
             `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`,
             { method: "GET" }
@@ -70,82 +85,57 @@ export async function GET(request: Request) {
 
         if (tokenData.error || !tokenData.access_token) {
             console.error("IG Token Error:", JSON.stringify(tokenData));
-            throw new Error(tokenData.error?.message || "Failed to get access token");
+            throw new Error(tokenData.error?.message || "Access token alınamadı.");
         }
 
         const accessToken = tokenData.access_token;
-        console.log("Access Token received.");
 
-        // 2. Token Analysis (Required for Granular Permissions Lookup)
+        // 2. Debug token for granular scopes
         const debugRes = await fetch(
             `https://graph.facebook.com/v21.0/debug_token?input_token=${accessToken}&access_token=${appId}|${appSecret}`
         );
         const debugData = await debugRes.json();
-
-        // 4. ROBUST STRATEGY: Use target_ids from debug_token
-        // If Granular Permissions are used, /me/accounts might be empty, but target_ids tells us exactly what we have access to.
 
         let foundPage = null;
         const scopes = debugData.data?.granular_scopes || [];
         const pageScope = scopes.find((s: any) => s.scope === 'pages_show_list');
         const targetIds = pageScope ? pageScope.target_ids : [];
 
-        console.log("Authorized Page IDs (Target IDs):", targetIds);
-
         if (targetIds && targetIds.length > 0) {
-            // Fetch each authorized page directly to find the one with IG
             for (const pageId of targetIds) {
-                console.log(`Checking Page ID: ${pageId}...`);
-                // Request Page Access Token explicitly
                 const pageRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}?fields=access_token,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
                 const pageData = await pageRes.json();
-
                 if (pageData.instagram_business_account) {
                     foundPage = pageData;
-                    break; // Found one!
+                    break;
                 }
             }
         }
 
-        // Fallback to /me/accounts if no target_ids (unlikely in business login) or if legacy token
         if (!foundPage) {
-            console.log("No specific target_ids found or no IG linked in them. Trying /me/accounts fallback...");
             const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=access_token,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
             const accountsData = await accountsRes.json();
             foundPage = accountsData.data?.find((p: any) => p.instagram_business_account);
         }
 
-        const pageWithIg = foundPage;
-
-        if (!pageWithIg) {
-            console.error("No IG Account found linked to Pages.");
-            throw new Error("No Instagram Business account linked to your Facebook Pages. Please ensure you selected a Page connected to an Instagram Business account.");
+        if (!foundPage) {
+            throw new Error("Facebook Sayfanıza bağlı bir Instagram Business hesabı bulunamadı.");
         }
 
-        const igAccount = pageWithIg.instagram_business_account;
+        const igAccount = foundPage.instagram_business_account;
         const igUserId = igAccount.id;
         const username = igAccount.username;
-        // USE PAGE ACCESS TOKEN
-        const pageAccessToken = pageWithIg.access_token;
+        const pageAccessToken = foundPage.access_token;
 
-        console.log("Found IG Account:", username, igUserId);
-        console.log("Page Access Token Found:", !!pageAccessToken);
-
-        // 2.5. IMPORTANT: Subscribe to Webhooks for this Page using PAGE TOKEN
+        // 3. Subscribe to Webhooks
         if (pageAccessToken) {
-            console.log("Subscribing Page to App Webhooks...");
-            const subscribeRes = await fetch(
-                `https://graph.facebook.com/v21.0/${pageWithIg.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins,message_deliveries,message_reads&access_token=${pageAccessToken}`,
+            await fetch(
+                `https://graph.facebook.com/v21.0/${foundPage.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins,message_deliveries,message_reads&access_token=${pageAccessToken}`,
                 { method: "POST" }
             );
-            const subscribeData = await subscribeRes.json();
-            console.log("Subscribe Result:", subscribeData);
-        } else {
-            console.warn("No Page Access Token found. Skipping subscription (User Token might fail).");
         }
 
-        // 3. Save to DB
-        console.log("Saving to DB...");
+        // 4. Save to DB
         const admin = createAdminClient();
         const { error: dbError } = await admin.from("channel_connections").upsert({
             tenant_id: tenantId,
@@ -156,9 +146,9 @@ export async function GET(request: Request) {
                 ig_user_id: igUserId,
                 username: username,
                 account_type: "business",
-                page_id: pageWithIg.id // Store Page ID too valuable
+                page_id: foundPage.id
             },
-            access_token_encrypted: pageAccessToken || accessToken // Prefer Page Token
+            access_token_encrypted: pageAccessToken || accessToken
         }, { onConflict: "tenant_id, channel" });
 
         if (dbError) {
@@ -166,11 +156,10 @@ export async function GET(request: Request) {
             throw dbError;
         }
 
-        console.log("Done. Redirecting...");
-        return redirect("/panel/settings?success=instagram_connected");
+        return popupResponse("IG_OAUTH_SUCCESS");
 
     } catch (err: any) {
-        console.error("Callback Error Details:", err);
-        return redirect(`/panel/settings?error=server_error&details=${encodeURIComponent(err.message)}`);
+        console.error("Callback Error:", err);
+        return popupResponse("IG_OAUTH_ERROR", err.message);
     }
 }

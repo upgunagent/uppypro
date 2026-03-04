@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick } from "lucide-react";
+import { Send, Bot, User, Smile, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { useMemo } from "react";
 import { TemplatePickerModal } from "./template-picker-modal";
+import { CannedResponsesPicker, CannedResponse } from "./canned-responses-picker";
+import { AiCorrectButton } from "./ai-correct-button";
 
 interface Message {
     id: string;
@@ -60,6 +62,8 @@ export default function ChatInterface({
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+    const [showCannedPicker, setShowCannedPicker] = useState(false);
+    const [selectedCannedMedia, setSelectedCannedMedia] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [tenantLocations, setTenantLocations] = useState<any[]>(safeLocations);
@@ -384,45 +388,67 @@ export default function ChatInterface({
 
 
 
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || sending) return;
 
         setSending(true);
-        const optimisticMsg: Message = {
-            id: "temp-" + Date.now(),
-            text: input,
+        const textToSend = input;
+        const mediaToSend = selectedCannedMedia;
+
+        // Optimistic: metin mesajı
+        const optimisticText: Message = {
+            id: "temp-text-" + Date.now(),
+            text: textToSend,
             sender: "HUMAN",
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
         };
-        setMessages((prev) => [...prev, optimisticMsg]);
+        // Optimistic: görsel mesajı (varsa)
+        const optimisticMedia: Message | null = mediaToSend ? {
+            id: "temp-media-" + (Date.now() + 1),
+            text: "",
+            sender: "HUMAN",
+            created_at: new Date().toISOString(),
+            media_url: mediaToSend,
+            message_type: "image",
+        } : null;
+
+        setMessages((prev) => optimisticMedia ? [...prev, optimisticText, optimisticMedia] : [...prev, optimisticText]);
         setInput("");
+        setSelectedCannedMedia(null);
         setShowEmojiPicker(false);
+        setShowCannedPicker(false);
 
         try {
-            const { data: realMsg } = await sendMessage(conversationId, optimisticMsg.text);
-
-            if (realMsg) {
+            // 1. Önce metni gönder
+            const { data: realTextMsg } = await sendMessage(conversationId, textToSend);
+            if (realTextMsg) {
                 setMessages(prev => {
-                    // Check if the real message already arrived via realtime or hybrid sync
-                    const alreadyExists = prev.some(m => m.id === realMsg.id);
-
-                    if (alreadyExists) {
-                        // If real message exists, remove the temp one to dedup
-                        return prev.filter(m => m.id !== optimisticMsg.id);
-                    } else {
-                        // Otherwise, swap temp -> real
-                        return prev.map(m => m.id === optimisticMsg.id ? (realMsg as Message) : m);
-                    }
+                    const alreadyExists = prev.some(m => m.id === realTextMsg.id);
+                    if (alreadyExists) return prev.filter(m => m.id !== optimisticText.id);
+                    return prev.map(m => m.id === optimisticText.id ? (realTextMsg as Message) : m);
                 });
+            }
+
+            // 2. Varsa görseli ayrı mesaj olarak gönder
+            if (mediaToSend && optimisticMedia) {
+                const { data: realMediaMsg } = await sendMessage(conversationId, "", mediaToSend, "image");
+                if (realMediaMsg) {
+                    setMessages(prev => {
+                        const alreadyExists = prev.some(m => m.id === realMediaMsg.id);
+                        if (alreadyExists) return prev.filter(m => m.id !== optimisticMedia.id);
+                        return prev.map(m => m.id === optimisticMedia.id ? (realMediaMsg as Message) : m);
+                    });
+                }
             }
         } catch (err) {
             console.error("Failed to send", err);
-            // Optional: Mark optimistic msg as error
         } finally {
             setSending(false);
         }
     };
+
 
     // Local Mode State to Support Optimistic Updates
     const [currentMode, setCurrentMode] = useState(conversationMode);
@@ -1133,29 +1159,78 @@ export default function ChatInterface({
                         </div>
                     ) : (
                         <>
-                            <Input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onFocus={() => setIsInputFocused(true)}
-                                onBlur={() => setIsInputFocused(false)}
-                                placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın..."}
-                                className="flex-1 bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500 text-base md:text-sm"
-                            />
-                            {!input.trim() && (
+                            {/* Kısayol (Canned) Picker Butonu + Popover */}
+                            <CannedResponsesPicker
+                                tenantId={tenantId}
+                                open={showCannedPicker}
+                                onOpenChange={setShowCannedPicker}
+                                onSelect={(resp) => {
+                                    setInput(resp.content);
+                                    setSelectedCannedMedia(resp.media_url || null);
+                                    setShowCannedPicker(false);
+                                }}
+                            >
                                 <button
                                     type="button"
-                                    onClick={startRecording}
-                                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
+                                    onClick={() => setShowCannedPicker((prev) => !prev)}
+                                    title="Hazır Cevaplar"
+                                    className="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors shrink-0 border border-slate-200 bg-white"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                                    <MessageSquarePlus className="w-4 h-4" />
                                 </button>
-                            )}
-                            {input.trim() && (
-                                <Button type="submit" disabled={sending || currentMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
-                                    <Send className="w-4 h-4" />
-                                </Button>
-                            )}
+                            </CannedResponsesPicker>
+
+                            {/* Medya önizlemesi (canned response'dan geliyorsa) */}
+                            <div className="flex-1 relative flex flex-col gap-1">
+                                {selectedCannedMedia && (
+                                    <div className="flex items-center gap-2 px-2 py-1 bg-blue-50 rounded-md border border-blue-200">
+                                        <img src={selectedCannedMedia} alt="Ek görsel" className="h-8 w-8 rounded object-cover border" />
+                                        <span className="text-xs text-blue-700 flex-1">Görsel mesajla birlikte gönderilecek</span>
+                                        <button type="button" onClick={() => setSelectedCannedMedia(null)} className="text-blue-400 hover:text-red-500">
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className="relative flex items-center">
+                                    <Input
+                                        value={input}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setInput(val);
+                                            if (val.startsWith("/")) {
+                                                setShowCannedPicker(true);
+                                            } else {
+                                                setShowCannedPicker(false);
+                                            }
+                                        }}
+                                        onFocus={() => setIsInputFocused(true)}
+                                        onBlur={() => setIsInputFocused(false)}
+                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Belge gönderilemez)..." : "Mesaj yazın veya '/' ile hazır cevap seçin..."}
+                                        className="w-full bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 focus-visible:ring-orange-500 text-base md:text-sm pr-28"
+                                    />
+                                    <AiCorrectButton
+                                        input={input}
+                                        onCorrected={setInput}
+                                        isEnabled={true}
+                                    />
+                                </div>
+                            </div>
                         </>
+                    )}
+
+                    {!isRecording && !input.trim() && (
+                        <button
+                            type="button"
+                            onClick={startRecording}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                        </button>
+                    )}
+                    {input.trim() && (
+                        <Button type="submit" disabled={sending || currentMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
+                            <Send className="w-4 h-4" />
+                        </Button>
                     )}
                 </form>
             </div>

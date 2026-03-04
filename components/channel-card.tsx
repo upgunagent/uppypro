@@ -176,10 +176,54 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
         }, 100);
     }, [CONFIG_ID, handleEmbeddedSignupCallback]);
 
-    // --- Instagram OAuth ---
+    // --- Instagram OAuth via Popup ---
     const handleOAuthLogin = () => {
-        setLoading(true);
-        router.push("/api/integrations/instagram/login/start");
+        const width = 600, height = 700;
+        const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+        const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
+
+        const popup = window.open(
+            "/api/integrations/instagram/login/start",
+            "instagram_oauth",
+            `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        if (!popup) {
+            alert("Popup engelleyicinizi kapatıp tekrar deneyin.");
+            return;
+        }
+
+        setWizardStep("waiting_meta");
+        setWizardError("");
+
+        // Popup kapanana kadar izle (kullanıcı manuel kapattıysa)
+        const closedTimer = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(closedTimer);
+                if (wizardStep === "waiting_meta") {
+                    setWizardStep("idle");
+                }
+            }
+        }, 800);
+
+        // Callback sayfasından postMessage dinle
+        const messageHandler = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data?.type === "IG_OAUTH_SUCCESS") {
+                clearInterval(closedTimer);
+                window.removeEventListener("message", messageHandler);
+                popup.close();
+                setWizardStep("success");
+                setTimeout(() => router.refresh(), 1200);
+            } else if (event.data?.type === "IG_OAUTH_ERROR") {
+                clearInterval(closedTimer);
+                window.removeEventListener("message", messageHandler);
+                popup.close();
+                setWizardError(event.data.message || "Bağlantı hatası oluştu.");
+                setWizardStep("error");
+            }
+        };
+        window.addEventListener("message", messageHandler);
     };
 
     // --- Legacy Manual Connect ---
@@ -391,17 +435,41 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
                                     {loading ? "İşleniyor..." : "Bağlantıyı Sonlandır"}
                                 </Button>
                             </div>
+                        ) : wizardStep === "waiting_meta" ? (
+                            <div className="flex items-center gap-3 py-2">
+                                <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                <div>
+                                    <p className="text-sm text-white/90 font-medium">Instagram oturum açma penceresi açıldı</p>
+                                    <p className="text-xs text-white/60">Lütfen adımları tamamlayın</p>
+                                </div>
+                            </div>
+                        ) : wizardStep === "success" ? (
+                            <div className="flex items-center gap-3 py-2">
+                                <CheckCircle className="w-5 h-5 text-white" />
+                                <p className="text-sm text-white font-bold">Başarıyla bağlandı! 🎉</p>
+                            </div>
+                        ) : wizardStep === "error" ? (
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-2 bg-red-900/40 rounded-lg p-3 border border-red-300/20">
+                                    <AlertCircle className="w-4 h-4 text-red-200 mt-0.5 shrink-0" />
+                                    <p className="text-xs text-red-100">{wizardError || "Bağlantı hatası."}</p>
+                                </div>
+                                <Button size="sm" onClick={() => { setWizardStep("idle"); setWizardError(""); }}
+                                    className={clsx("w-full h-9 font-bold", buttonClass)}>
+                                    Tekrar Dene
+                                </Button>
+                            </div>
                         ) : (
                             <div className="space-y-3">
                                 <p className="text-sm text-white/80 leading-relaxed">Instagram DM kutunuzu CRM sisteminize entegre edin.</p>
                                 <Button size="sm" onClick={handleOAuthLogin}
-                                    className={clsx("w-full h-10 font-bold shadow-lg border-2 border-transparent", buttonClass)}
-                                    disabled={loading}>
-                                    {loading ? "Yönlendiriliyor..." : "Instagram ile Bağlan"}
+                                    className={clsx("w-full h-10 font-bold shadow-lg border-2 border-transparent", buttonClass)}>
+                                    Instagram ile Bağlan
                                 </Button>
                             </div>
                         )
                     )}
+
                 </div>
             </div>
 

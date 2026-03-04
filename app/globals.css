@@ -1,5 +1,9 @@
 @import 'leaflet/dist/leaflet.css';
+
 @import "tailwindcss";
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: var(--font-inter);
