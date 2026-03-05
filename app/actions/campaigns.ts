@@ -573,3 +573,28 @@ export async function getCampaignReports(tenantId: string) {
 
     return { success: true, reports: reportData };
 }
+
+// =====================================================================
+// DELETE CAMPAIGN ACTION
+// =====================================================================
+export async function deleteCampaign(campaignId: string, tenantId: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignId)
+        .eq('tenant_id', tenantId);
+
+    if (error) {
+        console.error("Error deleting campaign:", error);
+        return { success: false, error: "Kampanya silinirken bir hata oluştu." };
+    }
+
+    // ON DELETE CASCADE yoksa manuel olarak logları da silebilirsiniz. 
+    // Supabase şemasında ON DELETE CASCADE var kabul ederek (yoksa bile zararı olmaz)
+    await supabase.from('customer_campaign_logs').delete().eq('campaign_id', campaignId);
+
+    revalidatePath("/panel/settings");
+    return { success: true };
+}

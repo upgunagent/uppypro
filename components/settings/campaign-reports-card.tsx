@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Search, FileText, ChevronRight, Users, CheckCheck, Check, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { BarChart, Search, FileText, ChevronRight, Users, CheckCheck, Check, AlertCircle, Clock, CheckCircle2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -40,6 +40,23 @@ export function CampaignReportsCard({ tenantId }: CampaignReportsCardProps) {
             fetchReports();
         }
     }, [tenantId]);
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        const conf = confirm("Bu kampanyayı silmek istediğinize emin misiniz? (Geçmiş verileriniz silinecektir)");
+        if (!conf) return;
+
+        // Optimistic UI update
+        setReports(prev => prev.filter(r => r.id !== id));
+
+        try {
+            const { deleteCampaign } = await import("@/app/actions/campaigns");
+            await deleteCampaign(id, tenantId);
+        } catch (error) {
+            console.error("Error deleting campaign:", error);
+            // Revert optimistically if failed? Optionally we can refetch.
+        }
+    };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -194,14 +211,14 @@ export function CampaignReportsCard({ tenantId }: CampaignReportsCardProps) {
                                             </div>
                                         )}
 
-                                        <Button variant="ghost" size="sm" className="hidden md:flex group-hover:bg-slate-100 text-slate-500 group-hover:text-primary">
-                                            Detayları İncele
-                                            <ChevronRight className="w-4 h-4 ml-1" />
-                                        </Button>
-
-                                        {/* Sadece mobil için buton */}
-                                        <Button variant="outline" size="sm" className="md:hidden w-full mt-2">
-                                            Detaylar
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                            onClick={(e) => handleDelete(e, report.id)}
+                                            title="Kampanyayı Sil"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>
 
