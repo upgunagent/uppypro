@@ -1379,7 +1379,12 @@ export default function ChatInterface({
                         setMessages((prev) => [...prev, optimisticMsg]);
 
                         const { sendMessage } = await import("@/app/actions/chat");
-                        await sendMessage(conversationId, displayTitle, undefined, 'template', undefined, payload);
+                        const result = await sendMessage(conversationId, displayTitle, undefined, 'template', undefined, payload);
+
+                        // sendMessage artık throw etmiyor, error ile return ediyor
+                        if (result?.error) {
+                            alert("Şablon gönderilirken hata oluştu: " + result.error);
+                        }
                     } catch (err: any) {
                         alert("Şablon gönderilirken hata oluştu: " + err.message);
                     } finally {

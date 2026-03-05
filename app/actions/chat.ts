@@ -43,8 +43,13 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
 
         if (!result.success) {
             console.error("Meta Send Failed:", result.error);
-            // Optional: Mark message as failed in DB?
-            throw new Error(`Mesaj gönderildi (DB) ama iletilemedi: ${result.error}`);
+            // Mesajı DB'de failed olarak işaretle
+            const adminDb = createAdminClient();
+            await adminDb.from("messages").update({
+                payload: { ...((payload as any) || {}), _send_error: result.error }
+            }).eq("id", insertedMsg.id);
+
+            return { data: insertedMsg, error: `Mesaj iletilemedi: ${result.error}` };
         }
 
         // CAPTURE EXTERNAL ID

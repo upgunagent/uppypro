@@ -252,6 +252,53 @@ async function processCampaignInBackground(
         return;
     }
 
+    // Şablonun medya (header image/video/document) bilgisini çek
+    const { data: templateAttachment } = await sb
+        .from('whatsapp_template_attachments')
+        .select('file_url, file_type')
+        .eq('tenant_id', tenantId)
+        .eq('template_name', templateName)
+        .eq('language', templateLanguage)
+        .single();
+
+    // Medya varsa WhatsApp'a yükle — bir kez yükleme yap, tüm mesajlarda kullan
+    let headerMediaId: string | null = null;
+    let headerMediaType: string | null = null;
+
+    if (templateAttachment?.file_url) {
+        headerMediaType = (templateAttachment.file_type || 'IMAGE').toLowerCase(); // image, video, document
+        console.log(`[CampaignProcessor] Template has media header: ${headerMediaType}, URL: ${templateAttachment.file_url}`);
+        try {
+            // 1. Dosyayı indir
+            const mediaResponse = await fetch(templateAttachment.file_url);
+            if (mediaResponse.ok) {
+                const blob = await mediaResponse.blob();
+                const formData = new FormData();
+                formData.append("messaging_product", "whatsapp");
+                formData.append("file", blob, templateAttachment.file_url.split('/').pop() || "media_file");
+
+                // 2. WhatsApp'a yükle
+                const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${waPhoneNumberId}/media`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${waAccessToken}` },
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+
+                if (uploadData.id) {
+                    headerMediaId = uploadData.id;
+                    console.log(`[CampaignProcessor] Media uploaded to WA, ID: ${headerMediaId}`);
+                } else {
+                    console.error("[CampaignProcessor] Media upload failed:", uploadData.error);
+                }
+            } else {
+                console.error(`[CampaignProcessor] Failed to fetch media: HTTP ${mediaResponse.status}`);
+            }
+        } catch (mediaErr: any) {
+            console.error("[CampaignProcessor] Media upload exception:", mediaErr.message);
+        }
+    }
+
     let successCount = 0;
     let failCount = 0;
 
@@ -309,6 +356,24 @@ async function processCampaignInBackground(
                 parameters.push({ type: "text", text: String(textValue).trim() || " " });
             }
             components.push({ type: "body", parameters });
+        }
+
+        // Header medya component'i ekle (varsa) — components array'inin BAŞINA
+        if (headerMediaId && headerMediaType) {
+            const mediaParam: any = { type: headerMediaType };
+            mediaParam[headerMediaType] = { id: headerMediaId };
+            components.unshift({
+                type: "header",
+                parameters: [mediaParam]
+            });
+        } else if (templateAttachment?.file_url && headerMediaType) {
+            // Media ID alınamadıysa link ile dene (fallback)
+            const mediaParam: any = { type: headerMediaType };
+            mediaParam[headerMediaType] = { link: templateAttachment.file_url };
+            components.unshift({
+                type: "header",
+                parameters: [mediaParam]
+            });
         }
 
         const payload = {
