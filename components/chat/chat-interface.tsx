@@ -861,22 +861,53 @@ export default function ChatInterface({
                                         </a>
                                     ) : msg.message_type === 'template' && msg.payload ? (
                                         <div className="flex flex-col gap-2 min-w-[200px] max-w-[300px] text-sm">
-                                            {/* Şablon Bilgi Kartı */}
-                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <MessageSquare size={14} className="text-green-600" />
-                                                    <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Şablon Mesajı</span>
+                                            {/* Header Medya Önizlemesi */}
+                                            {msg.payload._mediaUrl && (
+                                                <div className="w-full relative rounded-md overflow-hidden bg-slate-200 flex items-center justify-center mb-1">
+                                                    {msg.payload._mediaType === "IMAGE" && (
+                                                        <img src={msg.payload._mediaUrl} alt="Şablon Görseli" className="max-h-[200px] object-contain w-full" />
+                                                    )}
+                                                    {msg.payload._mediaType === "VIDEO" && (
+                                                        <video src={msg.payload._mediaUrl} controls className="max-h-[200px] w-full" />
+                                                    )}
+                                                    {msg.payload._mediaType === "DOCUMENT" && (
+                                                        <a href={msg.payload._mediaUrl} target="_blank" className="flex items-center justify-center p-3 text-slate-600 bg-slate-100 w-full hover:bg-slate-200 transition-colors">
+                                                            <FileText size={24} className="mr-2 text-red-500" />
+                                                            <span className="text-xs truncate font-medium">Belgeyi Görüntüle</span>
+                                                        </a>
+                                                    )}
                                                 </div>
-                                                <p className="text-sm font-medium text-slate-800">{msg.payload.name || "Şablon"}</p>
-                                                {msg.payload.language && (
-                                                    <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded mt-1 inline-block">{msg.payload.language}</span>
-                                                )}
-                                            </div>
+                                            )}
 
-                                            {/* Text fallback (mesaj text'i varsa göster) */}
-                                            {msg.text && (
-                                                <div className="whitespace-pre-wrap leading-relaxed text-slate-700 text-sm">
-                                                    {msg.text}
+                                            {/* Body Metni */}
+                                            {msg.payload._bodyText ? (
+                                                <div className="whitespace-pre-wrap leading-relaxed text-slate-800">
+                                                    {msg.payload._bodyText}
+                                                </div>
+                                            ) : (
+                                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <MessageSquare size={14} className="text-green-600" />
+                                                        <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Şablon Mesajı</span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-slate-800">{msg.payload.name || "Şablon"}</p>
+                                                    {msg.payload.language && (
+                                                        <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded mt-1 inline-block">{msg.payload.language}</span>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Butonlar */}
+                                            {msg.payload._buttons && msg.payload._buttons.length > 0 && (
+                                                <div className="flex flex-col gap-1.5 mt-1 border-t pt-2 border-slate-200/60">
+                                                    {msg.payload._buttons.map((btn: any, idx: number) => (
+                                                        <div key={idx} className="bg-white/60 border border-slate-100 rounded-lg p-2 text-center text-blue-600 font-semibold text-xs flex items-center justify-center gap-1.5 opacity-90">
+                                                            {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5" />}
+                                                            {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5" />}
+                                                            {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5" />}
+                                                            {btn.text}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
 
@@ -1360,11 +1391,28 @@ export default function ChatInterface({
                 onSelectTemplate={async (name, language, components, fullTemplate, variables) => {
                     setSending(true);
                     try {
-                        // Sadece serileştirilebilir basit alanları geçir (fullTemplate büyük ve serialization hatası verir)
+                        // fullTemplate'ten serileştirilebilir display verilerini çıkar
+                        // sendToChannel sadece name/language/components kullanır — _önekli alanlar gönderimi ETKİLEMEZ
+                        let bodyText = fullTemplate?.components?.find((c: any) => c.type === "BODY")?.text || "";
+                        // Değişken değerlerini body text'e uygula
+                        if (variables) {
+                            Object.entries(variables).forEach(([k, v]) => {
+                                if (k.startsWith('body_')) {
+                                    const varName = k.slice(5);
+                                    bodyText = bodyText.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(v));
+                                }
+                            });
+                        }
+
                         const payload = {
                             name,
                             language,
                             components,
+                            // Display verileri (gönderimi etkilemez, sadece chat render için)
+                            _bodyText: bodyText,
+                            _mediaUrl: fullTemplate?.uppypro_media?.file_url || null,
+                            _mediaType: fullTemplate?.uppypro_media?.file_type || null,
+                            _buttons: fullTemplate?.components?.find((c: any) => c.type === "BUTTONS")?.buttons?.map((btn: any) => ({ type: btn.type, text: btn.text, url: btn.url })) || null,
                         };
                         const displayTitle = "Şablon Gönderildi\nSeçilen Şablon Adı: " + name;
 
