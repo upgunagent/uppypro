@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Instagram, Settings, Send, Paperclip } from "lucide-react";
+import { MessageCircle, Instagram, Settings, Send, Paperclip, RefreshCcw } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FreeTrialModal } from "@/components/landing/free-trial-modal";
 
 export function HeroSection() {
@@ -74,7 +74,7 @@ export function HeroSection() {
 
                         {/* Visual Content (Mockup) */}
                         <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex flex-col items-end">
-
+                            <SyncAnimationBadge />
 
                             <div className="relative w-full flex justify-center lg:justify-end">
                                 {/* Floating Elements (Background) */}
@@ -223,4 +223,66 @@ function CheckCircle({ className }: { className?: string }) {
             <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
     )
+}
+
+function SyncAnimationBadge() {
+    const [activeIcon, setActiveIcon] = useState<"whatsapp" | "instagram">("whatsapp");
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveIcon((prev) => (prev === "whatsapp" ? "instagram" : "whatsapp"));
+        }, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="flex items-center gap-6 bg-white/90 backdrop-blur-md px-6 py-4 rounded-3xl shadow-xl border border-slate-100 mb-8 w-fit mx-auto lg:mx-0 mr-8">
+            {/* UU Logo */}
+            <div className="h-12 flex items-center justify-center">
+                <img src="/uu-sync-logo.png" alt="UppyPro" className="h-[42px] w-auto object-contain" />
+            </div>
+
+            {/* Sync Arrows */}
+            <div className="relative flex items-center justify-center">
+                {/* Background glow for arrows */}
+                <div className="absolute inset-0 bg-blue-100 blur-xl rounded-full scale-150"></div>
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    className="text-blue-500 relative z-10"
+                >
+                    <RefreshCcw size={32} strokeWidth={2.5} />
+                </motion.div>
+            </div>
+
+            {/* Social Media Logos */}
+            <div className="w-14 h-14 relative flex items-center justify-center bg-slate-50 rounded-2xl shadow-inner border border-slate-100/50">
+                <AnimatePresence mode="wait">
+                    {activeIcon === "whatsapp" ? (
+                        <motion.div
+                            key="wa"
+                            initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: 45 }}
+                            transition={{ duration: 0.4, ease: "backOut" }}
+                            className="absolute"
+                        >
+                            <MessageCircle size={32} className="text-[#25D366] fill-[#25D366]/10" strokeWidth={2} />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="ig"
+                            initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: 45 }}
+                            transition={{ duration: 0.4, ease: "backOut" }}
+                            className="absolute"
+                        >
+                            <Instagram size={32} className="text-pink-500 fill-pink-500/10" strokeWidth={2} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
 }
