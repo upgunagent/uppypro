@@ -130,7 +130,16 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
         if (bodyKeys.length > 0) {
             payloadComponent.push({
                 type: "body",
-                parameters: bodyKeys.map(k => ({ type: "text", text: variables[k]?.trim() || " " }))
+                parameters: bodyKeys.map(k => {
+                    const varName = k.slice(5); // "body_adsoyad" → "adsoyad", "body_1" → "1"
+                    const isNumeric = !isNaN(parseInt(varName));
+                    const param: any = { type: "text", text: variables[k]?.trim() || " " };
+                    // Meta API: named variable ise parameter_name zorunlu
+                    if (!isNumeric) {
+                        param.parameter_name = varName;
+                    }
+                    return param;
+                })
             });
         }
 

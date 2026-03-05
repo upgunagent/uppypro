@@ -353,7 +353,13 @@ async function processCampaignInBackground(
                         "";
                 }
 
-                parameters.push({ type: "text", text: String(textValue).trim() || " " });
+                const param: any = { type: "text", text: String(textValue).trim() || " " };
+                // Meta API: named variable ise parameter_name zorunlu
+                const isNumeric = !isNaN(parseInt(key));
+                if (!isNumeric) {
+                    param.parameter_name = key; // key = "adsoyad" gibi
+                }
+                parameters.push(param);
             }
             components.push({ type: "body", parameters });
         }
