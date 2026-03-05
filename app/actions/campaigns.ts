@@ -484,3 +484,92 @@ async function processCampaignInBackground(
 
     console.log(`[CampaignProcessor] Campaign ${campaignId} done. Success: ${successCount}, Fail: ${failCount}`);
 }
+
+// =====================================================================
+// CAMPAIGN REPORTS SERVER ACTION
+// =====================================================================
+export async function getCampaignReports(tenantId: string) {
+    const supabase = await createClient();
+
+    // 1. Fetch campaigns for this tenant, ordered by created_at descending
+    const { data: campaigns, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false });
+
+    if (campaignsError) {
+        console.error("Error fetching campaigns:", campaignsError);
+        return { success: false, error: "Kampanyalar alınırken bir hata oluştu." };
+    }
+
+    if (!campaigns || campaigns.length === 0) {
+        return { success: true, reports: [] };
+    }
+
+    // 2. We need aggregated metrics. We can either do it via Supabase RPC or fetch all logs.
+    // Given the potential size of logs, let's group by query if possible, or fetch all relevant logs 
+    // and group in memory if RPC is not available. To keep it simple without DB changes, 
+    // we'll fetch logs grouped by campaign_id.
+
+    // Using a more efficient approach with supabase aggregate queries is better, but since 
+    // standard Supabase JS client doesn't support GROUP BY easily without RPC, 
+    // we'll fetch the necessary counts using simple eq counts or fetching all logs for these campaigns.
+
+    // If campaigns list is huge, fetching all logs might be slow. 
+    // Let's optimize: fetch ONLY status fields for the campaigns in the current page
+    const campaignIds = campaigns.map(c => c.id);
+
+    const { data: logs, error: logsError } = await supabase
+        .from('customer_campaign_logs')
+        .select('campaign_id, status')
+        .in('campaign_id', campaignIds);
+
+    if (logsError) {
+        console.error("Error fetching campaign logs:", logsError);
+        return { success: false, error: "Kampanya istatistikleri alınırken bir hata oluştu." };
+    }
+
+    // 3. Aggregate metrics
+    const reportData = campaigns.map((camp) => {
+        const campLogs = logs?.filter(l => l.campaign_id === camp.id) || [];
+
+        let sent = 0;
+        let delivered = 0;
+        let read = 0;
+        let failed = 0;
+
+        campLogs.forEach(log => {
+            const s = log.status?.toLowerCase();
+            if (s === 'failed') {
+                failed++;
+            } else if (s === 'sent') {
+                sent++;
+            } else if (s === 'delivered') {
+                sent++; // implicitly sent if delivered
+                delivered++;
+            } else if (s === 'read') {
+                sent++; // implicitly sent
+                delivered++; // implicitly delivered
+                read++;
+            }
+        });
+
+        return {
+            id: camp.id,
+            name: camp.name || "İsimsiz Kampanya",
+            template_name: camp.template_name || camp.template_id,
+            status: camp.status,
+            created_at: camp.created_at,
+            metrics: {
+                total: camp.total_target || campLogs.length,
+                sent: sent,
+                delivered: delivered,
+                read: read,
+                failed: failed
+            }
+        };
+    });
+
+    return { success: true, reports: reportData };
+}

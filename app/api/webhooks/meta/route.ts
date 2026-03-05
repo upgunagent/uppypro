@@ -67,9 +67,35 @@ export async function POST(request: Request) {
             let channel: 'whatsapp' | 'instagram' = 'whatsapp';
             let recipientId = null; // To find tenant
 
-            // FILTER: Ignore Status Updates (WhatsApp)
+            // PROCESS Status Updates (WhatsApp) for Campaign/Message Logs
             if (changes?.statuses) {
-                console.log("Ignoring value 'statuses' update");
+                const statusObj = changes.statuses[0];
+                if (statusObj && statusObj.id) {
+                    const messageId = statusObj.id; // Meta Message ID
+                    const msgStatus = statusObj.status; // 'sent', 'delivered', 'read', 'failed'
+
+                    let updatePayload: any = { status: msgStatus };
+
+                    if (msgStatus === 'delivered') updatePayload.delivered_at = new Date().toISOString();
+                    if (msgStatus === 'read') updatePayload.read_at = new Date().toISOString();
+                    if (msgStatus === 'failed') {
+                        updatePayload.error_message = JSON.stringify(statusObj.errors);
+                        updatePayload.failed_at = new Date().toISOString();
+                    }
+
+                    // 1. Update Campaign Logs
+                    await supabaseAdmin.from('customer_campaign_logs')
+                        .update(updatePayload)
+                        .eq('meta_message_id', messageId);
+
+                    // 2. Update Direct Messages
+                    await supabaseAdmin.from('messages')
+                        .update({
+                            status: msgStatus,
+                            ...(msgStatus === 'read' ? { is_read: true } : {})
+                        })
+                        .eq('external_message_id', messageId);
+                }
                 continue;
             }
 
