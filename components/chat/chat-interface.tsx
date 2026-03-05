@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus } from "lucide-react";
+import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -859,57 +859,27 @@ export default function ChatInterface({
                                                 </p>
                                             </div>
                                         </a>
-                                    ) : msg.message_type === 'template' && msg.payload?.fullTemplate ? (
+                                    ) : msg.message_type === 'template' && msg.payload ? (
                                         <div className="flex flex-col gap-2 min-w-[200px] max-w-[300px] text-sm">
-                                            {/* Render Header Media */}
-                                            {msg.payload.fullTemplate.uppypro_media && (
-                                                <div className="w-full relative rounded-md overflow-hidden bg-slate-200 flex items-center justify-center mb-1">
-                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "IMAGE" && (
-                                                        <img src={msg.payload.fullTemplate.uppypro_media.file_url} alt="Şablon Görseli" className="max-h-[200px] object-contain w-full" />
-                                                    )}
-                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "VIDEO" && (
-                                                        <video src={msg.payload.fullTemplate.uppypro_media.file_url} controls className="max-h-[200px] w-full" />
-                                                    )}
-                                                    {msg.payload.fullTemplate.uppypro_media.file_type === "DOCUMENT" && (
-                                                        <a href={msg.payload.fullTemplate.uppypro_media.file_url} target="_blank" className="flex items-center justify-center p-3 text-slate-600 bg-slate-100 w-full hover:bg-slate-200 transition-colors">
-                                                            <FileText size={24} className="mr-2 text-red-500" />
-                                                            <span className="text-xs truncate font-medium">Belgeyi Görüntüle</span>
-                                                        </a>
-                                                    )}
+                                            {/* Şablon Bilgi Kartı */}
+                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <MessageSquare size={14} className="text-green-600" />
+                                                    <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Şablon Mesajı</span>
                                                 </div>
-                                            )}
-
-                                            {/* Render Body */}
-                                            <div className="whitespace-pre-wrap leading-relaxed">
-                                                {(() => {
-                                                    let bodyText = msg.payload.fullTemplate.components?.find((c: any) => c.type === "BODY")?.text || "";
-                                                    if (msg.payload.variables) {
-                                                        Object.entries(msg.payload.variables).forEach(([k, v]) => {
-                                                            if (k.startsWith('body_')) {
-                                                                const index = k.split('_')[1];
-                                                                bodyText = bodyText.replace(new RegExp(`\\{\\{${index}\\}\\}`, 'g'), String(v));
-                                                            }
-                                                        });
-                                                    }
-                                                    return bodyText;
-                                                })()}
+                                                <p className="text-sm font-medium text-slate-800">{msg.payload.name || "Şablon"}</p>
+                                                {msg.payload.language && (
+                                                    <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded mt-1 inline-block">{msg.payload.language}</span>
+                                                )}
                                             </div>
 
-                                            {/* Render Buttons */}
-                                            {msg.payload.fullTemplate.components?.find((c: any) => c.type === "BUTTONS") && (
-                                                <div className="flex flex-col gap-1.5 mt-2 border-t pt-2 border-slate-200/60">
-                                                    {msg.payload.fullTemplate.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => {
-                                                        return (
-                                                            <div key={idx} className="bg-white/60 border border-slate-100 rounded-lg p-2 text-center text-blue-600 font-semibold text-xs flex items-center justify-center gap-1.5 opacity-90">
-                                                                {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5" />}
-                                                                {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5" />}
-                                                                {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5" />}
-                                                                {btn.text}
-                                                            </div>
-                                                        )
-                                                    })}
+                                            {/* Text fallback (mesaj text'i varsa göster) */}
+                                            {msg.text && (
+                                                <div className="whitespace-pre-wrap leading-relaxed text-slate-700 text-sm">
+                                                    {msg.text}
                                                 </div>
                                             )}
+
                                             <div className="float-right ml-2 mt-1 flex justify-end items-center gap-1">
                                                 <span className="text-[10px] text-gray-500">
                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

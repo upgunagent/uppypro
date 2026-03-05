@@ -221,16 +221,21 @@ async function processCampaignInBackground(
     const tenantId = campaign.tenant_id;
     const mappings = variableMappings || campaign.variable_mappings || {};
 
-    // Get tenant WABA settings
-    const { data: tenantSetting } = await sb
-        .from('tenant_settings')
-        .select('whatsapp_phone_number_id, whatsapp_access_token')
+    // Get tenant WABA settings from channel_connections (same source as single send)
+    const { data: connection } = await sb
+        .from('channel_connections')
+        .select('access_token_encrypted, meta_identifiers')
         .eq('tenant_id', tenantId)
+        .eq('channel', 'whatsapp')
+        .eq('status', 'connected')
         .single();
 
-    if (!tenantSetting?.whatsapp_access_token || !tenantSetting?.whatsapp_phone_number_id) {
+    const waAccessToken = connection?.access_token_encrypted;
+    const waPhoneNumberId = (connection?.meta_identifiers as any)?.phone_number_id;
+
+    if (!waAccessToken || !waPhoneNumberId) {
         await sb.from('campaigns').update({ status: 'FAILED' }).eq('id', campaignId);
-        console.error("[CampaignProcessor] Tenant WhatsApp Settings Missing");
+        console.error("[CampaignProcessor] Tenant WhatsApp Connection Missing (channel_connections)");
         return;
     }
 
@@ -318,11 +323,11 @@ async function processCampaignInBackground(
         };
 
         try {
-            const url = `https://graph.facebook.com/v19.0/${tenantSetting.whatsapp_phone_number_id}/messages`;
+            const url = `https://graph.facebook.com/v21.0/${waPhoneNumberId}/messages`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${tenantSetting.whatsapp_access_token}`,
+                    'Authorization': `Bearer ${waAccessToken}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)

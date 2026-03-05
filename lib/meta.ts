@@ -176,7 +176,8 @@ export async function sendToChannel(
                     template: {
                         name: payload.name,
                         language: { code: payload.language || "tr" },
-                        components: payload.components || []
+                        // Meta API: değişkensiz şablonlarda components gönderilmemeli
+                        ...(payload.components && payload.components.length > 0 ? { components: payload.components } : {})
                     }
                 };
             } else if (mediaUrl) {
