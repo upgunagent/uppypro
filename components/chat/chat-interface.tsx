@@ -1390,12 +1390,11 @@ export default function ChatInterface({
                 onSelectTemplate={async (name, language, components, fullTemplate, variables) => {
                     setSending(true);
                     try {
+                        // Sadece serileştirilebilir basit alanları geçir (fullTemplate büyük ve serialization hatası verir)
                         const payload = {
                             name,
                             language,
                             components,
-                            fullTemplate,
-                            variables
                         };
                         const displayTitle = "Şablon Gönderildi\nSeçilen Şablon Adı: " + name;
 

@@ -172,14 +172,20 @@ export async function createCampaign(data: {
 
     revalidatePath('/panel/settings');
 
-    // 4. Arka plan worker'ı doğrudan (inline) tetikle
-    // NOT: fetch() ile kendi sunucumuza istek atmak Next.js Server Actions'da güvenilir değil.
-    // Bu yüzden processing mantığını doğrudan burada çalıştırıyoruz.
-    processCampaignInBackground(
-        campaign.id,
-        data.variableMappings,
-        data.audienceType
-    ).catch(err => console.error("Background processing error:", err));
+    // 4. Kampanyayı DOĞRUDAN işle (await ile)
+    // ÖNEMLI: Vercel serverless fonksiyonlar response döndüğünde ölür.
+    // Fire-and-forget (promise.catch) Vercel'de ÇALIŞMAZ.
+    // Bu yüzden processing'i await ile bekliyoruz.
+    try {
+        await processCampaignInBackground(
+            campaign.id,
+            data.variableMappings,
+            data.audienceType
+        );
+    } catch (err: any) {
+        console.error("Campaign processing error:", err);
+        // İşleme hatası olsa bile kampanya oluşturuldu, kullanıcıya bildiriyoruz
+    }
 
     return { success: true, campaignId: campaign.id };
 }
