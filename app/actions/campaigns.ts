@@ -299,6 +299,35 @@ async function processCampaignInBackground(
         }
     }
 
+    // Template'in body değişkenlerini Meta API'den tespit et (mappings boş olabilir!)
+    let templateBodyVars: string[] = []; // ["adsoyad"] veya ["1", "2", "3"]
+    try {
+        const { data: conn } = await sb.from('channel_connections')
+            .select('access_token_encrypted, meta_identifiers')
+            .eq('tenant_id', tenantId).eq('channel', 'whatsapp').eq('status', 'connected').single();
+
+        const wabaId = (conn?.meta_identifiers as any)?.waba_id;
+        if (wabaId && conn?.access_token_encrypted) {
+            const tplRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/message_templates?name=${templateName}`, {
+                headers: { "Authorization": `Bearer ${conn.access_token_encrypted}` }
+            });
+            const tplData = await tplRes.json();
+            const tpl = tplData.data?.find((t: any) => t.name === templateName && t.language === templateLanguage);
+            if (tpl) {
+                const bodyComp = tpl.components?.find((c: any) => c.type === "BODY");
+                if (bodyComp?.text) {
+                    const matches = bodyComp.text.match(/\{\{([^}]+)\}\}/g);
+                    if (matches) {
+                        templateBodyVars = [...new Set(matches.map((m: string) => m.replace(/[{}]/g, "")))] as string[];
+                    }
+                }
+                console.log(`[CampaignProcessor] Template body vars: ${JSON.stringify(templateBodyVars)}`);
+            }
+        }
+    } catch (e: any) {
+        console.error("[CampaignProcessor] Template structure fetch error:", e.message);
+    }
+
     let successCount = 0;
     let failCount = 0;
 
@@ -313,19 +342,32 @@ async function processCampaignInBackground(
 
         // Build components
         let components: any[] = [];
-        const mappingKeys = Object.keys(mappings);
-        let maxNumeric = 0;
-        mappingKeys.forEach(k => {
-            const num = parseInt(k);
-            if (!isNaN(num) && num > maxNumeric) maxNumeric = num;
-        });
 
-        const expectedKeys = [...mappingKeys];
-        for (let i = 1; i <= maxNumeric; i++) {
-            if (!expectedKeys.includes(String(i))) expectedKeys.push(String(i));
+        // Body parametrelerini oluştur
+        // Öncelik: mappings > templateBodyVars (Meta API'den)
+        const mappingKeys = Object.keys(mappings);
+
+        // Kullanılacak değişken listesini belirle
+        let varsToSend: string[] = [];
+
+        if (mappingKeys.length > 0) {
+            // Mappings varsa onları kullan
+            let maxNumeric = 0;
+            mappingKeys.forEach(k => {
+                const num = parseInt(k);
+                if (!isNaN(num) && num > maxNumeric) maxNumeric = num;
+            });
+            varsToSend = [...mappingKeys];
+            for (let i = 1; i <= maxNumeric; i++) {
+                if (!varsToSend.includes(String(i))) varsToSend.push(String(i));
+            }
+        } else if (templateBodyVars.length > 0) {
+            // Mappings boş ama template değişkenleri var → fallback
+            varsToSend = [...templateBodyVars];
         }
 
-        expectedKeys.sort((a, b) => {
+        // Sırala
+        varsToSend.sort((a, b) => {
             const numA = parseInt(a); const numB = parseInt(b);
             if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
             if (!isNaN(numA)) return -1;
@@ -333,14 +375,15 @@ async function processCampaignInBackground(
             return a.localeCompare(b);
         });
 
-        if (expectedKeys.length > 0) {
+        if (varsToSend.length > 0) {
             const parameters = [];
-            for (const key of expectedKeys) {
+            for (const key of varsToSend) {
                 const mapping = mappings[key];
                 let textValue = "";
 
                 if (!mapping) {
-                    textValue = rowContext['name'] || rowContext['Ad'] || rowContext['Adı Soyadı'] || rowContext['full_name'] || "";
+                    // Mapping yoksa rowContext'ten akıllı fallback
+                    textValue = rowContext['name'] || rowContext['full_name'] || rowContext['Ad'] || rowContext['Ad Soyad'] || rowContext['Adı Soyadı'] || "";
                 } else if (mapping.column === "name") {
                     textValue = rowContext['name'] || rowContext['Ad'] || rowContext['Adı Soyadı'] || rowContext['full_name'] || "";
                 } else if (mapping.column === "phone") {
@@ -357,7 +400,7 @@ async function processCampaignInBackground(
                 // Meta API: named variable ise parameter_name zorunlu
                 const isNumeric = !isNaN(parseInt(key));
                 if (!isNumeric) {
-                    param.parameter_name = key; // key = "adsoyad" gibi
+                    param.parameter_name = key;
                 }
                 parameters.push(param);
             }
