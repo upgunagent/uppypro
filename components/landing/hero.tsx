@@ -29,11 +29,6 @@ export function HeroSection() {
                                         İşletme Girişi
                                     </Button>
                                 </Link>
-                                <img
-                                    src="/meta-partner-badge.png"
-                                    alt="Meta Business Partner"
-                                    className="h-10 w-auto object-contain mt-4 opacity-90"
-                                />
                             </div>
 
                             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
@@ -79,12 +74,7 @@ export function HeroSection() {
 
                         {/* Visual Content (Mockup) */}
                         <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex flex-col items-end">
-                            {/* Meta Business Partner Badge — above panel, right-aligned */}
-                            <img
-                                src="/meta-partner-badge.png"
-                                alt="Meta Business Partner"
-                                className="mb-4 hidden lg:block w-[48%]"
-                            />
+
 
                             <div className="relative w-full flex justify-center lg:justify-end">
                                 {/* Floating Elements (Background) */}
