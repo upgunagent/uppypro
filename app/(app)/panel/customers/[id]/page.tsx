@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Building2, User, Plus, Trash2, ChevronDown, CheckCircle2, Loader2, MessageCircle, Instagram } from "lucide-react";
+import { ArrowLeft, Save, Building2, User, Plus, Trash2, ChevronDown, CheckCircle2, Loader2, MessageCircle, Instagram, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { clsx } from "clsx";
@@ -42,6 +42,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         individual_address: "",
         instagram_username: "",
         profile_pic: "",
+        segment: "",
+        tags: [] as string[],
     });
 
     // Notes State
@@ -92,6 +94,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 individual_address: customer.individual_address || "",
                 instagram_username: customer.instagram_username || "",
                 profile_pic: customer.profile_pic || "",
+                segment: customer.segment || "",
+                tags: customer.tags || [],
             });
         }
 
@@ -330,271 +334,330 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Info & Invoice */}
-                <div className="lg:col-span-2 space-y-8">
+            <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="bg-slate-100 p-1 mb-6 rounded-xl">
+                    <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm px-6">
+                        Profil Bilgileri
+                    </TabsTrigger>
+                    {id !== 'new' && (
+                        <TabsTrigger value="campaigns" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm px-6">
+                            <History className="w-4 h-4 mr-2" />
+                            Kampanya Geçmişi
+                        </TabsTrigger>
+                    )}
+                </TabsList>
 
-                    {/* Basic Info */}
-                    {/* Basic Info */}
-                    <Card className="border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
-                            <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800">
-                                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 text-xl font-bold transition-colors overflow-hidden ${formData.profile_pic ? 'bg-white' :
-                                    formData.invoice_type === 'corporate' ? 'bg-purple-50 text-purple-600' :
-                                        formData.instagram_username ? 'bg-pink-50 text-pink-600' :
-                                            'bg-green-50 text-green-600'
-                                    }`}>
-                                    {formData.profile_pic ? (
-                                        <img src={formData.profile_pic} alt="" className="w-full h-full object-cover" />
-                                    ) : formData.invoice_type === 'corporate' ? (
-                                        <Building2 className="w-7 h-7" />
-                                    ) : formData.instagram_username ? (
-                                        <Instagram className="w-7 h-7" />
-                                    ) : (
-                                        <MessageCircle className="w-7 h-7" />
-                                    )}
-                                </div>
-                                Müşteri Bilgileri
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2.5">
-                                    <Label className="text-slate-600 font-medium">Ad Soyad (Zorunlu)</Label>
-                                    <Input
-                                        value={formData.full_name}
-                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                        placeholder="Müşteri Adı"
-                                        className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                    />
-                                </div>
-                                <div className="space-y-2.5">
-                                    <Label className="text-slate-600 font-medium">Telefon (Zorunlu)</Label>
-                                    <Input
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        placeholder="+90 5..."
-                                        className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                    />
-                                </div>
-                                <div className="space-y-2.5 md:col-span-2">
-                                    <Label className="text-slate-600 font-medium">E-posta (Zorunlu)</Label>
-                                    <Input
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="ornek@mail.com"
-                                        className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                    />
-                                </div>
-                                <div className="space-y-2.5">
-                                    <Label className="text-slate-600 font-medium">Instagram</Label>
-                                    <div className="relative flex gap-2">
-                                        <div className="relative flex-1">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 select-none">@</div>
+                <TabsContent value="profile" className="outline-none">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column: Info & Invoice */}
+                        <div className="lg:col-span-2 space-y-8">
+
+                            {/* Basic Info */}
+                            {/* Basic Info */}
+                            <Card className="border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
+                                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                                    <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800">
+                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 text-xl font-bold transition-colors overflow-hidden ${formData.profile_pic ? 'bg-white' :
+                                            formData.invoice_type === 'corporate' ? 'bg-purple-50 text-purple-600' :
+                                                formData.instagram_username ? 'bg-pink-50 text-pink-600' :
+                                                    'bg-green-50 text-green-600'
+                                            }`}>
+                                            {formData.profile_pic ? (
+                                                <img src={formData.profile_pic} alt="" className="w-full h-full object-cover" />
+                                            ) : formData.invoice_type === 'corporate' ? (
+                                                <Building2 className="w-7 h-7" />
+                                            ) : formData.instagram_username ? (
+                                                <Instagram className="w-7 h-7" />
+                                            ) : (
+                                                <MessageCircle className="w-7 h-7" />
+                                            )}
+                                        </div>
+                                        Müşteri Bilgileri
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6 pt-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2.5">
+                                            <Label className="text-slate-600 font-medium">Ad Soyad (Zorunlu)</Label>
                                             <Input
-                                                value={formData.instagram_username}
-                                                onChange={(e) => setFormData({ ...formData, instagram_username: e.target.value })}
-                                                placeholder="kullaniciadi"
-                                                className="h-12 pl-9 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                value={formData.full_name}
+                                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                                placeholder="Müşteri Adı"
+                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
                                             />
                                         </div>
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="outline"
-                                            className="h-12 w-12 rounded-xl text-pink-600 border-slate-200 hover:bg-pink-50"
-                                            onClick={handleFetchProfile}
-                                            disabled={fetchLoading || !formData.instagram_username}
-                                            title="Herkese açık olan Instagram hesaplarının profil fotoğrafını müşteri kartınıza eklemek için tıklayın."
-                                        >
-                                            {fetchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Invoice Info */}
-                    {/* Invoice Info */}
-                    <Card className="border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800">
-                                    <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-                                        <Building2 className="w-5 h-5" />
-                                    </div>
-                                    Fatura Bilgileri
-                                </CardTitle>
-                            </div>
-                            <CardDescription className="pt-2 pl-[3.25rem]">
-                                Fatura kesimi için gerekli yasal bilgiler.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-8 pt-8">
-                            <div className="space-y-2.5">
-                                <Label className="text-slate-600 font-medium">Fatura Tipi</Label>
-                                <Select
-                                    value={formData.invoice_type}
-                                    onValueChange={(val) => setFormData({ ...formData, invoice_type: val })}
-                                >
-                                    <SelectTrigger className="w-full md:w-[240px] h-12 rounded-xl border-slate-200 focus:ring-orange-500/20">
-                                        <SelectValue placeholder="Seçiniz" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="individual">Şahıs (Bireysel)</SelectItem>
-                                        <SelectItem value="corporate">Şirket (Kurumsal)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {formData.invoice_type === 'corporate' ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="space-y-2.5 md:col-span-2">
-                                        <Label className="text-slate-600 font-medium">Firma Ünvanı</Label>
-                                        <Input
-                                            value={formData.company_name}
-                                            onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                        />
-                                    </div>
-                                    <div className="space-y-2.5">
-                                        <Label className="text-slate-600 font-medium">Vergi Dairesi</Label>
-                                        <Input
-                                            value={formData.tax_office}
-                                            onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                        />
-                                    </div>
-                                    <div className="space-y-2.5">
-                                        <Label className="text-slate-600 font-medium">Vergi Numarası</Label>
-                                        <Input
-                                            value={formData.tax_number}
-                                            onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                        />
-                                    </div>
-                                    <div className="space-y-2.5">
-                                        <Label className="text-slate-600 font-medium">Yetkili Kişi</Label>
-                                        <Input
-                                            value={formData.authorized_person}
-                                            onChange={(e) => setFormData({ ...formData, authorized_person: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                        />
-                                    </div>
-                                    <div className="space-y-2.5 md:col-span-2">
-                                        <Label className="text-slate-600 font-medium">Firma Adresi</Label>
-                                        <Textarea
-                                            value={formData.company_address}
-                                            onChange={(e) => setFormData({ ...formData, company_address: e.target.value })}
-                                            className="min-h-[100px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                            placeholder="İl, İlçe, Açık adres..."
-                                        />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="space-y-2.5">
-                                        <Label className="text-slate-600 font-medium">TC Kimlik No</Label>
-                                        <Input
-                                            value={formData.tckn}
-                                            onChange={(e) => setFormData({ ...formData, tckn: e.target.value })}
-                                            maxLength={11}
-                                            className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                        />
-                                    </div>
-                                    <div className="space-y-2.5 md:col-span-2">
-                                        <Label className="text-slate-600 font-medium">Adres</Label>
-                                        <Textarea
-                                            value={formData.individual_address}
-                                            onChange={(e) => setFormData({ ...formData, individual_address: e.target.value })}
-                                            className="min-h-[100px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                            placeholder="İl, İlçe, Açık adres..."
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Right Column: Notes */}
-                <div className="space-y-8">
-                    <Card className="h-full flex flex-col border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
-                            <CardTitle className="text-lg font-bold text-slate-800">Müşteri Notları</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col gap-6 pt-6">
-                            {id === 'new' ? (
-                                <div className="text-sm text-slate-500 bg-slate-50 p-6 rounded-2xl text-center border border-dashed border-slate-200">
-                                    Not eklemek için önce müşteriyi kaydediniz.
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-3">
-                                        <Textarea
-                                            placeholder="Yeni not ekle..."
-                                            className="resize-none min-h-[120px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                            value={newNote}
-                                            onChange={(e) => setNewNote(e.target.value)}
-                                        />
-                                        <Button
-                                            size="sm"
-                                            className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-md"
-                                            onClick={handleSaveNote}
-                                            disabled={noteLoading || !newNote.trim()}
-                                        >
-                                            {noteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                                            Notu Kaydet
-                                        </Button>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto space-y-4 pr-1 max-h-[600px] mt-2">
-                                        {notes.map((note) => (
-                                            <div key={note.id} className="border border-slate-100 rounded-2xl overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                                                <div
-                                                    className="bg-white p-4 cursor-pointer flex justify-between items-start"
-                                                    onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
-                                                >
-                                                    <div>
-                                                        <div className="text-xs text-slate-400 font-bold mb-1 uppercase tracking-wide">
-                                                            {new Date(note.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                        <div className="text-sm text-slate-700 font-medium line-clamp-3 leading-relaxed">
-                                                            {note.note}
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 -mr-2 -mt-2 transition-all opacity-0 group-hover:opacity-100"
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                        <div className="space-y-2.5">
+                                            <Label className="text-slate-600 font-medium">Telefon (Zorunlu)</Label>
+                                            <Input
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                placeholder="+90 5..."
+                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                            />
+                                        </div>
+                                        <div className="space-y-2.5 md:col-span-2">
+                                            <Label className="text-slate-600 font-medium">E-posta (Zorunlu)</Label>
+                                            <Input
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                placeholder="ornek@mail.com"
+                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                            />
+                                        </div>
+                                        <div className="space-y-2.5">
+                                            <Label className="text-slate-600 font-medium">Instagram</Label>
+                                            <div className="relative flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 select-none">@</div>
+                                                    <Input
+                                                        value={formData.instagram_username}
+                                                        onChange={(e) => setFormData({ ...formData, instagram_username: e.target.value })}
+                                                        placeholder="kullaniciadi"
+                                                        className="h-12 pl-9 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                    />
                                                 </div>
-                                                {expandedNoteId === note.id && (
-                                                    <div className="px-4 pb-4 pt-0 text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
-                                                        {note.note}
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="outline"
+                                                    className="h-12 w-12 rounded-xl text-pink-600 border-slate-200 hover:bg-pink-50"
+                                                    onClick={handleFetchProfile}
+                                                    disabled={fetchLoading || !formData.instagram_username}
+                                                    title="Herkese açık olan Instagram hesaplarının profil fotoğrafını müşteri kartınıza eklemek için tıklayın."
+                                                >
+                                                    {fetchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Yeni Eklenen Alanlar: Segment ve Etiketler */}
+                                        <div className="space-y-2.5">
+                                            <Label className="text-slate-600 font-medium">Segment</Label>
+                                            <Input
+                                                value={formData.segment}
+                                                onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
+                                                placeholder="Örn: VIP, Potansiyel, Kurumsal..."
+                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                            />
+                                        </div>
+                                        <div className="space-y-2.5">
+                                            <Label className="text-slate-600 font-medium">Etiketler (Virgülle Ayırın)</Label>
+                                            <Input
+                                                value={formData.tags.join(", ")}
+                                                onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+                                                placeholder="Örn: yeni_kayıt, kampanyaya_katildi"
+                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20 text-sm"
+                                            />
+                                        </div>
+
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Invoice Info */}
+                            {/* Invoice Info */}
+                            <Card className="border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
+                                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                                                <Building2 className="w-5 h-5" />
+                                            </div>
+                                            Fatura Bilgileri
+                                        </CardTitle>
+                                    </div>
+                                    <CardDescription className="pt-2 pl-[3.25rem]">
+                                        Fatura kesimi için gerekli yasal bilgiler.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-8 pt-8">
+                                    <div className="space-y-2.5">
+                                        <Label className="text-slate-600 font-medium">Fatura Tipi</Label>
+                                        <Select
+                                            value={formData.invoice_type}
+                                            onValueChange={(val) => setFormData({ ...formData, invoice_type: val })}
+                                        >
+                                            <SelectTrigger className="w-full md:w-[240px] h-12 rounded-xl border-slate-200 focus:ring-orange-500/20">
+                                                <SelectValue placeholder="Seçiniz" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="individual">Şahıs (Bireysel)</SelectItem>
+                                                <SelectItem value="corporate">Şirket (Kurumsal)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {formData.invoice_type === 'corporate' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            <div className="space-y-2.5 md:col-span-2">
+                                                <Label className="text-slate-600 font-medium">Firma Ünvanı</Label>
+                                                <Input
+                                                    value={formData.company_name}
+                                                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                                                    className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                <Label className="text-slate-600 font-medium">Vergi Dairesi</Label>
+                                                <Input
+                                                    value={formData.tax_office}
+                                                    onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
+                                                    className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                <Label className="text-slate-600 font-medium">Vergi Numarası</Label>
+                                                <Input
+                                                    value={formData.tax_number}
+                                                    onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                                                    className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                <Label className="text-slate-600 font-medium">Yetkili Kişi</Label>
+                                                <Input
+                                                    value={formData.authorized_person}
+                                                    onChange={(e) => setFormData({ ...formData, authorized_person: e.target.value })}
+                                                    className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5 md:col-span-2">
+                                                <Label className="text-slate-600 font-medium">Firma Adresi</Label>
+                                                <Textarea
+                                                    value={formData.company_address}
+                                                    onChange={(e) => setFormData({ ...formData, company_address: e.target.value })}
+                                                    className="min-h-[100px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                    placeholder="İl, İlçe, Açık adres..."
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            <div className="space-y-2.5">
+                                                <Label className="text-slate-600 font-medium">TC Kimlik No</Label>
+                                                <Input
+                                                    value={formData.tckn}
+                                                    onChange={(e) => setFormData({ ...formData, tckn: e.target.value })}
+                                                    maxLength={11}
+                                                    className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5 md:col-span-2">
+                                                <Label className="text-slate-600 font-medium">Adres</Label>
+                                                <Textarea
+                                                    value={formData.individual_address}
+                                                    onChange={(e) => setFormData({ ...formData, individual_address: e.target.value })}
+                                                    className="min-h-[100px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                    placeholder="İl, İlçe, Açık adres..."
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Right Column: Notes */}
+                        <div className="space-y-8">
+                            <Card className="h-full flex flex-col border-2 border-orange-500 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden">
+                                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                                    <CardTitle className="text-lg font-bold text-slate-800">Müşteri Notları</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex-1 flex flex-col gap-6 pt-6">
+                                    {id === 'new' ? (
+                                        <div className="text-sm text-slate-500 bg-slate-50 p-6 rounded-2xl text-center border border-dashed border-slate-200">
+                                            Not eklemek için önce müşteriyi kaydediniz.
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="space-y-3">
+                                                <Textarea
+                                                    placeholder="Yeni not ekle..."
+                                                    className="resize-none min-h-[120px] rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                    value={newNote}
+                                                    onChange={(e) => setNewNote(e.target.value)}
+                                                />
+                                                <Button
+                                                    size="sm"
+                                                    className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-md"
+                                                    onClick={handleSaveNote}
+                                                    disabled={noteLoading || !newNote.trim()}
+                                                >
+                                                    {noteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                                                    Notu Kaydet
+                                                </Button>
+                                            </div>
+
+                                            <div className="flex-1 overflow-y-auto space-y-4 pr-1 max-h-[600px] mt-2">
+                                                {notes.map((note) => (
+                                                    <div key={note.id} className="border border-slate-100 rounded-2xl overflow-hidden group shadow-sm hover:shadow-md transition-all">
+                                                        <div
+                                                            className="bg-white p-4 cursor-pointer flex justify-between items-start"
+                                                            onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
+                                                        >
+                                                            <div>
+                                                                <div className="text-xs text-slate-400 font-bold mb-1 uppercase tracking-wide">
+                                                                    {new Date(note.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                                                </div>
+                                                                <div className="text-sm text-slate-700 font-medium line-clamp-3 leading-relaxed">
+                                                                    {note.note}
+                                                                </div>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 -mr-2 -mt-2 transition-all opacity-0 group-hover:opacity-100"
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                        {expandedNoteId === note.id && (
+                                                            <div className="px-4 pb-4 pt-0 text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
+                                                                {note.note}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {notes.length === 0 && (
+                                                    <div className="text-center py-8">
+                                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                                            <MessageCircle className="w-6 h-6" />
+                                                        </div>
+                                                        <p className="text-xs text-slate-400">Henüz not eklenmemiş.</p>
                                                     </div>
                                                 )}
                                             </div>
-                                        ))}
-                                        {notes.length === 0 && (
-                                            <div className="text-center py-8">
-                                                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                                                    <MessageCircle className="w-6 h-6" />
-                                                </div>
-                                                <p className="text-xs text-slate-400">Henüz not eklenmemiş.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                {id !== 'new' && (
+                    <TabsContent value="campaigns" className="outline-none">
+                        <Card className="border-2 border-slate-200 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden min-h-[400px]">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                                <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <History className="w-5 h-5 text-orange-500" />
+                                    Müşterinin Kampanya Geçmişi
+                                </CardTitle>
+                                <CardDescription>
+                                    Bu müşteriye gönderilen geçmiş toplu mesaj (şablon) pazarlama kampanyaları ve teslimat (webhook) logları bu sayfada yer alacaktır.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-8">
+                                <div className="text-center py-12 text-slate-500 border border-dashed rounded-xl bg-slate-50">
+                                    <MessageCircle className="w-8 h-8 mx-auto text-slate-300 mb-3" />
+                                    Kampanya geçmişi (Webhook entegrasyonu ile) yakında buraya eklenecektir.
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+            </Tabs>
         </div>
     );
 }

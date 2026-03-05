@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Instagram, Settings, Send, Paperclip, RefreshCcw } from "lucide-react";
+import { MessageCircle, Instagram, Settings, Send, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FreeTrialModal } from "@/components/landing/free-trial-modal";
@@ -236,27 +236,19 @@ function SyncAnimationBadge() {
     }, []);
 
     return (
-        <div className="flex items-center gap-6 bg-white/90 backdrop-blur-md px-6 py-4 rounded-3xl shadow-xl border border-slate-100 mb-8 w-fit mx-auto lg:mx-0 mr-8">
+        <div className="flex items-center gap-6 mb-8 w-fit mx-auto lg:mx-0 mr-8">
             {/* UU Logo */}
             <div className="h-12 flex items-center justify-center">
-                <img src="/uu-sync-logo.png" alt="UppyPro" className="h-[42px] w-auto object-contain" />
+                <img src="/uu-sync-logo.png" alt="UppyPro" className="h-[38px] w-auto object-contain" />
             </div>
 
             {/* Sync Arrows */}
-            <div className="relative flex items-center justify-center">
-                {/* Background glow for arrows */}
-                <div className="absolute inset-0 bg-blue-100 blur-xl rounded-full scale-150"></div>
-                <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                    className="text-blue-500 relative z-10"
-                >
-                    <RefreshCcw size={32} strokeWidth={2.5} />
-                </motion.div>
+            <div className="relative w-14 h-10 flex items-center justify-center">
+                <img src="/animasyon.gif" alt="Sync Loop" className="w-full h-full object-contain" />
             </div>
 
             {/* Social Media Logos */}
-            <div className="w-14 h-14 relative flex items-center justify-center bg-slate-50 rounded-2xl shadow-inner border border-slate-100/50">
+            <div className="w-14 h-14 relative flex items-center justify-center">
                 <AnimatePresence mode="wait">
                     {activeIcon === "whatsapp" ? (
                         <motion.div
@@ -267,7 +259,7 @@ function SyncAnimationBadge() {
                             transition={{ duration: 0.4, ease: "backOut" }}
                             className="absolute"
                         >
-                            <MessageCircle size={32} className="text-[#25D366] fill-[#25D366]/10" strokeWidth={2} />
+                            <img src="/whatsapp_ikon.png" alt="WhatsApp" className="w-8 h-8 rounded-lg object-contain" />
                         </motion.div>
                     ) : (
                         <motion.div
@@ -278,7 +270,7 @@ function SyncAnimationBadge() {
                             transition={{ duration: 0.4, ease: "backOut" }}
                             className="absolute"
                         >
-                            <Instagram size={32} className="text-pink-500 fill-pink-500/10" strokeWidth={2} />
+                            <img src="/instagram_ikon.png" alt="Instagram" className="w-8 h-8 rounded-lg object-contain" />
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -179,3 +179,40 @@ export async function saveTemplateAttachment(payload: {
 
     return { success: true };
 }
+
+export async function deleteTemplateAttachment(payload: {
+    tenantId: string;
+    templateName: string;
+    language: string;
+}) {
+    const supabase = await createClient();
+
+    // Yetki kontrolü
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: member } = await supabase
+        .from("tenant_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("tenant_id", payload.tenantId)
+        .single();
+
+    if (!member) return { success: false, error: "Not a member" };
+
+    const { error } = await supabase
+        .from("whatsapp_template_attachments")
+        .delete()
+        .match({
+            tenant_id: payload.tenantId,
+            template_name: payload.templateName,
+            language: payload.language
+        });
+
+    if (error) {
+        console.error("Delete attachment error:", error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}

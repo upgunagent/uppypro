@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, MessageSquare, RefreshCw, AlertCircle, Image as ImageIcon, Video, FileText, Link as LinkIcon, Phone, MousePointerClick, Upload } from "lucide-react";
+import { ExternalLink, MessageSquare, RefreshCw, AlertCircle, Image as ImageIcon, Video, FileText, Link as LinkIcon, Phone, MousePointerClick, Upload, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getWhatsAppTemplates, saveTemplateAttachment } from "@/app/actions/whatsapp-templates";
+import { getWhatsAppTemplates, saveTemplateAttachment, deleteTemplateAttachment } from "@/app/actions/whatsapp-templates";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 
@@ -90,6 +90,29 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
         }
     };
 
+    const handleDeleteAttachment = async (tpl: any) => {
+        if (!confirm("Bu şablondaki görseli/medyayı silmek istediğinize emin misiniz?")) return;
+
+        setUploadingTpl(tpl.id);
+        try {
+            const res = await deleteTemplateAttachment({
+                tenantId,
+                templateName: tpl.name,
+                language: tpl.language
+            });
+
+            if (res.success) {
+                await fetchTemplates();
+            } else {
+                alert("Silinirken hata oluştu: " + res.error);
+            }
+        } catch (error: any) {
+            alert(error.message);
+        } finally {
+            setUploadingTpl(null);
+        }
+    };
+
     useEffect(() => {
         fetchTemplates();
     }, [tenantId]);
@@ -166,22 +189,39 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                                                 </span>
                                             </div>
 
-                                            <div className="relative">
-                                                <input
-                                                    type="file"
-                                                    accept={tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" ? "image/*" : tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" ? "video/*" : "application/pdf"}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    onChange={(e) => handleFileUpload(e, tpl, tpl.components?.find((c: any) => c.type === "HEADER").format)}
-                                                    disabled={uploadingTpl === tpl.id}
-                                                />
-                                                <Button size="sm" variant="outline" className="h-7 text-xs px-2" disabled={uploadingTpl === tpl.id}>
-                                                    {uploadingTpl === tpl.id ? (
-                                                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                                                    ) : (
-                                                        <Upload className="w-3 h-3 mr-1" />
-                                                    )}
-                                                    {tpl.uppypro_media ? "Değiştir" : "Yükle"}
-                                                </Button>
+                                            <div className="flex items-center gap-1">
+                                                {tpl.uppypro_media && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 text-xs px-2 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                        disabled={uploadingTpl === tpl.id}
+                                                        onClick={() => handleDeleteAttachment(tpl)}
+                                                    >
+                                                        {uploadingTpl === tpl.id ? (
+                                                            <RefreshCw className="w-3 h-3 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="w-3 h-3" />
+                                                        )}
+                                                    </Button>
+                                                )}
+                                                <div className="relative">
+                                                    <input
+                                                        type="file"
+                                                        accept={tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" ? "image/*" : tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" ? "video/*" : "application/pdf"}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleFileUpload(e, tpl, tpl.components?.find((c: any) => c.type === "HEADER").format)}
+                                                        disabled={uploadingTpl === tpl.id}
+                                                    />
+                                                    <Button size="sm" variant="outline" className="h-7 text-xs px-2" disabled={uploadingTpl === tpl.id}>
+                                                        {uploadingTpl === tpl.id ? (
+                                                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                                                        ) : (
+                                                            <Upload className="w-3 h-3 mr-1" />
+                                                        )}
+                                                        {tpl.uppypro_media ? "Değiştir" : "Yükle"}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
 

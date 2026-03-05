@@ -1,22 +1,23 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, CreditCard, User, Plug, MessageSquare, Users } from "lucide-react";
+import { Link, CreditCard, User, Plug, MessageSquare, Users, Megaphone } from "lucide-react";
 import { ReactNode } from "react";
 
 interface SettingsTabsProps {
     connectionTab: ReactNode;
     profileTab: ReactNode;
+    whatsappTemplatesTab: ReactNode;
     subscriptionTab: ReactNode;
     employeeTab: ReactNode;
     chatSettingsTab: ReactNode;
     defaultValue?: string;
 }
 
-export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
+export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-[1000px] h-12 bg-slate-100 p-1">
+            <TabsList className="grid w-full grid-cols-6 lg:w-[1200px] h-12 bg-slate-100 p-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Plug className="w-4 h-4 mr-2" />
                     Bağlantı Ayarları
@@ -25,17 +26,21 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, emplo
                     <User className="w-4 h-4 mr-2" />
                     Kişisel/Firma
                 </TabsTrigger>
-                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Abonelik
+                <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Chat Ayarları
                 </TabsTrigger>
                 <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Users className="w-4 h-4 mr-2" />
                     Çalışanlar
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Chat Ayarları
+                <TabsTrigger value="whatsapp-templates" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
+                    <Megaphone className="w-4 h-4 mr-2" />
+                    WhatsApp Şablonları
+                </TabsTrigger>
+                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Abonelik
                 </TabsTrigger>
             </TabsList>
 
@@ -47,22 +52,26 @@ export function SettingsTabs({ connectionTab, profileTab, subscriptionTab, emplo
                 {profileTab}
             </TabsContent>
 
-            <TabsContent value="subscription" className="space-y-6 outline-none">
-                {subscriptionTab}
+            <TabsContent value="chat" className="space-y-6 outline-none">
+                {chatSettingsTab}
             </TabsContent>
 
             <TabsContent value="employees" className="space-y-6 outline-none">
                 {employeeTab}
             </TabsContent>
 
-            <TabsContent value="chat" className="space-y-6 outline-none">
-                {chatSettingsTab}
+            <TabsContent value="whatsapp-templates" className="space-y-6 outline-none">
+                {whatsappTemplatesTab}
+            </TabsContent>
+
+            <TabsContent value="subscription" className="space-y-6 outline-none">
+                {subscriptionTab}
             </TabsContent>
         </Tabs>
     );
 }
 
-export function ConnectionTabs({ channelsContent, templatesContent, aiContent }: { channelsContent: ReactNode, templatesContent: ReactNode, aiContent: ReactNode }) {
+export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent: ReactNode, aiContent: ReactNode }) {
     return (
         <Tabs defaultValue="channels" className="w-full space-y-6">
             <div className="border-b border-slate-200">
@@ -72,12 +81,6 @@ export function ConnectionTabs({ channelsContent, templatesContent, aiContent }:
                         className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
                     >
                         İletişim Kanalları
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="templates"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
-                    >
-                        WhatsApp Şablonları
                     </TabsTrigger>
                     <TabsTrigger
                         value="ai"
@@ -92,12 +95,69 @@ export function ConnectionTabs({ channelsContent, templatesContent, aiContent }:
                 {channelsContent}
             </TabsContent>
 
-            <TabsContent value="templates" className="outline-none pt-4">
-                {templatesContent}
-            </TabsContent>
-
             <TabsContent value="ai" className="outline-none pt-4">
                 {aiContent}
+            </TabsContent>
+        </Tabs>
+    );
+}
+
+export function WhatsappTemplatesTabs({ existingTab, builderTab, campaignTab, reportsTab, customerListsTab }: { existingTab: ReactNode, builderTab: ReactNode, campaignTab: ReactNode, reportsTab: ReactNode, customerListsTab: ReactNode }) {
+    return (
+        <Tabs defaultValue="existing" className="w-full space-y-6">
+            <div className="border-b border-slate-200">
+                <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-x-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <TabsTrigger
+                        value="existing"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        Mevcut Şablonlar
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="builder"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        Yeni Şablon Oluştur
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="campaign"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        Yeni Kampanya (Toplu Gönderim)
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="reports"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        Kampanya Raporları
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="customer-lists"
+                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                    >
+                        Müşteri Listeleri
+                    </TabsTrigger>
+                </TabsList>
+            </div>
+
+            <TabsContent value="existing" className="outline-none pt-4">
+                {existingTab}
+            </TabsContent>
+
+            <TabsContent value="builder" className="outline-none pt-4">
+                {builderTab}
+            </TabsContent>
+
+            <TabsContent value="campaign" className="outline-none pt-4">
+                {campaignTab}
+            </TabsContent>
+
+            <TabsContent value="reports" className="outline-none pt-4">
+                {reportsTab}
+            </TabsContent>
+
+            <TabsContent value="customer-lists" className="outline-none pt-4">
+                {customerListsTab}
             </TabsContent>
         </Tabs>
     );

@@ -52,7 +52,7 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
         tpl.components?.forEach((comp: any) => {
             if (comp.type === "HEADER") {
                 if (comp.format === "TEXT" && comp.text) {
-                    const matches = comp.text.match(/\{\{(\d+)\}\}/g);
+                    const matches = comp.text.match(/\{\{([^}]+)\}\}/g);
                     if (matches) {
                         const uniqueVars = new Set(matches.map((m: string) => m.replace(/[{}]/g, "")));
                         uniqueVars.forEach(v => { newVars[`header_text_${v}`] = ""; });
@@ -65,7 +65,7 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
                     newVars["header_video"] = tpl.uppypro_media ? tpl.uppypro_media.file_url : "";
                 }
             } else if (comp.type === "BODY" && comp.text) {
-                const matches = comp.text.match(/\{\{(\d+)\}\}/g);
+                const matches = comp.text.match(/\{\{([^}]+)\}\}/g);
                 if (matches) {
                     const uniqueVars = new Set(matches.map((m: string) => m.replace(/[{}]/g, "")));
                     uniqueVars.forEach(v => { newVars[`body_${v}`] = ""; });
@@ -100,14 +100,14 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
         Object.keys(variables).forEach(k => {
             if (k.startsWith("header_text_")) {
                 hasHeaderParam = true;
-                headerParams.push({ type: "text", text: variables[k] });
-            } else if (k === "header_image") {
+                headerParams.push({ type: "text", text: variables[k]?.trim() || " " });
+            } else if (k === "header_image" && variables[k]) {
                 hasHeaderParam = true;
                 headerParams.push({ type: "image", image: { link: variables[k] } });
-            } else if (k === "header_document") {
+            } else if (k === "header_document" && variables[k]) {
                 hasHeaderParam = true;
                 headerParams.push({ type: "document", document: { link: variables[k] } });
-            } else if (k === "header_video") {
+            } else if (k === "header_video" && variables[k]) {
                 hasHeaderParam = true;
                 headerParams.push({ type: "video", video: { link: variables[k] } });
             }
@@ -121,11 +121,16 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
         }
 
         // Check Body variables (Sort numerically to match {{1}}, {{2}} order)
-        const bodyKeys = Object.keys(variables).filter(k => k.startsWith("body_")).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+        const bodyKeys = Object.keys(variables).filter(k => k.startsWith("body_")).sort((a, b) => {
+            const numA = parseInt(a.slice(5));
+            const numB = parseInt(b.slice(5));
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.localeCompare(b);
+        });
         if (bodyKeys.length > 0) {
             payloadComponent.push({
                 type: "body",
-                parameters: bodyKeys.map(k => ({ type: "text", text: variables[k] }))
+                parameters: bodyKeys.map(k => ({ type: "text", text: variables[k]?.trim() || " " }))
             });
         }
 
@@ -133,7 +138,7 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
         const buttonKeys = Object.keys(variables).filter(k => k.startsWith("button_url_"));
         buttonKeys.forEach(k => {
             const idx = parseInt(k.split("_")[2]);
-            let buttonLinkValue = variables[k];
+            let buttonLinkValue = variables[k]?.trim();
 
             // Eğer butona da statik bir değer atamak isteniyorsa ve UppyPro medyasından geliyorsa (İleride genişletilebilir)
             // Şimdilik sadece formdan gelen veya boş olan değeri atıyoruz
@@ -146,7 +151,7 @@ export function TemplatePickerModal({ open, onOpenChange, tenantId, onSelectTemp
                 sub_type: "url",
                 index: idx.toString(),
                 parameters: [
-                    { type: "text", text: buttonLinkValue }
+                    { type: "text", text: buttonLinkValue || " " }
                 ]
             });
         });

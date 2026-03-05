@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ChannelCard } from "@/components/channel-card";
-import { SettingsTabs, ConnectionTabs } from "./settings-tabs";
+import { SettingsTabs, ConnectionTabs, WhatsappTemplatesTabs } from "./settings-tabs";
 import { BillingForm } from "./billing-form";
 import { AiSettingsForm } from "./ai-settings-form";
+import { AlertTriangle } from "lucide-react";
 import { SubscriptionCard } from "./subscription-card";
 import { PaymentMethodsCard } from "./payment-methods-card";
 import { PasswordChangeCard } from "./password-change-card";
@@ -11,6 +12,10 @@ import { LocationsCard } from "@/components/settings/locations-card";
 import { TemplatesCard } from "@/components/settings/templates-card";
 import { EmployeeSettingsTab } from "@/components/settings/employee-settings-tab";
 import { ChatSettingsTab } from "./chat-settings-tab";
+import { TemplateBuilder } from "@/components/settings/template-builder";
+import { CampaignBuilder } from "@/components/settings/campaign-builder";
+import { CampaignReportsCard } from "@/components/settings/campaign-reports-card";
+import { CustomerListsCard } from "@/components/settings/customer-lists-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
@@ -94,9 +99,27 @@ export default async function SettingsPage(props: SettingsPageProps) {
         </div>
     );
     const aiContent = <AiSettingsForm settings={agentSettings} subscription={subscription} />;
-    const templatesContent = <TemplatesCard tenantId={member.tenant_id} />;
 
-    const connectionTab = <ConnectionTabs channelsContent={channelsContent} templatesContent={templatesContent} aiContent={aiContent} />;
+    const connectionTab = <ConnectionTabs channelsContent={channelsContent} aiContent={aiContent} />;
+
+    // 1.5 WhatsApp Templates Tab
+    const existingTab = (
+        <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                    <strong>Bilgilendirme:</strong> Şablon ve pazarlama (marketing) gönderim ücretleri doğrudan Meta (WhatsApp) tarafından ücretlendirilir. Lütfen <a href="https://business.facebook.com/billing_hub/" target="_blank" rel="noreferrer" className="underline font-medium hover:text-blue-900">Meta Fatura Ayarlarınızda</a> kredi kartınızın kayıtlı olduğundan emin olun.
+                </div>
+            </div>
+            <TemplatesCard tenantId={member.tenant_id} />
+        </div>
+    );
+    const builderTab = <TemplateBuilder tenantId={member.tenant_id} />;
+    const campaignTab = <CampaignBuilder tenantId={member.tenant_id} />;
+    const reportsTab = <CampaignReportsCard tenantId={member.tenant_id} />;
+    const customerListsTab = <CustomerListsCard tenantId={member.tenant_id} />;
+
+    const whatsappTemplatesTab = <WhatsappTemplatesTabs existingTab={existingTab} builderTab={builderTab} campaignTab={campaignTab} reportsTab={reportsTab} customerListsTab={customerListsTab} />;
 
     // 2. Profile/Billing Tab Content
     const profileTab = (
@@ -180,6 +203,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
                 defaultValue={searchParams.tab as string || "connections"}
                 connectionTab={connectionTab}
                 profileTab={profileTab}
+                whatsappTemplatesTab={whatsappTemplatesTab}
                 subscriptionTab={subscriptionTab}
                 employeeTab={employeeTab}
                 chatSettingsTab={chatSettingsTab}
