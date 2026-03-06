@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare } from "lucide-react";
+import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -28,6 +28,10 @@ interface Message {
     message_type?: string;
     media_url?: string;
     payload?: any;
+    status?: string;
+    is_read?: boolean;
+    reactions?: { emoji: string; sender_id: string } | null;
+    external_message_id?: string;
 }
 
 interface ChatInterfaceProps {
@@ -401,7 +405,7 @@ export default function ChatInterface({
         // 1. Initial Fetch
         syncMessages();
 
-        // 2. Realtime Subscription
+        // 2. Realtime Subscription (INSERT + UPDATE)
         const supabase = createClient();
         const channel = supabase
             .channel(`chat:${conversationId}`)
@@ -411,20 +415,32 @@ export default function ChatInterface({
                     event: 'INSERT',
                     schema: 'public',
                     table: 'messages',
-                    filter: `conversation_id=eq.${conversationId}` // More efficient server-side filtering
+                    filter: `conversation_id=eq.${conversationId}`
                 },
                 (payload) => {
                     const newMsg = payload.new as Message;
-                    // Trigger sync or direct append
-                    // Direct append is faster for UI
                     setMessages((prev) => {
                         if (prev.some(m => m.id === newMsg.id)) return prev;
                         const newList = [...prev, newMsg];
-                        // Sort ensures order
                         newList.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
                         return newList;
                     });
                     markConversationAsRead(conversationId);
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `conversation_id=eq.${conversationId}`
+                },
+                (payload) => {
+                    const updatedMsg = payload.new as Message;
+                    setMessages((prev) =>
+                        prev.map(m => m.id === updatedMsg.id ? { ...m, status: updatedMsg.status, is_read: updatedMsg.is_read, reactions: updatedMsg.reactions } : m)
+                    );
                 }
             )
             .subscribe();
@@ -947,7 +963,13 @@ export default function ChatInterface({
                                                         <span className="text-[10px] text-gray-500">
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
-                                                        {isMe && <Check size={12} className="text-blue-500" />}
+                                                        {isMe && (
+                                                            msg.is_read || msg.status === 'read'
+                                                                ? <CheckCheck size={12} className="text-blue-500" />
+                                                                : msg.status === 'delivered'
+                                                                    ? <CheckCheck size={12} className="text-gray-400" />
+                                                                    : <Check size={12} className="text-gray-400" />
+                                                        )}
                                                     </>
                                                 )}
                                             </div>
@@ -1009,6 +1031,15 @@ export default function ChatInterface({
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Reaction Badge */}
+                                {msg.reactions?.emoji && (
+                                    <div className={clsx("flex", (isMe || isBot) ? "justify-end" : "justify-start")}>
+                                        <span className="inline-block bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-sm shadow-sm -mt-2 relative z-10">
+                                            {msg.reactions.emoji}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

@@ -114,8 +114,29 @@ export async function POST(request: Request) {
                     }
                 }
 
-                // Determine Type
+                // Handle Reactions separately (don't create a new message)
                 const msgType = msg.type;
+                if (msgType === 'reaction') {
+                    const reactionEmoji = msg.reaction?.emoji || null;
+                    const reactedMsgId = msg.reaction?.message_id;
+                    if (reactedMsgId) {
+                        const recipientIdForReaction = changes.metadata?.phone_number_id;
+                        if (reactionEmoji) {
+                            // Add/Update reaction on the original message
+                            await supabaseAdmin.from('messages')
+                                .update({ reactions: { emoji: reactionEmoji, sender_id: msg.from } })
+                                .eq('external_message_id', reactedMsgId);
+                        } else {
+                            // Empty emoji = reaction removed
+                            await supabaseAdmin.from('messages')
+                                .update({ reactions: null })
+                                .eq('external_message_id', reactedMsgId);
+                        }
+                    }
+                    continue; // Don't create a new message for reactions
+                }
+
+                // Determine Type
                 if (msgType === 'text') {
                     eventData.text = msg.text?.body || "";
                     eventData.type = 'text';
