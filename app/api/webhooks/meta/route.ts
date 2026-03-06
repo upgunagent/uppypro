@@ -230,7 +230,7 @@ export async function POST(request: Request) {
                                     .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
                                     .eq('conversation_id', conv.id)
                                     .eq('direction', 'OUT')
-                                    .neq('status', 'read');
+                                    .eq('is_read', false);
                             }
                         }
                     }
