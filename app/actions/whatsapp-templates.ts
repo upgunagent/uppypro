@@ -115,6 +115,45 @@ export async function createWhatsAppTemplate(tenantId: string, payload: any) {
     }
 
     try {
+        // Handle Resumable Upload for Media Headers
+        const headerComp = payload.components?.find((c: any) => c.type === "HEADER" && ["IMAGE", "VIDEO", "DOCUMENT"].includes(c.format));
+        if (headerComp && headerComp.example && headerComp.example.header_url && headerComp.example.header_url[0]) {
+            const fileUrl = headerComp.example.header_url[0];
+
+            // 1. Download file
+            const fileRes = await fetch(fileUrl);
+            const arrayBuffer = await fileRes.arrayBuffer();
+            const fileBuffer = Buffer.from(arrayBuffer);
+            const fileLength = fileBuffer.length;
+            const fileType = fileRes.headers.get('content-type') || 'application/octet-stream';
+
+            // 2. Start Upload Session
+            const sessionRes = await fetch(`https://graph.facebook.com/v19.0/app/uploads?file_length=${fileLength}&file_type=${fileType}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const sessionData = await sessionRes.json();
+
+            if (sessionData.id) {
+                // 3. Upload File Bytes
+                const uploadRes = await fetch(`https://graph.facebook.com/v19.0/${sessionData.id}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `OAuth ${accessToken}`, 'file_offset': '0' },
+                    body: fileBuffer
+                });
+                const uploadData = await uploadRes.json();
+
+                if (uploadData.h) {
+                    // 4. Replace url with handle in payload
+                    headerComp.example = { header_handle: [uploadData.h] };
+                } else {
+                    console.error("Meta Upload Bytes Error:", uploadData);
+                }
+            } else {
+                console.error("Meta Upload Session Error:", sessionData);
+            }
+        }
+
         const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates`;
         const res = await fetch(url, {
             method: "POST",

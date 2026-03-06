@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Smartphone, Save, AlertCircle, FileImage, Video, FileText } from "lucide-react";
+import { Plus, Trash2, Smartphone, Save, AlertCircle, FileImage, Video, FileText, Loader2, UploadCloud } from "lucide-react";
+import { useRef } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface TemplateBuilderProps {
     tenantId: string;
@@ -20,16 +22,28 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
 
     const [headerType, setHeaderType] = useState("NONE");
     const [headerText, setHeaderText] = useState("");
+    const [headerUrl, setHeaderUrl] = useState(""); // Examples for media headers
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [bodyText, setBodyText] = useState("");
+    const [bodyVariables, setBodyVariables] = useState<string[]>([]);
     const [footerText, setFooterText] = useState("");
 
     const [buttons, setButtons] = useState<any[]>([]);
 
     // Helpers
     const addVariable = () => {
-        const varCount = (bodyText.match(/\{\{\d+\}\}/g) || []).length + 1;
-        setBodyText((prev) => prev + `{{${varCount}}}`);
+        const currentCount = (bodyText.match(/\{\{\d+\}\}/g) || []).length;
+        const nextIndex = currentCount + 1;
+        setBodyText((prev) => prev + `{{${nextIndex}}}`);
+        setBodyVariables([...bodyVariables, `Örnek ${nextIndex}`]);
+    };
+
+    const handleBodyVariablesChange = (index: number, val: string) => {
+        const newVars = [...bodyVariables];
+        newVars[index] = val;
+        setBodyVariables(newVars);
     };
 
     const addButton = (type: string) => {
@@ -50,13 +64,130 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
     const formatPreviewText = (text: string) => {
         if (!text) return "";
         let formatted = text.replace(/\n/g, "<br/>");
-        // Replace {{1}} with a generic placeholder like [Değişken 1]
-        formatted = formatted.replace(/\{\{(\d+)\}\}/g, "<span class='bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-[10px]'>[$1]</span>");
+        // Replace {{1}} with the actual example value from bodyVariables
+        formatted = formatted.replace(/\{\{(\d+)\}\}/g, (match, p1) => {
+            const idx = parseInt(p1) - 1;
+            const val = bodyVariables[idx] || match;
+            return `<span class='bg-blue-100/50 text-blue-800 px-1 py-0.5 rounded'>${val}</span>`;
+        });
         return <div dangerouslySetInnerHTML={{ __html: formatted }} />;
     };
 
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            setIsUploading(true);
+            const supabase = createClient();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${tenantId}/${Math.random()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('whatsapp_templates')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('whatsapp_templates')
+                .getPublicUrl(fileName);
+
+            setHeaderUrl(publicUrl);
+            alert("Medya başarıyla yüklendi.");
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            alert("Medya yüklenirken bir hata oluştu: " + error.message);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
     const handleSave = async () => {
-        alert("Şablon kaydetme ve Meta onayı işlemi bu sürümde API ucu bağlanarak gerçekleştirilecek.");
+        setIsSaving(true);
+        try {
+            // Build the payload for Meta API
+            const components: any[] = [];
+
+            // 1. Header
+            if (headerType !== "NONE") {
+                const headerComp: any = { type: "HEADER", format: headerType };
+                if (headerType === "TEXT") {
+                    headerComp.text = headerText;
+                } else if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType)) {
+                    // Provide the example header url
+                    if (headerUrl) {
+                        // Normally Meta expects 'header_handle' or 'header_url' undocumented workaround? 
+                        // Actually the API allows 'header_handle' mostly. We will pass header_url to our backend,
+                        // and either meta accepts it, or we handle it in the backend via resumable upload.
+                        headerComp.example = { header_url: [headerUrl] };
+                    }
+                }
+                components.push(headerComp);
+            }
+
+            // 2. Body
+            const bodyComp: any = { type: "BODY", text: bodyText };
+            if (bodyVariables.length > 0) {
+                bodyComp.example = { body_text: [bodyVariables] };
+            }
+            components.push(bodyComp);
+
+            // 3. Footer
+            if (footerText) {
+                components.push({ type: "FOOTER", text: footerText });
+            }
+
+            // 4. Buttons
+            if (buttons.length > 0) {
+                const mappedBtns = buttons.map(b => {
+                    if (b.type === "URL") {
+                        return { type: "URL", text: b.text, url: b.url };
+                    } else if (b.type === "QUICK_REPLY") {
+                        return { type: "QUICK_REPLY", text: b.text };
+                    }
+                    return b;
+                });
+                components.push({ type: "BUTTONS", buttons: mappedBtns });
+            }
+
+            const payload = {
+                name: name,
+                language: language,
+                category: category,
+                components: components
+            };
+
+            const { createWhatsAppTemplate, saveTemplateAttachment } = await import('@/app/actions/whatsapp-templates');
+            const res = await createWhatsAppTemplate(tenantId, payload);
+
+            if (res.success) {
+                alert("Şablon başarıyla onaya gönderildi!");
+
+                // If there's an image, save to db
+                if (headerUrl && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType)) {
+                    await saveTemplateAttachment({
+                        tenantId: tenantId,
+                        templateName: name,
+                        language: language,
+                        fileUrl: headerUrl,
+                        fileType: headerType
+                    });
+                }
+
+                // Reset logic or navigate away
+            } else {
+                alert("Meta Reddi / Hata: \n" + res.error);
+            }
+        } catch (err: any) {
+            console.error(err);
+            alert("Bir hata oluştu: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -138,9 +269,38 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                                 />
                             )}
                             {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && (
-                                <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4" />
-                                    Gönderim sırasında bu şablona uygun bir medya dosyası ekleyebileceksiniz.
+                                <div className="space-y-4">
+                                    <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm flex items-start gap-2">
+                                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                        <span>Meta onayı için örnek bir medya yüklemeniz (veya URL girmeniz) zorunludur. (Medya dosyalarınızı ileride kampanya gönderirken sitemizden yükleyerek değiştirebilirsiniz)</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">Örnek Medya URL veya Dosya</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="Örn: https://example.com/gorsel.jpg"
+                                                value={headerUrl}
+                                                onChange={(e) => setHeaderUrl(e.target.value)}
+                                                className="flex-1"
+                                            />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                ref={fileInputRef}
+                                                onChange={handleFileUpload}
+                                                accept={headerType === 'IMAGE' ? 'image/*' : headerType === 'VIDEO' ? 'video/*' : 'application/pdf'}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isUploading}
+                                            >
+                                                {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />}
+                                                Yükle
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -160,6 +320,26 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                                 maxLength={1024}
                             />
                             <p className="text-xs text-slate-500">Maksimum 1024 karakter. Müşteri isimlerini veya dinamik verileri eklemek için değişkenleri kullanın.</p>
+
+                            {bodyVariables.length > 0 && (
+                                <div className="space-y-3 mt-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <Label className="text-sm font-semibold text-slate-700">Değişken Örnekleri</Label>
+                                    <p className="text-xs text-slate-500 mb-2">Meta onayı için değişkenlerin yerine geçecek örnek kelimeler yazın. (Örn: İsim, Tarih vb.)</p>
+                                    {bodyVariables.map((val, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <div className="bg-blue-100/50 text-blue-800 font-bold px-2 py-1 rounded text-xs select-none">
+                                                {`{{${idx + 1}}}`}
+                                            </div>
+                                            <Input
+                                                placeholder={`Değişken ${idx + 1} için örnek...`}
+                                                value={val}
+                                                onChange={(e) => handleBodyVariablesChange(idx, e.target.value)}
+                                                className="flex-1 bg-white h-8"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-4 border-t pt-4">
@@ -216,8 +396,8 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                         </div>
                     </CardContent>
                     <CardFooter className="bg-slate-50 border-t flex justify-end py-4">
-                        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white">
-                            <Save className="w-4 h-4 mr-2" />
+                        <Button onClick={handleSave} disabled={isSaving} className="bg-green-600 hover:bg-green-700 text-white">
+                            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                             Şablonu Onaya Gönder
                         </Button>
                     </CardFooter>
@@ -244,10 +424,17 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                                     </div>
                                 )}
                                 {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && (
-                                    <div className="w-full bg-slate-200 h-32 flex items-center justify-center text-slate-500 border-b">
-                                        {headerType === 'IMAGE' && <FileImage className="w-8 h-8 opacity-50" />}
-                                        {headerType === 'VIDEO' && <Video className="w-8 h-8 opacity-50" />}
-                                        {headerType === 'DOCUMENT' && <FileText className="w-8 h-8 opacity-50" />}
+                                    <div className="w-full bg-slate-200 flex items-center justify-center text-slate-500 border-b overflow-hidden relative" style={{ minHeight: '8rem' }}>
+                                        {headerType === 'IMAGE' && headerUrl ? (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
+                                            <img src={headerUrl} alt="Header Preview" className="w-full h-auto max-h-48 object-cover" />
+                                        ) : (
+                                            <>
+                                                {headerType === 'IMAGE' && <FileImage className="w-8 h-8 opacity-50 my-8" />}
+                                            </>
+                                        )}
+                                        {headerType === 'VIDEO' && <Video className="w-8 h-8 opacity-50 my-8" />}
+                                        {headerType === 'DOCUMENT' && <FileText className="w-8 h-8 opacity-50 my-8" />}
                                     </div>
                                 )}
 
