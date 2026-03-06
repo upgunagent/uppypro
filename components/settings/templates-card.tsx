@@ -278,9 +278,9 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                     <div className="flex-1">
                         <h3 className="font-bold text-orange-900 text-lg mb-2">WhatsApp Şablonları Nasıl Oluşturulur?</h3>
                         <p className="text-orange-800 text-sm mb-4 leading-relaxed">
-                            Müşterilerinize görselli (Video, Resim, PDF) kampanyalar veya tıkanabilir interaktif butonlar (URL, Hızlı Yanıt) içeren mesajlar göndermek için <strong>Meta'nın resmî Gelişmiş Şablon Kütüphanesi ve Oluşturucusunu</strong> kullanmanız gerekmektedir.
+                            Müşterilerinize görselli (Video, Resim, PDF) kampanyalar veya tıklanabilir interaktif butonlar (URL, Hızlı Yanıt) içeren şablon mesajlarınızı dilerseniz hemen yandaki <strong>Yeni Şablon Oluştur</strong> sekmesinden panelden çıkmadan oluşturup onaylatabilirsiniz.
                             <br /><br />
-                            Meta Yöneticisi üzerinden oluşturduğunuz ve onaylanan tüm şablonlar (Hazır veya Özel tasarımlar) <strong>otomatik olarak bu panele senkronize olur</strong> ve paneldeki "Şablon Gönder" menüsünden görselleriyle birlikte müşterilerinize iletilebilir.
+                            Alternatif olarak <strong>Meta'nın resmî Gelişmiş Şablon Kütüphanesi ve Oluşturucusunu</strong> da kullanabilirsiniz. Meta Yöneticisi üzerinden oluşturduğunuz ve onaylanan tüm şablonlar <strong>otomatik olarak bu panele senkronize olur</strong> ve paneldeki &quot;Şablon Gönder&quot; veya Kampanya Sihirbazı menüsünden müşterilerinize iletilebilir.
                         </p>
                         <a
                             href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
