@@ -17,7 +17,7 @@ interface SettingsTabsProps {
 export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-[1200px] h-12 bg-slate-100 p-1">
+            <TabsList className="flex md:grid w-full overflow-x-auto md:grid-cols-6 h-auto md:h-12 bg-slate-100 p-1 rounded-lg">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Plug className="w-4 h-4 mr-2" />
                     Bağlantı Ayarları
