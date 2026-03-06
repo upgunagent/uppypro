@@ -105,7 +105,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                     </div>
 
                     <div className="mt-6 flex justify-end">
-                        <Button type="submit" disabled={loading || !isAiAllowed}>
+                        <Button type="submit" disabled={loading || !isAiAllowed} className="bg-orange-600 hover:bg-orange-700 text-white">
                             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                             {loading ? "Kaydediliyor..." : "Ayarları Kaydet"}
                         </Button>

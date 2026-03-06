@@ -125,7 +125,7 @@ export function SubscriptionCard({
 
     if (!subscription) {
         return (
-            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center">
+            <div className="p-6 bg-white rounded-xl border border-orange-500 shadow-sm flex items-center justify-center">
                 <p className="text-slate-500">Aktif abonelik bulunamadı.</p>
             </div>
         );
@@ -264,7 +264,7 @@ export function SubscriptionCard({
     // Eğer checkout formu sayfa içinde gösterilecekse, kartın yerine checkout alanı render et
     if (showCheckoutInPage) {
         return (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-orange-500 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <h3 className="font-bold text-lg text-slate-900">Ödeme</h3>
                     <Button
@@ -294,7 +294,7 @@ export function SubscriptionCard({
     }
 
     return (
-        <div className="space-y-6 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="space-y-6 bg-white rounded-xl border border-orange-500 shadow-sm p-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-orange-50 rounded-lg">

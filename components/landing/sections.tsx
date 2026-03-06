@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle } from "lucide-react";
+import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
@@ -545,6 +545,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
     const inboxPriceVal = inboxPrice || 19;
     const aiPriceVal = aiPrice || 79;
     const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
+    const [inboxExpanded, setInboxExpanded] = useState(false);
 
     const formatPrice = (p: number) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(p);
 
@@ -584,9 +585,40 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı Oluşturma</li>
                             <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Otomatik Görüşme Özeti Çıkarma</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Takvim Uygulaması (Randevu oluşturma)</li>
-                            <li className="flex items-center gap-3 text-slate-300"><X className="w-5 h-5 text-red-500 flex-shrink-0" /> AI Asistan Entegrasyonu</li>
+                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> 1-10 personel için takvim uygulaması (Randevu oluşturma)</li>
                         </ul>
+
+                        {/* Expandable section */}
+                        <AnimatePresence>
+                            {inboxExpanded && (
+                                <motion.ul
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="space-y-4 text-sm text-slate-100 overflow-hidden mt-4"
+                                >
+                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> WhatsApp Şablon Yönetimi</li>
+                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Hazır Cevaplar</li>
+                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Metin Düzeltme &amp; İyileştirme</li>
+                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Her Dilde Çeviri</li>
+                                    <li className="flex items-center gap-3 text-slate-300"><X className="w-5 h-5 text-red-500 flex-shrink-0" /> AI Asistan Entegrasyonu</li>
+                                </motion.ul>
+                            )}
+                        </AnimatePresence>
+
+                        <button
+                            onClick={() => setInboxExpanded(!inboxExpanded)}
+                            className="flex items-center gap-2 mt-4 text-xs font-semibold text-white/80 hover:text-white transition-colors mx-auto cursor-pointer"
+                        >
+                            {inboxExpanded ? "Gizle" : "Devamını oku..."}
+                            <motion.span
+                                animate={{ y: inboxExpanded ? 0 : [0, 4, 0] }}
+                                transition={inboxExpanded ? {} : { repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                            >
+                                <ChevronDown className={clsx("w-4 h-4 transition-transform duration-300", inboxExpanded && "rotate-180")} />
+                            </motion.span>
+                        </button>
                     </div>
 
                     {/* AI Plan (Highlighted) */}
@@ -636,7 +668,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                 </div>
 
                 <p className="mt-12 text-center text-sm text-slate-400">
-                    * Tüm fiyatlara KDV eklenecektir. Yıllık alımlarda %20 indirim uygulanır.
+                    * Tüm fiyatlara KDV eklenecektir. Kurumsal paketler için teklif iletilecektir.
                 </p>
             </div>
             <EnterpriseContactModal open={isEnterpriseModalOpen} onOpenChange={setIsEnterpriseModalOpen} />

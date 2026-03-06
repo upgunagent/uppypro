@@ -61,7 +61,7 @@ export function CampaignReportsCard({ tenantId }: CampaignReportsCardProps) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "COMPLETED": return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Tamamlandı</Badge>;
-            case "RUNNING": return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Gönderiliyor</Badge>;
+            case "RUNNING": return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Gönderiliyor</Badge>;
             case "FAILED": return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Hatalı</Badge>;
             case "DRAFT": return <Badge variant="secondary">Taslak</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
@@ -74,11 +74,11 @@ export function CampaignReportsCard({ tenantId }: CampaignReportsCardProps) {
     };
 
     return (
-        <Card className="border-slate-200 shadow-sm">
+        <Card className="border-orange-500 shadow-sm">
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
                 <div>
                     <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <BarChart className="w-5 h-5 text-primary" />
+                        <BarChart className="w-5 h-5 text-orange-600" />
                         Kampanya Raporları
                     </CardTitle>
                     <CardDescription>
@@ -179,14 +179,14 @@ export function CampaignReportsCard({ tenantId }: CampaignReportsCardProps) {
 
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-                                                <CheckCheck className="w-3.5 h-3.5 text-blue-500" /> Okunan (Mavi Tik)
+                                                <CheckCheck className="w-3.5 h-3.5 text-orange-500" /> Okunan (Mavi Tik)
                                             </div>
                                             <div className="flex items-baseline gap-2">
-                                                <span className="font-semibold text-lg text-blue-600">{report.metrics.read.toLocaleString("tr-TR")}</span>
-                                                <span className="text-[10px] text-blue-400 font-medium">%{calculateRate(report.metrics.read, report.metrics.delivered)}</span>
+                                                <span className="font-semibold text-lg text-orange-600">{report.metrics.read.toLocaleString("tr-TR")}</span>
+                                                <span className="text-[10px] text-orange-400 font-medium">%{calculateRate(report.metrics.read, report.metrics.delivered)}</span>
                                             </div>
-                                            <div className="w-full bg-blue-50 h-1.5 rounded-full overflow-hidden">
-                                                <div className="bg-blue-500 h-full rounded-full" style={{ width: `${calculateRate(report.metrics.read, report.metrics.delivered)}%` }} />
+                                            <div className="w-full bg-orange-50 h-1.5 rounded-full overflow-hidden">
+                                                <div className="bg-orange-500 h-full rounded-full" style={{ width: `${calculateRate(report.metrics.read, report.metrics.delivered)}%` }} />
                                             </div>
                                         </div>
 

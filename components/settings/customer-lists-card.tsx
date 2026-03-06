@@ -230,11 +230,11 @@ export function CustomerListsCard({ tenantId }: CustomerListsCardProps) {
     );
 
     return (
-        <Card>
+        <Card className="border-orange-500">
             <CardHeader className="flex flex-row items-start justify-between pb-4">
                 <div>
                     <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-primary" />
+                        <BookOpen className="w-5 h-5 text-orange-600" />
                         Müşteri Listeleri
                     </CardTitle>
                     <CardDescription>
@@ -246,7 +246,7 @@ export function CustomerListsCard({ tenantId }: CustomerListsCardProps) {
                         <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                     </Button>
                     <Label htmlFor="list-excel-upload" className="cursor-pointer">
-                        <div className="flex items-center gap-1.5 border border-primary text-primary hover:bg-primary/5 rounded-md px-3 py-2 text-sm font-medium transition-colors">
+                        <div className="flex items-center gap-1.5 border border-orange-500 text-orange-600 hover:bg-orange-600/5 rounded-md px-3 py-2 text-sm font-medium transition-colors">
                             <Plus className="w-4 h-4" /> Yeni Liste Oluştur
                         </div>
                         <input
@@ -283,7 +283,7 @@ export function CustomerListsCard({ tenantId }: CustomerListsCardProps) {
                             Excel yükleyerek yeni bir liste oluşturun.
                         </p>
                         <Label htmlFor="list-excel-upload-empty" className="cursor-pointer">
-                            <div className="inline-flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors">
+                            <div className="inline-flex items-center gap-2 bg-orange-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-orange-600/90 transition-colors">
                                 <Upload className="w-4 h-4" /> Excel / CSV Yükle
                             </div>
                             <input
@@ -300,8 +300,8 @@ export function CustomerListsCard({ tenantId }: CustomerListsCardProps) {
                         {filteredLists.map((list) => (
                             <div key={list.id} className="border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-300 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-primary/10 p-2.5 rounded-lg">
-                                        <Users className="w-5 h-5 text-primary" />
+                                    <div className="bg-orange-600/10 p-2.5 rounded-lg">
+                                        <Users className="w-5 h-5 text-orange-600" />
                                     </div>
                                     <div>
                                         <h4 className="font-semibold text-slate-900">{list.name}</h4>
@@ -335,9 +335,9 @@ export function CustomerListsCard({ tenantId }: CustomerListsCardProps) {
                 )}
 
                 {/* Info box */}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-                    <Globe className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                    <p className="text-sm text-blue-700">
+                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-start gap-3">
+                    <Globe className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
+                    <p className="text-sm text-orange-700">
                         WhatsApp, telefon numaralarını <strong>uluslararası E.164 formatında</strong> (örn: 905332076252) bekler. Excel yükleme sırasında ülke kodunu belirtebilirsiniz. Yurt dışı numaralar otomatik tanınır.
                     </p>
                 </div>

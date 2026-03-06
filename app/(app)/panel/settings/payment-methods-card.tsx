@@ -102,7 +102,7 @@ export function PaymentMethodsCard({ methods, subscription }: { methods: any[], 
     };
 
     return (
-        <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
+        <div className="p-6 bg-white rounded-xl border border-orange-500 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">

@@ -28,7 +28,7 @@ export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, 
                 </TabsTrigger>
                 <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    Chat Ayarları
+                    Hazır Cevaplar
                 </TabsTrigger>
                 <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-md transition-all text-slate-600 font-medium hover:text-slate-900">
                     <Users className="w-4 h-4 mr-2" />
@@ -105,35 +105,35 @@ export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent
 export function WhatsappTemplatesTabs({ existingTab, builderTab, campaignTab, reportsTab, customerListsTab }: { existingTab: ReactNode, builderTab: ReactNode, campaignTab: ReactNode, reportsTab: ReactNode, customerListsTab: ReactNode }) {
     return (
         <Tabs defaultValue="existing" className="w-full space-y-6">
-            <div className="border-b border-slate-200">
-                <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-x-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="pb-4 border-b border-slate-200">
+                <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <TabsTrigger
                         value="existing"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                        className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                     >
                         Mevcut Şablonlar
                     </TabsTrigger>
                     <TabsTrigger
                         value="builder"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                        className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                     >
                         Yeni Şablon Oluştur
                     </TabsTrigger>
                     <TabsTrigger
                         value="campaign"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                        className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                     >
                         Yeni Kampanya (Toplu Gönderim)
                     </TabsTrigger>
                     <TabsTrigger
                         value="reports"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                        className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                     >
                         Kampanya Raporları
                     </TabsTrigger>
                     <TabsTrigger
                         value="customer-lists"
-                        className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-slate-500 data-[state=active]:text-primary mb-[-1px]"
+                        className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"
                     >
                         Müşteri Listeleri
                     </TabsTrigger>

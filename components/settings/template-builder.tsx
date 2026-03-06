@@ -68,7 +68,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
         formatted = formatted.replace(/\{\{(\d+)\}\}/g, (match, p1) => {
             const idx = parseInt(p1) - 1;
             const val = bodyVariables[idx] || match;
-            return `<span class='bg-blue-100/50 text-blue-800 px-1 py-0.5 rounded'>${val}</span>`;
+            return `<span class='bg-orange-100/50 text-orange-800 px-1 py-0.5 rounded'>${val}</span>`;
         });
         return <div dangerouslySetInnerHTML={{ __html: formatted }} />;
     };
@@ -193,7 +193,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 flex flex-col gap-6">
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="border-orange-500 shadow-sm">
                     <CardHeader>
                         <CardTitle>Genel Bilgiler</CardTitle>
                         <CardDescription>Şablonunuzun temel ayarlarını belirleyin.</CardDescription>
@@ -239,7 +239,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-slate-200 shadow-sm">
+                <Card className="border-orange-500 shadow-sm overflow-hidden">
                     <CardHeader>
                         <CardTitle>Şablon İçeriği</CardTitle>
                         <CardDescription>Mesajınızın başlık, gövde ve altbilgi (footer) kısımlarını oluşturun.</CardDescription>
@@ -270,7 +270,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                             )}
                             {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && (
                                 <div className="space-y-4">
-                                    <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm flex items-start gap-2">
+                                    <div className="bg-orange-50 text-orange-800 p-3 rounded-md text-sm flex items-start gap-2">
                                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                         <span>Meta onayı için örnek bir medya yüklemeniz (veya URL girmeniz) zorunludur. (Medya dosyalarınızı ileride kampanya gönderirken sitemizden yükleyerek değiştirebilirsiniz)</span>
                                     </div>
@@ -308,7 +308,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                         <div className="space-y-4 border-t pt-4">
                             <div className="flex justify-between items-end">
                                 <Label className="text-base font-semibold">Gövde Metni</Label>
-                                <Button variant="outline" size="sm" onClick={addVariable} type="button">
+                                <Button size="sm" onClick={addVariable} type="button" className="bg-orange-500 hover:bg-orange-600 text-white border-0">
                                     <Plus className="w-4 h-4 mr-1" /> Değişken Ekle {'{{1}}'}
                                 </Button>
                             </div>
@@ -327,7 +327,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                                     <p className="text-xs text-slate-500 mb-2">Meta onayı için değişkenlerin yerine geçecek örnek kelimeler yazın. (Örn: İsim, Tarih vb.)</p>
                                     {bodyVariables.map((val, idx) => (
                                         <div key={idx} className="flex items-center gap-3">
-                                            <div className="bg-blue-100/50 text-blue-800 font-bold px-2 py-1 rounded text-xs select-none">
+                                            <div className="bg-orange-100/50 text-orange-800 font-bold px-2 py-1 rounded text-xs select-none">
                                                 {`{{${idx + 1}}}`}
                                             </div>
                                             <Input
@@ -356,10 +356,10 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                             <div className="flex justify-between items-center">
                                 <Label className="text-base font-semibold">Butonlar (Opsiyonel)</Label>
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => addButton("QUICK_REPLY")} disabled={buttons.length >= 3}>
+                                    <Button size="sm" onClick={() => addButton("QUICK_REPLY")} disabled={buttons.length >= 3} className="bg-orange-500 hover:bg-orange-600 text-white border-0">
                                         + Hızlı Yanıt
                                     </Button>
-                                    <Button variant="outline" size="sm" onClick={() => addButton("URL")} disabled={buttons.length >= 3}>
+                                    <Button size="sm" onClick={() => addButton("URL")} disabled={buttons.length >= 3} className="bg-orange-500 hover:bg-orange-600 text-white border-0">
                                         + URL Bağlantısı
                                     </Button>
                                 </div>
@@ -406,7 +406,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
 
             <div className="lg:col-span-4">
                 <div className="sticky top-6">
-                    <Card className="border-slate-200 shadow-sm overflow-hidden bg-slate-100">
+                    <Card className="border-orange-500 shadow-sm overflow-hidden bg-slate-100">
                         <CardHeader className="bg-white border-b pb-3 pt-4 px-4 sticky top-0 z-10">
                             <CardTitle className="text-sm flex items-center gap-2">
                                 <Smartphone className="w-4 h-4" />
@@ -454,7 +454,7 @@ export function TemplateBuilder({ tenantId }: TemplateBuilderProps) {
                                 {buttons.length > 0 && (
                                     <div className="flex flex-col border-t border-slate-100">
                                         {buttons.map((btn, idx) => (
-                                            <div key={idx} className={`py-2 text-center text-blue-500 font-medium text-sm flex items-center justify-center gap-1.5 ${idx > 0 ? 'border-t border-slate-100' : ''}`}>
+                                            <div key={idx} className={`py-2 text-center text-orange-500 font-medium text-sm flex items-center justify-center gap-1.5 ${idx > 0 ? 'border-t border-slate-100' : ''}`}>
                                                 {btn.type === "URL" && <span className="text-xs">↗</span>}
                                                 {btn.text || "Buton Metni"}
                                             </div>

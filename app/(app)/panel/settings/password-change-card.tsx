@@ -65,7 +65,7 @@ export function PasswordChangeCard() {
     };
 
     return (
-        <Card>
+        <Card className="border-orange-500">
             <CardHeader>
                 <div className="flex items-center gap-2">
                     <div className="bg-orange-100 p-2 rounded-lg">

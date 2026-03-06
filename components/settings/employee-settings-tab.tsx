@@ -105,7 +105,7 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees }: EmployeeSett
     };
 
     return (
-        <Card>
+        <Card className="border-orange-500">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl flex items-center gap-2">

@@ -149,6 +149,18 @@ export async function POST(request: Request) {
                         address: msg.location?.address,
                         url: msg.location?.url
                     };
+                } else if (msgType === 'button') {
+                    eventData.text = msg.button?.text || "[Buton Yanıtı]";
+                    eventData.type = 'text';
+                } else if (msgType === 'interactive') {
+                    if (msg.interactive?.type === 'button_reply') {
+                        eventData.text = msg.interactive.button_reply?.title || "[Buton Yanıtı]";
+                    } else if (msg.interactive?.type === 'list_reply') {
+                        eventData.text = msg.interactive.list_reply?.title || "[Liste Yanıtı]";
+                    } else {
+                        eventData.text = "[Etkileşimli Mesaj]";
+                    }
+                    eventData.type = 'text';
                 } else {
                     eventData.text = `[${msgType}]`;
                     eventData.type = 'text';

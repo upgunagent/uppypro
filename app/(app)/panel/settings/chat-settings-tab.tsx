@@ -182,28 +182,8 @@ export function ChatSettingsTab({ tenantId, initialAiEnabled, initialResponses }
 
     return (
         <div className="space-y-6">
-            {/* AI Auto-Correct */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900">Yapay Zeka (AI) Düzeltme</h3>
-                        <p className="text-sm text-slate-500">Müşteriye yazarken metninizin imlasını ve profesyonelliğini tek tıkla düzeltin.</p>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                    <div>
-                        <Label htmlFor="ai-toggle" className="text-base font-medium text-slate-700">Akıllı Yazım Düzeltmeyi Aktifleştir</Label>
-                        <p className="text-sm text-slate-500 mt-0.5">Mesaj kutusunda "✨ AI Düzelt" butonunu görünür yapar.</p>
-                    </div>
-                    <Switch id="ai-toggle" checked={aiEnabled} onCheckedChange={handleToggleAi} className="data-[state=checked]:bg-orange-600" />
-                </div>
-            </div>
-
             {/* Hazır Cevaplar */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+            <div className="bg-white p-6 rounded-xl border border-orange-500 shadow-sm space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">

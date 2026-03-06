@@ -127,11 +127,11 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
     };
 
     return (
-        <Card>
+        <Card className="border-orange-500">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <div>
                     <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-primary" />
+                        <MessageSquare className="w-5 h-5 text-orange-600" />
                         WhatsApp Şablonları
                     </CardTitle>
                     <CardDescription>
@@ -179,7 +179,7 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                                     <div className="flex flex-col gap-2 mb-2">
                                         <div className="flex items-center justify-between text-slate-600 bg-slate-100/50 p-2 rounded-md border border-slate-100">
                                             <div className="flex items-center gap-2">
-                                                {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-blue-500" />}
+                                                {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-orange-500" />}
                                                 {tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" && <Video className="w-4 h-4 text-red-500" />}
                                                 {tpl.components?.find((c: any) => c.type === "HEADER").format === "DOCUMENT" && <FileText className="w-4 h-4 text-orange-500" />}
                                                 <span className="text-xs font-semibold">
@@ -231,7 +231,7 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                                             </div>
                                         )}
                                         {tpl.uppypro_media && tpl.uppypro_media.file_type !== "IMAGE" && (
-                                            <div className="w-full text-xs text-blue-600 bg-blue-50 p-2 rounded-md truncate">
+                                            <div className="w-full text-xs text-orange-600 bg-orange-50 p-2 rounded-md truncate">
                                                 {tpl.uppypro_media.file_url}
                                             </div>
                                         )}
@@ -247,7 +247,7 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                                         {tpl.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => (
                                             <div key={idx} className="flex flex-col text-xs bg-slate-100 p-2 rounded border border-slate-200 text-slate-600">
                                                 <div className="flex items-center gap-1.5 font-semibold">
-                                                    {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5 text-blue-500" />}
+                                                    {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5 text-orange-500" />}
                                                     {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5 text-green-500" />}
                                                     {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5 text-indigo-500" />}
                                                     {btn.text}
@@ -271,13 +271,13 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                     </div>
                 )}
 
-                <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-6 flex items-start gap-4">
-                    <div className="bg-blue-100 p-2 rounded-full text-blue-600 mt-1 flex-shrink-0">
+                <div className="mt-8 bg-orange-50 border border-orange-100 rounded-xl p-6 flex items-start gap-4">
+                    <div className="bg-orange-100 p-2 rounded-full text-orange-600 mt-1 flex-shrink-0">
                         <AlertCircle className="w-6 h-6" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-bold text-blue-900 text-lg mb-2">WhatsApp Şablonları Nasıl Oluşturulur?</h3>
-                        <p className="text-blue-800 text-sm mb-4 leading-relaxed">
+                        <h3 className="font-bold text-orange-900 text-lg mb-2">WhatsApp Şablonları Nasıl Oluşturulur?</h3>
+                        <p className="text-orange-800 text-sm mb-4 leading-relaxed">
                             Müşterilerinize görselli (Video, Resim, PDF) kampanyalar veya tıkanabilir interaktif butonlar (URL, Hızlı Yanıt) içeren mesajlar göndermek için <strong>Meta'nın resmî Gelişmiş Şablon Kütüphanesi ve Oluşturucusunu</strong> kullanmanız gerekmektedir.
                             <br /><br />
                             Meta Yöneticisi üzerinden oluşturduğunuz ve onaylanan tüm şablonlar (Hazır veya Özel tasarımlar) <strong>otomatik olarak bu panele senkronize olur</strong> ve paneldeki "Şablon Gönder" menüsünden görselleriyle birlikte müşterilerinize iletilebilir.
@@ -287,7 +287,7 @@ export function TemplatesCard({ tenantId }: { tenantId: string }) {
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0">
+                            <Button className="bg-orange-600 hover:bg-orange-700 text-white border-0">
                                 <ExternalLink className="w-4 h-4 mr-2" />
                                 Meta Şablon Yöneticisine Git
                             </Button>

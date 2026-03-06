@@ -105,10 +105,10 @@ export default async function SettingsPage(props: SettingsPageProps) {
     // 1.5 WhatsApp Templates Tab
     const existingTab = (
         <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="bg-orange-50 border border-orange-200 text-orange-800 rounded-lg p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                    <strong>Bilgilendirme:</strong> Şablon ve pazarlama (marketing) gönderim ücretleri doğrudan Meta (WhatsApp) tarafından ücretlendirilir. Lütfen <a href="https://business.facebook.com/billing_hub/" target="_blank" rel="noreferrer" className="underline font-medium hover:text-blue-900">Meta Fatura Ayarlarınızda</a> kredi kartınızın kayıtlı olduğundan emin olun.
+                    <strong>Bilgilendirme:</strong> Şablon ve pazarlama (marketing) gönderim ücretleri doğrudan Meta (WhatsApp) tarafından ücretlendirilir. Lütfen <a href="https://business.facebook.com/billing_hub/" target="_blank" rel="noreferrer" className="underline font-medium hover:text-orange-900">Meta Fatura Ayarlarınızda</a> kredi kartınızın kayıtlı olduğundan emin olun.
                 </div>
             </div>
             <TemplatesCard tenantId={member.tenant_id} />

@@ -1,4 +1,5 @@
 "use client";
+// Force HMR reload
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -298,7 +299,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
     };
 
     return (
-        <Card className="border-slate-200 shadow-sm">
+        <Card className="border-orange-500 shadow-sm overflow-hidden">
             <CardHeader className="bg-slate-50 border-b">
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
@@ -308,10 +309,10 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                     <div className="flex items-center gap-2">
                         {[1, 2, 3, 4].map((s) => (
                             <div key={s} className="flex items-center">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mx-1 ${step >= s ? 'bg-primary text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mx-1 ${step >= s ? 'bg-orange-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                                     {s}
                                 </div>
-                                {s < 4 && <div className={`w-4 h-[2px] ${step > s ? 'bg-primary' : 'bg-slate-200'}`} />}
+                                {s < 4 && <div className={`w-4 h-[2px] ${step > s ? 'bg-orange-600' : 'bg-slate-200'}`} />}
                             </div>
                         ))}
                     </div>
@@ -348,16 +349,16 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                     approvedTemplates.map(tpl => (
                                         <div
                                             key={tpl.id}
-                                            className={`border rounded-lg p-5 cursor-pointer flex flex-col gap-3 transition-all h-full ${selectedTemplate === tpl.id ? 'border-primary bg-primary/5 ring-1 ring-primary shadow-sm' : 'border-slate-200 hover:border-primary/40 bg-white'}`}
+                                            className={`border rounded-lg p-5 cursor-pointer flex flex-col gap-3 transition-all h-full ${selectedTemplate === tpl.id ? 'border-orange-500 bg-orange-600/5 ring-1 ring-orange-500 shadow-sm' : 'border-slate-200 hover:border-orange-500/40 bg-white'}`}
                                             onClick={() => setSelectedTemplate(tpl.id)}
                                         >
                                             {/* Header */}
                                             <div className="flex justify-between items-start">
                                                 <div className="font-bold text-slate-900 flex items-center gap-2 break-all">
-                                                    <LayoutTemplate className={`w-4 h-4 ${selectedTemplate === tpl.id ? 'text-primary' : 'text-slate-500'}`} />
+                                                    <LayoutTemplate className={`w-4 h-4 ${selectedTemplate === tpl.id ? 'text-orange-600' : 'text-slate-500'}`} />
                                                     {tpl.name}
                                                 </div>
-                                                {selectedTemplate === tpl.id && <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />}
+                                                {selectedTemplate === tpl.id && <CheckCircle2 className="w-5 h-5 text-orange-600 shrink-0" />}
                                                 {selectedTemplate !== tpl.id && <Badge variant="secondary" className="bg-green-100 text-green-800 shrink-0">APPROVED</Badge>}
                                             </div>
 
@@ -370,9 +371,9 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
 
                                             {/* Media Tag */}
                                             {tpl.components?.find((c: any) => c.type === "HEADER" && (c.format === "IMAGE" || c.format === "VIDEO" || c.format === "DOCUMENT")) && (
-                                                <div className={`flex flex-col gap-2 p-2 rounded-md border mt-1 ${selectedTemplate === tpl.id ? 'bg-white border-primary/20' : 'bg-slate-100/70 border-slate-100 text-slate-600'}`}>
+                                                <div className={`flex flex-col gap-2 p-2 rounded-md border mt-1 ${selectedTemplate === tpl.id ? 'bg-white border-orange-500/20' : 'bg-slate-100/70 border-slate-100 text-slate-600'}`}>
                                                     <div className="flex items-center gap-2">
-                                                        {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-blue-500" />}
+                                                        {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-orange-500" />}
                                                         {tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" && <Video className="w-4 h-4 text-red-500" />}
                                                         {tpl.components?.find((c: any) => c.type === "HEADER").format === "DOCUMENT" && <FileText className="w-4 h-4 text-orange-500" />}
                                                         <span className="text-xs font-semibold">
@@ -392,7 +393,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                             )}
 
                                             {/* Body Text */}
-                                            <div className={`text-sm p-3 rounded-md line-clamp-none whitespace-pre-wrap flex-1 min-h-[80px] overflow-y-auto max-h-[200px] ${selectedTemplate === tpl.id ? 'bg-white border-primary/20 text-slate-800 border' : 'bg-slate-50 border-slate-100 text-slate-700'}`}>
+                                            <div className={`text-sm p-3 rounded-md line-clamp-none whitespace-pre-wrap flex-1 min-h-[80px] overflow-y-auto max-h-[200px] ${selectedTemplate === tpl.id ? 'bg-white border-orange-500/20 text-slate-800 border' : 'bg-slate-50 border-slate-100 text-slate-700'}`}>
                                                 {tpl.components?.find((c: any) => c.type === "BODY")?.text || "Gövde bulunmuyor."}
                                             </div>
 
@@ -400,7 +401,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                             {tpl.components?.find((c: any) => c.type === "BUTTONS") && (
                                                 <div className="flex flex-col gap-1.5 mt-1">
                                                     {tpl.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => (
-                                                        <div key={idx} className={`flex items-center gap-1.5 text-[11px] p-2 rounded border font-semibold ${selectedTemplate === tpl.id ? 'bg-white border-primary/20 text-primary' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
+                                                        <div key={idx} className={`flex items-center gap-1.5 text-[11px] p-2 rounded border font-semibold ${selectedTemplate === tpl.id ? 'bg-white border-orange-500/20 text-orange-600' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
                                                             {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5 shrink-0" />}
                                                             {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5 shrink-0" />}
                                                             {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5 shrink-0" />}
@@ -431,40 +432,29 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                 {step === 2 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <Label className="text-lg font-semibold block">Hedef Kitleyi Belirleyin</Label>
-                        <p className="text-sm text-slate-500">Mesajı kime göndermek istiyorsunuz? Sistemde kayıtlı müşterilerinizi seçebilir, yeni bir dosya yükleyebilir veya daha önce kaydettiğiniz bir listeyi kullanabilirsiniz.</p>
+                        <p className="text-sm text-slate-500">Mesajı kime göndermek istiyorsunuz? Sistemde kayıtlı müşterilerinizi seçebilir veya daha önce kaydettiğiniz bir müşteri listesini kullanabilirsiniz.</p>
 
                         {/* Audience Type Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             {/* Kayıtlı Müşteriler */}
                             <div
-                                className={`border-2 rounded-xl p-6 cursor-pointer flex flex-col items-center justify-center text-center transition-all ${audienceType === 'customers' ? 'border-primary bg-primary/5 shadow-sm' : 'border-dashed border-slate-300 hover:border-slate-400'
+                                className={`border-2 rounded-xl p-6 cursor-pointer flex flex-col items-center justify-center text-center transition-all ${audienceType === 'customers' ? 'border-orange-500 bg-orange-600/5 shadow-sm' : 'border-dashed border-slate-300 hover:border-slate-400'
                                     }`}
                                 onClick={() => setAudienceType('customers')}
                             >
-                                <Users className={`w-10 h-10 mb-3 ${audienceType === 'customers' ? 'text-primary' : 'text-slate-400'}`} />
+                                <Users className={`w-10 h-10 mb-3 ${audienceType === 'customers' ? 'text-orange-600' : 'text-slate-400'}`} />
                                 <h3 className="text-base font-bold mb-1">Kayıtlı Müşteriler</h3>
                                 <p className="text-xs text-slate-500">CRM'deki müşterilere gönderin.</p>
                             </div>
 
-                            {/* Excel Yükle */}
-                            <div
-                                className={`border-2 rounded-xl p-6 cursor-pointer flex flex-col items-center justify-center text-center transition-all ${audienceType === 'excel' ? 'border-primary bg-primary/5 shadow-sm' : 'border-dashed border-slate-300 hover:border-slate-400'
-                                    }`}
-                                onClick={() => setAudienceType('excel')}
-                            >
-                                <FileSpreadsheet className={`w-10 h-10 mb-3 ${audienceType === 'excel' ? 'text-primary' : 'text-slate-400'}`} />
-                                <h3 className="text-base font-bold mb-1">Excel / CSV Yükle</h3>
-                                <p className="text-xs text-slate-500">Yeni bir liste dosyası yükleyin.</p>
-                            </div>
-
                             {/* Kayıtlı Liste */}
                             <div
-                                className={`border-2 rounded-xl p-6 cursor-pointer flex flex-col items-center justify-center text-center transition-all ${audienceType === 'saved_list' ? 'border-primary bg-primary/5 shadow-sm' : 'border-dashed border-slate-300 hover:border-slate-400'
+                                className={`border-2 rounded-xl p-6 cursor-pointer flex flex-col items-center justify-center text-center transition-all ${audienceType === 'saved_list' ? 'border-orange-500 bg-orange-600/5 shadow-sm' : 'border-dashed border-slate-300 hover:border-slate-400'
                                     }`}
                                 onClick={() => setAudienceType('saved_list')}
                             >
-                                <BookOpen className={`w-10 h-10 mb-3 ${audienceType === 'saved_list' ? 'text-primary' : 'text-slate-400'}`} />
-                                <h3 className="text-base font-bold mb-1">Kayıtlı Liste</h3>
+                                <BookOpen className={`w-10 h-10 mb-3 ${audienceType === 'saved_list' ? 'text-orange-600' : 'text-slate-400'}`} />
+                                <h3 className="text-base font-bold mb-1">Kayıtlı Müşteri Listeleri</h3>
                                 <p className="text-xs text-slate-500">Önceden kaydettiğiniz bir listeyi kullanın.</p>
                             </div>
                         </div>
@@ -510,24 +500,6 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                             </div>
                         )}
 
-                        {/* === EXCEL YÜKLE === */}
-                        {audienceType === 'excel' && (
-                            <div className="space-y-4 mt-2">
-                                <div className="border border-dashed border-blue-300 bg-blue-50/50 rounded-xl p-8 flex flex-col items-center text-center">
-                                    <Upload className={`w-10 h-10 mb-3 ${excelFile ? 'text-green-500' : 'text-blue-500'}`} />
-                                    <h4 className="font-semibold mb-1">{excelFile ? excelFile.name : 'Dosyanızı sürükleyin veya seçin'}</h4>
-                                    <p className="text-sm text-slate-500 mb-4">{excelFile ? `${(excelFile.size / 1024).toFixed(1)} KB` : '.xlsx, .xls, .csv desteklenir.'}</p>
-                                    <Label htmlFor="excel-upload" className="cursor-pointer">
-                                        <div className={`border rounded-lg px-6 py-2.5 text-sm font-medium transition-colors ${excelFile ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                                            }`}>
-                                            {excelFile ? 'Başka Dosya Seç' : 'Dosya Seç'}
-                                        </div>
-                                        <input id="excel-upload" type="file" className="hidden" accept=".xlsx,.xls,.csv"
-                                            onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
-                                    </Label>
-                                </div>
-                            </div>
-                        )}
 
                         {/* === KAYITLI LİSTE === */}
                         {audienceType === 'saved_list' && (
@@ -540,7 +512,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold">Bir liste seçin</Label>
                                         <Select value={selectedSavedListId} onValueChange={setSelectedSavedListId}>
-                                            <SelectTrigger><SelectValue placeholder="Liste Seçin..." /></SelectTrigger>
+                                            <SelectTrigger className="focus:ring-orange-500"><SelectValue placeholder="Liste Seçin..." /></SelectTrigger>
                                             <SelectContent>
                                                 {savedLists.map((l: any) => (
                                                     <SelectItem key={l.id} value={l.id}>
@@ -635,7 +607,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                         {/* Header */}
                                         <div className="flex justify-between items-start">
                                             <div className="font-bold text-slate-900 flex items-center gap-2 break-all">
-                                                <LayoutTemplate className="w-4 h-4 text-primary" />
+                                                <LayoutTemplate className="w-4 h-4 text-orange-600" />
                                                 {activeTemplate.name}
                                             </div>
                                         </div>
@@ -649,9 +621,9 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
 
                                         {/* Media Tag */}
                                         {activeTemplate.components?.find((c: any) => c.type === "HEADER" && (c.format === "IMAGE" || c.format === "VIDEO" || c.format === "DOCUMENT")) && (
-                                            <div className="flex flex-col gap-2 p-2 rounded-md border mt-1 bg-white border-primary/20">
+                                            <div className="flex flex-col gap-2 p-2 rounded-md border mt-1 bg-white border-orange-500/20">
                                                 <div className="flex items-center gap-2">
-                                                    {activeTemplate.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-blue-500" />}
+                                                    {activeTemplate.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-orange-500" />}
                                                     {activeTemplate.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" && <Video className="w-4 h-4 text-red-500" />}
                                                     {activeTemplate.components?.find((c: any) => c.type === "HEADER").format === "DOCUMENT" && <FileText className="w-4 h-4 text-orange-500" />}
                                                     <span className="text-xs font-semibold">
@@ -671,7 +643,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                         )}
 
                                         {/* Body Text */}
-                                        <div className="text-sm p-3 rounded-md line-clamp-none whitespace-pre-wrap flex-1 min-h-[80px] overflow-y-auto max-h-[300px] bg-white border border-primary/20 text-slate-800">
+                                        <div className="text-sm p-3 rounded-md line-clamp-none whitespace-pre-wrap flex-1 min-h-[80px] overflow-y-auto max-h-[300px] bg-white border border-orange-500/20 text-slate-800">
                                             {getPreviewBodyText()}
                                         </div>
 
@@ -679,7 +651,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                         {activeTemplate.components?.find((c: any) => c.type === "BUTTONS") && (
                                             <div className="flex flex-col gap-1.5 mt-1">
                                                 {activeTemplate.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => (
-                                                    <div key={idx} className="flex items-center gap-1.5 text-[11px] p-2 rounded border font-semibold bg-white border-primary/20 text-primary">
+                                                    <div key={idx} className="flex items-center gap-1.5 text-[11px] p-2 rounded border font-semibold bg-white border-orange-500/20 text-orange-600">
                                                         {btn.type === "URL" && <LinkIcon className="w-3.5 h-3.5 shrink-0" />}
                                                         {btn.type === "PHONE_NUMBER" && <Phone className="w-3.5 h-3.5 shrink-0" />}
                                                         {btn.type === "QUICK_REPLY" && <MousePointerClick className="w-3.5 h-3.5 shrink-0" />}
@@ -703,7 +675,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                 {step === 4 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="text-center py-6">
-                            <Send className="w-16 h-16 text-primary mx-auto mb-4" />
+                            <Send className="w-16 h-16 text-orange-600 mx-auto mb-4" />
                             <h2 className="text-2xl font-bold text-slate-900 mb-2">Her Şey Hazır!</h2>
                             <p className="text-slate-500 max-w-lg mx-auto">Kampanyanız başlatılmak üzere. Lütfen aşağıdaki özeti kontrol edip onaylayın.</p>
                         </div>
@@ -755,8 +727,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                 </Button>
 
                 {step < 4 ? (
-                    <Button
-                        onClick={handleNext}
+                    <Button className='bg-orange-600 hover:bg-orange-700 text-white border-0' onClick={handleNext}
                         disabled={(step === 1 && (!selectedTemplate || isMissingMedia)) || (step === 3 && audienceType === 'excel' && !selectedPhoneColumn)}
                     >
                         İleri
@@ -785,7 +756,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                         <div className="border border-slate-200 rounded-xl overflow-hidden">
                             <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b">
                                 <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                    <Eye className="w-4 h-4 text-primary" /> Önizleme
+                                    <Eye className="w-4 h-4 text-orange-600" /> Önizleme
                                 </span>
                                 <span className="text-xs font-medium text-slate-500 bg-white border rounded-full px-3 py-0.5">
                                     {customersLoading ? '...' : `${customerPreview.length} müşteri`}
@@ -830,7 +801,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                         <div className="border border-slate-200 rounded-xl overflow-hidden">
                             <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b">
                                 <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                    <Eye className="w-4 h-4 text-primary" /> Önizleme — {excelPreviewRows.length} satır
+                                    <Eye className="w-4 h-4 text-orange-600" /> Önizleme — {excelPreviewRows.length} satır
                                 </span>
                                 <Button size="sm" variant="outline" className="h-7 text-xs flex items-center gap-1" onClick={() => setShowSaveDialog(true)}>
                                     <Save className="w-3 h-3" /> Bu Listeyi Kaydet
@@ -876,7 +847,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                         <div className="border border-slate-200 rounded-xl overflow-hidden">
                             <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b">
                                 <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                    <Eye className="w-4 h-4 text-primary" /> Liste Önizlemesi — {selectedSavedListRows.length} kişi
+                                    <Eye className="w-4 h-4 text-orange-600" /> Liste Önizlemesi — {selectedSavedListRows.length} kişi
                                 </span>
                             </div>
                             <div className="overflow-auto max-h-72">
