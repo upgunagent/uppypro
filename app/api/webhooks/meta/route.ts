@@ -199,9 +199,60 @@ export async function POST(request: Request) {
                     continue;
                 }
 
-                // FILTER: Ignore Delivery/Read Watermarks
+                // Process Delivery/Read Watermarks
                 if (messaging.delivery || messaging.read) {
-                    console.log("Ignoring Instagram delivery/read");
+                    if (messaging.delivery?.mids) {
+                        for (const mid of messaging.delivery.mids) {
+                            await supabaseAdmin.from('messages')
+                                .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+                                .eq('external_message_id', mid);
+                            await supabaseAdmin.from('customer_campaign_logs')
+                                .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+                                .eq('meta_message_id', mid);
+                        }
+                    }
+
+                    if (messaging.read) {
+                        const mid = messaging.read.mid;
+                        const senderId = messaging.sender?.id; // IG User who read the message
+
+                        if (mid) {
+                            await supabaseAdmin.from('messages')
+                                .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
+                                .eq('external_message_id', mid);
+                        } else if (senderId) {
+                            // Find conversation and mark all outbound messages as read
+                            const { data: conv } = await supabaseAdmin.from('conversations')
+                                .select('id').eq('external_thread_id', senderId).eq('channel', 'instagram').maybeSingle();
+
+                            if (conv) {
+                                await supabaseAdmin.from('messages')
+                                    .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
+                                    .eq('conversation_id', conv.id)
+                                    .eq('direction', 'OUT')
+                                    .neq('status', 'read');
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                // Process Reactions
+                if (messaging.reaction) {
+                    const reactionData = messaging.reaction;
+                    const reactedMsgId = reactionData.mid;
+
+                    if (reactedMsgId) {
+                        if (reactionData.action === 'react' && reactionData.emoji) {
+                            await supabaseAdmin.from('messages')
+                                .update({ reactions: { emoji: reactionData.emoji, sender_id: messaging.sender?.id } })
+                                .eq('external_message_id', reactedMsgId);
+                        } else if (reactionData.action === 'unreact') {
+                            await supabaseAdmin.from('messages')
+                                .update({ reactions: null })
+                                .eq('external_message_id', reactedMsgId);
+                        }
+                    }
                     continue;
                 }
 
