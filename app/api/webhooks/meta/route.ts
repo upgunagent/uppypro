@@ -199,8 +199,29 @@ export async function POST(request: Request) {
                     continue;
                 }
 
-                // Process Delivery/Read Watermarks
-                if (messaging.delivery || messaging.read) {
+                // Process Delivery/Read Watermarks or Reactions
+                if (messaging.delivery || messaging.read || messaging.reaction) {
+                    // WE MUST FIND THE TENANT FIRST. ONE IG USER CAN TALK TO MULTIPLE TENANTS!
+                    const recipientIdForTenant = messaging.recipient?.id;
+                    let tenantIdForEvents = null;
+
+                    if (recipientIdForTenant) {
+                        const { data: conn } = await supabaseAdmin
+                            .from("channel_connections")
+                            .select("tenant_id")
+                            .eq("channel", "instagram")
+                            .contains("meta_identifiers", { ig_user_id: recipientIdForTenant })
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+                        if (conn) tenantIdForEvents = conn.tenant_id;
+                    }
+
+                    if (!tenantIdForEvents) {
+                        console.log("Could not find tenant for IG event (read/delivery/reaction), ignoring.");
+                        continue;
+                    }
+
                     if (messaging.delivery?.mids) {
                         for (const mid of messaging.delivery.mids) {
                             await supabaseAdmin.from('messages')
@@ -226,7 +247,11 @@ export async function POST(request: Request) {
                         // Meta webhook'larında mid uyuşmazlığı olabiliyor.
                         if (senderId) {
                             const { data: conv } = await supabaseAdmin.from('conversations')
-                                .select('id').eq('external_thread_id', senderId).eq('channel', 'instagram').maybeSingle();
+                                .select('id')
+                                .eq('external_thread_id', senderId)
+                                .eq('channel', 'instagram')
+                                .eq('tenant_id', tenantIdForEvents) // FIX: EXACT MATCH
+                                .maybeSingle();
 
                             if (conv) {
                                 await supabaseAdmin.from('messages')
@@ -237,23 +262,22 @@ export async function POST(request: Request) {
                             }
                         }
                     }
-                    continue;
-                }
 
-                // Process Reactions
-                if (messaging.reaction) {
-                    const reactionData = messaging.reaction;
-                    const reactedMsgId = reactionData.mid;
+                    // Process Reactions
+                    if (messaging.reaction) {
+                        const reactionData = messaging.reaction;
+                        const reactedMsgId = reactionData.mid;
 
-                    if (reactedMsgId) {
-                        if (reactionData.action === 'react' && reactionData.emoji) {
-                            await supabaseAdmin.from('messages')
-                                .update({ reactions: { emoji: reactionData.emoji, sender_id: messaging.sender?.id } })
-                                .eq('external_message_id', reactedMsgId);
-                        } else if (reactionData.action === 'unreact') {
-                            await supabaseAdmin.from('messages')
-                                .update({ reactions: null })
-                                .eq('external_message_id', reactedMsgId);
+                        if (reactedMsgId) {
+                            if (reactionData.action === 'react' && reactionData.emoji) {
+                                await supabaseAdmin.from('messages')
+                                    .update({ reactions: { emoji: reactionData.emoji, sender_id: messaging.sender?.id } })
+                                    .eq('external_message_id', reactedMsgId);
+                            } else if (reactionData.action === 'unreact') {
+                                await supabaseAdmin.from('messages')
+                                    .update({ reactions: null })
+                                    .eq('external_message_id', reactedMsgId);
+                            }
                         }
                     }
                     continue;
