@@ -685,11 +685,16 @@ export default function ChatInterface({
                     <Button
                         variant="default"
                         size="sm"
-                        onClick={handleToggle}
-                        disabled={!aiOperational}
+                        onClick={() => {
+                            if (!aiOperational && currentMode !== "BOT") {
+                                alert("AI Asistan şu an ayarlardan PASİF durumda!\nLütfen İşletme Ayarları > AI Asistan Ayarları sayfasından asistanı 'Aktif' konuma getirin.");
+                                return;
+                            }
+                            handleToggle();
+                        }}
                         className={clsx(
                             "h-9 px-3 text-xs md:text-sm whitespace-nowrap",
-                            !aiOperational && "opacity-50 cursor-not-allowed",
+                            !aiOperational && "opacity-50",
                             currentMode === "BOT"
                                 ? "bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg shadow-green-500/20"
                                 : "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-500/20"

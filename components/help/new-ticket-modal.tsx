@@ -146,7 +146,7 @@ export function NewTicketModal({ tenantId, onClose, onSuccess }: NewTicketModalP
 
                     <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
                         <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>İptal</Button>
-                        <Button type="submit" disabled={loading} className="font-bold">
+                        <Button type="submit" disabled={loading} className="font-bold bg-orange-600 hover:bg-orange-700 text-white">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             Talebi Gönder
                         </Button>

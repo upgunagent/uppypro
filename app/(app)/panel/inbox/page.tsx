@@ -159,11 +159,41 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                         </div>
                     </div>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4">
-                        <div className="bg-white/5 p-6 rounded-full">
-                            <MessageSquare size={48} className="opacity-50" />
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-4 relative overflow-hidden bg-slate-50/50">
+                        {/* Decorative Background Logos */}
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.03]">
+                            {/* WhatsApp Logos */}
+                            <MessageCircle className="absolute top-[10%] left-[15%] w-64 h-64 -rotate-12" />
+                            <MessageCircle className="absolute top-[60%] left-[8%] w-48 h-48 rotate-45" />
+                            <MessageCircle className="absolute top-[20%] right-[20%] w-72 h-72 rotate-12" />
+                            <MessageCircle className="absolute -bottom-10 right-[35%] w-80 h-80 -rotate-45" />
+                            <MessageCircle className="absolute top-[40%] left-[45%] w-56 h-56 rotate-90" />
+
+                            {/* Instagram Logos */}
+                            <Instagram className="absolute top-[15%] right-[5%] w-56 h-56 rotate-12" />
+                            <Instagram className="absolute top-[55%] right-[10%] w-64 h-64 -rotate-12" />
+                            <Instagram className="absolute bottom-[10%] left-[20%] w-48 h-48 -rotate-45" />
+                            <Instagram className="absolute top-[5%] left-[40%] w-52 h-52 rotate-45" />
+                            <Instagram className="absolute bottom-[20%] right-[50%] w-72 h-72 rotate-12" />
                         </div>
-                        <p className="text-lg">Görüntülemek için bir konuşma seçin</p>
+
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100/50 flex items-center justify-center relative group hover:scale-[1.02] transition-transform duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-orange-100 to-rose-50 rounded-[2.5rem] opacity-50 group-hover:opacity-80 transition-opacity"></div>
+                                <MessageSquare size={64} className="text-orange-500 relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:rotate-6" strokeWidth={1.5} />
+                                <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-2 border-4 border-white shadow-sm rotate-12 group-hover:scale-110 transition-transform">
+                                    <MessageCircle size={14} className="text-white" />
+                                </div>
+                                <div className="absolute -bottom-2 -left-2 bg-gradient-to-tr from-rose-500 to-pink-500 rounded-full p-2 border-4 border-white shadow-sm -rotate-12 group-hover:scale-110 transition-transform">
+                                    <Instagram size={14} className="text-white" />
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center gap-2">
+                                <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Gelen Kutusu</h3>
+                                <p className="text-base text-slate-500 font-medium">Sohbeti görüntülemek için sol taraftan bir konuşma seçin</p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

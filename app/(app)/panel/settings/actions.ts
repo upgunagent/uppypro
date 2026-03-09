@@ -34,13 +34,15 @@ export async function updateAiSettings(formData: FormData) {
     }
 
     const systemMessage = formData.get("systemMessage") as string;
+    const aiOperationalEnabled = formData.get("aiOperationalEnabled") === "true";
 
     const adminDb = createAdminClient();
 
-    // Update agent settings - ONLY system message
+    // Update agent settings
     const { error } = await adminDb.from("agent_settings").upsert({
         tenant_id: member.tenant_id,
         system_message: systemMessage,
+        ai_operational_enabled: aiOperationalEnabled,
     }, { onConflict: 'tenant_id' });
 
     if (error) {

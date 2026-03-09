@@ -108,11 +108,13 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                             const updatedConv = { ...prev[existingIdx] };
 
                             // Safe create object
-                            const msgObj = {
+                            const msgObj: Message = {
                                 text: safeString(newMsg.text),
                                 created_at: safeString(newMsg.created_at),
                                 message_type: newMsg.message_type,
-                                media_url: newMsg.media_url
+                                media_url: newMsg.media_url,
+                                direction: newMsg.direction,
+                                is_read: newMsg.is_read
                             };
 
                             // Naively append
@@ -147,7 +149,9 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     text: safeString(newMsg.text),
                                                     created_at: safeString(newMsg.created_at),
                                                     message_type: newMsg.message_type,
-                                                    media_url: newMsg.media_url
+                                                    media_url: newMsg.media_url,
+                                                    direction: newMsg.direction,
+                                                    is_read: newMsg.is_read
                                                 }]
                                             };
                                             return [newConv, ...current];
@@ -168,6 +172,33 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
             // console.log("Unsubscribing from inbox-list");
             supabase.removeChannel(channel);
         };
+    }, [tenantId, currentTab]);
+
+    // Fast Polling ( Turbo Polling ) to ensure list is strictly up to date
+    useEffect(() => {
+        const fetchConversations = async () => {
+            const supabase = createClient();
+            let query = supabase
+                .from("conversations")
+                .select("*, messages(*)")
+                .eq("tenant_id", tenantId)
+                .order("updated_at", { ascending: false });
+
+            if (currentTab !== "all") {
+                query = query.eq("channel", currentTab);
+            }
+
+            const { data } = await query;
+            if (data && data.length > 0) {
+                // Sadece gerçek bir değişiklik varsa güncelleyerek React'ın boşuna render etmesini engelleyebiliriz 
+                // ya da listeyi direkt set edebiliriz. React'ın sanal DOM yapısında direkt set etmek de hızlıdır,
+                // ama listeyi direkt set edeceğiz.
+                setConversations(data as Conversation[]);
+            }
+        };
+
+        const interval = setInterval(fetchConversations, 4000);
+        return () => clearInterval(interval);
     }, [tenantId, currentTab]);
 
     // URL Constructor
@@ -257,8 +288,8 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                             >
                                 <div
                                     onClick={() => {
-                                        // Force navigation to ensure fresh state
-                                        window.location.href = getConversationUrl(conv.id);
+                                        // Use Next.js router for seamless SPA navigation
+                                        router.push(getConversationUrl(conv.id));
                                     }}
                                     className="block relative group cursor-pointer"
                                 >

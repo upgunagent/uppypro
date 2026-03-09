@@ -473,7 +473,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     icon={HelpCircle}
                     label="Yardım & Destek"
                     isActive={pathname.startsWith("/panel/help")}
-                    gradient="bg-pink-500 shadow-pink-500/20"
+                    gradient="bg-orange-500 shadow-orange-500/20"
                     iconColor="text-white"
                     count={unreadTicketsCount}
                 />

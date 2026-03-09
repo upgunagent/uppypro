@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { getTickets } from "@/app/actions/tickets";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Plus, Search, MessageSquare, AlertCircle } from "lucide-react";
+import { Plus, HelpCircle, ArrowRight, MessageCircle } from "lucide-react";
 import { NewTicketModal } from "@/components/help/new-ticket-modal";
 import { TicketChat } from "@/components/help/ticket-chat";
 import { clsx } from "clsx";
@@ -19,7 +19,6 @@ export function HelpClient({ tenantId, userId }: HelpClientProps) {
     const [loading, setLoading] = useState(true);
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
     const [showNewModal, setShowNewModal] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchTickets = async () => {
         const data = await getTickets(tenantId);
@@ -43,7 +42,7 @@ export function HelpClient({ tenantId, userId }: HelpClientProps) {
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "ticket_messages" },
-                () => fetchTickets() // naive refresh on any message, could be optimized
+                () => fetchTickets()
             )
             .subscribe();
 
@@ -53,131 +52,128 @@ export function HelpClient({ tenantId, userId }: HelpClientProps) {
         };
     }, [tenantId]);
 
-    const selectedTicket = tickets.find(t => t.id === selectedTicketId);
-
-    const filteredTickets = tickets.filter(t =>
-        (t.subject && t.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (t.category && t.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
     const formatCategory = (cat: string) => {
         const map: Record<string, string> = {
             'billing': 'Fatura & Ödeme',
-            'subscription': 'Abonelik & Paket',
-            'meta_approval': 'Meta (WhatsApp) Onay',
-            'connection_issue': 'Bağlantı Kopması',
-            'ai_settings': 'Yapay Zeka Ayarları',
-            'campaign_reject': 'Kampanya Reddi',
-            'technical_error': 'Teknik Hata',
-            'other': 'Diğer'
+            'subscription': 'Abonelik & Paket Yükseltme',
+            'meta_approval': 'Meta (WhatsApp) Onay Sorunları',
+            'connection_issue': 'Bağlantı Kopmaları',
+            'ai_settings': 'AI / Yapay Zeka Bot Ayarları',
+            'campaign_reject': 'Kampanya ve Şablon Reddi',
+            'technical_error': 'Teknik Hata Bildirimi',
+            'other': 'Diğer / Öneri'
         };
         return map[cat] || cat;
     };
 
-    const hasAdminRepliedCount = tickets.filter(t => t.has_unread_admin_message).length;
+    const selectedTicket = tickets.find(t => t.id === selectedTicketId);
+
+    if (selectedTicket) {
+        return (
+            <div className="p-4 md:p-8 max-w-[1000px] h-screen overflow-y-auto">
+                <TicketChat
+                    ticket={selectedTicket}
+                    tenantId={tenantId}
+                    onBack={() => {
+                        setSelectedTicketId(null);
+                        fetchTickets();
+                    }}
+                    userId={userId}
+                    role="tenant"
+                    onMessageSent={() => fetchTickets()}
+                />
+            </div>
+        );
+    }
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-background relative flex-col">
-            {/* Mobile Header (similar to Inbox) could go here but we have desktop first view */}
+        <div className="p-4 md:p-8 max-w-[1200px] pb-24 h-screen overflow-y-auto w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Yardım & Destek</h1>
+                    <p className="text-slate-500 mt-1">Sistem uzmanlarımızdan destek alın, taleplerinizi yönetin.</p>
+                </div>
+                <Button
+                    onClick={() => setShowNewModal(true)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-semibold flex items-center gap-2 h-11 px-5 rounded-xl shadow-sm hover:shadow-md transition-all shrink-0"
+                >
+                    <Plus size={18} /> Yeni Talep Oluştur
+                </Button>
+            </div>
 
-            <div className="flex-1 flex overflow-hidden">
-                {/* Left Pane: Ticket List */}
-                <div className={clsx(
-                    "shrink-0 flex flex-col border-r border-slate-200 bg-slate-50 transition-all duration-300 absolute inset-0 z-10 md:static md:w-[35%] md:min-w-[350px] md:max-w-[450px]",
-                    selectedTicketId ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"
-                )}>
-                    <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-slate-900">Destek Talepleri</h2>
-                        </div>
-                        <Button
-                            onClick={() => setShowNewModal(true)}
-                            className="bg-primary hover:bg-primary/90 text-white shadow-sm flex items-center gap-1 h-9 px-3"
-                        >
-                            <Plus size={16} /> Yeni Talep
-                        </Button>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+                    <div className="p-2.5 bg-orange-50 rounded-xl text-orange-600">
+                        <MessageCircle size={22} className="stroke-[2.5]" />
                     </div>
+                    <h2 className="text-lg font-bold text-slate-800">Geçmiş Destek Talepleri</h2>
+                </div>
 
-                    <div className="p-3 border-b border-slate-200 bg-slate-50 shrink-0">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Taleplerde ara..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-10 pl-9 pr-4 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto">
-                        {loading ? (
-                            <div className="p-6 text-center text-slate-500">Yükleniyor...</div>
-                        ) : filteredTickets.length === 0 ? (
-                            <div className="p-8 text-center flex flex-col items-center justify-center h-full text-slate-500">
-                                <HelpCircle size={48} className="opacity-20 mb-4" />
-                                <p>Henüz bir destek talebi bulunmuyor.</p>
-                                <p className="text-sm mt-2 opacity-70">Sorularınız veya yardım ihtiyacınız için yeni bir talep oluşturabilirsiniz.</p>
+                <div className="p-0">
+                    {loading ? (
+                        <div className="p-12 text-center text-slate-500 font-medium">Talepler yükleniyor...</div>
+                    ) : tickets.length === 0 ? (
+                        <div className="p-16 text-center flex flex-col items-center justify-center text-slate-500">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <HelpCircle size={32} className="text-slate-300" />
                             </div>
-                        ) : (
-                            <div className="divide-y divide-slate-100">
-                                {filteredTickets.map((ticket) => (
-                                    <div
-                                        key={ticket.id}
-                                        onClick={() => setSelectedTicketId(ticket.id)}
-                                        className={clsx(
-                                            "p-4 cursor-pointer hover:bg-slate-100 transition-colors flex flex-col gap-2 relative",
-                                            selectedTicketId === ticket.id && "bg-slate-100 border-l-4 border-l-primary"
-                                        )}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-semibold text-slate-900 line-clamp-1 pr-6">{ticket.subject}</h3>
-                                            <span className="text-xs text-slate-500 shrink-0">
-                                                {new Date(ticket.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-xs font-medium px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-600">
+                            <h3 className="text-lg font-semibold text-slate-700 mb-1">Geçmiş Talebiniz Yok</h3>
+                            <p className="max-w-md text-sm text-slate-500 mb-6 border-transparent">
+                                Henüz Müşteri Destek ekibimize açılmış bir biletiniz bulunmuyor. Bir sorun yaşarsanız veya sormak istediğiniz bir konu olursa "Yeni Talep Oluştur" butonunu kullanabilirsiniz.
+                            </p>
+                            <Button variant="outline" onClick={() => setShowNewModal(true)} className="border-orange-200 text-orange-700 hover:bg-orange-50 rounded-xl px-6">
+                                İlk Talebi Oluştur
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-100">
+                            {tickets.map((ticket) => (
+                                <div
+                                    key={ticket.id}
+                                    onClick={() => setSelectedTicketId(ticket.id)}
+                                    className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 hover:bg-orange-50/40 cursor-pointer transition-colors"
+                                >
+                                    <div className="flex-1 min-w-0 pr-4">
+                                        <div className="flex items-center gap-3 mb-1.5">
+                                            <span className="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200">
                                                 {formatCategory(ticket.category)}
                                             </span>
 
                                             {/* Status Badge */}
-                                            {ticket.status === 'open' && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">Açık</span>}
-                                            {ticket.status === 'closed' && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700">Kapalı</span>}
-                                            {ticket.status === 'waiting_on_user' && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-700">Cevap Bekliyor</span>}
+                                            {ticket.status === 'open' && <span className="text-xs font-bold px-2.5 py-1 rounded bg-blue-100 text-blue-700 border border-blue-200/60">Açık</span>}
+                                            {ticket.status === 'closed' && <span className="text-xs font-bold px-2.5 py-1 rounded bg-slate-200 text-slate-700 border border-slate-300/60">Kapalı</span>}
+                                            {ticket.status === 'waiting_on_user' && <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-100 text-amber-700 border border-amber-200/60">Cevap Bekliyor</span>}
+
+                                            {ticket.has_unread_admin_message && (
+                                                <span className="flex h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-500/50" title="Okunmamış mesaj var" />
+                                            )}
                                         </div>
-
-                                        {/* Unread dot */}
-                                        {ticket.has_unread_admin_message && (
-                                            <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
-                                        )}
+                                        <h3 className={clsx(
+                                            "text-base font-bold truncate",
+                                            ticket.has_unread_admin_message ? "text-slate-900" : "text-slate-700 group-hover:text-orange-700"
+                                        )}>
+                                            {ticket.subject}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 mt-1 line-clamp-1 border-transparent">
+                                            {ticket.ticket_messages?.[0]?.message || 'Detaylar için tıklayın...'}
+                                        </p>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Right Pane: Chat Area */}
-                <div className={clsx(
-                    "flex-1 flex flex-col bg-slate-50 overflow-hidden absolute inset-0 z-20 md:static md:block transition-transform duration-300 bg-white",
-                    selectedTicketId ? "translate-x-0" : "translate-x-full md:translate-x-0"
-                )}>
-                    {selectedTicket ? (
-                        <TicketChat
-                            ticket={selectedTicket}
-                            tenantId={tenantId}
-                            onBack={() => setSelectedTicketId(null)}
-                            userId={userId}
-                            role="tenant"
-                        />
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4">
-                            <div className="bg-slate-100 p-6 rounded-full">
-                                <MessageSquare size={48} className="opacity-40 text-slate-500" />
-                            </div>
-                            <p className="text-lg font-medium text-slate-600">Görüntülemek için bir talep seçin</p>
+                                    <div className="mt-4 sm:mt-0 flex items-center justify-between sm:justify-end w-full sm:w-auto gap-6 shrink-0 text-right">
+                                        <div className="flex flex-col sm:items-end">
+                                            <span className="text-sm font-semibold text-slate-600">
+                                                {new Date(ticket.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </span>
+                                            <span className="text-xs font-medium text-slate-400 mt-0.5">
+                                                Saat: {new Date(ticket.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-orange-100 text-slate-400 group-hover:text-orange-600 flex items-center justify-center transition-colors">
+                                            <ArrowRight size={20} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -187,7 +183,7 @@ export function HelpClient({ tenantId, userId }: HelpClientProps) {
                 <NewTicketModal
                     tenantId={tenantId}
                     onClose={() => setShowNewModal(false)}
-                    onSuccess={(newTicketId) => {
+                    onSuccess={(newTicketId: string) => {
                         setShowNewModal(false);
                         setSelectedTicketId(newTicketId);
                         fetchTickets();

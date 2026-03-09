@@ -7,12 +7,14 @@ import { Switch } from "@/components/ui/switch";
 import { updateAiSettings } from "./actions";
 import { Bot, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
 export function AiSettingsForm({ settings, subscription }: { settings: any, subscription: any }) {
+    const formRef = useRef<HTMLFormElement>(null);
     const [loading, setLoading] = useState(false);
+    const [isAiEnabled, setIsAiEnabled] = useState(settings?.ai_operational_enabled || false);
     const { toast } = useToast();
 
     const packageName = getPackageName(subscription);
@@ -24,6 +26,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
 
         setLoading(true);
         try {
+            // value is injected via hidden input instead of relying on stale state
             const result = await updateAiSettings(formData);
             if (result?.error) {
                 toast({
@@ -49,7 +52,8 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
     }
 
     return (
-        <form action={handleSubmit} className="space-y-6">
+        <form ref={formRef} action={handleSubmit} className="space-y-6">
+            <input type="hidden" name="aiOperationalEnabled" value={isAiEnabled ? "true" : "false"} />
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-purple-50 rounded-lg">
@@ -59,17 +63,26 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                         <h3 className="font-bold text-lg text-slate-900">AI Asistan Ayarları</h3>
                         <p className="text-sm text-slate-500">Asistanınızın davranışlarını ve firma bilgilerinizi yapılandırın.</p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                         {isAiAllowed ? (
-                            settings?.ai_operational_enabled ? (
-                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">
-                                    Aktif
+                            <>
+                                <span className={isAiEnabled ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200" : "bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-200"}>
+                                    {isAiEnabled ? "Aktif" : "Pasif"}
                                 </span>
-                            ) : (
-                                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-200">
-                                    Pasif
-                                </span>
-                            )
+                                <div className="flex items-center gap-2" title={!settings?.n8n_webhook_url ? "Sistem kurulumu henüz tamamlanmadı. Lütfen bekleyin veya destekle iletişime geçin." : "AI Asistanı Aç/Kapat"}>
+                                    <Switch
+                                        checked={isAiEnabled}
+                                        onCheckedChange={(val) => {
+                                            setIsAiEnabled(val);
+                                            setTimeout(() => {
+                                                formRef.current?.requestSubmit();
+                                            }, 50);
+                                        }}
+                                        disabled={!settings?.n8n_webhook_url || loading}
+                                        className="data-[state=checked]:bg-green-500"
+                                    />
+                                </div>
+                            </>
                         ) : (
                             <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold border border-red-200">
                                 Kapalı
@@ -77,6 +90,12 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                         )}
                     </div>
                 </div>
+
+                {!settings?.n8n_webhook_url && isAiAllowed && (
+                    <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm mb-4 border border-amber-200">
+                        <strong>AI Kurulum Bekleniyor:</strong> Sistem mesajınızı kaydedebilirsiniz ancak UppyPro ekibinin arka planda asistan yapılandırmanızı tamamlaması gerekmektedir. İşlem sonrası asistanınızı aktif edebilirsiniz.
+                    </div>
+                )}
 
                 {!isAiAllowed && (
                     <div className="bg-orange-50 text-orange-800 p-4 rounded-lg text-sm mb-4 border border-orange-200">
