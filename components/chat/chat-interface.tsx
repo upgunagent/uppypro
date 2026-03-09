@@ -1048,7 +1048,7 @@ export default function ChatInterface({
                                 {/* Reaction Badge */}
                                 {msg.reactions?.emoji && (
                                     <div className={clsx("flex", (isMe || isBot) ? "justify-end" : "justify-start")}>
-                                        <span className="inline-block bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-sm shadow-sm -mt-2 relative z-10">
+                                        <span className="inline-block bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-sm shadow-sm -mt-2 relative z-[1]">
                                             {msg.reactions.emoji}
                                         </span>
                                     </div>

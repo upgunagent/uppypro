@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Phone, Briefcase, Mail, Save, X, Ban, Trash2, Eraser, MessageCircle, ChevronDown, Plus, Instagram, CalendarIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
-import { EventDialog } from "@/components/calendar/event-dialog"; // Import EventDialog
+import { EventDialog } from "@/components/calendar/event-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { summarizeConversation } from "@/actions/summarize-conversation";
 import { Sparkles } from "lucide-react";
@@ -17,7 +17,7 @@ interface ContactInfoSheetProps {
     isOpen: boolean;
     onClose: () => void;
     conversationId: string;
-    customerHandle: string; // Phone or Username
+    customerHandle: string;
     platform: string;
     initialProfilePic?: string;
     triggerRef?: React.RefObject<HTMLButtonElement>;
@@ -36,7 +36,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
     const [loading, setLoading] = useState(false);
     const [noteLoading, setNoteLoading] = useState(false);
 
-    // Profile Data
     const [formData, setFormData] = useState({
         full_name: "",
         company_name: "",
@@ -45,17 +44,13 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
         instagram_username: "",
     });
 
-    const [showEventDialog, setShowEventDialog] = useState(false); // State for Event Dialog
-    const [tenantId, setTenantId] = useState<string>(""); // Need tenant ID for event dialog
+    const [showEventDialog, setShowEventDialog] = useState(false);
+    const [tenantId, setTenantId] = useState<string>("");
 
-    // AI Summary State
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
     const [summaryText, setSummaryText] = useState("");
 
-    // Notes Data
-
-    // Notes Data
     const [newNote, setNewNote] = useState("");
     const [notesList, setNotesList] = useState<Note[]>([]);
     const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
@@ -70,7 +65,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
             setLoading(true);
             const supabase = createClient();
 
-            // 1. Check if conversation already has a customer_id
             const { data: conv } = await supabase
                 .from("conversations")
                 .select("customer_id, tenant_id")
@@ -80,7 +74,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
             if (conv) setTenantId(conv.tenant_id);
 
             if (conv?.customer_id) {
-                // Fetch Customer Data
                 const { data: customer } = await supabase
                     .from("customers")
                     .select("*")
@@ -97,7 +90,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         instagram_username: customer.instagram_username || "",
                     });
 
-                    // Fetch Notes
                     const { data: notes } = await supabase
                         .from("customer_notes")
                         .select("*")
@@ -107,13 +99,18 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     if (notes) setNotesList(notes);
                 }
             } else {
-                // Pre-fill defaults
                 setCustomerId(null);
+                // Extract only phone number from customerHandle (e.g. "Hayri Topkan/ Happy IK (+905491013425)" -> "905491013425")
+                let extractedPhone = "";
+                if (platform === 'whatsapp') {
+                    const phoneMatch = customerHandle.match(/(\+?\d[\d\s\-()]{7,}\d)/);
+                    extractedPhone = phoneMatch ? phoneMatch[1].replace(/[\s\-()]/g, '') : customerHandle;
+                }
                 setFormData(prev => ({
                     ...prev,
-                    phone: platform === 'whatsapp' ? customerHandle : "",
+                    phone: platform === 'whatsapp' ? extractedPhone : "",
                     instagram_username: platform === 'instagram' ? customerHandle : "",
-                    full_name: "", // Leave blank for manual entry
+                    full_name: "",
                 }));
                 setNotesList([]);
             }
@@ -132,13 +129,8 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
             if (!conv) throw new Error("Conversation not found");
 
             if (customerId) {
-                // UPDATE
                 if (!formData.full_name.trim()) return alert("Lütfen Ad Soyad giriniz.");
                 if (!formData.phone.trim()) return alert("Lütfen telefon numarası giriniz.");
-                // Email might be optional for update? User said "when creating". But for consistency let's make it mandatory if user implies "customer record" requirements.
-                // Actually user said "yeni müşteri kaydı oluştururken". So update might be lax?
-                // But usually consistency is better. Let's enforce for both to be safe or just Insert. 
-                // Let's enforce for both as these are now critical fields.
                 if (!formData.email.trim()) return alert("Lütfen e-posta adresi giriniz.");
 
                 const { error } = await supabase
@@ -149,14 +141,13 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         phone: formData.phone,
                         email: formData.email,
                         instagram_username: formData.instagram_username,
-                        profile_pic: initialProfilePic || undefined, // Update if new one provided
+                        profile_pic: initialProfilePic || undefined,
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", customerId);
 
                 if (error) throw error;
             } else {
-                // INSERT
                 if (!formData.full_name.trim()) return alert("Lütfen Ad Soyad giriniz.");
                 if (!formData.phone.trim()) return alert("Lütfen telefon numarası giriniz.");
                 if (!formData.email.trim()) return alert("Lütfen e-posta adresi giriniz.");
@@ -177,7 +168,6 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
                 if (error) throw error;
 
-                // LINK
                 await supabase
                     .from("conversations")
                     .update({ customer_id: newCustomer.id })
@@ -317,192 +307,217 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800" overlayClassName="bg-transparent backdrop-blur-none">
-                <SheetHeader className="mb-6">
-                    <SheetTitle>Kişi Bilgisi</SheetTitle>
-                    <SheetDescription></SheetDescription>
-                </SheetHeader>
+            <SheetContent className="w-[400px] sm:w-[480px] overflow-y-auto p-0 border-l border-slate-200/50 z-[60]" overlayClassName="bg-transparent backdrop-blur-none">
 
-                {/* HEADER PROFILE */}
-                <div className="flex flex-col items-center mb-8">
-                    <Avatar className="w-24 h-24 mb-4 border-4 border-white dark:border-slate-800 shadow-xl">
+                {/* ── GRADIENT HEADER ── */}
+                <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-6 pt-10 pb-8 flex flex-col items-center">
+                    {/* Close Button */}
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 left-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 z-10"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                    <SheetHeader className="sr-only">
+                        <SheetTitle>Kişi Bilgisi</SheetTitle>
+                        <SheetDescription></SheetDescription>
+                    </SheetHeader>
+                    <Avatar className="w-20 h-20 border-[3px] border-white/20 shadow-2xl ring-4 ring-white/10">
                         {platform === 'whatsapp' ? (
-                            <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                <MessageCircle className="w-12 h-12 text-green-500" />
+                            <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                <MessageCircle className="w-10 h-10 text-white drop-shadow" />
                             </div>
                         ) : (
                             <>
                                 <AvatarImage src={initialProfilePic} className="object-cover" />
-                                <AvatarFallback className="text-2xl bg-slate-200 dark:bg-slate-800">
+                                <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-pink-400 to-purple-500 text-white">
                                     {customerHandle.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </>
                         )}
                     </Avatar>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                        {formData.full_name || customerHandle}
-                    </h2>
-                    <p className="text-sm text-slate-500 font-mono">
+                    <div className="flex items-center gap-2 mt-4">
+                        <h2 className="text-lg font-bold text-white tracking-tight">
+                            {formData.full_name || customerHandle}
+                        </h2>
+                        {platform === 'whatsapp' ? (
+                            <MessageCircle className="w-[18px] h-[18px] text-green-400 shrink-0" />
+                        ) : (
+                            <Instagram className="w-[18px] h-[18px] text-pink-400 shrink-0" />
+                        )}
+                    </div>
+                    <p className="text-sm text-slate-400 mt-0.5">
                         {platform === 'whatsapp' ? '+' + customerHandle : '@' + customerHandle}
                     </p>
+
                 </div>
 
-                {/* PROFILE FORM */}
-                <form className="space-y-4 mb-8" autoComplete="off" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
+                {/* ── MAIN CONTENT ── */}
+                <div className="px-5 py-6 space-y-6 bg-white">
 
+                    {/* NO CUSTOMER WARNING */}
                     {!customerId && (
-                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-3 text-center mb-4">
-                            <h3 className="text-orange-600 dark:text-orange-400 font-bold text-sm uppercase flex items-center justify-center gap-2">
-                                <User className="w-4 h-4" /> Müşteri Kaydı Oluştur
-                            </h3>
-                            <p className="text-xs text-orange-500/80 mt-1 dark:text-orange-400/70">
-                                Randevu oluşturmak için önce müşteriyi kaydediniz.
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">Ad Soyad (Zorunlu)</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                            <Input
-                                name="contact_full_name"
-                                autoComplete="off"
-                                value={formData.full_name}
-                                onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
-                                placeholder="Ad Soyad girin..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">Firma Adı</label>
-                        <div className="relative">
-                            <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                            <Input
-                                name="contact_company_name"
-                                autoComplete="organization"
-                                value={formData.company_name}
-                                onChange={e => setFormData({ ...formData, company_name: e.target.value })}
-                                className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
-                                placeholder="Firma adı..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">İletişim Numarası (Zorunlu)</label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                            <Input
-                                name="contact_phone"
-                                autoComplete="off" // "tel" sometimes triggers aggressive autofill
-                                value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
-                                placeholder="+90..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">E-posta Adresi (Zorunlu)</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                            <Input
-                                name="contact_email"
-                                autoComplete="email"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                className="pl-9 bg-white text-black border-slate-300 placeholder:text-slate-400 focus:ring-slate-400"
-                                placeholder="ornek@sirket.com"
-                            />
-                        </div>
-                    </div>
-
-                    <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white shadow-lg shadow-red-500/20 font-bold border-0">
-                        {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
-                    </Button>
-
-                    {customerId && (
-                        <Button
-                            type="button"
-                            onClick={() => setShowEventDialog(true)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 font-bold border-0 mt-3"
-                        >
-                            <CalendarIcon className="mr-2 w-4 h-4" /> Randevu Oluştur
-                        </Button>
-                    )}
-                </form>
-
-                <div className="border-t border-slate-200 dark:border-slate-800 my-6" />
-
-                {/* NOTE ENTRY */}
-                <div className="space-y-3 mb-8">
-                    <label className="text-xs font-semibold uppercase text-slate-500">Yeni Görüşme Notu</label>
-                    <Textarea
-                        value={newNote}
-                        onChange={e => setNewNote(e.target.value)}
-                        className="min-h-[100px] resize-none text-slate-900 dark:text-slate-100"
-                        placeholder="Notunuzu buraya yazın..."
-                    />
-                    <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 font-bold">
-                        {noteLoading ? "Ekleniyor..." : <><Plus className="mr-2 w-4 h-4" /> Notu Kaydet</>}
-                    </Button>
-
-                    <Button
-                        onClick={handleSummarize}
-                        disabled={summaryLoading}
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-700 font-semibold"
-                    >
-                        {summaryLoading ? (
-                            "Özet Hazırlanıyor..."
-                        ) : (
-                            <><Sparkles className="mr-2 w-4 h-4" /> ✨ Konuşma Özetini Çıkar</>
-                        )}
-                    </Button>
-                </div>
-
-
-
-                {/* NOTES HISTORY (ACCORDION) */}
-                {notesList.length > 0 && (
-                    <div className="space-y-2 pb-10">
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase mb-3">Geçmiş Görüşme Notları</h3>
-                        {notesList.map((note) => (
-                            <div key={note.id} className="border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden relative group">
-                                <div
-                                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                    onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
-                                >
-                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        {new Date(note.created_at).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={(e) => handleDeleteNote(note.id, e)}
-                                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-400 hover:text-red-600 transition-colors"
-                                            title="Notu Sil"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                        <ChevronDown className={clsx("w-4 h-4 text-slate-400 transition-transform duration-200", expandedNoteId === note.id && "rotate-180")} />
-                                    </div>
-                                </div>
-
-                                {expandedNoteId === note.id && (
-                                    <div className="p-3 bg-white dark:bg-black text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-1">
-                                        {note.note}
-                                    </div>
-                                )}
+                        <div className="flex items-start gap-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/50 rounded-2xl p-4 shadow-sm">
+                            <div className="shrink-0 mt-0.5 p-2 bg-orange-100 rounded-xl">
+                                <User className="w-4 h-4 text-orange-600" />
                             </div>
-                        ))}
+                            <div>
+                                <h3 className="text-sm font-bold text-orange-800">Müşteri Kaydı Oluştur</h3>
+                                <p className="text-xs text-orange-600/80 mt-0.5 leading-relaxed">
+                                    Randevu oluşturmak için önce aşağıdaki bilgileri doldurup müşteriyi kaydediniz.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PROFILE FORM */}
+                    <form className="space-y-4" autoComplete="off" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1.5 block">Ad Soyad <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                    <Input
+                                        name="contact_full_name"
+                                        autoComplete="off"
+                                        value={formData.full_name}
+                                        onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                                        className="pl-10 h-11 bg-slate-50/80 border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
+                                        placeholder="Ad Soyad girin..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1.5 block">Firma Adı</label>
+                                <div className="relative">
+                                    <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                    <Input
+                                        name="contact_company_name"
+                                        autoComplete="organization"
+                                        value={formData.company_name}
+                                        onChange={e => setFormData({ ...formData, company_name: e.target.value })}
+                                        className="pl-10 h-11 bg-slate-50/80 border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
+                                        placeholder="Firma adı..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1.5 block">İletişim Numarası <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                    <Input
+                                        name="contact_phone"
+                                        autoComplete="off"
+                                        value={formData.phone}
+                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                        className="pl-10 h-11 bg-slate-50/80 border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
+                                        placeholder="+90..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1.5 block">E-posta Adresi <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                    <Input
+                                        name="contact_email"
+                                        autoComplete="email"
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                        className="pl-10 h-11 bg-slate-50/80 border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
+                                        placeholder="ornek@sirket.com"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/20 font-bold rounded-xl border-0 transition-all duration-200 hover:shadow-xl hover:shadow-orange-500/30">
+                            {loading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Değişiklikleri Kaydet</>}
+                        </Button>
+
+                        {customerId && (
+                            <Button
+                                type="button"
+                                onClick={() => setShowEventDialog(true)}
+                                className="w-full h-11 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-green-500/20 font-bold rounded-xl border-0 transition-all duration-200"
+                            >
+                                <CalendarIcon className="mr-2 w-4 h-4" /> Randevu Oluştur
+                            </Button>
+                        )}
+                    </form>
+
+                    {/* ── DIVIDER ── */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-slate-200"></div>
+                        <span className="text-[10px] font-bold uppercase text-slate-300 tracking-widest">Notlar</span>
+                        <div className="flex-1 h-px bg-slate-200"></div>
                     </div>
-                )}
+
+                    {/* NOTE ENTRY */}
+                    <div className="space-y-3">
+                        <Textarea
+                            value={newNote}
+                            onChange={e => setNewNote(e.target.value)}
+                            className="min-h-[90px] resize-none text-slate-900 bg-slate-50/80 border-slate-200 rounded-xl placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
+                            placeholder="Görüşme notunuzu buraya yazın..."
+                        />
+                        <Button onClick={handleSaveNote} disabled={noteLoading || !newNote.trim()} size="sm" className="w-full h-10 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/15 font-bold rounded-xl border-0">
+                            {noteLoading ? "Ekleniyor..." : <><Plus className="mr-2 w-4 h-4" /> Notu Kaydet</>}
+                        </Button>
+
+                        <Button
+                            onClick={handleSummarize}
+                            disabled={summaryLoading}
+                            size="sm"
+                            className="w-full h-10 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-semibold shadow-lg shadow-slate-800/20 border-0 transition-all duration-200"
+                        >
+                            {summaryLoading ? (
+                                "Özet Hazırlanıyor..."
+                            ) : (
+                                <><Sparkles className="mr-1.5 w-4 h-4" /> Konuşma Özetini Çıkar</>
+                            )}
+                        </Button>
+                    </div>
+
+                    {/* NOTES HISTORY (ACCORDION) */}
+                    {notesList.length > 0 && (
+                        <div className="space-y-2 pb-6">
+                            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Geçmiş Görüşme Notları</h3>
+                            {notesList.map((note) => (
+                                <div key={note.id} className="border border-slate-200/80 rounded-xl overflow-hidden relative group bg-white hover:shadow-sm transition-shadow">
+                                    <div
+                                        className="w-full flex items-center justify-between p-3 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                                        onClick={() => setExpandedNoteId(expandedNoteId === note.id ? null : note.id)}
+                                    >
+                                        <span className="text-xs font-medium text-slate-500">
+                                            {new Date(note.created_at).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={(e) => handleDeleteNote(note.id, e)}
+                                                className="p-1 hover:bg-red-100 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                                                title="Notu Sil"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <ChevronDown className={clsx("w-4 h-4 text-slate-300 transition-transform duration-200", expandedNoteId === note.id && "rotate-180")} />
+                                        </div>
+                                    </div>
+
+                                    {expandedNoteId === note.id && (
+                                        <div className="px-3 pb-3 text-sm text-slate-700 whitespace-pre-wrap border-t border-slate-100 pt-2 animate-in slide-in-from-top-1">
+                                            {note.note}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
             </SheetContent>
 
