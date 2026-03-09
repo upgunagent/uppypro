@@ -632,12 +632,20 @@ export default function ChatInterface({
                                 <MessageCircle className="text-green-500 w-5 h-5" />
                             ) : (
                                 activeProfilePic ? (
-                                    <img
-                                        src={activeProfilePic}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                        referrerPolicy="no-referrer"
-                                    />
+                                    <div
+                                        className="w-full h-full cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={() => {
+                                            setLightboxMedia({ url: activeProfilePic, type: 'image' });
+                                        }}
+                                        title="Profil fotoğrafını büyüt"
+                                    >
+                                        <img
+                                            src={activeProfilePic}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                    </div>
                                 ) : (
                                     <Instagram className="text-pink-500 w-5 h-5" />
                                 )
