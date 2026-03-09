@@ -29,12 +29,17 @@ export default async function SettingsPage(props: SettingsPageProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data: member } = await supabase
+    const { data: member, error: memberErr } = await supabase
         .from("tenant_members")
         .select("tenant_id, role")
         .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
+
+    if (memberErr) {
+        console.error("Tenant member fetch error in settings:", memberErr);
+        throw new Error("İşletme bilgisi alınırken geçici bir ağ veya veritabanı hatası oluştu. Lütfen sayfayı yenileyin.");
+    }
 
     if (!member) return <div className="p-12"><RepairTenantButton /></div>;
 

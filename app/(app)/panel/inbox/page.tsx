@@ -36,12 +36,17 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         queryClient = createAdminClient();
     } else {
         // Regular user -> Get their tenant
-        const { data: member } = await supabase
+        const { data: member, error: memberErr } = await supabase
             .from("tenant_members")
             .select("tenant_id")
             .eq("user_id", user.id)
             .limit(1)
             .maybeSingle();
+
+        if (memberErr) {
+            console.error("Tenant member fetch error:", memberErr);
+            throw new Error("İşletme bilgisi alınırken geçici bir ağ veya veritabanı hatası oluştu. Lütfen sayfayı yenileyin.");
+        }
 
         tenantId = member?.tenant_id;
     }

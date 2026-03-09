@@ -225,7 +225,7 @@ export async function POST(request: Request) {
                     if (messaging.delivery?.mids) {
                         for (const mid of messaging.delivery.mids) {
                             await supabaseAdmin.from('messages')
-                                .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+                                .update({ status: 'delivered' })
                                 .eq('external_message_id', mid);
                             await supabaseAdmin.from('customer_campaign_logs')
                                 .update({ status: 'delivered', delivered_at: new Date().toISOString() })
@@ -239,7 +239,7 @@ export async function POST(request: Request) {
 
                         if (mid) {
                             await supabaseAdmin.from('messages')
-                                .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
+                                .update({ status: 'read', is_read: true })
                                 .eq('external_message_id', mid);
                         }
 
@@ -255,7 +255,7 @@ export async function POST(request: Request) {
 
                             if (conv) {
                                 await supabaseAdmin.from('messages')
-                                    .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
+                                    .update({ status: 'read', is_read: true })
                                     .eq('conversation_id', conv.id)
                                     .eq('direction', 'OUT')
                                     .eq('is_read', false);
