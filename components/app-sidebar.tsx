@@ -18,7 +18,8 @@ import {
     Calendar as CalendarIcon,
     Receipt,
     Lock,
-    Bell
+    Bell,
+    HelpCircle
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const router = useRouter();
     const [counts, setCounts] = useState({ all: 0, whatsapp: 0, instagram: 0 });
     const [notificationCount, setNotificationCount] = useState(0);
+    const [unreadTicketsCount, setUnreadTicketsCount] = useState(0);
     const prevNotifCountRef = useRef(0);
     const userInteractedRef = useRef(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -161,6 +163,60 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         };
     }, [tenantId]);
 
+    // Tickets count
+    useEffect(() => {
+        const supabase = createClient();
+
+        const fetchTicketCount = async () => {
+            let query = supabase.from('support_tickets').select('*', { count: 'exact', head: true });
+
+            if (role === 'agency_admin') {
+                query = query.eq('has_unread_user_message', true);
+            } else if (tenantId) {
+                query = query.eq('tenant_id', tenantId).eq('has_unread_admin_message', true);
+            } else {
+                return;
+            }
+
+            const { count } = await query;
+            setUnreadTicketsCount(count || 0);
+        };
+
+        fetchTicketCount();
+
+        let filterString = '';
+        if (role === 'agency_admin') {
+            filterString = `has_unread_user_message=eq.true`;
+        } else if (tenantId) {
+            filterString = `tenant_id=eq.${tenantId}`;
+        }
+
+        if (filterString) {
+            const ticketChannel = supabase
+                .channel(`sidebar-tickets:${tenantId || 'admin'}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'support_tickets',
+                        filter: filterString
+                    },
+                    () => {
+                        fetchTicketCount();
+                    }
+                )
+                .subscribe();
+
+            const ticketInterval = setInterval(fetchTicketCount, 15000);
+
+            return () => {
+                supabase.removeChannel(ticketChannel);
+                clearInterval(ticketInterval);
+            };
+        }
+    }, [tenantId, role]);
+
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -224,6 +280,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/pricing", label: "Fiyatlandırma", icon: Tag },
         { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
         { href: "/admin/notifications", label: "Bildirim Gönder", icon: Bell },
+        { href: "/admin/tickets", label: "Destek Talepleri", icon: HelpCircle },
         { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 
@@ -302,6 +359,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                             icon={link.icon}
                             label={link.label}
                             isActive={pathname.startsWith(link.href)}
+                            count={link.href === '/admin/tickets' ? unreadTicketsCount : 0}
                         />
                     ))}
                 </nav>
@@ -409,6 +467,15 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     gradient="bg-amber-500 shadow-amber-500/20"
                     iconColor="text-white"
                     count={notificationCount}
+                />
+                <TenantSidebarItem
+                    href="/panel/help"
+                    icon={HelpCircle}
+                    label="Yardım & Destek"
+                    isActive={pathname.startsWith("/panel/help")}
+                    gradient="bg-pink-500 shadow-pink-500/20"
+                    iconColor="text-white"
+                    count={unreadTicketsCount}
                 />
                 <TenantSidebarItem
                     href="/panel/settings"
