@@ -220,8 +220,11 @@ export async function POST(request: Request) {
                             await supabaseAdmin.from('messages')
                                 .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
                                 .eq('external_message_id', mid);
-                        } else if (senderId) {
-                            // Find conversation and mark all outbound messages as read
+                        }
+
+                        // Her zaman senderId (mesajlaşan kullanıcı) bazlı konuşma bulup, okunmamış tüm dışarı giden mesajları "okundu" yap.
+                        // Meta webhook'larında mid uyuşmazlığı olabiliyor.
+                        if (senderId) {
                             const { data: conv } = await supabaseAdmin.from('conversations')
                                 .select('id').eq('external_thread_id', senderId).eq('channel', 'instagram').maybeSingle();
 
@@ -230,7 +233,7 @@ export async function POST(request: Request) {
                                     .update({ status: 'read', is_read: true, read_at: new Date().toISOString() })
                                     .eq('conversation_id', conv.id)
                                     .eq('direction', 'OUT')
-                                    .eq('is_read', false);
+                                    .neq('status', 'read');
                             }
                         }
                     }
