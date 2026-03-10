@@ -178,20 +178,20 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                         </div>
 
                         {/* Content */}
-                        <div className="relative z-10 flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100/50 flex items-center justify-center relative group hover:scale-[1.02] transition-transform duration-300">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-orange-100 to-rose-50 rounded-[2.5rem] opacity-50 group-hover:opacity-80 transition-opacity"></div>
-                                <MessageSquare size={64} className="text-orange-500 relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:rotate-6" strokeWidth={1.5} />
-                                <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-2 border-4 border-white shadow-sm rotate-12 group-hover:scale-110 transition-transform">
-                                    <MessageCircle size={14} className="text-white" />
+                        <div className="relative z-10 flex flex-col items-center gap-4 md:gap-6 animate-in fade-in zoom-in duration-500">
+                            <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100/50 flex items-center justify-center relative group hover:scale-[1.02] transition-transform duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-orange-100 to-rose-50 rounded-[2rem] md:rounded-[2.5rem] opacity-50 group-hover:opacity-80 transition-opacity"></div>
+                                <MessageSquare className="w-12 h-12 md:w-16 md:h-16 text-orange-500 relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:rotate-6" strokeWidth={1.5} />
+                                <div className="absolute -top-1 md:-top-2 -right-1 md:-right-2 bg-green-500 rounded-full p-1.5 md:p-2 border-2 md:border-4 border-white shadow-sm rotate-12 group-hover:scale-110 transition-transform">
+                                    <MessageCircle className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 text-white" />
                                 </div>
-                                <div className="absolute -bottom-2 -left-2 bg-gradient-to-tr from-rose-500 to-pink-500 rounded-full p-2 border-4 border-white shadow-sm -rotate-12 group-hover:scale-110 transition-transform">
-                                    <Instagram size={14} className="text-white" />
+                                <div className="absolute -bottom-1 md:-bottom-2 -left-1 md:-left-2 bg-gradient-to-tr from-rose-500 to-pink-500 rounded-full p-1.5 md:p-2 border-2 md:border-4 border-white shadow-sm -rotate-12 group-hover:scale-110 transition-transform">
+                                    <Instagram className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 text-white" />
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center gap-2">
-                                <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Gelen Kutusu</h3>
-                                <p className="text-base text-slate-500 font-medium">Sohbeti görüntülemek için sol taraftan bir konuşma seçin</p>
+                            <div className="flex flex-col items-center gap-1.5 md:gap-2">
+                                <h3 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Gelen Kutusu</h3>
+                                <p className="text-sm md:text-base text-slate-500 font-medium text-center px-4">Sohbeti görüntülemek için sol taraftan bir konuşma seçin</p>
                             </div>
                         </div>
                     </div>

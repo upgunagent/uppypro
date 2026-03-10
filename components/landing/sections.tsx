@@ -242,7 +242,7 @@ export function FeaturesSection() {
 
     return (
         <section id="features" className="py-12 md:py-24 bg-slate-50 scroll-mt-20">
-            <div className="container mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-5xl font-bold text-slate-900 mb-2">Özellikler</h2>
                     <h3 className="text-2xl font-bold text-orange-500 mb-4">Mesaj Yönetimini Satışa Çevirin</h3>
@@ -554,7 +554,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
             {/* Background Decoration */}
             <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-orange-50/50 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <div className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full mb-4">
                         UYGUN FİYATLANDIRMA
@@ -679,7 +679,7 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
 export function HowItWorks() {
     return (
         <section className="py-8 bg-white border-b border-gray-50">
-            <div className="container mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight mb-4">
                         <span className="text-orange-500">Uppy</span>
@@ -745,7 +745,7 @@ export function ContactSection() {
 
     return (
         <section id="contact" className="py-12 md:py-24 bg-white">
-            <div className="container mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid lg:grid-cols-2 gap-16 items-center">
                     {/* Left Content */}
                     <div className="space-y-8">

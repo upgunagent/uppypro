@@ -50,7 +50,7 @@ export default async function CalendarPage() {
         .order("name", { ascending: true });
 
     return (
-        <div className="h-[calc(100vh-4rem)] p-6 bg-slate-50 overflow-hidden flex flex-col">
+        <div className="h-[calc(100vh/var(--zoom-factor)-4rem)] p-6 bg-slate-50 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Takvim</h1>

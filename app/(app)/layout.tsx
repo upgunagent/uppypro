@@ -64,7 +64,7 @@ export default async function AppLayout({
 
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
+        <div className="flex min-h-[calc(100vh/var(--zoom-factor))] bg-background text-foreground">
 
 
             <AppSidebar role={role} tenantId={tenantId} />
@@ -73,7 +73,7 @@ export default async function AppLayout({
                 <NotificationSoundListener tenantId={tenantId} />
             )}
             <main className={clsx(
-                "flex-1 ml-0 flex flex-col h-[100dvh] overflow-y-auto pb-16 md:pb-0 md:mb-0",
+                "flex-1 ml-0 flex flex-col h-[calc(100dvh/var(--zoom-factor))] overflow-y-auto pb-16 md:pb-0 md:mb-0",
                 role === "agency_admin" ? "md:ml-64" : "md:ml-20"
             )}>
                 {children}

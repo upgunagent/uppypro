@@ -5,8 +5,8 @@ import { Mail, Phone, MapPin, Instagram, MessageCircle } from "lucide-react";
 
 export function LandingHeader() {
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
-            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-md pt-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
                     <img
@@ -42,7 +42,7 @@ export function LandingHeader() {
 export function LandingFooter() {
     return (
         <footer className="bg-gray-50 border-t border-gray-100 py-12">
-            <div className="container mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8" style={{ alignItems: 'start' }}>
                     {/* Brand */}
                     <div className="space-y-4">

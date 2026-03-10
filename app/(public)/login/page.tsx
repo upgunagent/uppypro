@@ -7,7 +7,7 @@ export default async function LoginPage() {
     return (
         <div className="flex min-h-screen w-full bg-white">
             {/* Left Side - Hero/Visuals... same as before */}
-            <div className="hidden lg:flex w-1/2 bg-slate-50 relative overflow-hidden flex-col justify-between p-12 lg:p-16">
+            <div className="hidden lg:flex w-1/2 bg-slate-50 relative overflow-hidden flex-col justify-between p-12 lg:p-16 xl:p-24 2xl:px-32">
 
                 {/* Decorational Background Elements */}
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-100/40 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
@@ -25,12 +25,12 @@ export default async function LoginPage() {
                 {/* Main Visual & Content */}
                 <div className="relative z-10 flex flex-col justify-center items-start flex-1 py-12 text-left">
                     <div className="space-y-8 mb-12 relative z-20">
-                        <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight mb-4">
+                        <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight mb-4">
                             <span className="text-orange-500">Uppy</span>
                             <span className="text-black">Pro</span>
                         </h1>
 
-                        <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+                        <h2 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                             <span className="relative inline-block">
                                 {/* Base Layer */}
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-800">Instagram</span>
@@ -44,14 +44,14 @@ export default async function LoginPage() {
                             </span>
                             <br />
                             <span className="text-orange-500">Tek Panelde.</span>
-                        </h1>
-                        <p className="text-slate-600 text-xl max-w-lg leading-relaxed">
+                        </h2>
+                        <p className="text-slate-600 text-lg xl:text-xl max-w-md xl:max-w-lg leading-relaxed mt-4">
                             Yapay Zeka Dijital Asistanınız mesajlarınızı yanıtlasın, satışlarınızı artırsın. Tüm müşteri iletişiminiz tek bir yerde.
                         </p>
                     </div>
 
                     {/* Chat Visual Mockup Wrapper */}
-                    <div className="relative w-full max-w-[500px]">
+                    <div className="relative w-full max-w-[400px] xl:max-w-[500px]">
 
                         {/* Abstract Card Background */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-orange-200 to-purple-200 rounded-3xl blur-2xl opacity-30 transform rotate-6 scale-95" />

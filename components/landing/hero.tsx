@@ -18,7 +18,7 @@ export function HeroSection() {
                     <div className="absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-3xl opacity-60" />
                 </div>
 
-                <div className="container mx-auto px-4 relative z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         {/* Text Content */}
                         <div className="flex-1 text-center lg:text-left space-y-8">
@@ -31,7 +31,7 @@ export function HeroSection() {
                                 </Link>
                             </div>
 
-                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-[4rem] font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                                 Instagram + WhatsApp <br />
                                 <span className="relative inline-block">
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
@@ -43,7 +43,7 @@ export function HeroSection() {
                                 </span>
                             </h1>
 
-                            <p className="text-xl text-slate-500 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                            <p className="text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                                 Tüm mesajlarınız tek bir inbox’ta. Yapay Zeka Dijital Asistan'ın yanıtlasın; siz istediğiniz an tek tıkla devralın, sonra tekrar Yapay Zeka'ya devredin.
                             </p>
 

@@ -336,7 +336,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     // Agency Admin View
     if (role === "agency_admin") {
         return (
-            <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 py-6 z-50 shadow-sm">
+            <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-[calc(100vh/var(--zoom-factor))] fixed left-0 top-0 py-6 z-50 shadow-sm">
                 <div className="px-6 mb-8 flex items-center justify-center">
                     <Link href="/admin/tenants" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                         <Image
@@ -386,7 +386,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
     // Tenant/User View
     return (
-        <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-screen fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
+        <div className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col h-[calc(100vh/var(--zoom-factor))] fixed left-0 top-0 items-center py-6 z-50 shadow-sm">
             <div className="mb-8 hover:scale-105 transition-transform duration-300">
                 {avatarUrl ? (
                     <Image

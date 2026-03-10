@@ -49,6 +49,21 @@
   @apply bg-white/5 backdrop-blur-lg border border-white/10;
 }
 
+/* Global CSS Zoom — scales all px, rem, em values uniformly like browser zoom */
+:root {
+  --zoom-factor: 1;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --zoom-factor: 0.8;
+  }
+
+  html {
+    zoom: 0.8;
+  }
+}
+
 /* Global Styles */
 body {
   @apply bg-background text-foreground;

@@ -7,7 +7,7 @@ import Image from "next/image";
 export function SolutionsSection() {
     return (
         <section id="solutions" className="py-12 md:py-24 bg-white">
-            <div className="container mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <div className="inline-block px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full mb-4">
                         TERZİ İŞİ YAZILIM
