@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
+
 import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
-import { useState, useActionState, useRef } from "react";
+import { useState, useActionState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { EnterpriseContactModal } from "./enterprise-contact-modal";
@@ -12,6 +14,13 @@ import { sendMeetingRequest } from "@/actions/contact-meeting";
 
 export function FeaturesSection() {
     const [activeFeature, setActiveFeature] = useState<number | null>(0);
+
+    useEffect(() => {
+        // Mobilde tek inbox kartının başlangıçta kapalı gelmesini sağla
+        if (typeof window !== "undefined" && window.innerWidth < 768) {
+            setActiveFeature(null);
+        }
+    }, []);
 
     const features = [
         {
@@ -250,82 +259,191 @@ export function FeaturesSection() {
                         Karmaşık panellere ve excel tablolarına veda edin. UppyPro ile müşteri iletişimi hiç bu kadar kolay olmamıştı.
                     </p>
                 </div>
+                {/* Mobile Grid - 9 features (excluding Güvenlik), 3 per row, square cards */}
+                <div className="md:hidden grid grid-cols-3 gap-2">
+                    {features.slice(0, 9).map((f, i) => {
+                        const isActive = activeFeature === f.id;
+                        const mobileRowEnd = (i + 1) % 3 === 0;
+                        const rowStart = Math.floor(i / 3) * 3;
+                        const rowEnd = rowStart + 2;
+                        const activeInThisRow = activeFeature !== null
+                            && features.slice(0, 9).findIndex(feat => feat.id === activeFeature) >= rowStart
+                            && features.slice(0, 9).findIndex(feat => feat.id === activeFeature) <= rowEnd;
 
-                {/* ROW 1 (0-4) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {features.slice(0, 5).map((f, i) => {
-                        const originalIndex = i;
                         return (
-                            <div key={originalIndex} className="contents md:block">
+                            <React.Fragment key={f.id}>
                                 <motion.div
-                                    onClick={() => setActiveFeature(activeFeature === originalIndex ? null : originalIndex)}
-                                    animate={{
-                                        scale: activeFeature === originalIndex ? 1.05 : 1,
-                                        borderColor: activeFeature === originalIndex ? "rgb(251 146 60)" : "rgb(241 245 249)",
-                                        zIndex: activeFeature === originalIndex ? 10 : 0
-                                    }}
-                                    whileHover={{
-                                        x: [0, -5, 5, -5, 5, 0],
-                                        transition: { duration: 0.5 }
-                                    }}
+                                    onClick={() => setActiveFeature(isActive ? null : f.id)}
                                     className={clsx(
-                                        "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
-                                        activeFeature === originalIndex
-                                            ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
-                                            : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                        "cursor-pointer p-2 rounded-xl border text-center flex flex-col items-center justify-center aspect-square transition-all",
+                                        isActive
+                                            ? "bg-white shadow-lg ring-2 ring-orange-400 border-orange-200"
+                                            : "bg-white shadow-sm border-slate-100"
                                     )}
+                                    whileTap={{ scale: 0.95 }}
                                 >
-                                    <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === originalIndex ? "scale-110" : "group-hover:scale-105")}>
+                                    <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center mb-1.5 shadow-md", f.color)}>
                                         {f.icon}
                                     </div>
-                                    <h3 className={clsx("text-lg font-bold mb-2", activeFeature === originalIndex ? "text-orange-600" : "text-slate-900")}>
+                                    <h3 className={clsx("text-[10px] font-bold leading-tight", isActive ? "text-orange-600" : "text-slate-800")}>
                                         {f.title}
                                     </h3>
-                                    <p className="text-slate-500 text-xs leading-relaxed">
-                                        {f.desc}
-                                    </p>
-
-                                    {/* Active Indicator Arrow */}
-                                    {activeFeature === originalIndex && (
-                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
-                                    )}
                                 </motion.div>
 
-                                {/* Mobile Inline Detail Panel */}
-                                <AnimatePresence>
-                                    {activeFeature === originalIndex && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
-                                        >
-                                            <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-                                                <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
-                                                    <img
-                                                        src={f.image}
-                                                        alt={f.title}
-                                                        className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
-                                                    />
-                                                </div>
-                                                <div className="p-6">
-                                                    <div className="flex items-center gap-3 mb-4">
-                                                        <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
-                                                            {f.icon}
+                                {mobileRowEnd && activeInThisRow && activeFeature !== null && (
+                                    <div className="col-span-3">
+                                        <AnimatePresence mode="wait">
+                                            <motion.div
+                                                key={`mobile-detail-${activeFeature}`}
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mt-2 mb-1">
+                                                    <div className="bg-slate-50 p-4 flex items-center justify-center border-b border-slate-100">
+                                                        <img
+                                                            src={features[activeFeature].image}
+                                                            alt={features[activeFeature].title}
+                                                            className="rounded-xl shadow-md max-h-[180px] w-auto object-contain"
+                                                        />
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                                {features[activeFeature].icon}
+                                                            </div>
+                                                            <h3 className="text-base font-bold text-slate-900">
+                                                                {features[activeFeature].title}
+                                                            </h3>
                                                         </div>
-                                                        <h3 className="text-xl font-bold text-slate-900">
-                                                            {f.title}
-                                                        </h3>
-                                                    </div>
-                                                    <div className="text-slate-600 text-sm leading-relaxed mb-6">
-                                                        {f.longDesc}
+                                                        <div className="text-slate-600 text-xs leading-relaxed">
+                                                            {features[activeFeature].longDesc}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </motion.div>
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
+                </div>
+
+                {/* ROW 1 (0-4) - Desktop Only */}
+                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {features.slice(0, 5).map((f, i) => {
+                        const originalIndex = i;
+                        // Determine if we need to show mobile detail after this card
+                        // Cards per row on mobile = 3, so rows break after index 2
+                        const mobileRowEnd = (i === 2) || (i === 4); // end of mobile row
+                        const isActive = activeFeature === originalIndex;
+                        // Check if any card in this mobile row is active
+                        const mobileRow = i <= 2 ? 0 : 1;
+                        const activeInThisRow = mobileRow === 0
+                            ? (activeFeature !== null && activeFeature >= 0 && activeFeature <= 2)
+                            : (activeFeature !== null && activeFeature >= 3 && activeFeature <= 4);
+                        const activeFeatureInRow = mobileRow === 0
+                            ? activeFeature
+                            : activeFeature;
+
+                        return (
+                            <React.Fragment key={originalIndex}>
+                                {/* Desktop card (hidden on mobile) */}
+                                <div className="hidden md:block">
+                                    <motion.div
+                                        onClick={() => setActiveFeature(isActive ? null : originalIndex)}
+                                        animate={{
+                                            scale: isActive ? 1.05 : 1,
+                                            borderColor: isActive ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                            zIndex: isActive ? 10 : 0
+                                        }}
+                                        whileHover={{
+                                            x: [0, -5, 5, -5, 5, 0],
+                                            transition: { duration: 0.5 }
+                                        }}
+                                        className={clsx(
+                                            "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                            isActive
+                                                ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                                : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                        )}
+                                    >
+                                        <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, isActive ? "scale-110" : "group-hover:scale-105")}>
+                                            {f.icon}
+                                        </div>
+                                        <h3 className={clsx("text-lg font-bold mb-2", isActive ? "text-orange-600" : "text-slate-900")}>
+                                            {f.title}
+                                        </h3>
+                                        <p className="text-slate-500 text-xs leading-relaxed">
+                                            {f.desc}
+                                        </p>
+                                        {isActive && (
+                                            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                                        )}
+                                    </motion.div>
+                                </div>
+
+                                {/* Mobile card (hidden on desktop) */}
+                                <motion.div
+                                    onClick={() => setActiveFeature(isActive ? null : originalIndex)}
+                                    className={clsx(
+                                        "md:hidden cursor-pointer p-2 rounded-xl border text-center flex flex-col items-center transition-all",
+                                        isActive
+                                            ? "bg-white shadow-lg ring-2 ring-orange-400 border-orange-200"
+                                            : "bg-white shadow-sm border-slate-100 active:scale-95"
                                     )}
-                                </AnimatePresence>
-                            </div>
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 shadow-md", f.color)}>
+                                        {f.icon}
+                                    </div>
+                                    <h3 className={clsx("text-[10px] font-bold leading-tight", isActive ? "text-orange-600" : "text-slate-800")}>
+                                        {f.title}
+                                    </h3>
+                                </motion.div>
+
+                                {/* Mobile detail panel - after end of mobile row */}
+                                {mobileRowEnd && activeInThisRow && activeFeature !== null && activeFeature <= 4 && (
+                                    <div className="md:hidden col-span-3">
+                                        <AnimatePresence mode="wait">
+                                            <motion.div
+                                                key={`mobile-detail-${activeFeature}`}
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mt-2 mb-1">
+                                                    <div className="bg-slate-50 p-4 flex items-center justify-center border-b border-slate-100">
+                                                        <img
+                                                            src={features[activeFeature].image}
+                                                            alt={features[activeFeature].title}
+                                                            className="rounded-xl shadow-md max-h-[180px] w-auto object-contain"
+                                                        />
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                                {features[activeFeature].icon}
+                                                            </div>
+                                                            <h3 className="text-base font-bold text-slate-900">
+                                                                {features[activeFeature].title}
+                                                            </h3>
+                                                        </div>
+                                                        <div className="text-slate-600 text-xs leading-relaxed">
+                                                            {features[activeFeature].longDesc}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </React.Fragment>
                         )
                     })}
                 </div>
@@ -394,81 +512,112 @@ export function FeaturesSection() {
                 </div>
 
 
-                {/* ROW 2 (5-9) */}
-                <div className={clsx("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4", (activeFeature === null || activeFeature > 4) ? "mt-4" : "mt-8")}>
+                {/* ROW 2 (5-9) - Desktop Only */}
+                <div className={clsx("hidden md:grid md:grid-cols-2 lg:grid-cols-5 gap-4", (activeFeature === null || activeFeature > 4) ? "mt-4" : "mt-8")}>
                     {features.slice(5, 10).map((f, i) => {
                         const originalIndex = i + 5;
+                        const mobileRowEnd = (i === 2) || (i === 4);
+                        const isActive = activeFeature === originalIndex;
+                        const mobileRow = i <= 2 ? 0 : 1;
+                        const activeInThisRow = mobileRow === 0
+                            ? (activeFeature !== null && activeFeature >= 5 && activeFeature <= 7)
+                            : (activeFeature !== null && activeFeature >= 8 && activeFeature <= 9);
+
                         return (
-                            <div key={originalIndex} className="contents md:block">
+                            <React.Fragment key={originalIndex}>
+                                {/* Desktop card */}
+                                <div className="hidden md:block">
+                                    <motion.div
+                                        onClick={() => setActiveFeature(isActive ? null : originalIndex)}
+                                        animate={{
+                                            scale: isActive ? 1.05 : 1,
+                                            borderColor: isActive ? "rgb(251 146 60)" : "rgb(241 245 249)",
+                                            zIndex: isActive ? 10 : 0
+                                        }}
+                                        whileHover={{
+                                            x: [0, -5, 5, -5, 5, 0],
+                                            transition: { duration: 0.5 }
+                                        }}
+                                        className={clsx(
+                                            "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
+                                            isActive
+                                                ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
+                                                : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                        )}
+                                    >
+                                        <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, isActive ? "scale-110" : "group-hover:scale-105")}>
+                                            {f.icon}
+                                        </div>
+                                        <h3 className={clsx("text-lg font-bold mb-2", isActive ? "text-orange-600" : "text-slate-900")}>
+                                            {f.title}
+                                        </h3>
+                                        <p className="text-slate-500 text-xs leading-relaxed">
+                                            {f.desc}
+                                        </p>
+                                        {isActive && (
+                                            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
+                                        )}
+                                    </motion.div>
+                                </div>
+
+                                {/* Mobile card */}
                                 <motion.div
-                                    onClick={() => setActiveFeature(activeFeature === originalIndex ? null : originalIndex)}
-                                    animate={{
-                                        scale: activeFeature === originalIndex ? 1.05 : 1,
-                                        borderColor: activeFeature === originalIndex ? "rgb(251 146 60)" : "rgb(241 245 249)",
-                                        zIndex: activeFeature === originalIndex ? 10 : 0
-                                    }}
-                                    whileHover={{
-                                        x: [0, -5, 5, -5, 5, 0],
-                                        transition: { duration: 0.5 }
-                                    }}
+                                    onClick={() => setActiveFeature(isActive ? null : originalIndex)}
                                     className={clsx(
-                                        "cursor-pointer p-6 rounded-2xl border relative group text-center flex flex-col items-center h-full",
-                                        activeFeature === originalIndex
-                                            ? "bg-white shadow-xl ring-2 ring-orange-500 ring-offset-2"
-                                            : "bg-white shadow-sm hover:shadow-md hover:border-orange-100"
+                                        "md:hidden cursor-pointer p-2 rounded-xl border text-center flex flex-col items-center transition-all",
+                                        isActive
+                                            ? "bg-white shadow-lg ring-2 ring-orange-400 border-orange-200"
+                                            : "bg-white shadow-sm border-slate-100 active:scale-95"
                                     )}
+                                    whileTap={{ scale: 0.95 }}
                                 >
-                                    <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300", f.color, activeFeature === originalIndex ? "scale-110" : "group-hover:scale-105")}>
+                                    <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 shadow-md", f.color)}>
                                         {f.icon}
                                     </div>
-                                    <h3 className={clsx("text-lg font-bold mb-2", activeFeature === originalIndex ? "text-orange-600" : "text-slate-900")}>
+                                    <h3 className={clsx("text-[10px] font-bold leading-tight", isActive ? "text-orange-600" : "text-slate-800")}>
                                         {f.title}
                                     </h3>
-                                    <p className="text-slate-500 text-xs leading-relaxed">
-                                        {f.desc}
-                                    </p>
-
-                                    {/* Active Indicator Arrow */}
-                                    {activeFeature === originalIndex && (
-                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-white border-r border-b border-orange-200 rotate-45 z-20"></div>
-                                    )}
                                 </motion.div>
 
-                                {/* Mobile Inline Detail Panel */}
-                                <AnimatePresence>
-                                    {activeFeature === originalIndex && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="md:hidden overflow-hidden mt-4 mb-4 col-span-1"
-                                        >
-                                            <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-                                                <div className="bg-slate-50 p-6 flex items-center justify-center border-b border-slate-100">
-                                                    <img
-                                                        src={f.image}
-                                                        alt={f.title}
-                                                        className="rounded-xl shadow-md max-h-[200px] w-auto object-contain"
-                                                    />
-                                                </div>
-                                                <div className="p-6">
-                                                    <div className="flex items-center gap-3 mb-4">
-                                                        <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shadow-md", f.color)}>
-                                                            {f.icon}
+                                {/* Mobile detail panel */}
+                                {mobileRowEnd && activeInThisRow && activeFeature !== null && activeFeature >= 5 && (
+                                    <div className="md:hidden col-span-3">
+                                        <AnimatePresence mode="wait">
+                                            <motion.div
+                                                key={`mobile-detail-r2-${activeFeature}`}
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mt-2 mb-1">
+                                                    <div className="bg-slate-50 p-4 flex items-center justify-center border-b border-slate-100">
+                                                        <img
+                                                            src={features[activeFeature].image}
+                                                            alt={features[activeFeature].title}
+                                                            className="rounded-xl shadow-md max-h-[180px] w-auto object-contain"
+                                                        />
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center shadow-md", features[activeFeature].color)}>
+                                                                {features[activeFeature].icon}
+                                                            </div>
+                                                            <h3 className="text-base font-bold text-slate-900">
+                                                                {features[activeFeature].title}
+                                                            </h3>
                                                         </div>
-                                                        <h3 className="text-xl font-bold text-slate-900">
-                                                            {f.title}
-                                                        </h3>
-                                                    </div>
-                                                    <div className="text-slate-600 text-sm leading-relaxed mb-6">
-                                                        {f.longDesc}
+                                                        <div className="text-slate-600 text-xs leading-relaxed">
+                                                            {features[activeFeature].longDesc}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </React.Fragment>
                         )
                     })}
                 </div>
@@ -565,27 +714,26 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                     </p>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 max-w-6xl mx-auto items-start">
                     {/* Basic Plan */}
-                    {/* Basic Plan */}
-                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-8 rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
-                        <h3 className="text-xl font-bold text-white mb-2">UppyPro Inbox</h3>
-                        <p className="text-slate-100 text-sm mb-6">Küçük işletmeler ve butikler için.</p>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
-                            <span className="text-slate-200 text-sm ml-1">+ KDV / ay</span>
+                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro Inbox</h3>
+                        <p className="text-slate-100 text-[10px] md:text-sm mb-3 md:mb-6">Küçük işletmeler ve butikler için.</p>
+                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
+                            <span className="text-xl md:text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
+                            <span className="text-slate-200 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=base">
-                            <Button className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
+                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-white text-slate-900 text-xs md:text-sm font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
                                 Paketi Seç
                             </Button>
                         </Link>
-                        <ul className="space-y-4 text-sm text-slate-100">
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı Oluşturma</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Otomatik Görüşme Özeti Çıkarma</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> 1-10 personel için takvim uygulaması (Randevu oluşturma)</li>
+                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-100">
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Görüşme Özeti</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Takvim (1-10 personel)</li>
                         </ul>
 
                         {/* Expandable section */}
@@ -596,13 +744,13 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                                     animate={{ opacity: 1, height: "auto" }}
                                     exit={{ opacity: 0, height: 0 }}
                                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                                    className="space-y-4 text-sm text-slate-100 overflow-hidden mt-4"
+                                    className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-100 overflow-hidden mt-2 md:mt-4"
                                 >
-                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> WhatsApp Şablon Yönetimi</li>
-                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Hazır Cevaplar</li>
-                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Metin Düzeltme &amp; İyileştirme</li>
-                                    <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> Her Dilde Çeviri</li>
-                                    <li className="flex items-center gap-3 text-slate-300"><X className="w-5 h-5 text-red-500 flex-shrink-0" /> AI Asistan Entegrasyonu</li>
+                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> WA Şablon Yönetimi</li>
+                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Hazır Cevaplar</li>
+                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Metin Düzeltme</li>
+                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Her Dilde Çeviri</li>
+                                    <li className="flex items-center gap-1.5 md:gap-3 text-slate-300"><X className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-500 flex-shrink-0" /> AI Asistan</li>
                                 </motion.ul>
                             )}
                         </AnimatePresence>
@@ -622,47 +770,46 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                     </div>
 
                     {/* AI Plan (Highlighted) */}
-                    <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl ring-4 ring-orange-500/20 relative transform lg:-translate-y-4 hover:scale-105 duration-300 transition-all">
-                        <div className="absolute top-0 right-0 left-0 -mt-4 flex justify-center">
-                            <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
+                    <div className="bg-slate-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl ring-2 md:ring-4 ring-orange-500/20 relative transform lg:-translate-y-4 hover:scale-105 duration-300 transition-all">
+                        <div className="absolute top-0 right-0 left-0 -mt-3 md:-mt-4 flex justify-center">
+                            <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 md:px-4 py-0.5 md:py-1 rounded-full text-[8px] md:text-xs font-bold uppercase tracking-wide shadow-lg">
                                 En Çok Tercih Edilen
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">UppyPro AI</h3>
-                        <p className="text-slate-400 text-sm mb-6">Otomasyon isteyen büyüyen markalar.</p>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
-                            <span className="text-slate-500 text-sm ml-1">+ KDV / ay</span>
+                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro AI</h3>
+                        <p className="text-slate-400 text-[10px] md:text-sm mb-3 md:mb-6">Otomasyon isteyen markalar.</p>
+                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
+                            <span className="text-xl md:text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
+                            <span className="text-slate-500 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=ai_starter">
-                            <Button className="w-full h-12 rounded-xl mb-8 bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-lg shadow-orange-500/25">
+                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-orange-600 hover:bg-orange-700 text-white text-xs md:text-sm font-bold shadow-lg shadow-orange-500/25">
                                 AI Paketi Seç
                             </Button>
                         </Link>
-                        <ul className="space-y-4 text-sm text-slate-300">
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Her şey dahil Inbox Paketi</span></li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">AI Asistan Entegrasyonu</span></li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> AI Takvim Kontrolü</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> AI destekli CRM/ Müşteri Kartı Oluşturma</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> 7/24 Anında Yanıt</li>
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-orange-500 flex-shrink-0" /> Devral / Teslim Et Modu</li>
+                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-300">
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Inbox Paketi Dahil</span></li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">AI Asistan</span></li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI Takvim</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI CRM</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> 7/24 Yanıt</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> Devral / Devret</li>
                         </ul>
                     </div>
 
                     {/* Enterprise Plan */}
-                    {/* Enterprise Plan */}
-                    <div className="bg-gradient-to-br from-purple-700 to-indigo-900 p-8 rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
-                        <h3 className="text-xl font-bold text-white mb-2">UppyPro Kurumsal</h3>
-                        <p className="text-slate-200 text-sm mb-6">Özel çözümler ve yüksek hacimler.</p>
-                        <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-3xl font-bold text-white">Teklif Al</span>
+                    <div className="col-span-2 lg:col-span-1 max-w-[280px] md:max-w-none mx-auto w-full bg-gradient-to-br from-purple-700 to-indigo-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro Kurumsal</h3>
+                        <p className="text-slate-200 text-[10px] md:text-sm mb-3 md:mb-6">Özel çözümler ve yüksek hacimler.</p>
+                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
+                            <span className="text-xl md:text-3xl font-bold text-white">Teklif Al</span>
                         </div>
-                        <Button onClick={() => setIsEnterpriseModalOpen(true)} className="w-full h-12 rounded-xl mb-8 bg-white text-slate-900 font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
+                        <Button onClick={() => setIsEnterpriseModalOpen(true)} className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-white text-slate-900 text-xs md:text-sm font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
                             İletişime Geç
                         </Button>
-                        <ul className="space-y-4 text-sm text-slate-200">
-                            <li className="flex items-center gap-3"><Check className="w-5 h-5 text-white flex-shrink-0" /> <span className="font-medium">Her şey dahil UppyPro AI Paketi</span></li>
-                            <li className="flex items-start gap-3"><Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" /> <span>Firmanız için özel tasarlanan otomasyon hizmetleri. (Stok Kontrolü, Ürün Satışı, Çoklu Rezervasyon/Randevu vb.)</span></li>
+                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-200">
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="font-medium">AI Paketi Dahil</span></li>
+                            <li className="flex items-start gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0 mt-0.5" /> <span>Özel otomasyon hizmetleri</span></li>
                         </ul>
                     </div>
                 </div>

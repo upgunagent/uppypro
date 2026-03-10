@@ -134,16 +134,6 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             )}>
                 {selectedConversation ? (
                     <div className="h-full w-full flex flex-col">
-                        {/* Mobile Header with Back Button */}
-                        <div className="md:hidden h-14 border-b flex items-center px-4 bg-white shrink-0 gap-3">
-                            <Link href={`/panel/inbox?tab=${tab}`} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-600">
-                                <ArrowLeft size={20} />
-                            </Link>
-                            <div className="font-semibold text-slate-900 truncate flex-1">
-                                {selectedConversation.customer_handle || selectedConversation.external_thread_id}
-                            </div>
-                        </div>
-
                         <div className="flex-1 overflow-hidden relative">
                             <ChatInterface
                                 key={selectedConversation.id}
@@ -155,6 +145,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                                 customerName={selectedConversation.customer_handle || selectedConversation.external_thread_id || 'Bilinmeyen Kullanıcı'}
                                 profilePic={selectedConversation.profile_pic}
                                 tenantId={selectedConversation.tenant_id}
+                                mobileBackUrl={`/panel/inbox?tab=${tab}`}
                             />
                         </div>
                     </div>

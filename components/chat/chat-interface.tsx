@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare } from "lucide-react";
+import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, ArrowLeft, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
@@ -44,6 +45,7 @@ interface ChatInterfaceProps {
     profilePic?: string;
     tenantLocations?: any[];
     tenantId: string;
+    mobileBackUrl?: string;
 }
 
 export default function ChatInterface({
@@ -55,7 +57,8 @@ export default function ChatInterface({
     customerName,
     profilePic,
     tenantLocations: initialLocations,
-    tenantId
+    tenantId,
+    mobileBackUrl
 }: ChatInterfaceProps) {
     const router = useRouter();
     // Default array fallback for safety
@@ -71,6 +74,10 @@ export default function ChatInterface({
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [showCannedPicker, setShowCannedPicker] = useState(false);
+    const [showMobileAttachMenu, setShowMobileAttachMenu] = useState(false);
+    const [showMobileCannedPanel, setShowMobileCannedPanel] = useState(false);
+    const [mobileCannedResponses, setMobileCannedResponses] = useState<{id:string,shortcut:string,content:string,media_url:string|null}[]>([]);
+    const [mobileCannedSearch, setMobileCannedSearch] = useState("");
     const [selectedCannedMedia, setSelectedCannedMedia] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<string>("");
@@ -570,7 +577,7 @@ export default function ChatInterface({
     const [isInputFocused, setIsInputFocused] = useState(false);
 
     return (
-        <div className="flex flex-col h-full relative">
+        <div className="flex flex-col h-full relative overflow-hidden">
 
             {/* LIGHTBOX OVERLAY */}
             {lightboxMedia && (
@@ -620,8 +627,73 @@ export default function ChatInterface({
                 </div>
             )}
 
-            {/* Header / Toolbar */}
-            <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white shadow-sm z-10">
+            {/* Mobile: Compact single-row header */}
+            <div className="flex md:hidden justify-between items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 z-10">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    {mobileBackUrl && (
+                        <Link href={mobileBackUrl} className="p-1.5 -ml-1 rounded-full hover:bg-slate-100 text-slate-600 shrink-0">
+                            <ArrowLeft size={18} />
+                        </Link>
+                    )}
+                    <span className="font-semibold text-sm text-slate-900 truncate">{customerName}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                            if (!aiOperational && currentMode !== "BOT") {
+                                alert("AI Asistan şu an ayarlardan PASİF durumda!\nLütfen İşletme Ayarları > AI Asistan Ayarları sayfasından asistanı 'Aktif' konuma getirin.");
+                                return;
+                            }
+                            handleToggle();
+                        }}
+                        className={clsx(
+                            "h-7 px-2 text-[11px] whitespace-nowrap rounded-md",
+                            !aiOperational && "opacity-50",
+                            currentMode === "BOT"
+                                ? "bg-green-600 hover:bg-green-700 text-white font-bold"
+                                : "bg-red-600 hover:bg-red-700 text-white font-bold"
+                        )}
+                    >
+                        {currentMode === "BOT" ? <><User className="mr-1 w-3 h-3" />Devral</> : <><Bot className="mr-1 w-3 h-3" />AI'ya Devret</>}
+                    </Button>
+                    <div className="relative z-50">
+                        <Button variant="ghost" size="icon" className="hover:bg-slate-100 text-slate-900 rounded-full h-7 w-7 border border-slate-300 flex items-center justify-center" onClick={() => setMenuOpen(!menuOpen)}>
+                            <Menu className="w-4 h-4 stroke-[2.5]" />
+                        </Button>
+                        {menuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                                <div className="absolute right-0 top-8 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 duration-100 origin-top-right text-slate-900">
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 cursor-pointer text-sm font-medium"
+                                        onClick={() => { setContactSheetOpen(true); setMenuOpen(false); }}
+                                    >
+                                        <User className="w-4 h-4 text-slate-500" /> Kişi bilgisi
+                                    </div>
+                                    <div className="border-b border-slate-100 my-1" />
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 cursor-pointer text-sm font-medium text-slate-600"
+                                        onClick={handleClearChat}
+                                    >
+                                        <Eraser className="w-4 h-4" /> Sohbeti Temizle
+                                    </div>
+                                    <div
+                                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 cursor-pointer text-sm font-medium text-red-600"
+                                        onClick={handleDeleteChat}
+                                    >
+                                        <Trash2 className="w-4 h-4" /> Sohbeti Sil
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop: Full Header / Toolbar */}
+            <div className="hidden md:flex justify-between items-center p-4 border-b border-slate-200 bg-white shadow-sm z-10">
                 <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                         {activeProfilePic && (
@@ -741,7 +813,7 @@ export default function ChatInterface({
 
             {/* Messages Area */}
             <div
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7dd] relative scroll-smooth pb-[140px] md:pb-4"
+                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7dd] relative scroll-smooth pb-4"
                 ref={scrollRef}
                 onScroll={handleScroll}
                 style={{
@@ -1087,32 +1159,146 @@ export default function ChatInterface({
                 </button>
             )}
 
+            {/* Mobile: Floating AI buttons above input - appear when text exists */}
+            {currentMode === 'HUMAN' && input.trim() && (
+                <div className="flex items-center justify-end gap-1.5 px-3 pb-1.5 md:hidden animate-in fade-in slide-in-from-bottom-1 duration-150">
+                    <TranslateButton
+                        input={input}
+                        onTranslated={setInput}
+                        detectedLanguage={lastDetectedLanguage}
+                    />
+                    <AiCorrectButton
+                        input={input}
+                        onCorrected={setInput}
+                        isEnabled={true}
+                    />
+                </div>
+            )}
+
+            {/* Mobile: Inline Canned Responses Panel above input */}
+            {showMobileCannedPanel && (
+                <div className="bg-white border-t border-slate-200 shrink-0 md:hidden animate-in fade-in slide-in-from-bottom-2 duration-150 max-h-[240px] flex flex-col">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                        <span className="text-xs font-bold text-slate-600">Hazır Cevaplar</span>
+                        <button type="button" onClick={() => { setShowMobileCannedPanel(false); setMobileCannedSearch(""); }} className="text-slate-400 hover:text-slate-600">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="px-3 py-1.5 border-b border-slate-100">
+                        <input
+                            type="text"
+                            placeholder="Kısayol ara..."
+                            value={mobileCannedSearch}
+                            onChange={(e) => setMobileCannedSearch(e.target.value)}
+                            className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {mobileCannedResponses
+                            .filter(r => !mobileCannedSearch || r.shortcut.toLowerCase().includes(mobileCannedSearch.toLowerCase()) || r.content.toLowerCase().includes(mobileCannedSearch.toLowerCase()))
+                            .map((resp) => (
+                            <button
+                                key={resp.id}
+                                type="button"
+                                className="flex flex-col items-start gap-0.5 w-full px-3 py-2 hover:bg-orange-50 active:bg-orange-100 transition-colors text-left border-b border-slate-50 last:border-0"
+                                onClick={() => {
+                                    setInput(resp.content);
+                                    setSelectedCannedMedia(resp.media_url || null);
+                                    setShowMobileCannedPanel(false);
+                                    setMobileCannedSearch("");
+                                }}
+                            >
+                                <span className="font-mono text-xs font-bold text-orange-600">/{resp.shortcut}</span>
+                                <span className="text-xs text-slate-600 line-clamp-1">{resp.content}</span>
+                            </button>
+                        ))}
+                        {mobileCannedResponses.length === 0 && (
+                            <div className="p-4 text-center text-xs text-slate-400">Kayıtlı hazır cevap bulunamadı.</div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile: Inline Location Picker Panel above input */}
+            {showLocationPicker && (
+                <div className="bg-white border-t border-slate-200 shrink-0 md:hidden animate-in fade-in slide-in-from-bottom-2 duration-150 max-h-[240px] flex flex-col">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                            <MapPin className="text-red-500" size={14} />
+                            <span className="text-xs font-bold text-slate-600">Kayıtlı Konumlar</span>
+                        </div>
+                        <button type="button" onClick={() => setShowLocationPicker(false)} className="text-slate-400 hover:text-slate-600">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {tenantLocations?.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-slate-500">Kayıtlı konum bulunamadı. İşletme Ayarları'ndan ekleyebilirsiniz.</div>
+                        ) : (
+                            tenantLocations?.map((loc) => (
+                                <button
+                                    key={loc.id}
+                                    type="button"
+                                    className="flex flex-col items-start gap-0.5 w-full px-3 py-2 hover:bg-orange-50 active:bg-orange-100 transition-colors text-left border-b border-slate-50 last:border-0"
+                                    onClick={async () => {
+                                        setShowLocationPicker(false);
+                                        setSending(true);
+                                        try {
+                                            const textToSend = loc.title;
+                                            const payloadToSend = {
+                                                latitude: loc.latitude,
+                                                longitude: loc.longitude,
+                                                name: loc.title,
+                                                address: loc.address,
+                                                url: loc.url
+                                            };
+                                            const optimisticMsg: Message = {
+                                                id: "temp-" + Date.now(),
+                                                text: textToSend,
+                                                sender: "HUMAN",
+                                                created_at: new Date().toISOString(),
+                                                message_type: 'location',
+                                                payload: payloadToSend
+                                            };
+                                            setMessages((prev) => [...prev, optimisticMsg]);
+                                            await sendMessage(conversationId, textToSend, undefined, 'location', undefined, payloadToSend);
+                                        } catch (err: any) {
+                                            console.error("Location Send Failed:", err);
+                                            alert("Konum gönderilirken hata oluştu: " + err.message);
+                                        } finally {
+                                            setSending(false);
+                                        }
+                                    }}
+                                >
+                                    <span className="font-semibold text-slate-800 text-sm">{loc.title}</span>
+                                    <span className="text-xs text-slate-500 line-clamp-1">{loc.address}</span>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Input Area */}
             <div
-                className={clsx(
-                    "fixed md:relative left-0 right-0 bg-white border-t border-slate-200 z-40 transition-all duration-100",
-                    // Mobile Strategy: Always stick to bottom (covering scrolling content).
-                    // When blur: Add padding (58px) to push input slightly behind the 60px Nav (2px overlap).
-                    // When focus: Remove padding to sit on keyboard.
-                    isInputFocused ? "bottom-0 pb-0" : "bottom-0 pb-[58px] md:pb-0 md:bottom-auto"
-                )}
+                className="bg-white border-t border-slate-200 z-40 shrink-0 relative"
             >
-                {currentMode === 'BOT' && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 w-full h-full bg-red-600/75" />
+                {currentMode === 'BOT' ? (
+                    <div className="flex items-center justify-center px-3 py-3 bg-red-600/90 gap-2">
+                        <span className="animate-pulse text-sm">⚠️</span>
+                        <span className="text-white text-xs md:text-sm font-semibold">AI yanıtlıyor.</span>
                         <button
                             onClick={handleToggle}
                             disabled={!aiOperational}
-                            className="relative z-10 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-bold tracking-wide rounded-xl shadow-2xl border-2 border-white/20 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg shadow-lg border border-white/20 flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer"
                         >
-                            <span className="animate-pulse">⚠️</span>
-                            Dijital Asistanınız yanıtlıyor. Müdehale etmek için "Human" moduna geçin.
-                            <div className="ml-2 bg-white/20 p-1 rounded-full">
-                                <User className="w-4 h-4" />
-                            </div>
+                            <User className="w-3 h-3" />
+                            Devral
                         </button>
                     </div>
-                )}
+                ) : (
+                    <>
 
                 {showEmojiPicker && (
                     <>
@@ -1132,6 +1318,8 @@ export default function ChatInterface({
                     </>
                 )}
 
+                {/* Desktop only: Location picker popup */}
+                <div className="hidden md:block">
                 {showLocationPicker && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowLocationPicker(false)} />
@@ -1190,8 +1378,9 @@ export default function ChatInterface({
                         </div>
                     </>
                 )}
+                </div>
 
-                <form onSubmit={handleSend} className="p-2 md:p-4 flex gap-2 items-center bg-white">
+                <form onSubmit={handleSend} className="px-1.5 py-1.5 md:p-4 flex gap-1 md:gap-2 items-end bg-white">
                     <input
                         type="file"
                         id="file-upload"
@@ -1255,7 +1444,96 @@ export default function ChatInterface({
                         }}
                     />
 
-                    <div className="flex items-center gap-1 md:gap-2">
+                    {/* === MOBILE: "+" Menu + Emoji === */}
+                    <div className="flex items-center gap-1 shrink-0 md:hidden">
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setShowMobileAttachMenu(!showMobileAttachMenu)}
+                                className={clsx(
+                                    "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 shrink-0",
+                                    showMobileAttachMenu
+                                        ? "bg-orange-600 text-white rotate-45"
+                                        : "bg-orange-500 text-white"
+                                )}
+                            >
+                                <Plus className="w-5 h-5" strokeWidth={2.5} />
+                            </button>
+
+                            {/* Mobile Attach Popup Menu */}
+                            {showMobileAttachMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMobileAttachMenu(false)} />
+                                    <div className="absolute bottom-10 left-0 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 w-52 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                        <button
+                                            type="button"
+                                            className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-orange-50 transition-colors text-left"
+                                            onClick={() => {
+                                                setShowMobileAttachMenu(false);
+                                                document.getElementById('file-upload')?.click();
+                                            }}
+                                        >
+                                            <Image src="/icons/atac_v2.png" alt="Dosya" width={24} height={24} className="w-5 h-5" />
+                                            <span className="text-sm font-medium text-slate-700">Dosya Ekleme</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-orange-50 transition-colors text-left"
+                                            onClick={() => {
+                                                setShowMobileAttachMenu(false);
+                                                setShowTemplatePicker(true);
+                                            }}
+                                        >
+                                            <Image src="/icons/whatsapp_sablon_v2.png" alt="Şablon" width={24} height={24} className="w-5 h-5" />
+                                            <span className="text-sm font-medium text-slate-700">WhatsApp Şablonları</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-orange-50 transition-colors text-left"
+                                            onClick={() => {
+                                                setShowMobileAttachMenu(false);
+                                                setShowLocationPicker(!showLocationPicker);
+                                            }}
+                                        >
+                                            <Image src="/icons/konum_v2.png" alt="Konum" width={24} height={24} className="w-5 h-5" />
+                                            <span className="text-sm font-medium text-slate-700">Konum</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-orange-50 transition-colors text-left"
+                                            onClick={async () => {
+                                                setShowMobileAttachMenu(false);
+                                                // Fetch canned responses for mobile panel
+                                                const supabase = createClient();
+                                                const { data } = await supabase
+                                                    .from("canned_responses")
+                                                    .select("*")
+                                                    .eq("tenant_id", tenantId)
+                                                    .order("shortcut", { ascending: true });
+                                                if (data) setMobileCannedResponses(data);
+                                                setShowMobileCannedPanel(true);
+                                            }}
+                                        >
+                                            <Image src="/icons/hazir_cevap_v2.png" alt="Hazır Cevap" width={24} height={24} className="w-5 h-5" />
+                                            <span className="text-sm font-medium text-slate-700">Hazır Cevaplar</span>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => { setShowLocationPicker(false); setShowEmojiPicker(!showEmojiPicker); }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-all shrink-0"
+                            title="Emojiler"
+                        >
+                            <Image src="/icons/emoji_v3.png" alt="Emojiler" width={24} height={24} className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* === DESKTOP: Original icon row === */}
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
                         <button
                             type="button"
                             onClick={() => document.getElementById('file-upload')?.click()}
@@ -1356,7 +1634,7 @@ export default function ChatInterface({
                                 <div className="relative flex items-center">
                                     <TextareaAutosize
                                         minRows={1}
-                                        maxRows={6}
+                                        maxRows={4}
                                         value={input}
                                         onChange={(e) => {
                                             const val = e.target.value;
@@ -1375,11 +1653,11 @@ export default function ChatInterface({
                                                 handleSend(e as unknown as React.FormEvent);
                                             }
                                         }}
-                                        placeholder={platform === 'instagram' ? "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin (Belge gönderilemez)..." : "Mesaj yazın (Alt satır için Shift+Enter) veya '/' ile hazır cevap seçin..."}
-                                        className="w-full bg-[#f0f2f5] border-gray-200 text-gray-900 placeholder:text-gray-500 rounded-md focus-visible:ring-1 focus-visible:outline-none focus:outline-none focus-visible:ring-orange-500 focus-visible:border-orange-500 text-base md:text-[15px] pr-[220px] py-2.5 pl-3 resize-none shadow-sm transition-all"
+                                        placeholder={platform === 'instagram' ? "Mesaj yazın..." : "Mesaj yazın..."}
+                                        className="w-full bg-[#f0f2f5] border border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl md:rounded-md focus-visible:ring-1 focus-visible:outline-none focus:outline-none focus-visible:ring-orange-500 focus-visible:border-orange-500 text-[15px] md:text-[15px] pr-10 md:pr-[220px] py-2 md:py-2.5 pl-3 resize-none shadow-sm transition-all"
                                     />
                                     {currentMode === 'HUMAN' && (
-                                        <div className="absolute right-3 bottom-1.5 flex items-center gap-1.5 z-10 bg-[#f0f2f5] pl-1 pr-1 rounded-md">
+                                        <div className="absolute right-3 bottom-1.5 items-center gap-1.5 z-10 bg-[#f0f2f5] pl-1 pr-1 rounded-md hidden md:flex">
                                             <TranslateButton
                                                 input={input}
                                                 onTranslated={setInput}
@@ -1400,22 +1678,24 @@ export default function ChatInterface({
                                 <button
                                     type="button"
                                     onClick={startRecording}
-                                    className="h-10 w-10 hover:bg-orange-50/50 rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center shrink-0"
+                                    className="h-8 w-8 md:h-10 md:w-10 hover:bg-orange-50/50 rounded-full md:rounded-xl transition-all duration-300 md:hover:-translate-y-1 active:scale-95 flex items-center justify-center shrink-0"
                                     title="Ses Kaydetme"
                                     disabled={sending}
                                 >
-                                    <Image src="/icons/seskayit_v2.png" alt="Ses Kaydetme" width={24} height={24} className="drop-shadow-sm object-contain" />
+                                    <Image src="/icons/seskayit_v2.png" alt="Ses Kaydetme" width={24} height={24} className="drop-shadow-sm object-contain w-5 h-5 md:w-6 md:h-6" />
                                 </button>
                             )}
                         </>
                     )}
 
                     {input.trim() && (
-                        <Button type="submit" disabled={sending || currentMode === 'BOT'} className="bg-orange-600 hover:bg-orange-700">
+                        <Button type="submit" disabled={sending} className="bg-orange-600 hover:bg-orange-700 h-8 w-8 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md shrink-0 p-0 md:p-2">
                             <Send className="w-4 h-4" />
                         </Button>
                     )}
                 </form>
+                </>
+                )}
             </div>
             <ContactInfoSheet
                 isOpen={contactSheetOpen}

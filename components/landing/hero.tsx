@@ -12,7 +12,7 @@ export function HeroSection() {
 
     return (
         <>
-            <section className="relative pt-20 pb-12 overflow-hidden bg-white">
+            <section className="relative pt-8 md:pt-20 pb-12 overflow-hidden bg-white">
                 {/* Background Decorations */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-3xl opacity-60" />
@@ -21,17 +21,18 @@ export function HeroSection() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         {/* Text Content */}
-                        <div className="flex-1 text-center lg:text-left space-y-8">
-                            {/* Mobile Login Button */}
-                            <div className="md:hidden mb-6 flex flex-col items-center">
-                                <Link href="/login" className="w-full max-w-xs">
-                                    <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white shadow-lg rounded-full px-8 py-6 text-lg transition-colors w-full">
+                        <div className="flex-1 text-center lg:text-left space-y-4 md:space-y-8">
+                            {/* Mobile: Sync Animation + Login Button */}
+                            <div className="md:hidden flex flex-col items-center gap-2">
+                                <SyncAnimationBadge />
+                                <Link href="/login" className="w-full max-w-[200px]">
+                                    <Button className="bg-[#25D366] hover:bg-[#128C7E] text-white shadow-md rounded-full px-6 py-3 text-sm font-bold transition-colors w-full">
                                         İşletme Girişi
                                     </Button>
                                 </Link>
                             </div>
 
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-[4rem] font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+                            <h1 className="text-[2.5rem] sm:text-5xl lg:text-6xl xl:text-[4rem] font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                                 Instagram + WhatsApp <br />
                                 <span className="relative inline-block">
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
@@ -73,36 +74,41 @@ export function HeroSection() {
                         </div>
 
                         {/* Visual Content (Mockup) */}
-                        <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex flex-col items-end">
-                            <SyncAnimationBadge />
+                        <div className="flex-1 relative w-full max-w-[600px] lg:max-w-none flex flex-col items-center lg:items-end">
+                            <div className="hidden md:block">
+                                <SyncAnimationBadge />
+                            </div>
 
                             <div className="relative w-full flex justify-center lg:justify-end">
                                 {/* Floating Elements (Background) */}
-                                <div className="absolute -left-4 lg:-left-12 bottom-48 lg:bottom-60 z-0">
+                                {/* Floating Elements (Background) */}
+                                <div className="absolute left-0 md:-left-4 lg:-left-24 xl:-left-32 bottom-[55%] md:bottom-48 lg:bottom-60 z-20">
                                     <div className="animate-bounce duration-[3000ms]">
-                                        <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100 rotate-[15deg]">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                                    <MessageCircle size={20} />
+                                        <div className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-2xl border border-slate-100 rotate-[15deg]">
+                                            <div className="flex items-center gap-1.5 md:gap-3">
+                                                <div className="w-6 h-6 md:w-10 md:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                                    <MessageCircle size={12} className="md:hidden" />
+                                                    <MessageCircle size={20} className="hidden md:block" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-slate-800">+128 Mesaj</div>
-                                                    <div className="text-xs text-green-600">WhatsApp Business</div>
+                                                    <div className="text-[10px] md:text-sm font-bold text-slate-800">+128</div>
+                                                    <div className="text-[8px] md:text-xs text-green-600">WhatsApp</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="absolute -left-4 lg:-left-12 bottom-10 lg:bottom-20 z-0">
+                                <div className="absolute left-0 md:-left-4 lg:-left-20 xl:-left-28 bottom-[15%] md:bottom-10 lg:bottom-20 z-20">
                                     <div className="animate-bounce duration-[4000ms]">
-                                        <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100 -rotate-[5deg]">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                                    <Instagram size={20} />
+                                        <div className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-2xl border border-slate-100 -rotate-[5deg]">
+                                            <div className="flex items-center gap-1.5 md:gap-3">
+                                                <div className="w-6 h-6 md:w-10 md:h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+                                                    <Instagram size={12} className="md:hidden" />
+                                                    <Instagram size={20} className="hidden md:block" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-slate-800">+24 DM</div>
-                                                    <div className="text-xs text-pink-500">Instagram</div>
+                                                    <div className="text-[10px] md:text-sm font-bold text-slate-800">+24</div>
+                                                    <div className="text-[8px] md:text-xs text-pink-500">Instagram</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -110,53 +116,56 @@ export function HeroSection() {
                                 </div>
 
                                 {/* Main Card (Foreground) */}
-                                <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-700 ease-out max-w-lg w-full">
+                                <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-700 ease-out max-w-[300px] md:max-w-lg w-full ml-auto mr-0 md:mr-0">
                                     {/* Fake Browser Header */}
-                                    <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-red-400" />
-                                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                                    <div className="h-7 md:h-10 bg-slate-50 border-b border-slate-100 flex items-center px-2 md:px-4 gap-1.5 md:gap-2">
+                                        <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-red-400" />
+                                        <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-yellow-400" />
+                                        <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-green-400" />
                                     </div>
 
                                     {/* Mock UI Content */}
-                                    <div className="relative aspect-[4/3] bg-slate-50 p-4 flex gap-4">
+                                    <div className="relative aspect-[4/3] bg-slate-50 p-2 md:p-4 flex gap-2 md:gap-4">
                                         {/* Sidebar */}
-                                        <div className="w-16 flex flex-col items-center justify-between gap-4 py-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center overflow-hidden">
+                                        <div className="w-10 md:w-16 flex flex-col items-center justify-between gap-2 md:gap-4 py-2 md:py-4 bg-white rounded-lg md:rounded-xl shadow-sm border border-slate-100">
+                                            <div className="flex flex-col items-center gap-2 md:gap-4">
+                                                <div className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-orange-50 flex items-center justify-center overflow-hidden">
                                                     <img src="/uppy-logo-small.png" alt="Uppy" className="w-full h-full object-cover" />
                                                 </div>
-                                                <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 relative">
-                                                    <MessageCircle size={20} />
-                                                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                                                        <span className="text-[10px] font-bold text-white">25</span>
+                                                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-green-50 flex items-center justify-center text-green-600 relative">
+                                                    <MessageCircle size={14} className="md:hidden" />
+                                                    <MessageCircle size={20} className="hidden md:block" />
+                                                    <div className="absolute -top-1 -right-1 md:-top-1.5 md:-right-1.5 w-3.5 h-3.5 md:w-5 md:h-5 bg-red-500 rounded-full flex items-center justify-center border-[1.5px] md:border-2 border-white">
+                                                        <span className="text-[7px] md:text-[10px] font-bold text-white">25</span>
                                                     </div>
                                                 </div>
-                                                <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 relative">
-                                                    <Instagram size={20} />
-                                                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                                                        <span className="text-[10px] font-bold text-white">46</span>
+                                                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 relative">
+                                                    <Instagram size={14} className="md:hidden" />
+                                                    <Instagram size={20} className="hidden md:block" />
+                                                    <div className="absolute -top-1 -right-1 md:-top-1.5 md:-right-1.5 w-3.5 h-3.5 md:w-5 md:h-5 bg-red-500 rounded-full flex items-center justify-center border-[1.5px] md:border-2 border-white">
+                                                        <span className="text-[7px] md:text-[10px] font-bold text-white">46</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="w-10 h-10 rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer transition-colors">
-                                                <Settings size={20} />
+                                            <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer transition-colors">
+                                                <Settings size={14} className="md:hidden" />
+                                                <Settings size={20} className="hidden md:block" />
                                             </div>
                                         </div>
 
                                         {/* Chat Area */}
-                                        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                                            <div className="h-14 border-b border-slate-100 flex items-center justify-between px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                                        <div className="flex-1 bg-white rounded-lg md:rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                                            <div className="h-8 md:h-14 border-b border-slate-100 flex items-center justify-between px-2 md:px-4">
+                                                <div className="flex items-center gap-1.5 md:gap-3">
+                                                    <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-slate-200 overflow-hidden">
                                                         <img src="/profile-woman.png" alt="User" className="w-full h-full object-cover" />
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <div className="h-2 w-24 bg-slate-200 rounded" />
-                                                        <div className="h-2 w-16 bg-slate-100 rounded" />
+                                                    <div className="space-y-0.5 md:space-y-1">
+                                                        <div className="h-1.5 md:h-2 w-12 md:w-24 bg-slate-200 rounded" />
+                                                        <div className="h-1.5 md:h-2 w-8 md:w-16 bg-slate-100 rounded" />
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="hidden md:flex items-center gap-2">
                                                     <div className="px-3 py-1 bg-green-50 text-green-600 text-xs font-bold rounded-full border border-green-100 animate-pulse">
                                                         AI Modu Aktif
                                                     </div>
@@ -164,35 +173,37 @@ export function HeroSection() {
                                                         Konuşmayı Devral
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex-1 bg-[#fffbeb] p-4 space-y-4 relative">
-                                                {/* Messages */}
-                                                <div className="flex flex-col gap-2">
-                                                    <div className="self-start bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-600 max-w-[80%]">
-                                                        Fiyatlarınız hakkında bilgi alabilir miyim?
-                                                    </div>
-                                                    <div className="self-end bg-yellow-50 p-3 rounded-2xl rounded-tr-none shadow-sm text-sm text-slate-800 max-w-[80%] border border-yellow-100">
-                                                        <span className="text-[10px] text-orange-500 font-bold block mb-1">Dijital Asistan</span>
-                                                        Tabii ki! Paketlerimiz aylık 495 TL'den başlıyor. Detayları göndermemi ister misiniz? 😊
+                                                <div className="flex md:hidden items-center">
+                                                    <div className="px-1.5 py-0.5 bg-green-50 text-green-600 text-[7px] font-bold rounded-full border border-green-100 animate-pulse">
+                                                        AI Aktif
                                                     </div>
                                                 </div>
-
-                                                {/* Toast Notification Simulation */}
-                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-2 rounded-full shadow-xl flex items-center gap-2 opacity-0 animate-in fade-in slide-in-from-bottom-2 delay-1000 fill-mode-forwards">
-                                                    <span>⚡</span> AI yanıtladı • 2sn önce
+                                            </div>
+                                            <div className="flex-1 bg-[#fffbeb] p-2 md:p-4 space-y-2 md:space-y-4 relative">
+                                                {/* Messages */}
+                                                <div className="flex flex-col gap-1.5 md:gap-2">
+                                                    <div className="self-start bg-white p-1.5 md:p-3 rounded-xl md:rounded-2xl rounded-tl-none shadow-sm text-[9px] md:text-sm text-slate-600 max-w-[85%]">
+                                                        Fiyat bilgisi alabilir miyim?
+                                                    </div>
+                                                    <div className="self-end bg-yellow-50 p-1.5 md:p-3 rounded-xl md:rounded-2xl rounded-tr-none shadow-sm text-[9px] md:text-sm text-slate-800 max-w-[85%] border border-yellow-100">
+                                                        <span className="text-[7px] md:text-[10px] text-orange-500 font-bold block mb-0.5">AI Asistan</span>
+                                                        Paketler 495 TL'den başlıyor 😊
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             {/* Input Area */}
-                                            <div className="h-16 bg-white border-t border-slate-100 flex items-center px-4 gap-3">
-                                                <div className="flex gap-2 text-slate-400">
-                                                    <Paperclip size={18} />
+                                            <div className="h-8 md:h-16 bg-white border-t border-slate-100 flex items-center px-2 md:px-4 gap-1.5 md:gap-3">
+                                                <div className="flex gap-1 md:gap-2 text-slate-400">
+                                                    <Paperclip size={12} className="md:hidden" />
+                                                    <Paperclip size={18} className="hidden md:block" />
                                                 </div>
-                                                <div className="flex-1 bg-slate-50 h-10 rounded-full flex items-center px-4 text-xs text-slate-400">
-                                                    Mesajınızı yazın...
+                                                <div className="flex-1 bg-slate-50 h-5 md:h-10 rounded-full flex items-center px-2 md:px-4 text-[7px] md:text-xs text-slate-400">
+                                                    Mesaj yazın...
                                                 </div>
-                                                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-                                                    <Send size={18} />
+                                                <div className="w-5 h-5 md:w-10 md:h-10 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+                                                    <Send size={10} className="md:hidden" />
+                                                    <Send size={18} className="hidden md:block" />
                                                 </div>
                                             </div>
                                         </div>
@@ -236,7 +247,7 @@ function SyncAnimationBadge() {
     }, []);
 
     return (
-        <div className="flex items-center gap-6 mb-8 w-fit mx-auto lg:mx-0 mr-8">
+        <div className="flex items-center gap-6 mb-8 w-fit mx-auto lg:mx-0">
             {/* UU Logo */}
             <div className="h-12 flex items-center justify-center">
                 <img src="/uu-sync-logo.png" alt="UppyPro" className="h-[38px] w-auto object-contain" />
