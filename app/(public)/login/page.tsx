@@ -1,11 +1,11 @@
 import { LoginForm } from "./login-form";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MessageCircle, Instagram } from "lucide-react";
 import { Suspense } from "react";
 
 export default async function LoginPage() {
     return (
-        <div className="flex min-h-screen w-full bg-white">
+        <div className="flex min-h-[calc(100vh/var(--zoom-factor))] w-full bg-white">
             {/* Left Side - Hero/Visuals... same as before */}
             <div className="hidden lg:flex w-1/2 bg-slate-50 relative overflow-hidden flex-col justify-between p-12 lg:p-16 xl:p-24 2xl:px-32">
 
@@ -116,13 +116,29 @@ export default async function LoginPage() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 relative">
-                <Link href="/" className="absolute top-8 right-8 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+                {/* Decorative Background Logos */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.03] z-0">
+                    {/* WhatsApp Logos */}
+                    <MessageCircle className="absolute top-[10%] left-[15%] w-64 h-64 -rotate-12" />
+                    <MessageCircle className="absolute top-[60%] left-[8%] w-48 h-48 rotate-45" />
+                    <MessageCircle className="absolute top-[20%] right-[20%] w-72 h-72 rotate-12" />
+                    <MessageCircle className="absolute -bottom-10 right-[35%] w-80 h-80 -rotate-45" />
+                    <MessageCircle className="absolute top-[40%] left-[45%] w-56 h-56 rotate-90" />
+
+                    {/* Instagram Logos */}
+                    <Instagram className="absolute top-[15%] right-[5%] w-56 h-56 rotate-12" />
+                    <Instagram className="absolute top-[55%] right-[10%] w-64 h-64 -rotate-12" />
+                    <Instagram className="absolute bottom-[10%] left-[20%] w-48 h-48 -rotate-45" />
+                    <Instagram className="absolute top-[5%] left-[40%] w-52 h-52 rotate-45" />
+                    <Instagram className="absolute bottom-[20%] right-[50%] w-72 h-72 rotate-12" />
+                </div>
+                <Link href="/" className="absolute top-8 right-8 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors z-10">
                     Ana Sayfaya Dön
                     <ArrowLeft size={16} />
                 </Link>
 
-                <div className="w-full max-w-[480px] space-y-8 bg-white p-10 rounded-3xl border-4 border-orange-500 shadow-2xl shadow-gray-400">
+                <div className="w-full max-w-[480px] space-y-8 bg-white p-10 rounded-3xl border-4 border-orange-500 shadow-2xl shadow-gray-400 relative z-10">
                     <div className="text-center space-y-2 lg:text-left">
                         <img
                             src="/brand-logo-text.png"
