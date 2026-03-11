@@ -585,26 +585,26 @@ export default function ChatInterface({
                     className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
                     onClick={() => setLightboxMedia(null)}
                 >
-                    <div className="absolute top-4 right-4 flex items-center gap-3">
+                    <div className="absolute top-4 right-4 flex items-center gap-3 z-50 pt-safe pr-safe">
                         <button
-                            className="bg-black/50 text-white/80 hover:text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all"
+                            className="bg-white/90 md:bg-black/50 text-slate-800 md:text-white/80 hover:text-white p-3 md:p-2.5 rounded-full hover:bg-white md:hover:bg-black/70 backdrop-blur-sm transition-all shadow-lg md:shadow-none"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleDownloadMedia(lightboxMedia.url);
                             }}
                             title="İndir"
                         >
-                            <Download size={22} />
+                            <Download size={24} className="md:w-[22px] md:h-[22px]" />
                         </button>
                         <button
-                            className="bg-black/50 text-white/80 hover:text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all"
+                            className="bg-white/90 md:bg-black/50 text-red-600 md:text-white/80 hover:text-white p-3 md:p-2.5 rounded-full hover:bg-red-500 md:hover:bg-black/70 backdrop-blur-sm transition-all shadow-lg md:shadow-none"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setLightboxMedia(null);
                             }}
                             title="Kapat"
                         >
-                            <X size={22} />
+                            <X size={24} className="md:w-[22px] md:h-[22px]" />
                         </button>
                     </div>
 
