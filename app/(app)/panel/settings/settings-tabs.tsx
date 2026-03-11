@@ -18,27 +18,30 @@ export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, 
     return (
         <Tabs defaultValue={defaultValue} className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto bg-slate-100 p-1.5 md:p-1 rounded-xl md:rounded-lg gap-1">
-                <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Plug className="w-4 h-4 shrink-0" />
                     <span className="leading-tight text-center md:text-left">Bağlantılar</span>
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <User className="w-4 h-4 shrink-0" />
                     <span className="leading-tight text-center md:text-left">Kişisel/Firma</span>
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="chat" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <MessageSquare className="w-4 h-4 shrink-0" />
                     <span className="leading-tight text-center md:text-left">Hazır Cevaplar</span>
                 </TabsTrigger>
-                <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Users className="w-4 h-4 shrink-0" />
                     <span className="leading-tight text-center md:text-left">Çalışanlar</span>
                 </TabsTrigger>
-                <TabsTrigger value="whatsapp-templates" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="whatsapp-templates" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Megaphone className="w-4 h-4 shrink-0" />
-                    <span className="leading-tight text-center md:text-left">WhatsApp</span>
+                    <span className="leading-tight text-center md:text-left">
+                        <span className="md:hidden">WhatsApp</span>
+                        <span className="hidden md:inline">WhatsApp Şablonlar</span>
+                    </span>
                 </TabsTrigger>
-                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-0 text-[11px] md:text-sm px-1 md:px-3">
+                <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <CreditCard className="w-4 h-4 shrink-0" />
                     <span className="leading-tight text-center md:text-left">Abonelik</span>
                 </TabsTrigger>
@@ -75,7 +78,7 @@ export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent
     return (
         <Tabs defaultValue="channels" className="w-full space-y-6">
             <div className="pb-4 border-b border-slate-200">
-                <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2">
+                <TabsList className="bg-transparent h-auto p-0 flex flex-wrap justify-start gap-2">
                     <TabsTrigger
                         value="channels"
                         className="bg-slate-50 transition-colors data-[state=active]:bg-orange-500 data-[state=active]:text-white px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100"

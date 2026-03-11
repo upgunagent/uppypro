@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ChannelCard } from "@/components/channel-card";
+import { ConnectionGuide } from "@/components/settings/connection-guide";
 import { SettingsTabs, ConnectionTabs, WhatsappTemplatesTabs } from "./settings-tabs";
 import { BillingForm } from "./billing-form";
 import { AiSettingsForm } from "./ai-settings-form";
@@ -98,9 +99,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
     // 1. Connection Tab Content (Sub-tabs: Channels & AI)
     const channelsContent = (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChannelCard type="whatsapp" connection={wa} />
-            <ChannelCard type="instagram" connection={ig} />
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ChannelCard type="whatsapp" connection={wa} />
+                <ChannelCard type="instagram" connection={ig} />
+            </div>
+            <ConnectionGuide />
         </div>
     );
     const aiContent = <AiSettingsForm settings={agentSettings} subscription={subscription} />;
