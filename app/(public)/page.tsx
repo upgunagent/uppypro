@@ -1,6 +1,7 @@
 import { LandingHeader, LandingFooter } from "@/components/landing/layout";
 import { HeroSection } from "@/components/landing/hero";
 import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/components/landing/sections";
+import { MobileAccessSection } from "@/components/landing/mobile-access";
 import { SolutionsSection } from "@/components/landing/solutions";
 import { FaqSection } from "@/components/landing/faq";
 import { getProductPrices } from "@/app/actions/pricing";
@@ -19,6 +20,7 @@ export default async function LandingPage() {
                 <HeroSection />
                 <HowItWorks />
                 <FeaturesSection />
+                <MobileAccessSection />
                 <PricingSection inboxPrice={inboxPrice} aiPrice={aiPrice} />
 
                 <FaqSection />
