@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { AppRecovery } from "@/components/app-recovery";
 import { SubscriptionBlockOverlay } from "@/components/subscription-block-overlay";
 import { NotificationSoundListener } from "@/components/notification-sound-listener";
 import { clsx } from "clsx";
@@ -79,6 +80,7 @@ export default async function AppLayout({
                 {children}
             </main>
             <MobileBottomNav />
+            <AppRecovery />
             {subscriptionBlockReason && (
                 <SubscriptionBlockOverlay reason={subscriptionBlockReason} />
             )}
