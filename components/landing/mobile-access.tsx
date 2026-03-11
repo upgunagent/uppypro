@@ -124,7 +124,7 @@ export function MobileAccessSection() {
                                 {/* Screen */}
                                 <div className="rounded-[2.3rem] overflow-hidden bg-white relative">
                                     <img
-                                        src="/features/mobile-screenshot.jpg"
+                                        src="/features/mobile-screenshot.png"
                                         alt="UppyPro Mobil Panel Görünümü"
                                         className="w-full h-auto block"
                                     />
