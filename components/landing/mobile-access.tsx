@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Smartphone, Monitor, Tablet, Wifi, WifiOff } from "lucide-react";
+import { Smartphone, Monitor, Tablet, WifiOff } from "lucide-react";
 
 export function MobileAccessSection() {
     return (
@@ -62,9 +62,9 @@ export function MobileAccessSection() {
                                     desc: "Tarayıcınızdan anında erişin. Kurulum ve güncelleme derdi yok."
                                 },
                                 {
-                                    icon: <Wifi className="w-5 h-5" />,
-                                    title: "Anlık Bildirimler",
-                                    desc: "Yeni mesajları anında görün, müşterilerinizi bekletmeyin."
+                                    icon: <Monitor className="w-5 h-5" />,
+                                    title: "Aynı Panel, Her Ekranda",
+                                    desc: "Masaüstünde gördüğünüz her şey — mesajlar, takvim, müşteriler — telefonunuzda da aynı şekilde karşınızda."
                                 }
                             ].map((item, i) => (
                                 <motion.div
