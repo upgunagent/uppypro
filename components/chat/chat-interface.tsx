@@ -631,8 +631,8 @@ export default function ChatInterface({
             <div className="flex md:hidden justify-between items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 z-10">
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
                     {mobileBackUrl && (
-                        <Link href={mobileBackUrl} className="p-1.5 -ml-1 rounded-full hover:bg-slate-100 text-slate-600 shrink-0">
-                            <ArrowLeft size={18} />
+                        <Link href={mobileBackUrl} className="w-9 h-9 -ml-1 rounded-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/30 transition-all">
+                            <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                     )}
                     <span className="font-semibold text-sm text-slate-900 truncate">{customerName}</span>
