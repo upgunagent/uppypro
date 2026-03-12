@@ -35,7 +35,7 @@ export async function updatePricing(
             
             const planResult = await createPricingPlan({
                 productReferenceCode: iyzicoProductCode,
-                name: `${productKey} Aylik Plan`,
+                name: `${productKey} ${kdvDahilFiyat.toFixed(0)} TL Aylik`,
                 price: kdvDahilFiyat,
                 currencyCode: 'TRY',
                 paymentInterval: 'MONTHLY',
