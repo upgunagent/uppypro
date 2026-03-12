@@ -93,6 +93,15 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
                                 <span className="text-slate-500">Fatura Dönemi</span>
                                 <span className="font-medium text-slate-900 capitalize">{subscription?.billing_cycle === 'annual' ? 'Yıllık' : 'Aylık'}</span>
                             </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-500">Sonraki Ödeme</span>
+                                <span className="font-medium text-slate-900">
+                                    {subscription?.status === 'active' && subscription?.current_period_end
+                                        ? new Date(subscription.current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                                        : '-'
+                                    }
+                                </span>
+                            </div>
                             <div className="flex justify-between py-2">
                                 <span className="text-slate-500">Tanımlı Ücret</span>
                                 <span className="font-bold text-slate-900">

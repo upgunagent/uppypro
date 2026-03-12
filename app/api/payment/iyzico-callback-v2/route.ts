@@ -113,6 +113,30 @@ export async function POST(request: Request) {
                 .update(updateData)
                 .eq('tenant_id', tenantId);
 
+            // --- İlk ödemeyi payments tablosuna kaydet ---
+            try {
+                const paidPrice = result.paidPrice || result.price || 0;
+                await supabase.from('payments').insert({
+                    tenant_id: tenantId,
+                    amount_try: Math.round(paidPrice * 100), // kuruş cinsinden
+                    currency: 'TRY',
+                    status: 'success',
+                    type: isReactivation ? 'subscription_reactivation' : 'subscription_initial',
+                    provider: 'iyzico',
+                    provider_ref: {
+                        subscriptionReferenceCode: finalSubRefCode,
+                        customerReferenceCode,
+                        pricingPlanReferenceCode,
+                        paidPrice,
+                        cardLast4
+                    },
+                    created_at: now.toISOString()
+                });
+                console.log(`[IYZICO-CALLBACK-V2] Payment record saved for tenant ${tenantId} (${paidPrice} TL)`);
+            } catch (paymentErr) {
+                console.error('[IYZICO-CALLBACK-V2] Failed to save payment record:', paymentErr);
+            }
+
             // --- REACTIVATION: Skip welcome email, redirect to settings ---
             if (isReactivation) {
                 console.log(`[IYZICO-CALLBACK-V2] Reactivation complete for tenant ${tenantId}. Redirecting to settings.`);
