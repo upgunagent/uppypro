@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const META_GRAPH_API = "https://graph.facebook.com/v21.0";
 const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!;
-const FB_APP_SECRET = process.env.IG_APP_SECRET!; // Same Facebook App secret
+const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET || process.env.IG_APP_SECRET!; // Fallback added temporarily for safety
 
 export async function POST(request: Request) {
     try {
