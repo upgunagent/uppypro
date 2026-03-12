@@ -163,6 +163,22 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                             <span className="text-slate-500">Fatura Dönemi</span>
                             <span className="font-medium text-slate-900">Aylık</span>
                         </div>
+                        <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                            <span className="text-slate-500">Başlangıç Tarihi</span>
+                            <span className="font-medium text-slate-900">
+                                {sub?.created_at ? new Date(sub.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                            <span className="text-slate-500">
+                                {sub?.cancel_at_period_end ? 'Erişim Bitiş Tarihi' : sub?.status === 'canceled' ? 'İptal Tarihi' : 'Sonraki Ödeme Tarihi'}
+                            </span>
+                            <span className="font-medium text-slate-900">
+                                {sub?.status === 'canceled' && sub?.canceled_at
+                                    ? new Date(sub.canceled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                                    : (sub?.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-')}
+                            </span>
+                        </div>
                         <div className="flex justify-between items-center py-2 pt-4">
                             <span className="text-slate-500">Tanımlı Ücret</span>
                             <span className="font-bold text-lg text-slate-900">
