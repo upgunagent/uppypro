@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { createPricingPlan } from "@/lib/iyzico";
 
 export async function updatePricing(
     productKey: string,
@@ -11,12 +12,51 @@ export async function updatePricing(
 ) {
     const admin = createAdminClient();
 
+    // 0. Mevcut kaydı çek (fiyat değişimi kontrolü için)
+    const { data: currentRow } = await admin
+        .from('pricing')
+        .select('monthly_price_try, iyzico_pricing_plan_reference_code')
+        .eq('product_key', productKey)
+        .eq('billing_cycle', 'monthly')
+        .maybeSingle();
+
+    let finalIyzicoPlanCode = iyzicoCode;
+
+    // Fiyat değiştiyse ve İyzico ürün ref kodu varsa → İyzico'da yeni plan oluştur
+    const priceChanged = currentRow && currentRow.monthly_price_try !== priceTry;
+    if (priceChanged && iyzicoProductCode) {
+        try {
+            const kdvDahilFiyat = priceTry * 1.20; // %20 KDV ekle
+            console.log(`[PRICING] Fiyat değişti (${currentRow.monthly_price_try} → ${priceTry}). İyzico'da yeni plan oluşturuluyor... (KDV dahil: ${kdvDahilFiyat.toFixed(2)} TL)`);
+            
+            const planResult = await createPricingPlan({
+                productReferenceCode: iyzicoProductCode,
+                name: `${productKey} Aylik Plan`,
+                price: kdvDahilFiyat,
+                currencyCode: 'TRY',
+                paymentInterval: 'MONTHLY',
+                paymentIntervalCount: 1,
+                planPaymentType: 'RECURRING'
+            });
+
+            if (planResult.status === 'success' && planResult.referenceCode) {
+                finalIyzicoPlanCode = planResult.referenceCode;
+                console.log(`[PRICING] İyzico'da yeni plan oluşturuldu: ${finalIyzicoPlanCode}`);
+            } else {
+                console.error(`[PRICING] İyzico plan oluşturulamadı:`, planResult.errorMessage);
+                // Hata olsa bile Supabase'i güncellemeye devam et
+            }
+        } catch (e) {
+            console.error('[PRICING] İyzico senkronizasyon hatası:', e);
+        }
+    }
+
     // 1. pricing tablosunu güncelle (plan ref kodu + fiyat)
     const { error } = await admin
         .from('pricing')
         .update({
             monthly_price_try: priceTry,
-            iyzico_pricing_plan_reference_code: iyzicoCode || null
+            iyzico_pricing_plan_reference_code: finalIyzicoPlanCode || null
         })
         .eq('product_key', productKey)
         .eq('billing_cycle', 'monthly');
@@ -31,7 +71,6 @@ export async function updatePricing(
             .from('products')
             .update({ iyzico_product_reference_code: iyzicoProductCode || null })
             .eq('key', productKey);
-        // Hata olsa bile devam et (products tablosu isteğe bağlı)
     }
 
     revalidatePath('/');
@@ -56,7 +95,7 @@ export async function getProductPrices() {
         console.error("[PRICING ACTION] Error fetching prices:", error);
         // Fallback prices in TL (approximate from script)
         return {
-            inbox: 895,
+            inbox: 995,
             ai: 3995,
             corporate_small: 4995,
             corporate_medium: 6995,
