@@ -184,18 +184,19 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                             <span className="font-bold text-lg text-slate-900">
                                 {sub?.custom_price_usd
                                     ? <span className="text-purple-600">${sub.custom_price_usd} (Özel USD)</span>
-                                    : <span>
-                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(
+                                    : <span className="flex items-center gap-1">
+                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(
                                             (sub?.custom_price_try && sub.custom_price_try > 0)
                                                 ? sub.custom_price_try
-                                                : (pricing.inbox + (
+                                                : (
                                                     sub?.ai_product_key === 'uppypro_ai' ? pricing.ai :
                                                         sub?.ai_product_key === 'uppypro_corporate_small' ? pricing.corporate_small :
                                                             sub?.ai_product_key === 'uppypro_corporate_medium' ? pricing.corporate_medium :
                                                                 sub?.ai_product_key === 'uppypro_corporate_large' ? pricing.corporate_large :
-                                                                    sub?.ai_product_key === 'uppypro_corporate_xl' ? pricing.corporate_xl : 0
-                                                ))
+                                                                    sub?.ai_product_key === 'uppypro_corporate_xl' ? pricing.corporate_xl : pricing.inbox
+                                                )
                                         )}
+                                        <span className="text-sm font-normal text-slate-500">+ KDV (%20)</span>
                                     </span>
                                 }
                             </span>
