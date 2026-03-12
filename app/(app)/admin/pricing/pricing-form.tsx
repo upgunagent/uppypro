@@ -30,7 +30,7 @@ export function PricingForm({ label, productKey, currentPrice, currentCode = "",
             if (res.error) {
                 toast({ variant: "destructive", title: "Hata", description: res.error });
             } else {
-                toast({ title: "Başarılı", description: "Fiyat ve referans kodları güncellendi." });
+                toast({ title: "Başarılı", description: res.message || "Fiyat ve referans kodları güncellendi." });
             }
         } catch (error) {
             toast({ variant: "destructive", title: "Hata", description: "Bir hata oluştu." });

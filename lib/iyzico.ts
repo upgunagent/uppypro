@@ -3,7 +3,7 @@ import crypto from 'crypto';
 export const IyzicoConfig = {
     apiKey: (process.env.IYZICO_API_KEY || '').trim(),
     secretKey: (process.env.IYZICO_SECRET_KEY || '').trim(),
-    baseUrl: (process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com').trim(),
+    baseUrl: (process.env.IYZICO_BASE_URL || process.env.IYZICO_BASE_UR || 'https://api.iyzipay.com').trim(),
     locale: 'tr',
     conversationId: Date.now().toString()
 };

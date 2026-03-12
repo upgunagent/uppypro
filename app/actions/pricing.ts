@@ -21,9 +21,13 @@ export async function updatePricing(
         .maybeSingle();
 
     let finalIyzicoPlanCode = iyzicoCode;
+    let iyzicoSyncMessage = '';
 
     // Fiyat değiştiyse ve İyzico ürün ref kodu varsa → İyzico'da yeni plan oluştur
     const priceChanged = currentRow && currentRow.monthly_price_try !== priceTry;
+    
+    console.log(`[PRICING] Debug: productKey=${productKey}, priceTry=${priceTry}, currentPrice=${currentRow?.monthly_price_try}, priceChanged=${priceChanged}, iyzicoProductCode=${iyzicoProductCode || 'EMPTY'}`);
+    
     if (priceChanged && iyzicoProductCode) {
         try {
             const kdvDahilFiyat = priceTry * 1.20; // %20 KDV ekle
@@ -41,14 +45,20 @@ export async function updatePricing(
 
             if (planResult.status === 'success' && planResult.referenceCode) {
                 finalIyzicoPlanCode = planResult.referenceCode;
+                iyzicoSyncMessage = ` | İyzico yeni plan: ${finalIyzicoPlanCode} (${kdvDahilFiyat.toFixed(0)} TL)`;
                 console.log(`[PRICING] İyzico'da yeni plan oluşturuldu: ${finalIyzicoPlanCode}`);
             } else {
-                console.error(`[PRICING] İyzico plan oluşturulamadı:`, planResult.errorMessage);
-                // Hata olsa bile Supabase'i güncellemeye devam et
+                iyzicoSyncMessage = ` | İyzico HATA: ${planResult.errorMessage || 'Bilinmeyen hata'}`;
+                console.error(`[PRICING] İyzico plan oluşturulamadı:`, planResult.errorMessage, planResult.errorDetails);
             }
-        } catch (e) {
+        } catch (e: any) {
+            iyzicoSyncMessage = ` | İyzico Exception: ${e.message}`;
             console.error('[PRICING] İyzico senkronizasyon hatası:', e);
         }
+    } else if (!priceChanged) {
+        iyzicoSyncMessage = ' | Fiyat değişmedi, İyzico güncellenmedi.';
+    } else if (!iyzicoProductCode) {
+        iyzicoSyncMessage = ' | Ürün ref kodu boş, İyzico güncellenmedi!';
     }
 
     // 1. pricing tablosunu güncelle (plan ref kodu + fiyat)
@@ -62,7 +72,7 @@ export async function updatePricing(
         .eq('billing_cycle', 'monthly');
 
     if (error) {
-        return { error: error.message };
+        return { error: error.message + iyzicoSyncMessage };
     }
 
     // 2. Ürün ref kodu varsa products tablosunu da güncelle
@@ -77,7 +87,7 @@ export async function updatePricing(
     revalidatePath('/panel/settings');
     revalidatePath('/admin/pricing');
 
-    return { success: true };
+    return { success: true, message: 'Fiyat güncellendi.' + iyzicoSyncMessage };
 }
 
 // getExchangeRate removed as we use TL directly now.
