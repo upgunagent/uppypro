@@ -6,7 +6,7 @@ import {
     Wand2, Save, Send, Loader2, ArrowLeft, Plus, Trash2,
     FileText, Eye, Code, Edit3, RefreshCw, Mail, CheckCircle2,
     ChevronDown, ChevronUp, FolderOpen, X, UploadCloud, Image as ImageIcon, Package,
-    Users, Zap, AlertTriangle
+    Users, Zap, AlertTriangle, Copy, Sparkles
 } from "lucide-react";
 
 interface Template {
@@ -58,10 +58,13 @@ export default function LeadCampaignsPage() {
 
     // Loading states
     const [generating, setGenerating] = useState(false);
+    const [isAiGenerated, setIsAiGenerated] = useState(false);
     const [saving, setSaving] = useState(false);
     const [sendingTest, setSendingTest] = useState(false);
     const [testEmail, setTestEmail] = useState("");
     const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+    const [promptSuggestion, setPromptSuggestion] = useState("");
+    const [promptCopied, setPromptCopied] = useState(false);
 
     // Send campaign state
     const [sendTemplate, setSendTemplate] = useState<Template | null>(null);
@@ -110,6 +113,7 @@ export default function LeadCampaignsPage() {
         setSubject("");
         setHtmlContent("");
         setAiCommand("");
+        setIsAiGenerated(false);
         setView("editor");
     };
 
@@ -121,6 +125,7 @@ export default function LeadCampaignsPage() {
         setSubject(template.subject);
         setHtmlContent(template.html_content);
         setAiCommand("");
+        setIsAiGenerated(template.is_ai_generated);
         setView("editor");
     };
 
@@ -146,13 +151,6 @@ export default function LeadCampaignsPage() {
             setSelectedSectorName(sector.name);
             setSectorDescription(sector.description || "");
             if (!templateName) setTemplateName(`${sector.name} - E-posta Şablonu`);
-
-            // Auto-generate when sector is selected for new templates
-            if (!editingTemplate && !htmlContent) {
-                setTimeout(() => {
-                    autoGenerate(sector.name, sector.description || "");
-                }, 100);
-            }
         }
     };
 
@@ -177,6 +175,7 @@ export default function LeadCampaignsPage() {
             setHtmlContent(data.htmlContent);
             if (data.subject) setSubject(data.subject);
             setPreviewMode("preview");
+            setIsAiGenerated(true);
             setStatusMessage({ type: "success", text: "✅ Şablon oluşturuldu! Beğenmediğiniz yerleri aşağıdan AI'a yazarak değiştirebilirsiniz." });
         } catch (err: any) {
             setStatusMessage({ type: "error", text: `Hata: ${err.message}` });
@@ -213,6 +212,7 @@ export default function LeadCampaignsPage() {
             setHtmlContent(data.htmlContent);
             if (data.subject) setSubject(data.subject);
             setPreviewMode("preview");
+            setIsAiGenerated(true);
             setStatusMessage({ type: "success", text: "✅ Şablon başarıyla oluşturuldu!" });
             setAiCommand("");
         } catch (err: any) {
@@ -274,21 +274,31 @@ export default function LeadCampaignsPage() {
             sector_name: selectedSectorName || null,
             subject: subject.trim(),
             html_content: htmlContent,
-            is_ai_generated: true,
+            is_ai_generated: isAiGenerated,
             updated_at: new Date().toISOString()
         };
 
-        let error;
         if (editingTemplate) {
-            ({ error } = await supabase.from("lead_email_templates").update(templateData).eq("id", editingTemplate.id));
+            const { error } = await supabase.from("lead_email_templates").update(templateData).eq("id", editingTemplate.id);
+            if (error) {
+                setStatusMessage({ type: "error", text: `Kaydetme hatası: ${error.message}` });
+            } else {
+                setEditingTemplate({ ...editingTemplate, ...templateData });
+                setStatusMessage({ type: "success", text: "✅ Şablon kaydedildi!" });
+            }
         } else {
-            ({ error } = await supabase.from("lead_email_templates").insert(templateData));
-        }
+            const { data: newTemplate, error } = await supabase
+                .from("lead_email_templates")
+                .insert(templateData)
+                .select("*")
+                .single();
 
-        if (error) {
-            setStatusMessage({ type: "error", text: `Kaydetme hatası: ${error.message}` });
-        } else {
-            setStatusMessage({ type: "success", text: "✅ Şablon kaydedildi!" });
+            if (error) {
+                setStatusMessage({ type: "error", text: `Kaydetme hatası: ${error.message}` });
+            } else if (newTemplate) {
+                setEditingTemplate(newTemplate);
+                setStatusMessage({ type: "success", text: "✅ Şablon kaydedildi!" });
+            }
         }
 
         setSaving(false);
@@ -309,7 +319,7 @@ export default function LeadCampaignsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     to: testEmail.trim(),
-                    subject: `[TEST] ${subject}`,
+                    subject: subject,
                     htmlContent
                 })
             });
@@ -1173,6 +1183,115 @@ export default function LeadCampaignsPage() {
                         </div>
                         <p className="text-xs text-slate-400 mt-2">💡 Tıklayınca kopyalanır → HTML koduna veya konuya yapıştırın.</p>
                     </div>
+
+                    {/* Prompt Önerisi */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                        <h2 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <Sparkles size={16} className="text-amber-500" />
+                            Prompt Önerisi
+                        </h2>
+                        <p className="text-xs text-slate-400 mb-3">
+                            Seçilen sektöre göre diğer AI araçlarında (ChatGPT, Claude vb.) kullanabileceğiniz detaylı bir HTML e-posta şablonu oluşturma prompt&apos;u üretir.
+                        </p>
+
+                        <button
+                            onClick={() => {
+                                if (!selectedSectorName) {
+                                    setStatusMessage({ type: "error", text: "Lütfen önce bir sektör seçin" });
+                                    return;
+                                }
+                                const prompt = `Bana profesyonel bir HTML e-posta şablonu oluştur. Aşağıdaki bilgileri dikkate al:
+
+## HEDEF SEKTÖR
+- Sektör: ${selectedSectorName}
+${sectorDescription ? `- Sektör Açıklaması: ${sectorDescription}` : ""}
+- Bu sektördeki işletmelere gönderilecek bir tanıtım/pazarlama e-postası olacak.
+
+## ÜRÜN BİLGİSİ (UppyPro)
+UppyPro, işletmelerin müşteri iletişimini dijitalleştiren bir SaaS platformudur.
+- Web sitesi: https://www.upgunai.com
+- Slogan: "Instagram + WhatsApp Tek Panelde"
+- Açıklama: Tüm mesajlar tek bir inbox'ta toplanır. Yapay Zeka dijital asistan mesajları yanıtlar, işletme sahibi istediğinde tek tıkla devralır, sonra tekrar AI'ye devredebilir.
+
+## ÖNE ÇIKARILACAK ÖZELLİKLER
+1. **Tek Inbox**: WhatsApp ve Instagram mesajlarını tek panelde birleştirme. Hiçbir bildirim gözden kaçmaz.
+2. **AI Otomasyon**: 7/24 aktif yapay zeka asistanı tüm mesajlara anında yanıt verir. Fiyat bilgisi, randevu oluşturma gibi sık sorulan sorulara otomatik cevap.
+3. **Çoklu Personel Takvimi**: 1-10 arası personel/çalışan için ayrı ayrı takvim oluşturulabilir. İşletme sahipleri hem manuel olarak hem de AI asistan yardımıyla otomatik randevu oluşturabilir, mevcut randevularda değişiklik yapabilir veya iptal edebilir.
+4. **Yazım Düzeltme & Kurumsal Dil**: Yazım hatalarını otomatik düzeltme ve yazılan mesajları tek tuşla kurumsal, profesyonel bir dile çevirme özelliği.
+5. **Her Dilde Anlık Çeviri**: Yabancı müşterilerle anlık çeviri sayesinde her dilde akıcı ve doğal bir iletişim kurulabilir. Turist veya yurt dışı müşterileri olan işletmeler için ideal.
+6. **Devral / Devret**: AI asistan mesajları yanıtlarken istediğinizde araya girin, sonra tekrar AI'ye devredin.
+7. **Müşteri Kartı**: Mesaj yazan tüm müşterileri kaydetme, notlar alma, geçmiş bilgilerini görme.
+8. **WhatsApp Şablonları**: Önceden onaylanmış şablonlarla 24 saat kuralına takılmadan müşterilere ulaşma.
+9. **Hazır Cevaplar**: Sık sorulan sorulara saniyeler içinde zengin içeriklerle yanıt verme.
+10. **Güvenlik**: Uçtan uca koruma, anti-spam kontrolü ve aktivite takibi.
+
+NOT: Yukarıdaki tüm özellikleri (özellikle 3, 4 ve 5 numaralı olanları) e-posta içeriğinde mutlaka yer ver, bunlar her sektör için geçerli temel özelliklerdir.
+
+## ŞABLON GEREKSİNİMLERİ
+- Tamamen HTML ve inline CSS kullanılmalı (e-posta uyumluluğu için).
+- Responsive tasarım olmalı, mobilde de düzgün görünmeli.
+- Modern ve profesyonel bir tasarım olmalı.
+- Ana renk: turuncu (#F97316), ikincil renk: koyu lacivert (#1E293B).
+- Logo yerine "UppyPro" yazısı kullanılabilir (Uppy kısmı turuncu, Pro kısmı lacivert).
+- Üst kısımda dikkat çekici bir başlık ve alt başlık olmalı.
+- ${selectedSectorName} sektörüne özel faydalar ve kullanım senaryoları vurgulanmalı.
+- Özellikler bölümünde ikonlar yerine emoji kullanılabilir.
+- Güçlü bir CTA (Çağrı Butonu) olmalı, örn: "Ücretsiz Deneyin", "Demo Talep Edin" gibi. Buton linki: https://www.upgunai.com
+- En altta kısa bir güven mesajı olmalı (7/24 Destek, Ücretsiz Kurulum, Güvenilir Altyapı gibi).
+- E-posta içinde "{{firma_adi}}" değişkenini kullanarak kişiselleştirme yap (örn: "Merhaba {{firma_adi}}" veya "{{firma_adi}} olarak siz de...").
+- HTML kodu temiz ve düzenli olsun, tüm stiller inline olsun.
+- Tablo tabanlı layout kullan (e-posta istemcisi uyumluluğu için).
+- Toplam genişlik max 600px olsun.
+
+## ÖNEMLİ
+- Sadece düz HTML kodu üret, açıklama ekleme.
+- Şablonun konusu/amacı: ${selectedSectorName} sektöründeki işletmelere UppyPro'nun nasıl fayda sağlayacağını anlatmak ve denemeye yönlendirmek.
+- E-postanın dili Türkçe olmalı.`;
+
+                                setPromptSuggestion(prompt);
+                                setPromptCopied(false);
+                            }}
+                            disabled={!selectedSectorId}
+                            className="w-full px-4 py-2.5 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
+                        >
+                            <Sparkles size={16} /> Prompt Önerisi Oluştur
+                        </button>
+
+                        {promptSuggestion && (
+                            <div className="mt-3 space-y-2">
+                                <div className="relative">
+                                    <textarea
+                                        value={promptSuggestion}
+                                        readOnly
+                                        rows={8}
+                                        className="w-full px-3 py-2 rounded-lg border border-amber-200 bg-amber-50/50 text-xs text-slate-700 resize-none outline-none font-mono"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(promptSuggestion);
+                                            setPromptCopied(true);
+                                            setStatusMessage({ type: "success", text: "📋 Prompt kopyalandı! ChatGPT, Claude veya başka bir AI aracına yapıştırabilirsiniz." });
+                                            setTimeout(() => setPromptCopied(false), 3000);
+                                        }}
+                                        className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                                            promptCopied
+                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-amber-100 hover:text-amber-700'
+                                        }`}
+                                    >
+                                        {promptCopied ? (
+                                            <><CheckCircle2 size={12} /> Kopyalandı!</>
+                                        ) : (
+                                            <><Copy size={12} /> Kopyala</>
+                                        )}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400">
+                                    💡 Bu prompt&apos;u ChatGPT, Claude veya başka bir AI aracına yapıştırın. Oluşturulan HTML kodunu "HTML Kodu" sekmesine yapıştırıp önizlemede görebilirsiniz.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* RIGHT: Preview / Code */}
@@ -1206,14 +1325,23 @@ export default function LeadCampaignsPage() {
 
                     {/* Content area */}
                     <div className="flex-1 overflow-auto">
-                        {!htmlContent ? (
+                        {previewMode === "code" ? (
+                            <textarea
+                                value={htmlContent}
+                                onChange={(e) => setHtmlContent(e.target.value)}
+                                className="w-full h-full p-4 font-mono text-xs text-slate-700 resize-none outline-none"
+                                style={{ minHeight: "750px" }}
+                                spellCheck={false}
+                                placeholder={"HTML kodunuzu buraya yapıştırın...\n\nÖrnek:\n<!DOCTYPE html>\n<html>\n<head>\n  <title>E-posta Şablonu</title>\n</head>\n<body>\n  <h1>Merhaba!</h1>\n  <p>İçeriğinizi buraya yazın.</p>\n  <a href=\"https://www.siteniz.com\">Siteyi Ziyaret Et</a>\n</body>\n</html>"}
+                            />
+                        ) : !htmlContent ? (
                             <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                 <Mail size={48} className="text-slate-200 mb-4" />
                                 <p className="text-slate-400 text-sm">
-                                    Sektör seçip "AI ile Şablon Oluştur" butonuna tıklayın
+                                    AI ile şablon oluşturabilir veya &quot;HTML Kodu&quot; sekmesine geçerek kendi kodunuzu yapıştırabilirsiniz
                                 </p>
                             </div>
-                        ) : previewMode === "preview" ? (
+                        ) : (
                             <iframe
                                 srcDoc={htmlContent}
                                 className="w-full border-0"
@@ -1225,14 +1353,6 @@ export default function LeadCampaignsPage() {
                                         iframe.style.height = height + 20 + 'px';
                                     } catch { iframe.style.height = '800px'; }
                                 }}
-                            />
-                        ) : (
-                            <textarea
-                                value={htmlContent}
-                                onChange={(e) => setHtmlContent(e.target.value)}
-                                className="w-full h-full p-4 font-mono text-xs text-slate-700 resize-none outline-none"
-                                style={{ minHeight: "750px" }}
-                                spellCheck={false}
                             />
                         )}
                     </div>

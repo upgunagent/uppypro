@@ -24,7 +24,9 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "WhatsApp'tan 7/24 otomatik randevu alma",
             "Instagram DM'den gelen müşteri mesajlarını tek panelden yönetme",
             "AI asistan ile müşteri sorularına anında yanıt",
-            "Randevu takvimi ve hatırlatma sistemi",
+            "Çoklu personel takvimi: 1-10 çalışan için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı müşterilerle akıcı iletişim kurma",
             "Müşteri geçmişi ve sadakat takibi"
         ],
         cta: "Ücretsiz Demo ile randevu sisteminizi kurun",
@@ -35,7 +37,9 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "WhatsApp üzerinden otomatik randevu ve bilgilendirme",
             "Instagram DM mesajlarını kaçırmadan yanıtlama",
             "AI ile tedavi önerileri ve fiyat bilgilendirme",
-            "Online randevu takvimi yönetimi",
+            "Çoklu personel takvimi: 1-10 uzman için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı müşterilerle akıcı iletişim kurma",
             "VIP müşteri takibi ve CRM"
         ],
         cta: "Ücretsiz deneyin, müşterilerinizi kaybetmeyin",
@@ -46,7 +50,9 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "WhatsApp'tan 7/24 rezervasyon kabul etme",
             "Paket ve fiyat bilgilerini otomatik paylaşma",
             "Müşteri memnuniyetini artıran hızlı iletişim",
-            "Randevu takvimi ve kapasite yönetimi",
+            "Çoklu personel takvimi: 1-10 terapist için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı müşterilerle akıcı iletişim kurma",
             "Sadık müşteri takibi"
         ],
         cta: "Hemen deneyin, rezervasyonlarınızı artırın",
@@ -57,8 +63,10 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "Instagram DM'lerden gelen tasarım taleplerini yönetin",
             "WhatsApp'tan otomatik randevu ve fiyat bilgisi verin",
             "AI asistan ile sık sorulan soruları anında yanıtlayın",
-            "Portföy paylaşımı ve müşteri onay süreci",
-            "Müşteri geçmişi ve bakım hatırlatmaları"
+            "Çoklu sanatçı takvimi: 1-10 sanatçı için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı müşterilerle akıcı iletişim kurma",
+            "Portföy paylaşımı ve müşteri onay süreci"
         ],
         cta: "Ücretsiz deneyin, stüdyonuzu dijitalleştirin",
         tone: "Yaratıcı, modern, cool"
@@ -68,8 +76,10 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "WhatsApp'tan 7/24 randevu alma ve hatırlatma",
             "Hasta sorularına AI ile anında yanıt",
             "Tedavi bilgilendirme ve fiyat paylaşımı",
-            "Dijital hasta takip ve CRM sistemi",
-            "Çoklu kanal yönetimi (WhatsApp + Instagram)"
+            "Çoklu hekim takvimi: 1-10 diş hekimi için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı hastalarla akıcı iletişim kurma",
+            "Dijital hasta takip ve CRM sistemi"
         ],
         cta: "Ücretsiz demo ile kliniğinizi dijitalleştirin",
         tone: "Güvenilir, profesyonel, sağlık odaklı"
@@ -77,10 +87,12 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
     "Estetik & Plastik Cerrahi": {
         benefits: [
             "Hasta danışmanlığını WhatsApp'tan yönetme",
-            "Yurt dışı hastalar için çok dilli AI asistan",
+            "Instagram DM'den gelen talepleri profesyonelce yönetme",
             "Randevu ve operasyon takvimi yönetimi",
-            "Gizlilik odaklı güvenli iletişim",
-            "Instagram DM'den gelen talepleri profesyonelce yönetme"
+            "Çoklu doktor takvimi: 1-10 uzman için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yurt dışı hastalarla akıcı iletişim kurma",
+            "Gizlilik odaklı güvenli iletişim"
         ],
         cta: "Ücretsiz demo talep edin",
         tone: "Prestijli, güven veren, tıbbi"
@@ -90,7 +102,9 @@ const SECTOR_CONTEXT: Record<string, { benefits: string[]; cta: string; tone: st
             "WhatsApp'tan randevu ve tedavi bilgilendirme",
             "Instagram DM mesajlarını kaçırmadan yanıtlama",
             "AI ile tedavi önerileri ve sık sorulan sorulara otomatik yanıt",
-            "Hasta takibi ve kontrol hatırlatmaları",
+            "Çoklu uzman takvimi: 1-10 uzman için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı hastalarla akıcı iletişim kurma",
             "Kampanya ve indirim duyuruları"
         ],
         cta: "Ücretsiz deneyin, hasta memnuniyetinizi artırın",
@@ -103,7 +117,9 @@ function getDefaultContext(sectorName: string) {
         benefits: [
             "WhatsApp ve Instagram mesajlarını tek panelden yönetme",
             "AI asistan ile 7/24 otomatik müşteri yanıtlama",
-            "Randevu ve sipariş yönetimi",
+            "Çoklu personel takvimi: 1-10 çalışan için ayrı ayrı takvim oluşturma, hem manuel hem AI asistan yardımıyla otomatik randevu oluşturma, değişiklik ve iptal yapabilme",
+            "Yazım hatalarını otomatik düzeltme ve mesajları tek tuşla kurumsal dile çevirme",
+            "Her dilde anlık çeviri ile yabancı müşterilerle akıcı iletişim kurma",
             "Müşteri takibi ve CRM",
             "Hazır cevaplar ile hızlı iletişim"
         ],

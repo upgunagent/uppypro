@@ -31,9 +31,8 @@ export async function GET(req: NextRequest) {
             { onConflict: "email" }
         );
 
-        // If we have a sendId, update the send record
+        // If we have a sendId, log which campaign triggered unsubscribe
         if (sendId) {
-            // Log which campaign triggered unsubscribe
             try {
                 const { data: send } = await adminDb
                     .from("lead_campaign_sends")
@@ -47,6 +46,26 @@ export async function GET(req: NextRequest) {
                         .eq("email", email);
                 }
             } catch {}
+        }
+
+        // Delete all campaign send records for this email
+        try {
+            await adminDb
+                .from("lead_campaign_sends")
+                .delete()
+                .eq("email", email);
+        } catch (err) {
+            console.error("Error deleting campaign sends:", err);
+        }
+
+        // Delete the lead record(s) with this email
+        try {
+            await adminDb
+                .from("leads")
+                .delete()
+                .eq("email", email);
+        } catch (err) {
+            console.error("Error deleting lead:", err);
         }
 
         return new NextResponse(
