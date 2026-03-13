@@ -74,7 +74,9 @@ export const config = {
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
          * - api/webhooks (webhook endpoints must be public)
+         * - api/leads/track (email tracking endpoints must be public)
+         * - api/leads/unsubscribe (unsubscribe endpoint must be public)
          */
-        "/((?!_next/static|_next/image|favicon.ico|api/webhooks).*)",
+        "/((?!_next/static|_next/image|favicon.ico|api/webhooks|api/leads/track|api/leads/unsubscribe).*)",
     ],
 };

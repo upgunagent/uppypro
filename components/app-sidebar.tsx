@@ -19,7 +19,11 @@ import {
     Receipt,
     Lock,
     Bell,
-    HelpCircle
+    HelpCircle,
+    Search,
+    Target,
+    Mail,
+    BarChart3
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -284,6 +288,13 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 
+    const leadLinks = [
+        { href: "/admin/lead-discovery", label: "Lead Keşfi", icon: Search },
+        { href: "/admin/leads", label: "Lead Listesi", icon: Target },
+        { href: "/admin/lead-campaigns", label: "Kampanyalar", icon: Mail },
+        { href: "/admin/lead-analytics", label: "Raporlar", icon: BarChart3 },
+    ];
+
     const AdminSidebarItem = ({ href, icon: Icon, label, isActive, count }: any) => (
         <Link
             href={href}
@@ -360,6 +371,20 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                             label={link.label}
                             isActive={pathname.startsWith(link.href)}
                             count={link.href === '/admin/tickets' ? unreadTicketsCount : 0}
+                        />
+                    ))}
+
+                    <div className="pt-4 pb-1 px-1">
+                        <div className="text-xs font-bold tracking-wider text-orange-400 uppercase">Lead Intelligence</div>
+                    </div>
+                    {leadLinks.map((link) => (
+                        <AdminSidebarItem
+                            key={link.href}
+                            href={link.href}
+                            icon={link.icon}
+                            label={link.label}
+                            isActive={pathname.startsWith(link.href)}
+                            count={0}
                         />
                     ))}
                 </nav>
