@@ -4,6 +4,7 @@ import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/c
 import { MobileAccessSection } from "@/components/landing/mobile-access";
 import { SolutionsSection } from "@/components/landing/solutions";
 import { FaqSection } from "@/components/landing/faq";
+import { PackageFinderSection } from "@/components/landing/package-finder";
 import { getProductPrices } from "@/app/actions/pricing";
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,8 @@ export default async function LandingPage() {
                 <FeaturesSection />
                 <MobileAccessSection />
                 <PricingSection inboxPrice={inboxPrice} aiPrice={aiPrice} />
+
+                <PackageFinderSection />
 
                 <FaqSection />
 
