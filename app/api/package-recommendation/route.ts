@@ -136,16 +136,21 @@ GÖREV
 4. Önerdiğin paketin İLGİLİ ÖZELLİKLERİNİ müşterinin sektörüne ve sorunlarına özel somut senaryolarla açıkla
    - "Takvim özelliğiyle stilistlerinizin müsaitlik durumunu AI anında kontrol edecek" gibi
 5. Eğer birden fazla paket uygunsa, ana öneriyi yap ama alternatifi de kısaca belirt
-6. Sonunda bir CTA ekle
+6. Sonunda bir CTA ekle:
+   - "Hemen **14 günlük ücretsiz deneme** ile Inbox paketini kullanmaya başlayabilirsiniz."
+   - Veya AI paketi önerdiysen: "**UppyPro AI** paketini seçerek 48 saat içinde size özel eğitilmiş yapay zeka asistanınızı aktif hale getirebiliriz."
+   - ASLA "demo gösterelim", "bir görüşme planlayalım", "detayları görüşelim" gibi ifadeler KULLANMA.
+   - Doğrudan harekete geçirici ol: ücretsiz deneme veya paket seçimi yönlendir.
 
 KURALLAR:
 - Markdown formatında yaz (bold, emoji, bullet list kullan)
 - Samimi ama profesyonel ol, "siz" hitabı kullan
-- Maximum 200-280 kelime
+- Maximum 300-500 kelime (konuyu iyi açıkla, kısa kesme)
 - Fiyatları mutlaka belirt
 - Sektöre özel gerçekçi ve yaratıcı senaryolar ver
 - Özellik açıklarken YUKARIDA verilen detaylı özellik bilgilerini KULLAN, kafandan uydurma
-- Asla "yapay zeka" veya "bot" olarak konuşma, bir danışman gibi konuş`;
+- Asla "yapay zeka" veya "bot" olarak konuşma, bir danışman gibi konuş
+- ASLA "demo gösterelim", "detayları görüşelim", "uygun bir zaman planlayalım" DEMEYİN — müşteriyi doğrudan ücretsiz denemeye veya paket seçimine yönlendir`;
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
