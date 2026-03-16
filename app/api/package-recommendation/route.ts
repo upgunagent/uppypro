@@ -157,7 +157,7 @@ KURALLAR:
                     generationConfig: {
                         temperature: 0.9,
                         topP: 0.95,
-                        maxOutputTokens: 1024,
+                        maxOutputTokens: 8192,
                     },
                 }),
             }
