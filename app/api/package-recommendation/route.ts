@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = "gemini-2.5-pro-preview-05-06";
+const MODEL = "gemini-2.5-pro";
 
 // Simple in-memory rate limiting
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
