@@ -3,8 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.LEAD_OUTREACH_FROM_EMAIL || "UppyPro <noreply@upgunai.com>";
+// Kampanya mailleri için ayrı Resend hesabı (marketing@upgunai.com)
+// Sistem mailleri (şifre sıfırlama, randevu, abonelik) hâlâ RESEND_API_KEY ile gider
+const resend = new Resend(process.env.RESEND_CAMPAIGN_API_KEY || process.env.RESEND_API_KEY);
+const FROM_EMAIL = process.env.LEAD_CAMPAIGN_FROM_EMAIL || "UPGUN AI <marketing@upgunai.com>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.upgunai.com";
 const DAILY_LIMIT = parseInt(process.env.LEAD_DAILY_SEND_LIMIT || "100");
 const SEND_INTERVAL = parseInt(process.env.LEAD_SEND_INTERVAL_MS || "5000");

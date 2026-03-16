@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Kampanya/test mailleri için ayrı Resend hesabı (marketing@upgunai.com)
+const resend = new Resend(process.env.RESEND_CAMPAIGN_API_KEY || process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
     try {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
         }
 
         const { data, error } = await resend.emails.send({
-            from: "UppyPro <noreply@upgunai.com>",
+            from: process.env.LEAD_CAMPAIGN_FROM_EMAIL || "UPGUN AI <marketing@upgunai.com>",
             to: [to],
             subject: subject,
             html: htmlContent,
