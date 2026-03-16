@@ -159,14 +159,11 @@ export function PackageFinderSection() {
     const currentProgress = Math.min(step, totalSteps);
 
     return (
-        <section ref={sectionRef} className="py-12 md:py-24 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-hidden" id="package-finder">
+        <section ref={sectionRef} className="py-8 md:py-16 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-hidden" id="package-finder">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Header */}
-                <div className="text-center mb-8 md:mb-12">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-bold rounded-full mb-4">
-                        <Sparkles size={14} /> AI PAKET DANIŞMANI
-                    </div>
+                <div className="text-center mb-6 md:mb-10">
                     <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-3">
                         İşletmenize En Uygun Paketi Keşfedin
                     </h2>
@@ -213,28 +210,35 @@ export function PackageFinderSection() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="text-center"
                             >
-                                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-10 relative overflow-hidden">
+                                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-5 md:p-8 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-40 h-40 bg-orange-50 rounded-full blur-3xl -mr-20 -mt-20" />
 
-                                    <div className="relative z-10">
-                                        <img
-                                            src="/uppypro-assistant.png"
-                                            alt="UppyPro AI Asistan"
-                                            className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-6 object-contain drop-shadow-lg"
-                                        />
-                                        <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">
-                                            Merhaba! Ben <span className="text-orange-600">UppyPro</span> 👋
-                                        </h3>
-                                        <p className="text-slate-500 text-sm md:text-base mb-6 max-w-md mx-auto leading-relaxed">
-                                            Size birkaç soru sorarak işletmeniz için en uygun paketi bulmama yardım edin.
-                                            Cevaplarınıza göre <strong>kişisel önerimizi</strong> hazırlayacağım!
-                                        </p>
-                                        <button
-                                            onClick={() => setStep(1)}
-                                            className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-bold text-sm md:text-base shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all hover:scale-105 active:scale-95"
-                                        >
-                                            Hadi Başlayalım! <ArrowRight size={18} />
-                                        </button>
+                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                                        {/* Left: Robot Image */}
+                                        <div className="flex-shrink-0">
+                                            <img
+                                                src="/uppypro-question.png"
+                                                alt="UppyPro AI Asistan"
+                                                className="w-36 h-auto md:w-48 object-contain drop-shadow-lg"
+                                            />
+                                        </div>
+
+                                        {/* Right: Text & Button */}
+                                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                                            <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">
+                                                Merhaba! Ben <span className="text-orange-600">UppyPro</span>
+                                            </h3>
+                                            <p className="text-slate-500 text-sm md:text-base mb-6 max-w-md leading-relaxed">
+                                                Size birkaç soru sorarak işletmeniz için en uygun paketi bulmama yardım edin.
+                                                Cevaplarınıza göre <strong>kişisel önerimizi</strong> hazırlayacağım!
+                                            </p>
+                                            <button
+                                                onClick={() => setStep(1)}
+                                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-bold text-sm md:text-base shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all hover:scale-105 active:scale-95"
+                                            >
+                                                Hadi Başlayalım! <ArrowRight size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

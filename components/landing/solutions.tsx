@@ -9,9 +9,6 @@ export function SolutionsSection() {
         <section id="solutions" className="py-12 md:py-24 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <div className="inline-block px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full mb-4">
-                        TERZİ İŞİ YAZILIM
-                    </div>
                     <h2 className="text-4xl font-bold text-slate-900 mb-4">Çözümlerimiz</h2>
                     <p className="text-slate-500 text-lg">
                         Sektörünüz ne olursa olsun, işletmenizin ihtiyaçlarına tam uyan akıllı sistemler geliştiriyoruz.

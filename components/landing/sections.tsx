@@ -705,9 +705,6 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <div className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full mb-4">
-                        UYGUN FİYATLANDIRMA
-                    </div>
                     <h2 className="text-4xl font-bold text-slate-900 mb-4">İşletmenize Uygun Paketi Seçin</h2>
                     <p className="text-slate-500 text-lg">
                         Taahhüt yok, gizli ücret yok. Büyüdükçe paketinizi yükseltin.
