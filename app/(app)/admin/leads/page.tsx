@@ -163,6 +163,7 @@ export default function LeadsListPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [emailFilter, setEmailFilter] = useState("all");
+    const [phoneFilter, setPhoneFilter] = useState("all");
     const [sortField, setSortField] = useState("business_name");
     const [sortAsc, setSortAsc] = useState(true);
     const [actionMenuId, setActionMenuId] = useState<string | null>(null);
@@ -247,6 +248,8 @@ export default function LeadsListPage() {
         if (statusFilter !== "all") query = query.eq("status", statusFilter);
         if (emailFilter === "missing") query = query.eq("email_missing", true);
         if (emailFilter === "available") query = query.eq("email_missing", false);
+        if (phoneFilter === "mobile") query = query.like("phone", "05%");
+        if (phoneFilter === "landline") query = query.not("phone", "like", "05%");
 
         const { data, count } = await query;
         if (data) {
@@ -254,7 +257,7 @@ export default function LeadsListPage() {
             setTotalCount(count || 0);
         }
         setLoading(false);
-    }, [selectedList, searchQuery, statusFilter, emailFilter, sortField, sortAsc, page]);
+    }, [selectedList, searchQuery, statusFilter, emailFilter, phoneFilter, sortField, sortAsc, page]);
 
     useEffect(() => {
         if (view === "leads" && selectedList) fetchLeads();
@@ -267,6 +270,7 @@ export default function LeadsListPage() {
         setSearchQuery("");
         setStatusFilter("all");
         setEmailFilter("all");
+        setPhoneFilter("all");
     };
 
     const goBackToLists = () => {
@@ -872,6 +876,7 @@ export default function LeadsListPage() {
                                 if (statusFilter !== "all") params.set("status", statusFilter);
                                 if (emailFilter === "missing") params.set("email_filter", "missing_email");
                                 if (emailFilter === "available") params.set("email_filter", "has_email");
+                                if (phoneFilter !== "all") params.set("phone_filter", phoneFilter);
                                 
                                 const res = await fetch(`/api/leads/export?${params.toString()}`);
                                 if (!res.ok) throw new Error("Export başarısız");
@@ -879,7 +884,7 @@ export default function LeadsListPage() {
                                 const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement("a");
                                 a.href = url;
-                                a.download = `${selectedList.name}_leads.csv`;
+                                a.download = `${selectedList.name}_leads.xlsx`;
                                 a.click();
                                 window.URL.revokeObjectURL(url);
                             } catch (err: any) {
@@ -894,7 +899,7 @@ export default function LeadsListPage() {
                         {exporting ? (
                             <><Loader2 size={16} className="animate-spin" /> İndiriliyor...</>
                         ) : (
-                            <><Download size={16} /> CSV İndir</>
+                            <><Download size={16} /> Excel İndir</>
                         )}
                     </button>
                     <Link
@@ -935,7 +940,7 @@ export default function LeadsListPage() {
             )}
 
             {/* Filters */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div className="md:col-span-2 relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -966,6 +971,16 @@ export default function LeadsListPage() {
                     <option value="all">E-posta Durumu</option>
                     <option value="available">E-posta Var</option>
                     <option value="missing">E-posta Eksik</option>
+                </select>
+
+                <select
+                    value={phoneFilter}
+                    onChange={(e) => { setPhoneFilter(e.target.value); setPage(0); }}
+                    className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                >
+                    <option value="all">Tüm Hatlar</option>
+                    <option value="mobile">📱 Mobil Hatlı</option>
+                    <option value="landline">📞 Sabit Hatlı</option>
                 </select>
             </div>
 

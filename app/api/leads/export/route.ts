@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import * as XLSX from "xlsx";
 
 export async function GET(req: NextRequest) {
     try {
@@ -23,11 +24,12 @@ export async function GET(req: NextRequest) {
         const listId = searchParams.get("list_id");
         const status = searchParams.get("status");
         const sectorName = searchParams.get("sector_name");
-        const emailFilter = searchParams.get("email_filter"); // "has_email" | "missing_email"
+        const emailFilter = searchParams.get("email_filter");
+        const phoneFilter = searchParams.get("phone_filter");
 
         let query = supabase
             .from("leads")
-            .select("business_name, sector_name, city, district, address, phone, email, website, google_rating, google_review_count, score, status, source, tags, created_at")
+            .select("business_name, contact_name, sector_name, city, district, address, phone, email, website, google_rating, google_review_count, score, status, source, tags, created_at")
             .order("business_name");
 
         if (listId) query = query.eq("list_id", listId);
@@ -35,53 +37,78 @@ export async function GET(req: NextRequest) {
         if (sectorName && sectorName !== "all") query = query.eq("sector_name", sectorName);
         if (emailFilter === "has_email") query = query.eq("email_missing", false);
         if (emailFilter === "missing_email") query = query.eq("email_missing", true);
+        if (phoneFilter === "mobile") query = query.like("phone", "05%");
+        if (phoneFilter === "landline") query = query.not("phone", "like", "05%");
 
         const { data: leads, error } = await query;
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         if (!leads || leads.length === 0) return NextResponse.json({ error: "Dışa aktarılacak lead bulunamadı" }, { status: 404 });
 
-        // Build CSV
-        const headers = [
-            "Firma Adı", "Sektör", "Şehir", "İlçe", "Adres", "Telefon", "E-posta",
-            "Website", "Google Puan", "Yorum Sayısı", "Skor", "Durum", "Kaynak", "Etiketler", "Oluşturulma Tarihi"
-        ];
-
-        const escapeCSV = (val: any) => {
-            if (val === null || val === undefined) return "";
-            const str = String(val);
-            if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-                return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
+        // Status label map
+        const STATUS_LABELS: Record<string, string> = {
+            new: "Yeni",
+            contacted: "İletişime Geçildi",
+            demo_scheduled: "Demo Planlandı",
+            proposal: "Teklif Verildi",
+            won: "Kazanıldı",
+            lost: "Kaybedildi",
+            archived: "Arşivlendi",
         };
 
+        // Build rows for Excel
+        const headers = [
+            "Firma Adı", "Yetkili Ad Soyad", "Sektör", "Şehir", "İlçe", "Adres",
+            "Telefon", "E-posta", "Website",
+            "Google Puan", "Yorum Sayısı", "Skor", "Durum", "Kaynak", "Etiketler", "Kayıt Tarihi"
+        ];
+
         const rows = leads.map(lead => [
-            escapeCSV(lead.business_name),
-            escapeCSV(lead.sector_name),
-            escapeCSV(lead.city),
-            escapeCSV(lead.district),
-            escapeCSV(lead.address),
-            escapeCSV(lead.phone),
-            escapeCSV(lead.email),
-            escapeCSV(lead.website),
-            escapeCSV(lead.google_rating),
-            escapeCSV(lead.google_review_count),
-            escapeCSV(lead.score),
-            escapeCSV(lead.status),
-            escapeCSV(lead.source),
-            escapeCSV(lead.tags ? lead.tags.join(", ") : ""),
-            escapeCSV(lead.created_at ? new Date(lead.created_at).toLocaleDateString("tr-TR") : "")
-        ].join(","));
+            lead.business_name || "",
+            lead.contact_name || "",
+            lead.sector_name || "",
+            lead.city || "",
+            lead.district || "",
+            lead.address || "",
+            lead.phone || "",
+            lead.email || "",
+            lead.website || "",
+            lead.google_rating ?? "",
+            lead.google_review_count ?? "",
+            lead.score ?? "",
+            STATUS_LABELS[lead.status] || lead.status || "",
+            lead.source || "",
+            lead.tags ? lead.tags.join(", ") : "",
+            lead.created_at ? new Date(lead.created_at).toLocaleDateString("tr-TR") : ""
+        ]);
 
-        // BOM for Excel Turkish character support
-        const BOM = "\uFEFF";
-        const csv = BOM + headers.join(",") + "\n" + rows.join("\n");
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-        return new NextResponse(csv, {
+        // Auto column widths
+        const colWidths = headers.map((h, colIdx) => {
+            let maxLen = h.length;
+            rows.forEach(row => {
+                const cellLen = String(row[colIdx] || "").length;
+                if (cellLen > maxLen) maxLen = cellLen;
+            });
+            return { wch: Math.min(maxLen + 2, 50) };
+        });
+        ws["!cols"] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, "Leads");
+
+        // Generate buffer
+        const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+
+        const fileName = `leads_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+        return new NextResponse(buf, {
             headers: {
-                "Content-Type": "text/csv; charset=utf-8",
-                "Content-Disposition": `attachment; filename="leads_${new Date().toISOString().split("T")[0]}.csv"`
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Content-Disposition": `attachment; filename="${fileName}"`
             }
         });
 

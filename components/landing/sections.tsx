@@ -825,10 +825,12 @@ export function HowItWorks() {
         <section className="py-8 bg-white border-b border-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight mb-4">
-                        <span className="text-orange-500">Uppy</span>
-                        <span className="text-black">Pro</span>
-                    </h1>
+                    <img
+                        src="/uppypro_logo_avatar.png"
+                        alt="UppyPro"
+                        className="h-14 md:h-20 lg:h-24 w-auto mx-auto mb-4 object-contain"
+                    />
+                    <h1 className="sr-only">UppyPro</h1>
                     <p className="text-slate-500 text-lg">
                         Karmaşık kurulumlar yok. 3 basit adımda panelinizi kullanmaya başlayın.
                     </p>

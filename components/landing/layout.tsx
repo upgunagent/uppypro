@@ -94,8 +94,8 @@ export function LandingFooter() {
                                 </li>
                                 <li className="flex items-start gap-1.5 md:gap-3">
                                     <Phone className="w-3 h-3 md:w-5 md:h-5 text-gray-400 mt-0.5 shrink-0 hidden sm:block" />
-                                    <a href="tel:+905334906252" className="hover:text-primary transition-colors inline-block">
-                                        +90 533 490 6252 <span className="text-slate-400 text-[8px] md:text-sm ml-0.5 md:ml-1 block xl:inline">(WA Destek)</span>
+                                    <a href="tel:+902122837175" className="hover:text-primary transition-colors inline-block">
+                                        0212 283 71 75
                                     </a>
                                 </li>
                                 <li className="flex items-start gap-1.5 md:gap-3">
