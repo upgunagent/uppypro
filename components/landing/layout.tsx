@@ -1,9 +1,38 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Mail, Phone, MapPin, Instagram, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, MessageCircle, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+
+const SECTORS = [
+    { name: "Güzellik & Kuaför", slug: "guzellik-salonu", emoji: "💇‍♀️" },
+    { name: "Klinik & Sağlık", slug: "klinik-saglik", emoji: "🏥" },
+    { name: "Otel & Konaklama", slug: "otel-konaklama", emoji: "🏨" },
+    { name: "Restoran & Kafe", slug: "restoran-kafe", emoji: "🍽️" },
+    { name: "E-Ticaret", slug: "e-ticaret", emoji: "🛒" },
+    { name: "Diş Klinikleri", slug: "dis-klinigi", emoji: "🦷" },
+    { name: "Eğitim Kurumları", slug: "egitim", emoji: "🎓" },
+    { name: "Emlak", slug: "emlak", emoji: "🏠" },
+    { name: "Otomotiv", slug: "otomotiv", emoji: "🚗" },
+    { name: "Sigorta", slug: "sigorta", emoji: "🛡️" },
+];
 
 export function LandingHeader() {
+    const [sectorOpen, setSectorOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setSectorOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-md pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between">
@@ -18,12 +47,47 @@ export function LandingHeader() {
 
                 {/* Navigation */}
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-                    <Link href="#product" className="hover:text-primary transition-colors">Ürün</Link>
-                    <Link href="#features" className="hover:text-primary transition-colors">Özellikler</Link>
-                    <Link href="#pricing" className="hover:text-primary transition-colors">Paketler</Link>
-                    <Link href="#faq" className="hover:text-primary transition-colors">SSS</Link>
-                    <Link href="#solutions" className="hover:text-primary transition-colors">Çözümlerimiz</Link>
-                    <Link href="#contact" className="hover:text-primary transition-colors">İletişim</Link>
+                    <Link href="/hakkimizda" className="hover:text-primary transition-colors">Hakkımızda</Link>
+                    <Link href="/#features" className="hover:text-primary transition-colors">Özellikler</Link>
+
+                    {/* Sektörler Dropdown */}
+                    <div
+                        ref={dropdownRef}
+                        className="relative"
+                        onMouseEnter={() => setSectorOpen(true)}
+                        onMouseLeave={() => setSectorOpen(false)}
+                    >
+                        <button
+                            className="flex items-center gap-1 hover:text-primary transition-colors"
+                            onClick={() => setSectorOpen(!sectorOpen)}
+                        >
+                            Sektörler
+                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${sectorOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {sectorOpen && (
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 w-64 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {SECTORS.map((sector) => (
+                                        <Link
+                                            key={sector.slug}
+                                            href={`/cozumler/${sector.slug}`}
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                                            onClick={() => setSectorOpen(false)}
+                                        >
+                                            <span className="font-medium">{sector.name}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <Link href="/#pricing" className="hover:text-primary transition-colors">Paketler</Link>
+                    <Link href="/#faq" className="hover:text-primary transition-colors">SSS</Link>
+                    <Link href="/#solutions" className="hover:text-primary transition-colors">Çözümlerimiz</Link>
+                    <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
+                    <Link href="/#contact" className="hover:text-primary transition-colors">İletişim</Link>
                 </nav>
 
                 {/* Actions */}

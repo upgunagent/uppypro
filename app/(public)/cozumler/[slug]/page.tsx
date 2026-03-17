@@ -1,0 +1,486 @@
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { SectorPageContent } from "@/components/landing/sector-page-content";
+
+const SECTORS: Record<string, {
+    name: string; emoji: string; title: string; description: string; metaDesc: string;
+    heroText: string; problems: string[]; solutions: { title: string; desc: string; icon: string }[];
+    features: string[]; cta: string;
+    scenario?: string;
+    stats?: { value: string; label: string; desc: string }[];
+    beforeAfter?: { before: string; after: string }[];
+}> = {
+    "guzellik-salonu": {
+        name: "Güzellik & Kuaför", emoji: "💇‍♀️",
+        title: "Güzellik Salonları ve Kuaförler İçin WhatsApp & Instagram Yönetimi",
+        description: "Güzellik salonunuzun WhatsApp ve Instagram mesajlarını yapay zeka ile yönetin. Randevu otomasyonu, müşteri takibi ve 7/24 AI asistan.",
+        metaDesc: "Güzellik salonu ve kuaförler için WhatsApp yapay zeka asistanı. Randevu otomasyonu, müşteri takibi, Instagram DM yönetimi. 14 gün ücretsiz deneyin.",
+        heroText: "Müşterileriniz Instagram'dan ilham alıyor, WhatsApp'tan randevu istiyor. Peki siz bu mesajlara yetişebiliyor musunuz? UppyPro ile güzellik salonunuzun tüm dijital iletişimini tek panelden yönetin.",
+        problems: [
+            "Instagram'dan gelen DM'lere geç yanıt verme — müşteri rakibe gidiyor",
+            "WhatsApp'ta randevu karmaşası — çift rezervasyonlar, unutulan saatler",
+            "Personel kişisel telefonundan yanıt veriyor — kurumsal kontrol yok",
+            "Hafta sonu ve mesai dışı saatlerde mesajlara cevap verilemiyor",
+            "Müşteri geçmişi ve tercihleri takip edilemiyor",
+        ],
+        solutions: [
+            { title: "AI Randevu Asistanı", desc: "Yapay zeka, müşterilerinizin randevu taleplerini anında değerlendirir. Uygun saatleri önerir, onay alır ve takviminize otomatik ekler.", icon: "calendar" },
+            { title: "Instagram DM Otomasyonu", desc: "Story yanıtları, fiyat soruları, randevu talepleri — AI asistanınız 7/24 Instagram DM'lerinizi profesyonelce yanıtlar.", icon: "bot" },
+            { title: "Müşteri Hafızası", desc: "Her müşterinin tercih ettiği kuaför, saç rengi, son işlem tarihi — AI tüm detayları hatırlar ve kişiselleştirilmiş hizmet sunar.", icon: "users" },
+            { title: "Tek Panel Yönetimi", desc: "WhatsApp ve Instagram mesajlarını tek ekrandan yönetin. Personeliniz kurumsal panelden güvenle yanıt versin.", icon: "message" },
+        ],
+        features: [
+            "WhatsApp ve Instagram mesajları tek panelde",
+            "AI destekli otomatik randevu oluşturma",
+            "Gelişmiş takvim ile çift rezervasyon engelleme",
+            "Müşteri kartları — geçmiş işlemler, notlar, tercihler",
+            "Mesai dışı saatlerde 7/24 AI yanıt",
+            "Hazır cevap şablonları (fiyat listesi, çalışma saatleri)",
+            "Çok dilli müşteri desteği — turist müşteriler için otomatik çeviri",
+            "WhatsApp şablon mesajları ile kampanya bildirimleri",
+        ],
+        cta: "Güzellik salonunuzun dijital iletişimini dönüştürmeye hazır mısınız?",
+        scenario: "Salonunuzda yoğun bir Cumartesi günü düşünün. Bir yandan saç boyama işlemi devam ederken, WhatsApp'tan 3 yeni randevu talebi, Instagram DM'den 2 fiyat sorusu ve bir de story'ye gelen 'Bu saç modeli bana yakışır mı?' mesajı var. Telefonunuza bakacak zamanınız yok, personeliniz de zaten meşgul.\n\nUppyPro'nun AI asistanı devrede olsaydı: Instagram DM'deki fiyat sorularına anında fiyat listenizden yanıt verirdi. WhatsApp'taki randevu taleplerini takviminize bakarak uygun saatleri önerip onay alırdı. Story'deki soruya nazik ve profesyonel bir öneri sunardı. Siz ise elinizi kirletmeden, tek bir müşteriyi kaybetmeden işinize odaklanırdınız.\n\nAkşam eve gittiğinizde panelden bakarsınız: 12 yeni randevu alınmış, 5 yeni müşteri kartı oluşmuş, hiçbir mesaj cevapsız kalmamış. Üstelik bir turist müşteriye İngilizce yanıt bile vermiş!",
+        stats: [
+            { value: "%70", label: "Daha Hızlı Yanıt", desc: "Mesajlara ortalama yanıt süresi 2 dakikaya düşer" },
+            { value: "3x", label: "Daha Fazla Randevu", desc: "Kaçırılan randevu talepleri sıfıra yaklaşır" },
+            { value: "%40", label: "Zaman Tasarrufu", desc: "Mesaj yönetimi için harcanan süre azalır" },
+            { value: "7/24", label: "Kesintisiz Hizmet", desc: "Mesai dışında bile müşterilerinize ulaşın" },
+        ],
+        beforeAfter: [
+            { before: "WhatsApp'tan gelen randevuları elle not defterine yazıyorsunuz", after: "AI otomatik takvime ekliyor, çift rezervasyon imkansız" },
+            { before: "Instagram DM'lere iş bitince bakıyorsunuz, müşteri çoktan gitmiş", after: "AI anında fiyat ve randevu bilgisi veriyor" },
+            { before: "Personel kişisel telefonundan mesaj yazıyor, kontrol sizde değil", after: "Tüm iletişim kurumsal panelden, her mesaj kayıt altında" },
+            { before: "Hafta sonu ve akşam mesajlara cevap yok", after: "7/24 AI asistan müşterileri karşılıyor" },
+            { before: "Müşteri tercihleri hatırlanmıyor, her seferinde baştan soruyorsunuz", after: "Müşteri kartında saç rengi, tercih ettiği kuaför, tüm geçmiş" },
+        ],
+    },
+    "klinik-saglik": {
+        name: "Klinik & Sağlık", emoji: "🏥",
+        title: "Klinikler ve Sağlık Kuruluşları İçin WhatsApp & Instagram Yönetimi",
+        description: "Kliniğinizin hasta iletişimini yapay zeka ile yönetin. Randevu otomasyonu, hasta takibi ve 7/24 AI asistan.",
+        metaDesc: "Klinikler için WhatsApp yapay zeka asistanı. Hasta randevu otomasyonu, hatırlatma mesajları, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Hastalarınız WhatsApp'tan randevu almak, Instagram'dan bilgi edinmek istiyor. Kliniğinizin iletişim yükünü yapay zekaya devredin, siz tedaviye odaklanın.",
+        problems: [
+            "Telefon trafiği yoğunluğunda kaçan hastalar",
+            "Randevu hatırlatmalarının manuel yapılması",
+            "Mesai dışı saatlerde hasta sorularına yanıt verilememesi",
+            "Farklı branşlar için randevu yönlendirme karmaşası",
+            "Hasta memnuniyeti takibinin yapılamaması",
+        ],
+        solutions: [
+            { title: "Akıllı Randevu Sistemi", desc: "AI asistan, hastanın şikayetine göre doğru branşa yönlendirir ve uygun doktora randevu oluşturur.", icon: "calendar" },
+            { title: "Otomatik Hatırlatmalar", desc: "Randevu öncesi WhatsApp hatırlatma mesajları ile no-show oranını minimize edin.", icon: "message" },
+            { title: "7/24 Hasta Desteği", desc: "Çalışma saatleri, konum, hazırlık bilgileri gibi sık sorulan sorulara anında AI yanıt.", icon: "bot" },
+            { title: "Güvenli İletişim", desc: "Hasta bilgileri kurumsal panelde güvenle saklanır, personel kişisel telefondan iletişim kurmaz.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram mesajları tek panelde",
+            "Branş bazlı randevu yönlendirme",
+            "Otomatik randevu hatırlatma mesajları",
+            "Hasta kartları — geçmiş randevular, notlar",
+            "Mesai dışı 7/24 AI yanıt",
+            "Çok dilli destek — yabancı hasta iletişimi",
+            "WhatsApp şablonları ile check-up hatırlatmaları",
+            "Devral/Devret — AI'dan doktora anlık geçiş",
+        ],
+        cta: "Kliniğinizin hasta iletişimini dönüştürmeye hazır mısınız?",
+        scenario: "Kliniğinizde sabah 09:00'da kapılar açıldığında sekreterinizin telefonu çalmaya başlıyor. Randevu almak isteyen hastalar, sonuçlarını soran hastalar, adres soran hastalar... Bir yandan WhatsApp'ta 15 okunmamış mesaj var. 'Doktor bugün var mı?', 'MR sonucumu gönderdim gördünüz mü?', 'Yarın için randevum vardı saatini hatırlayamıyorum.'\n\nUppyPro ile bu sabah çok farklı olurdu: Gece boyunca gelen 8 randevu talebini AI otomatik değerlendirdi, branşına göre doğru doktora yönlendirdi ve uygun saatleri hastaya sundu. 3 tanesi onay vermiş bile. 'Doktor bugün var mı?' sorusuna çalışma saatlerinden otomatik yanıt verildi. Randevu hatırlatması bugün randevusu olan 12 hastaya otomatik gönderildi — no-show oranı %60 düştü.\n\nSekreteriniz artık sadece gerçekten insan müdahalesi gerektiren vakalara odaklanıyor.",
+        stats: [
+            { value: "%60", label: "No-Show Azalması", desc: "Otomatik hatırlatmalar ile randevu kaçırma oranı düşer" },
+            { value: "5sn", label: "Ort. Yanıt Süresi", desc: "Hasta sorularına ortalama yanıt süresi" },
+            { value: "%80", label: "Otomasyon Oranı", desc: "Rutin soruların AI tarafından yanıtlanma oranı" },
+            { value: "24/7", label: "Hasta Desteği", desc: "Gece bile randevu talebi alınabiliyor" },
+        ],
+        beforeAfter: [
+            { before: "Sabahları 20+ kaçırılmış çağrı ve cevapsız mesaj", after: "AI gece boyunca tüm talepleri yanıtladı, sıfır kaçırılmış mesaj" },
+            { before: "Randevu hatırlatmaları tek tek aranarak yapılıyor", after: "WhatsApp'tan otomatik hatırlatma, %60 daha az no-show" },
+            { before: "Yanlış branşa randevu verilip vakit kaybediliyor", after: "AI hastanın sorununa göre doğru branşa yönlendiriyor" },
+            { before: "Mesai dışında hasta soruları cevapsız kalıyor", after: "AI 7/24 çalışma saatleri, konum, hazırlık bilgisi veriyor" },
+            { before: "Hasta geçmişi dosya dosya karıştırılıyor", after: "Dijital hasta kartında tüm geçmiş tek tıkla" },
+        ],
+    },
+    "otel-konaklama": {
+        name: "Otel & Konaklama", emoji: "🏨",
+        title: "Oteller ve Konaklama Tesisleri İçin WhatsApp & Instagram Yönetimi",
+        description: "Otelinizin misafir iletişimini yapay zeka ile yönetin. Rezervasyon otomasyonu, çok dilli destek ve 7/24 AI concierge.",
+        metaDesc: "Oteller için WhatsApp yapay zeka concierge. Rezervasyon otomasyonu, çok dilli misafir desteği, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Misafirleriniz dünyanın her yerinden yazıyor — farklı dillerde, farklı zaman dilimlerinde. UppyPro'nun AI concierge'i ile hiçbir mesajı kaçırmayın.",
+        problems: [
+            "Farklı dillerdeki misafir mesajlarına yanıt verilememesi",
+            "Gece saatlerinde gelen rezervasyon taleplerine cevap verilememesi",
+            "Instagram'dan gelen fiyat ve müsaitlik sorularının kaçması",
+            "Check-in/check-out bilgilerinin manuel iletilmesi",
+            "Misafir şikayetlerinin geç ele alınması",
+        ],
+        solutions: [
+            { title: "AI Concierge", desc: "Yapay zeka, misafirlerinizin dilinde 7/24 hizmet verir. Oda bilgileri, çevre rehberi, restoran önerileri anında.", icon: "bot" },
+            { title: "Çok Dilli Destek", desc: "40+ dilde otomatik çeviri. Misafir kendi dilinde yazar, siz Türkçe görür ve yanıtlarsınız.", icon: "message" },
+            { title: "Rezervasyon Yönetimi", desc: "WhatsApp üzerinden gelen rezervasyon taleplerini AI otomatik değerlendirir ve müsaitlik bildirir.", icon: "calendar" },
+            { title: "Misafir Memnuniyeti", desc: "Konaklama sonrası otomatik memnuniyet anketi ve geri bildirim toplama.", icon: "users" },
+        ],
+        features: [
+            "40+ dilde otomatik çeviri",
+            "7/24 AI concierge hizmeti",
+            "WhatsApp'tan rezervasyon talebi yönetimi",
+            "Check-in/check-out otomatik bilgilendirme",
+            "Misafir kartları — tercihler, özel istekler",
+            "Instagram DM ile oda fotoğrafı ve fiyat paylaşımı",
+            "Ekip yönetimi — resepsiyon, housekeeping, F&B",
+            "Memnuniyet anketi otomasyonu",
+        ],
+        cta: "Otelinizin misafir deneyimini yapay zeka ile yükseltin.",
+        scenario: "Gece 02:00. Yarın check-in yapacak Alman bir çift WhatsApp'tan Almanca yazıyor: 'Flughafentransfer möglich?' (Havalimanı transferi mümkün mü?). Resepsiyonist uyuyor, mesaj sabaha kadar bekleyecek. Sabah baktığında çift başka bir yerden transfer organize etmiş bile.\n\nUppyPro ile bu durum imkansız: AI asistanınız mesajı anında algılıyor, Almanca'dan Türkçe'ye çeviriyor ve otel hizmetlerinize göre 'Evet, havalimanı transfer hizmetimiz mevcuttur. Varış saatinizi paylaşır mısınız?' diye Almanca yanıt veriyor. Misafir memnun, transfer organize ediliyor. Sabah siz paneli açtığınızda her şey halledilmiş.\n\nÜstelik check-in gününde otomatik hoş geldiniz mesajı, oda bilgileri ve WiFi şifresi de gönderiliyor. Check-out sonrası memnuniyet anketi otomatik atılıyor.",
+        stats: [
+            { value: "40+", label: "Dil Desteği", desc: "Misafirlerle kendi dillerinde iletişim" },
+            { value: "%90", label: "Anlık Yanıt", desc: "Gece dahil mesajlara anlık yanıt oranı" },
+            { value: "4.8★", label: "Misafir Puanı", desc: "İletişim memnuniyetinde ortalama puan" },
+            { value: "%35", label: "Tekrar Rezervasyon", desc: "Hızlı iletişim ile tekrar gelme oranı artışı" },
+        ],
+        beforeAfter: [
+            { before: "Gece gelen mesajlar sabaha kadar cevapsız", after: "AI 7/24 her dilde anında yanıt veriyor" },
+            { before: "Yabancı misafirlerle Google Translate ile zorlu iletişim", after: "40+ dilde otomatik çeviri, doğal diyalog" },
+            { before: "Check-in bilgileri elle tek tek gönderiliyor", after: "Otomatik hoş geldiniz, oda bilgisi, WiFi şifresi" },
+            { before: "Memnuniyet geri bildirimi toplanamıyor", after: "Check-out sonrası otomatik anket ve değerlendirme" },
+        ],
+    },
+    "restoran-kafe": {
+        name: "Restoran & Kafe", emoji: "🍽️",
+        title: "Restoran ve Kafeler İçin WhatsApp & Instagram Yönetimi",
+        description: "Restoranınızın müşteri iletişimini yapay zeka ile yönetin. Rezervasyon, menü paylaşımı ve 7/24 AI asistan.",
+        metaDesc: "Restoranlar için WhatsApp yapay zeka asistanı. Rezervasyon otomasyonu, menü paylaşımı, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Müşterileriniz Instagram'da yemek fotoğraflarınızı görüyor, hemen WhatsApp'tan masa ayırtmak istiyor. Bu anı kaçırmayın.",
+        problems: [
+            "Yoğun saatlerde telefona bakılamıyor, rezervasyonlar kaçıyor",
+            "Instagram DM'lerine geç yanıt verilmesi",
+            "Menü ve fiyat bilgisi sürekli sorularak zaman kaybı",
+            "Özel gün rezervasyonlarında koordinasyon sorunu",
+            "Müşteri geri bildirimlerinin takip edilememesi",
+        ],
+        solutions: [
+            { title: "AI Rezervasyon Asistanı", desc: "Müşterileriniz WhatsApp'tan masa rezervasyonu yapsın. AI müsait saatleri gösterir ve onay verir.", icon: "calendar" },
+            { title: "Dijital Menü Paylaşımı", desc: "Menünüzü WhatsApp'ta tek tıkla paylaşın. Güncel fiyatlar, alerjen bilgileri dahil.", icon: "message" },
+            { title: "Instagram DM Yönetimi", desc: "Yemek paylaşımlarınızı gören müşterilerden gelen DM'leri AI anında yanıtlar, fiyat ve menü bilgisi paylaşır.", icon: "bot" },
+            { title: "Müşteri Sadakati", desc: "Doğum günü kutlamaları, özel kampanyalar — WhatsApp şablonları ile kişisel dokunuş.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp'tan online rezervasyon",
+            "Dijital menü paylaşımı",
+            "Instagram DM otomasyonu",
+            "Müşteri kartları — tercihler, alerjiler, özel günler",
+            "Kampanya ve promosyon mesajları",
+            "7/24 AI asistan — çalışma saatleri, konum bilgisi",
+            "Ekip yönetimi — garson, mutfak, kasa",
+            "Memnuniyet anketi ve geri bildirim toplama",
+        ],
+        cta: "Restoranınızın dijital iletişimini tek panelden yönetmeye başlayın.",
+        scenario: "Cuma akşamı saat 19:00. Mutfak full çalışıyor, garsonlar koşturuyor. Telefon durmadan çalıyor ama kim bakacak? WhatsApp'ta 8 mesaj var: 'Bu akşam için 4 kişilik masa var mı?', 'Vejetaryen menünüz var mı?', 'Doğum günü pastası hazırlayabilir misiniz?'. Instagram'dan 5 DM gelmiş: 'Menüde ne var?', 'Bu tabağın fiyatı ne?'\n\nUppyPro devredeyken: AI asistanınız WhatsApp'taki masa talebine müsait saatleri sunuyor, onay alıp takvime ekliyor. Vejetaryen menü sorusuna hazır menü bilgilerinden yanıt veriyor. Doğum günü talebi için 'özel istekler' notuna ekleyip size bildirim gönderiyor. Instagram DM'lerindeki fiyat sorularına menüden yanıt veriyor.\n\nSiz sadece yemeklerin kalitesine ve misafir deneyimine odaklanıyorsunuz.",
+        stats: [
+            { value: "%50", label: "Daha Fazla Rezervasyon", desc: "Kaçırılan taleplerin sıfıra inmesiyle" },
+            { value: "2dk", label: "Yanıt Süresi", desc: "Mesajlara ortalama yanıt süresi" },
+            { value: "%30", label: "Satış Artışı", desc: "Instagram etkileşimlerinden gelen müşterilerle" },
+            { value: "0", label: "Kaçan Müşteri", desc: "Tüm mesajlar anında cevaplanıyor" },
+        ],
+        beforeAfter: [
+            { before: "Yoğun saatlerde telefona bakılamıyor, müşteri başka yere gidiyor", after: "AI anında masa müsaitliği bildiriyor ve rezervasyon oluşturuyor" },
+            { before: "Menü ve fiyat soruları için hep aynı bilgileri tekrarlıyorsunuz", after: "AI güncel menüyü ve fiyatları otomatik paylaşıyor" },
+            { before: "Instagram DM'lerine günler sonra bakılıyor", after: "AI DM'lere anında yanıtlıyor, potansiyel müşteriyi yakalıyor" },
+            { before: "Özel gün istekleri unutuluyor veya karışıyor", after: "Müşteri kartında notlar ve tercihler kayıtlı" },
+        ],
+    },
+    "e-ticaret": {
+        name: "E-Ticaret", emoji: "🛒",
+        title: "E-Ticaret İşletmeleri İçin WhatsApp & Instagram Yönetimi",
+        description: "E-ticaret mağazanızın müşteri iletişimini yapay zeka ile yönetin. Sipariş takibi, ürün bilgilendirme ve 7/24 destek.",
+        metaDesc: "E-ticaret için WhatsApp yapay zeka müşteri hizmetleri. Sipariş takibi, ürün bilgilendirme, Instagram DM otomasyonu. 14 gün ücretsiz.",
+        heroText: "Müşterileriniz sipariş durumunu soruyor, ürün bilgisi istiyor, iade talep ediyor — hepsini yapay zeka ile anında yanıtlayın.",
+        problems: [
+            "Yüzlerce 'Kargom nerede?' mesajına aynı cevabı vermek",
+            "Instagram'dan gelen ürün sorularına geç yanıt — satış kaybı",
+            "İade ve değişim süreçlerinde müşteri memnuniyetsizliği",
+            "Farklı kanallardan gelen mesajların karışması",
+            "Stok ve fiyat bilgilerinin güncel paylaşılamaması",
+        ],
+        solutions: [
+            { title: "Sipariş Takip Otomasyonu", desc: "AI asistan, müşterinize kargo durumunu anında bildirir. 'Kargom nerede?' sorularından kurtulun.", icon: "bot" },
+            { title: "Ürün Danışmanlığı", desc: "Müşteriniz ne aradığını yazsın, AI en uygun ürünleri önererek satışa yönlendirsin.", icon: "message" },
+            { title: "İade & Değişim Yönetimi", desc: "İade taleplerini AI otomatik toplar, kurallara göre yönlendirir ve süreci başlatır.", icon: "users" },
+            { title: "Instagram'dan Satış", desc: "Instagram DM'lerinden gelen ürün ilgisini anında satışa dönüştürün.", icon: "calendar" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek inbox",
+            "Otomatik sipariş durumu bildirimi",
+            "AI ürün önerisi ve danışmanlık",
+            "İade/değişim süreci otomasyonu",
+            "Stok ve fiyat bilgisi paylaşımı",
+            "Toplu WhatsApp kampanya mesajları",
+            "Müşteri segmentasyonu ve etiketleme",
+            "Çok dilli müşteri desteği",
+        ],
+        cta: "E-ticaret müşteri hizmetlerinizi yapay zeka ile güçlendirin.",
+        scenario: "Pazartesi sabahı. Hafta sonu kampanya yaptınız ve 200 sipariş geldi. WhatsApp'ta 45 mesaj birikmiş: bunların 30'u 'Kargom nerede?' sorusu, 5'i iade talebi, 10'u ürün sorusu. Instagram DM'den de 15 mesaj var — ürün soruları ve fiyat talepleri. Tek başınıza veya küçük ekibinizle bunlara yetişmek saatler sürecek.\n\nUppyPro kurulu olsaydı: 30 'Kargom nerede?' sorusuna AI otomatik kargo takip numarasıyla yanıt verirdi. İade taleplerini toplar, iade kurallarınıza göre süreci başlatırdı. Ürün sorularına stok ve fiyat bilgileriyle yanıt verirdi. Instagram DM'lerine de anında dönüş yapardı.\n\nSiz sabah geldiğinizde 45 mesajın 40'ı çözülmüş, sadece 5 karmaşık konuda 'Devral' yapmanız gerekiyor. Kampanyanızın etkisi? Instagram DM'lerinden 15 yeni satış daha gelmiş — çünkü AI hiçbir mesajı cevapsız bırakmadı.",
+        stats: [
+            { value: "%85", label: "Otomasyon Oranı", desc: "Rutin soruların AI tarafından çözülme oranı" },
+            { value: "10x", label: "Hız Artışı", desc: "Kargo sorgularına yanıt süresi" },
+            { value: "%25", label: "Satış Artışı", desc: "Instagram etkileşimlerinden dönüşüm" },
+            { value: "%90", label: "Memnuniyet", desc: "Hızlı yanıt ile müşteri memnuniyeti" },
+        ],
+        beforeAfter: [
+            { before: "'Kargom nerede?' mesajlarına aynı cevabı 30 kez yazıyorsunuz", after: "AI otomatik kargo takip bilgisi paylaşıyor" },
+            { before: "İade talepleri karışıyor, süreç uzuyor, müşteri kızıyor", after: "AI kurallarınıza göre süreci otomatik başlatıyor" },
+            { before: "Instagram DM'lerine geç dönüş, satış fırsatı kaçıyor", after: "DM'lere anında fiyat ve stok bilgisi, satışa yönlendirme" },
+            { before: "Kampanya sonrası mesaj yığılması, günlerce süren cevaplama", after: "Tüm mesajlar anlık, siz sadece karmaşık vakalara odaklanın" },
+        ],
+    },
+    "dis-klinigi": {
+        name: "Diş Klinikleri", emoji: "🦷",
+        title: "Diş Klinikleri İçin WhatsApp & Instagram Yönetimi",
+        description: "Diş kliniğinizin hasta iletişimini yapay zeka ile yönetin. Randevu otomasyonu, tedavi bilgilendirme ve 7/24 AI asistan.",
+        metaDesc: "Diş klinikleri için WhatsApp yapay zeka asistanı. Randevu otomasyonu, tedavi bilgilendirme, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Hastalarınız diş beyazlatma fiyatını soruyor, implant randevusu istiyor, kontrol zamanını merak ediyor. Tüm bu iletişimi AI asistanınıza devredin.",
+        problems: [
+            "Telefon yoğunluğunda kaçan randevu talepleri",
+            "Instagram'dan gelen tedavi fiyatı sorularına geç yanıt",
+            "Randevu hatırlatma ve kontrol çağrılarının zaman kaybı",
+            "Tedavi öncesi hazırlık bilgilerinin manuel iletilmesi",
+            "Hasta geri bildirimlerinin toplanamaması",
+        ],
+        solutions: [
+            { title: "Akıllı Randevu", desc: "AI, hastanın ihtiyacına göre doğru tedavi alanına ve doktora yönlendirir, randevu oluşturur.", icon: "calendar" },
+            { title: "Tedavi Bilgilendirme", desc: "İmplant, beyazlatma, ortodonti hakkında sık sorulan sorulara AI anında yanıt verir.", icon: "bot" },
+            { title: "Otomatik Hatırlatma", desc: "Randevu ve kontrol hatırlatmaları WhatsApp üzerinden otomatik gönderilir.", icon: "message" },
+            { title: "Hasta Takibi", desc: "Tedavi geçmişi, bir sonraki kontrol tarihi, notlar — tüm bilgiler müşteri kartında.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde",
+            "Branş bazlı randevu yönlendirme",
+            "Tedavi fiyat bilgilendirme otomasyonu",
+            "Randevu ve kontrol hatırlatmaları",
+            "Hasta kartları — tedavi geçmişi, notlar",
+            "Tedavi öncesi hazırlık bilgilendirmesi",
+            "Before/After fotoğraf paylaşımı yönetimi",
+            "7/24 AI asistan desteği",
+        ],
+        cta: "Diş kliniğinizin hasta iletişimini yapay zeka ile dönüştürün.",
+        scenario: "Diş kliniğinize Instagram'dan bir mesaj geldi: 'Zirkonyum kaplama fiyatı ne kadar? Kaç seans sürüyor?' Klinik sekreteriniz hastalarla ilgilenirken bu mesajı ancak 4 saat sonra gördü. Hasta o sürede 3 farklı klinikten teklif almış ve en hızlı yanıt veren yere randevu oluşturmuş bile.\n\nUppyPro olsaydı: AI asistanınız mesajı anında yanıtlardı — zirkonyum kaplama hakkında hazırladığınız bilgilendirme metnini paylaşır, fiyat aralığını bildirir ve 'Ağız içi muayene sonrası kesin fiyat belirlenecektir, randevu oluşturmak ister misiniz?' diye sorardı. Hasta 'evet' dediğinde takvimde uygun saatleri gösterir, doktor seçimi yapar ve randevuyu oluştururdu.\n\nÜstelik randevudan 1 gün önce ve 2 saat önce otomatik hatırlatma gönderilir. Tedavi sonrası kontrol randevusu için de otomatik takip başlar.",
+        stats: [
+            { value: "%75", label: "Daha Fazla Hasta", desc: "Hızlı yanıt ile hasta kazanma oranı artışı" },
+            { value: "<1dk", label: "Yanıt Süresi", desc: "Instagram ve WhatsApp mesajlarına" },
+            { value: "%55", label: "No-Show Azalması", desc: "Otomatik hatırlatma ile" },
+            { value: "%100", label: "Cevaplama", desc: "Hiçbir hasta mesajı cevapsız kalmaz" },
+        ],
+        beforeAfter: [
+            { before: "Tedavi fiyatı soruları elle tek tek cevaplanıyor", after: "AI hazır bilgi metinleriyle anında yanıt veriyor" },
+            { before: "Hastalar geç yanıt yüzünden rakip kliniğe gidiyor", after: "Saniyeler içinde profesyonel yanıt, hasta sizinle kalıyor" },
+            { before: "Kontrol randevuları telefon ile hatırlatılıyor, çoğu gelmiyor", after: "Otomatik WhatsApp hatırlatma, %55 daha az no-show" },
+            { before: "Before/After fotoğrafları elle WhatsApp'tan paylaşılıyor", after: "AI istenen tedavi örneklerini otomatik paylaşıyor" },
+        ],
+    },
+    "egitim": {
+        name: "Eğitim Kurumları", emoji: "🎓",
+        title: "Eğitim Kurumları İçin WhatsApp & Instagram Yönetimi",
+        description: "Eğitim kurumunuzun veli ve öğrenci iletişimini yapay zeka ile yönetin. Kayıt otomasyonu, bilgilendirme ve 7/24 AI asistan.",
+        metaDesc: "Eğitim kurumları için WhatsApp yapay zeka asistanı. Kayıt bilgilendirme, veli iletişimi, Instagram yönetimi. 14 gün ücretsiz.",
+        heroText: "Veliler kurs programını soruyor, kayıt bilgisi istiyor, ödeme detaylarını öğrenmek istiyor. AI asistanınız tüm soruları profesyonelce yanıtlasın.",
+        problems: [
+            "Kayıt dönemlerinde yoğun telefon trafiği",
+            "Aynı bilgi sorularının tekrar tekrar cevaplanması",
+            "Veli iletişiminin takip edilememesi",
+            "Ders programı ve duyuru paylaşımının zorluğu",
+            "Instagram'dan gelen potansiyel öğrenci sorularının kaçması",
+        ],
+        solutions: [
+            { title: "Kayıt Otomasyonu", desc: "AI asistan, kurs programları, fiyatlar ve kayıt süreçleri hakkında anında bilgi verir.", icon: "bot" },
+            { title: "Veli İletişimi", desc: "Duyurular, sınav tarihleri, ödeme hatırlatmaları — WhatsApp şablonları ile toplu bilgilendirme.", icon: "message" },
+            { title: "Randevu & Görüşme", desc: "Veliler AI üzerinden görüşme randevusu alabilir, uygun saatler otomatik sunulur.", icon: "calendar" },
+            { title: "Öğrenci Takibi", desc: "Her öğrenci/veli için kart — kayıt durumu, ödeme bilgisi, notlar.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde",
+            "Kurs ve program bilgilendirme otomasyonu",
+            "Toplu veli bilgilendirme mesajları",
+            "Kayıt süreci yönlendirme",
+            "Ödeme hatırlatmaları",
+            "Veli görüşme randevusu otomasyonu",
+            "Öğrenci/veli kartları",
+            "7/24 AI asistan — SSS yanıtlama",
+        ],
+        cta: "Eğitim kurumunuzun iletişimini yapay zeka ile profesyonelleştirin.",
+        scenario: "Eylül ayı. Kayıt dönemi başladı ve Instagram reklamlarınız yayında. Günde 30-40 veli mesaj atıyor: 'Kurs ücretleri ne kadar?', 'Hangi yaş grupları var?', 'Haftada kaç gün?', 'Deneme dersi var mı?'. Sekreteriniz hem mevcut velilerle hem yeni adaylarla ilgileniyor, telefon susumuyor, WhatsApp şişiyor.\n\nUppyPro ile bu dönem çok farklı geçer: AI asistanınız kurs programlarını, fiyatları, yaş gruplarını ve ders günlerini anında paylaşıyor. 'Deneme dersi istiyorum' diyen veliye uygun saatleri sunuyor ve onay alıp takvime ekliyor. Kayıt süreci hakkında adım adım bilgi veriyor.\n\nMevcut velilere ödeme hatırlatmaları, sınav tarihleri ve duyurular otomatik gönderiliyor. Sekreteriniz artık telefonla boğuşmak yerine kayıt işlemlerini tamamlamaya odaklanıyor. Sonuç? Geçen yılın aynı dönemine göre %40 daha fazla kayıt.",
+        stats: [
+            { value: "%40", label: "Daha Fazla Kayıt", desc: "Hızlı yanıt ile potansiyel öğrenci kaybı sıfıra yaklaşır" },
+            { value: "500+", label: "Aylık Mesaj", desc: "AI tarafından otomatik yanıtlanan mesaj" },
+            { value: "%95", label: "Ödeme Tahsilatı", desc: "Otomatik hatırlatma ile zamanında ödeme" },
+            { value: "0", label: "Kaçan Aday", desc: "Tüm bilgi talepleri anında yanıtlanıyor" },
+        ],
+        beforeAfter: [
+            { before: "Aynı kurs bilgilerini günde 20 kez tekrarlıyorsunuz", after: "AI tüm bilgileri anında ve detaylı paylaşıyor" },
+            { before: "Kayıt döneminde telefon susmuyuor, iş yapılamıyor", after: "AI rutin soruları çözüyor, siz kayıt işlemlerine odaklanın" },
+            { before: "Ödeme hatırlatmaları elle yapılıyor, çoğu gecikiyor", after: "Otomatik ödeme hatırlatma ile %95 zamanında tahsilat" },
+            { before: "Veliler ders programı değişikliklerinden habersiz kalıyor", after: "Toplu WhatsApp bildirimi ile anında tüm velilere ulaşın" },
+        ],
+    },
+    "emlak": {
+        name: "Emlak", emoji: "🏠",
+        title: "Emlak Ofisleri İçin WhatsApp & Instagram Yönetimi",
+        description: "Emlak ofisinizin müşteri iletişimini yapay zeka ile yönetin. İlan bilgilendirme, randevu otomasyonu ve 7/24 AI asistan.",
+        metaDesc: "Emlak ofisleri için WhatsApp yapay zeka asistanı. İlan bilgilendirme, görüşme randevusu, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Potansiyel alıcılar Instagram'da ilanlarınızı görüyor, WhatsApp'tan detay soruyor. Bu fırsatları kaçırmayın — AI asistanınız anında yanıt versin.",
+        problems: [
+            "Instagram ilanlarına gelen DM'lere geç yanıt — müşteri kaybı",
+            "Aynı ilan bilgilerinin tekrar tekrar gönderilmesi",
+            "Gösterim randevularının koordinasyonu",
+            "Birden fazla danışmanın mesaj takibi",
+            "Müşteri portföyünün düzenli takip edilememesi",
+        ],
+        solutions: [
+            { title: "İlan Bilgilendirme", desc: "Müşteri ilgilendiği bölge ve bütçeyi yazsın, AI en uygun ilanları anında listelesin.", icon: "bot" },
+            { title: "Gösterim Randevusu", desc: "AI, müşteri ve danışman müsaitliğine göre gösterim randevusu oluşturur.", icon: "calendar" },
+            { title: "Müşteri Portföyü", desc: "Her müşterinin aradığı özellikler, bütçe, tercih edilen bölgeler — CRM kartında.", icon: "users" },
+            { title: "Instagram DM Otomasyonu", desc: "İlan postlarınızı gören müşterilerden gelen DM'leri AI anında yanıtlar, potansiyel müşteriyi yakalar.", icon: "message" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde",
+            "İlan bilgilendirme otomasyonu",
+            "Gösterim randevusu planlama",
+            "Müşteri portföy kartları",
+            "Danışman bazlı mesaj yönetimi",
+            "Yeni ilan bildirimleri — hedefli gönderim",
+            "Instagram DM otomasyonu",
+            "7/24 AI asistan desteği",
+        ],
+        cta: "Emlak ofisinizin müşteri iletişimini yapay zeka ile güçlendirin.",
+        scenario: "Instagram'da paylaştığınız deniz manzaralı daire ilanına 24 saatte 12 DM geldi: 'Fiyatı nedir?', 'Kaç metrekare?', 'Kredi uygun mu?', 'Gösterim yapabilir miyiz?'. 3 danışmanınız var ama her biri kendi müşterileriyle sahada. Akşama kadar ancak 5 kişiye dönüş yapabildiniz, diğer 7 kişi çoktan başka portföylere yöneldi.\n\nUppyPro olsaydı: Her DM'ye AI anında yanıt verirdi — ilanın detaylarını (m², oda sayısı, fiyat, aidat, kat, cephe) paylaşır, müşterinin bütçe ve bölge tercihini öğrenir ve gösterim randevusu için uygun saatleri sunardı. Danışman müsaitliğine göre randevu oluşturur, müşteri kartına tercihleri kaydederdi.\n\nDaha da önemlisi: Yeni bir ilan girdiğinizde, daha önce 'Kadıköy'de 2+1 arıyorum' demiş tüm müşterilere otomatik bildirim gönderilir. Satış döngüsü kısalır, portföyünüz akıllıca yönetilir.",
+        stats: [
+            { value: "%65", label: "Daha Fazla Gösterim", desc: "Kaçırılmayan DM'ler ile" },
+            { value: "<3dk", label: "İlk Yanıt", desc: "Instagram DM'lere ortalama ilk yanıt süresi" },
+            { value: "%30", label: "Satış Artışı", desc: "Hızlı takip ile müşteri dönüşüm oranı" },
+            { value: "∞", label: "Portföy Hafızası", desc: "Her müşterinin aradığı özellikler kayıtlı" },
+        ],
+        beforeAfter: [
+            { before: "Instagram ilanlarına gelen DM'lere saatler sonra dönüş", after: "AI saniyeler içinde detaylı ilan bilgisi paylaşıyor" },
+            { before: "Müşterinin ne aradığını hatırlamak zor, her görüşmede baştan", after: "Müşteri kartında bütçe, bölge, oda sayısı tercihi kayıtlı" },
+            { before: "Yeni ilan girdiğinizde uygun müşteriyi bulmak için listeliyor", after: "Otomatik eşleşme ve bildirim, hedefli ilan paylaşımı" },
+            { before: "Danışmanlar arası müşteri karışıklığı", after: "Danışman bazlı mesaj yönetimi, net portföy ayrımı" },
+        ],
+    },
+    "otomotiv": {
+        name: "Otomotiv", emoji: "🚗",
+        title: "Otomotiv Sektörü İçin WhatsApp & Instagram Yönetimi",
+        description: "Oto galeri, servis ve yedek parça işletmenizin iletişimini yapay zeka ile yönetin. Randevu, stok bilgilendirme ve 7/24 AI asistan.",
+        metaDesc: "Otomotiv sektörü için WhatsApp yapay zeka asistanı. Servis randevusu, araç bilgilendirme, Instagram DM yönetimi. 14 gün ücretsiz.",
+        heroText: "Müşterileriniz araç fiyatı soruyor, servis randevusu istiyor, yedek parça arıyor. Tüm bu taleplere AI asistanınız anında yanıt versin.",
+        problems: [
+            "Showroom, servis ve yedek parça arası iletişim karmaşası",
+            "Instagram'dan gelen araç sorularına geç yanıt",
+            "Servis randevularının telefon yoğunluğunda kaçması",
+            "Test sürüşü ve görüşme koordinasyonu",
+            "Müşteri takibinin düzensizliği",
+        ],
+        solutions: [
+            { title: "Araç Bilgilendirme", desc: "AI, stok durumu, fiyat ve özellik bilgilerini müşteriye anında sunar.", icon: "bot" },
+            { title: "Servis Randevusu", desc: "Periyodik bakım, arıza, lastik değişimi — AI uygun saati bulur, randevu oluşturur.", icon: "calendar" },
+            { title: "Test Sürüşü Planlama", desc: "Müşteri ilgilendiği aracı yazsın, AI test sürüşü randevusu ayarlasın.", icon: "message" },
+            { title: "Departman Yönetimi", desc: "Showroom, servis, yedek parça — mesajları doğru departmana yönlendirin.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde",
+            "Araç stok ve fiyat bilgilendirme",
+            "Servis randevusu otomasyonu",
+            "Test sürüşü planlama",
+            "Departman bazlı mesaj yönlendirme",
+            "Periyodik bakım hatırlatmaları",
+            "Instagram araç ilan otomasyonu",
+            "7/24 AI asistan desteği",
+        ],
+        cta: "Otomotiv işletmenizin müşteri iletişimini yapay zeka ile yönetin.",
+        scenario: "Instagram'da paylaştığınız 2024 model araç ilanına 20 kişi yazdı. WhatsApp'ta servis randevusu isteyen 8 müşteri var. Yedek parça soran 3 kişi var. Showroom, servis ve yedek parça departmanları ayrı çalışıyor ama mesajlar tek numaraya geliyor. Kim kime yanıt verecek? Mesaj hangi departmana ait?\n\nUppyPro ile: AI gelen mesajı analiz ediyor — araç sorularını showroom ekibine, servis taleplerini servise, yedek parça sorularını ilgili departmana yönlendiriyor. Araç fiyatı sorana stok bilgisiyle yanıt veriyor, servis randevusu isteyene uygun saatleri sunuyor. Instagram'daki araç sorularına anında detaylı bilgi paylaşıyor.\n\nPeriyodik bakım zamanı gelen müşterilere otomatik hatırlatma gönderiliyor. Test sürüşü talepleri takvimde organize ediliyor. Tüm departmanlar tek panelden koordineli çalışıyor.",
+        stats: [
+            { value: "%45", label: "Daha Hızlı Satış", desc: "Anlık yanıt ile satış döngüsü kısalır" },
+            { value: "3", label: "Departman Entegrasyonu", desc: "Showroom, servis, yedek parça tek panelde" },
+            { value: "%35", label: "Servis Doluluğu", desc: "Otomatik hatırlatma ile servis randevuları artar" },
+            { value: "0", label: "Yanlış Yönlendirme", desc: "AI mesajı doğru departmana otomatik yönlendiriyor" },
+        ],
+        beforeAfter: [
+            { before: "Mesajlar karışıyor, showroom müşterisi servise, servis showroom'a gidiyor", after: "AI mesajı otomatik doğru departmana yönlendiriyor" },
+            { before: "Servis hatırlatmaları elle yapılıyor, çoğu müşteri unutuyor", after: "Periyodik bakım hatırlatması otomatik, servis doluluğu %35 artar" },
+            { before: "Instagram'daki araç sorularına geç yanıt, müşteri rakibe gidiyor", after: "AI stok, fiyat ve özellik bilgisini anında paylaşıyor" },
+            { before: "Test sürüşü koordinasyonu telefon trafiğinde kayboluyor", after: "AI müsait saatleri sunuyor, test sürüşünü takvime ekliyor" },
+        ],
+    },
+    "sigorta": {
+        name: "Sigorta", emoji: "🛡️",
+        title: "Sigorta Acenteleri İçin WhatsApp & Instagram Yönetimi",
+        description: "Sigorta acentenizin müşteri iletişimini yapay zeka ile yönetin. Poliçe bilgilendirme, yenileme hatırlatmaları ve 7/24 AI asistan.",
+        metaDesc: "Sigorta acenteleri için WhatsApp yapay zeka asistanı. Poliçe bilgilendirme, yenileme hatırlatma, müşteri takibi. 14 gün ücretsiz.",
+        heroText: "Müşterileriniz poliçe detayını soruyor, hasar ihbarı yapıyor, yenileme fiyatını öğrenmek istiyor. AI asistanınız tüm bu süreçleri profesyonelce yönetsin.",
+        problems: [
+            "Poliçe yenileme dönemlerinde yoğun telefon trafiği",
+            "Hasar ihbar süreçlerinin gecikmesi",
+            "Müşterilerin poliçe detaylarını sürekli sorması",
+            "Yenileme hatırlatmalarının manuel yapılması",
+            "Potansiyel müşteri takibinin düzensizliği",
+        ],
+        solutions: [
+            { title: "Poliçe Bilgilendirme", desc: "AI, müşteriye poliçe kapsamı, vade tarihi ve ödeme bilgilerini anında sunar.", icon: "bot" },
+            { title: "Yenileme Otomasyonu", desc: "Poliçe bitiş tarihinden önce otomatik WhatsApp hatırlatma — yenileme oranlarını artırın.", icon: "calendar" },
+            { title: "Hasar İhbar Yönetimi", desc: "Müşteri hasar fotoğrafını ve bilgilerini WhatsApp'tan göndersin, AI süreci başlatsın.", icon: "message" },
+            { title: "Müşteri Portföyü", desc: "Her müşterinin poliçeleri, vade tarihleri, ödeme durumları — tek kartta.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde",
+            "Poliçe bilgilendirme otomasyonu",
+            "Otomatik yenileme hatırlatmaları",
+            "Hasar ihbar süreci yönetimi",
+            "Müşteri portföy kartları",
+            "Teklif gönderimi ve takibi",
+            "Kampanya ve promosyon mesajları",
+            "7/24 AI asistan desteği",
+        ],
+        cta: "Sigorta acentenizin müşteri iletişimini yapay zeka ile güçlendirin.",
+        scenario: "Ay sonu yaklaşıyor. 85 müşterinizin poliçesi bu ay bitiyor. Tek tek aramak, WhatsApp'tan yenileme teklifi göndermek günler sürecek. Bir yandan da 3 hasar ihbarı var — kaza fotoğrafları, belgeler toplanması gerekiyor. Yeni müşteri adayları Instagram'dan teklif istiyor ama onlara dönecek vakit yok.\n\nUppyPro devredeyken: Poliçe bitiş tarihinden 15 gün önce AI otomatik hatırlatma gönderdi. 85 müşterinin 60'ı WhatsApp'tan 'Yenilemek istiyorum' dedi, AI yenileme teklifini hazırlayıp gönderdi. Hasar ihbarı yapan müşteriden AI otomatik fotoğraf ve bilgi topladı, dosyayı oluşturdu. Instagram'dan teklif isteyen 5 kişiye AI anında araç bilgilerini sordu ve teklif süreci başlattı.\n\nSiz sadece karmaşık hasarlara ve özel tekliflere odaklanıyorsunuz. Portföy yenileme oranınız %75'ten %92'ye çıktı.",
+        stats: [
+            { value: "%92", label: "Yenileme Oranı", desc: "Otomatik hatırlatma ile poliçe yenileme oranı" },
+            { value: "15gün", label: "Erken Hatırlatma", desc: "Poliçe bitiminden önce otomatik bildirim" },
+            { value: "%60", label: "Zaman Tasarrufu", desc: "Manuel arama ve mesajlaşma süresi azalır" },
+            { value: "2x", label: "Yeni Müşteri", desc: "Instagram'dan gelen taleplere hızlı yanıt ile" },
+        ],
+        beforeAfter: [
+            { before: "Poliçe yenileme hatırlatmaları için tek tek arama yapılıyor", after: "AI otomatik hatırlatma gönderiyor, müşteri WhatsApp'tan onaylıyor" },
+            { before: "Hasar ihbar bilgileri telefonda karışıyor, belgeler eksik kalıyor", after: "AI adım adım fotoğraf ve bilgi topluyor, dosya oluşturuyor" },
+            { before: "Yeni teklif talepleri günler sonra yanıtlanıyor", after: "AI anında bilgi toplayıp teklif sürecini başlatıyor" },
+            { before: "Portföy takibi karmaşık, vade tarihleri kaçırılıyor", after: "Tüm poliçeler, vadeler ve müşteri bilgileri tek kartta" },
+        ],
+    },
+};
+
+export const dynamicParams = true;
+
+export function generateStaticParams() {
+    return Object.keys(SECTORS).map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const sector = SECTORS[slug];
+    if (!sector) return {};
+    return {
+        title: sector.title,
+        description: sector.metaDesc,
+        openGraph: {
+            title: sector.title,
+            description: sector.metaDesc,
+            url: `https://www.upgunai.com/cozumler/${slug}`,
+            type: "website",
+        },
+        alternates: { canonical: `https://www.upgunai.com/cozumler/${slug}` },
+    };
+}
+
+export default async function SectorPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const sector = SECTORS[slug];
+    if (!sector) notFound();
+
+    return <SectorPageContent sector={sector} />;
+}
