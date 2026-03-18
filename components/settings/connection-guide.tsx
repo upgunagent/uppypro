@@ -10,13 +10,14 @@ interface GuideStep {
     image: string;
     tips?: string[];
     warning?: string;
+    link?: { label: string; url: string };
 }
 
 const whatsappSteps: GuideStep[] = [
     {
         title: "\"WhatsApp'ı Bağla\" Butonuna Tıklayın",
-        description: "İşletme Ayarları > Bağlantılar > İletişim Kanalları sekmesindeki yeşil WhatsApp kartında bulunan \"WhatsApp'ı Bağla\" butonuna tıklayın. Bu işlem Meta'nın Embedded Signup sihirbazını başlatacaktır.",
-        image: "/guide/wa_step1_button_1773262436086.png",
+        description: "İşletme Ayarları > Bağlantılar > İletişim Kanalları sekmesindeki yeşil WhatsApp kartında bulunan \"WhatsApp'ı Bağla\" butonuna tıklayın. Bu işlem Meta'nın Embedded Signup sihirbazını yeni bir pencerede başlatacaktır.",
+        image: "/guide/whatsapp1.png",
         tips: [
             "Tarayıcınızda popup engelleyici varsa geçici olarak kapatın",
             "Google Chrome veya Firefox tarayıcıları önerilir"
@@ -24,56 +25,68 @@ const whatsappSteps: GuideStep[] = [
     },
     {
         title: "Facebook ile Giriş Yapın",
-        description: "Meta'nın açılan penceresiinde Facebook hesabınızla giriş yapın. İşletmenizin Facebook sayfasını yönetme yetkisi olan hesabı kullanmanız gerekir.",
-        image: "/guide/wa_step2_fblogin_1773262453211.png",
+        description: "Açılan pencerede Facebook hesabınızla giriş yapın. E-posta veya telefon numaranızı ve şifrenizi girerek \"Giriş Yap\" butonuna tıklayın. İşletmenizin Facebook sayfasını yönetme yetkisi olan hesabı kullanmanız gerekmektedir.",
+        image: "/guide/whatsapp2.png",
         tips: [
             "İşletmenizin Facebook sayfasının yöneticisi olan hesapla giriş yapın",
             "İki faktörlü doğrulama açıksa telefonunuzu hazır bulundurun"
         ]
     },
     {
-        title: "Gerekli İzinleri Onaylayın",
-        description: "UppyPro'nun WhatsApp Business hesabınıza erişebilmesi için gerekli izinleri onaylayın. Bu izinler mesaj gönderme/alma ve hesap yönetimi için gereklidir.",
-        image: "/guide/wa_step3_permissions_1773262468020.png",
-        warning: "Tüm izinleri onaylamazsanız bağlantı düzgün çalışmayabilir. Lütfen istenen tüm izinlere onay verin."
+        title: "Hesabınızı Bağlayın ve Koşulları Onaylayın",
+        description: "Giriş yaptıktan sonra \"Hesabını upgunai ile sorunsuz bir şekilde bağla\" ekranı açılacaktır. Bu ekranda Cloud API ile müşterilerinize geniş ölçekte iletişim kurabileceğiniz, büyük hacimli mesajları kolaylıkla yönetebileceğiniz bilgileri göreceksiniz. Koşulları inceleyip \"Devam\" butonuna tıklayın.",
+        image: "/guide/whatsapp3.png",
+        tips: [
+            "Bulut API'si İçin Meta Barındırma Koşullarını ve WhatsApp Business İçin Meta Koşullarını incelemenizi öneririz"
+        ]
     },
     {
-        title: "İşletme Portföyünüzü Seçin veya Oluşturun",
-        description: "Meta Business Portföyü (Business Portfolio), işletmenize ait tüm Meta varlıklarını bir arada tutan yapıdır. Mevcut portföyünüzü seçin veya yeni bir portföy oluşturun.",
-        image: "/guide/wa_step4_portfolio_1773262508370.png",
+        title: "İşletme Portföyünüzü ve WhatsApp Business Hesabınızı Seçin",
+        description: "\"UPGUN AI - UppyPro ile paylaşılacak işletme varlıklarını seçin\" ekranında İşletme Portföyünüzü seçin veya mevcut portföyünüzü onaylayın. Ayrıca WhatsApp Business hesabınızı seçin ya da \"WhatsApp Business hesabı oluşturun\" seçeneğiyle yeni bir WABA oluşturun. Ardından \"İleri\" butonuna tıklayın.",
+        image: "/guide/whatsapp4.png",
         tips: [
             "Zaten bir Meta Business hesabınız varsa mevcut portföyü seçin",
-            "Yeni oluşturuyorsanız işletme adınızı doğru girin"
+            "Yeni portföy oluşturuyorsanız işletme adınızı doğru girdiğinizden emin olun"
         ]
     },
     {
-        title: "WhatsApp Business Hesabı Seçin veya Oluşturun",
-        description: "Mevcut bir WhatsApp Business Account (WABA) varsa onu seçin. Yoksa yeni bir WABA oluşturun. Her portföyde birden fazla WABA olabilir.",
-        image: "/guide/wa_step5_waba_1773262523048.png"
-    },
-    {
-        title: "Telefon Numaranızı Ekleyin ve Doğrulayın",
-        description: "WhatsApp Business için kullanacağınız telefon numarasını girin. Meta, bu numaraya SMS veya sesli arama ile bir doğrulama kodu gönderecektir. Gelen 6 haneli kodu ilgili alana yazın.",
-        image: "/guide/wa_step6_phone_1773262539561.png",
-        warning: "Bu numara daha önce kişisel WhatsApp uygulamasında kullanılıyorsa, kişisel hesabınız devre dışı kalabilir. İşletme için ayrı bir hat kullanmanızı öneririz.",
+        title: "İşletme Bilgilerinizi Girin",
+        description: "\"Yeni varlıklar için işletme bilgilerini girin\" ekranında işletmenizin adını, kategorisini (örn. Giyim ve Kıyafet), ülkenizi (Türkiye), internet sitenizin adresini ve saat diliminizi ((GMT+03:00) Europe/Istanbul) girin. Tüm bilgileri doğru girdiğinizden emin olun ve \"İleri\" butonuna tıklayın.",
+        image: "/guide/whatsapp5.png",
         tips: [
-            "Ülke kodunun doğru seçildiğinden emin olun (+90 Türkiye)",
-            "SMS gelmezse 'Sesli Arama' seçeneğini deneyin"
+            "İşletme adı ve kategorisini doğru seçmek, WhatsApp Business profilinizin onaylanmasını hızlandırır",
+            "İnternet sitesi alanına işletmenizin web sitesini ekleyin"
         ]
     },
     {
-        title: "Profil Adınızı Belirleyin",
-        description: "WhatsApp Business profilinizde müşterilerinizin göreceği işletme adını girin. Bu isim, mesajlarınızda ve işletme profilinizde görünecektir.",
-        image: "/guide/wa_step7_profile_1773262580581.png",
+        title: "Telefon Numarası ve Görünen Adı Belirleyin",
+        description: "\"WhatsApp telefon numaranı ekle\" ekranında \"Yeni bir numara ekle\" seçeneğini işaretleyerek telefon numaranızı girin. Ülke kodunun TR +90 olarak seçili olduğundan emin olun. WhatsApp Business görünen adı kısmına işletmenizin adını yazın. Doğrulama yöntemi olarak \"Kısa mesaj\" veya \"Telefon araması\" seçeneklerinden birini seçip \"İleri\"ye tıklayın.",
+        image: "/guide/whatsapp6.png",
+        warning: "Bu numara halihazırda kişisel WhatsApp uygulamasında kullanılıyorsa kişisel hesabınız devre dışı kalabilir. İşletme için ayrı bir hat kullanmanızı öneririz. WhatsApp İşletme hesabı için sabit hatlarınızı da kullanabilirsiniz, ayrıca bir GSM hattı almanıza gerek yoktur.",
         tips: [
-            "İşletme adınızı tam ve profesyonel şekilde yazın",
-            "Meta, uygunsuz veya yanıltıcı isimleri reddedebilir"
+            "Sabit telefon kullanıyorsanız \"Telefon araması\" yöntemini seçin",
+            "Görünen ad, işletme adınızla eşleşmeli ve WhatsApp Business kurallarına uygun olmalıdır"
+        ]
+    },
+    {
+        title: "Doğrulama Kodunu Girin",
+        description: "\"Telefon numaranızı doğrulayın\" ekranında, telefonunuza gelen 6 haneli doğrulama kodunu ilgili alanlara girin. Kod telefon araması veya SMS ile gelecektir. Kodu doğru girdikten sonra \"İleri\" butonuna tıklayın. İleri butonuna tıkladıktan sonra Meta, hesabınızı doğrulamak için 24-48 saat arasında bir süre alabilir. Hesabınız onaylandıktan sonra mesaj alışverişi yapabilirsiniz.",
+        image: "/guide/whatsapp7.png",
+        warning: "WhatsApp şablonlarını kullanabilmek için Meta Business Manager'daki WhatsApp yönetim sayfasında kredi kartı tanımlamanız gerekmektedir. Aşağıdaki bağlantıdan Meta WhatsApp Manager sayfasına ulaşabilirsiniz.",
+        link: {
+            label: "Meta WhatsApp Manager'a Git",
+            url: "https://business.facebook.com/wa/manage/"
+        },
+        tips: [
+            "Kod gelmezse belirtilen süre sonunda yeni bir kod talep edebilirsiniz",
+            "Doğrulama yönteminizi değiştirerek tekrar deneyebilirsiniz",
+            "Hesap doğrulama süresi genellikle 24-48 saat arasında tamamlanır"
         ]
     },
     {
         title: "Bağlantı Tamamlandı! 🎉",
-        description: "Tebrikler! WhatsApp Business hesabınız başarıyla UppyPro'ya bağlandı. Artık müşterilerinizden gelen WhatsApp mesajlarını panelinizden görebilir ve yanıtlayabilirsiniz.",
-        image: "/guide/wa_step8_success_1773262592983.png"
+        description: "Tebrikler! WhatsApp Business hesabınız başarıyla UppyPro'ya bağlandı. Kart üzerinde \"Sistem Aktif\" yazısını ve bağlı hesap bilgilerinizi göreceksiniz. Artık müşterilerinizden gelen WhatsApp mesajlarını UppyPro panelinizden görebilir, AI Asistan ile otomatik yanıt verebilir ve konuşmalarınızı tek bir yerden yönetebilirsiniz.",
+        image: "/guide/whatsapp8.png"
     }
 ];
 
@@ -233,6 +246,19 @@ function StepCard({ step, index, total, onImageClick }: { step: GuideStep; index
                             </p>
                         ))}
                     </div>
+                )}
+
+                {/* External Link */}
+                {step.link && (
+                    <a
+                        href={step.link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 ml-11 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        {step.link.label}
+                    </a>
                 )}
             </div>
         </div>
