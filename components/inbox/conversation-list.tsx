@@ -428,9 +428,56 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                 </AnimatePresence>
                 {
                     filteredConversations.length === 0 && (
-                        <div className="text-center text-gray-500 mt-24">
-                            {searchQuery ? 'Aramanızla eşleşen sonuç bulunamadı.' : 'Bu filtrede hiç konuşma yok.'}
-                        </div>
+                        searchQuery ? (
+                            <div className="text-center text-gray-500 mt-24">
+                                Aramanızla eşleşen sonuç bulunamadı.
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center mt-6 px-4">
+                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl overflow-hidden max-w-md w-full shadow-sm">
+                                    {/* Banner Image */}
+                                    <div className="w-full">
+                                        <img
+                                            src="/welcome-banner.png"
+                                            alt="UppyPro Panel"
+                                            className="w-full h-44 object-cover"
+                                        />
+                                    </div>
+
+                                    <div className="p-6 space-y-4">
+                                        <h3 className="text-xl font-bold text-slate-800 text-center">UppyPro&apos;ya Hoşgeldiniz!</h3>
+
+                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                            Artık tüm <strong>WhatsApp</strong> ve <strong>Instagram</strong> mesajlarınızı tek bir panelden yönetebilir, 
+                                            <strong> AI Asistan</strong> ile 7/24 otomatik yanıt verebilir, <strong>akıllı takvim</strong> ile randevularınızı takip edebilir 
+                                            ve <strong>toplu mesaj</strong> gönderimleriyle müşterilerinize ulaşabilirsiniz.
+                                        </p>
+
+                                        <div className="bg-white rounded-xl p-4 border border-orange-100">
+                                            <p className="text-sm font-semibold text-slate-700 mb-2">📲 İlk mesajınızı almak için:</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed">
+                                                <strong>Ayarlar → İletişim Kanalları</strong> sekmesinden 
+                                                WhatsApp ve Instagram hesaplarınızı kolayca bağlayabilirsiniz.
+                                            </p>
+                                        </div>
+
+                                        <p className="text-xs text-slate-500 leading-relaxed">
+                                            💡 Bağlantı adımlarında, WhatsApp ve Instagram entegrasyonu için 
+                                            <strong> adım adım görsel anlatım</strong> sizi yönlendirecektir.
+                                            Sol üstteki logoyu kendi işletme logonuzla değiştirmek için 
+                                            <strong> Ayarlar → Firma Bilgileri</strong> sayfasını ziyaret edin.
+                                        </p>
+
+                                        <Link
+                                            href="/panel/settings"
+                                            className="block w-full text-center bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm py-3 rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
+                                        >
+                                            İletişim Kanallarına Git →
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        )
                     )
                 }
             </div>

@@ -8,12 +8,24 @@ import { createEnterpriseInvite } from "@/app/actions/enterprise";
 import { getProductPrices } from "@/app/actions/pricing";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Send } from "lucide-react";
+import { TURKEY_CITIES, CITY_NAMES } from "@/lib/turkey-cities";
 
 export default function EnterpriseInvitePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [billingType, setBillingType] = useState<'corporate' | 'individual'>('corporate');
     const [prices, setPrices] = useState<Record<string, number>>({});
+
+    // İl / İlçe state
+    const [selectedCity, setSelectedCity] = useState("");
+    const [selectedDistrict, setSelectedDistrict] = useState("");
+    const [customCity, setCustomCity] = useState("");
+    const [customDistrict, setCustomDistrict] = useState("");
+
+    const isCityOther = selectedCity === "__other__";
+    const isDistrictOther = selectedDistrict === "__other__";
+
+    const districts = selectedCity && selectedCity !== "__other__" ? TURKEY_CITIES[selectedCity] || [] : [];
 
     useEffect(() => {
         getProductPrices().then(setPrices).catch(console.error);
@@ -23,6 +35,9 @@ export default function EnterpriseInvitePage() {
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
+
+        const cityValue = isCityOther ? customCity : selectedCity;
+        const districtValue = isDistrictOther ? customDistrict : selectedDistrict;
 
         const data = {
             billingType: billingType,
@@ -35,8 +50,8 @@ export default function EnterpriseInvitePage() {
             taxNumber: formData.get("taxNumber") as string,
             tckn: formData.get("tckn") as string,
             address: formData.get("address") as string,
-            city: formData.get("city") as string,
-            district: formData.get("district") as string,
+            city: cityValue,
+            district: districtValue,
             planKey: formData.get("planKey") as string,
         };
 
@@ -48,8 +63,11 @@ export default function EnterpriseInvitePage() {
             toast({ variant: "destructive", title: "Hata", description: res.error });
         } else {
             toast({ title: "Başarılı", description: "Davet e-postası gönderildi." });
-            // Reset form manually or reload
             (document.getElementById("invite-form") as HTMLFormElement)?.reset();
+            setSelectedCity("");
+            setSelectedDistrict("");
+            setCustomCity("");
+            setCustomDistrict("");
         }
     }
 
@@ -60,6 +78,8 @@ export default function EnterpriseInvitePage() {
         { key: 'uppypro_corporate_xl', name: 'XL', price: `${formatPrice(prices.uppypro_corporate_xl || 12995)} TL + KDV` },
         { key: 'uppypro_corporate_free', name: 'Kurumsal Ücretsiz', price: 'Ücretsiz' }
     ];
+
+    const selectClass = "flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
     return (
         <div className="p-8 max-w-2xl">
@@ -123,7 +143,6 @@ export default function EnterpriseInvitePage() {
                             <div className="space-y-2">
                                 <Label>Ad Soyad (Fatura Sahibi)</Label>
                                 <Input name="fullName" required placeholder="Ad Soyad" />
-                                {/* Hidden input to satisfy legacy requirements if needed, or handled in handleSubmit */}
                             </div>
                             <div className="space-y-2">
                                 <Label>TC Kimlik No</Label>
@@ -159,14 +178,73 @@ export default function EnterpriseInvitePage() {
                         />
                     </div>
 
+                    {/* İl ve İlçe Combobox */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>İl</Label>
-                            <Input name="city" required placeholder="İstanbul" />
+                            <select
+                                className={selectClass}
+                                value={selectedCity}
+                                onChange={(e) => {
+                                    setSelectedCity(e.target.value);
+                                    setSelectedDistrict("");
+                                    setCustomCity("");
+                                    setCustomDistrict("");
+                                }}
+                                required
+                            >
+                                <option value="">İl Seçiniz</option>
+                                {CITY_NAMES.map((city) => (
+                                    <option key={city} value={city}>{city}</option>
+                                ))}
+                                <option value="__other__">Diğer</option>
+                            </select>
+                            {isCityOther && (
+                                <Input
+                                    placeholder="İl adını giriniz"
+                                    value={customCity}
+                                    onChange={(e) => setCustomCity(e.target.value)}
+                                    required
+                                />
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label>İlçe</Label>
-                            <Input name="district" required placeholder="Beşiktaş" />
+                            {isCityOther ? (
+                                <Input
+                                    placeholder="İlçe adını giriniz"
+                                    value={customDistrict}
+                                    onChange={(e) => setCustomDistrict(e.target.value)}
+                                    required
+                                />
+                            ) : (
+                                <>
+                                    <select
+                                        className={selectClass}
+                                        value={selectedDistrict}
+                                        onChange={(e) => {
+                                            setSelectedDistrict(e.target.value);
+                                            setCustomDistrict("");
+                                        }}
+                                        required
+                                        disabled={!selectedCity}
+                                    >
+                                        <option value="">{selectedCity ? "İlçe Seçiniz" : "Önce il seçiniz"}</option>
+                                        {districts.map((d) => (
+                                            <option key={d} value={d}>{d}</option>
+                                        ))}
+                                        {selectedCity && <option value="__other__">Diğer</option>}
+                                    </select>
+                                    {isDistrictOther && (
+                                        <Input
+                                            placeholder="İlçe adını giriniz"
+                                            value={customDistrict}
+                                            onChange={(e) => setCustomDistrict(e.target.value)}
+                                            required
+                                        />
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -204,3 +282,4 @@ export default function EnterpriseInvitePage() {
         </div>
     );
 }
+

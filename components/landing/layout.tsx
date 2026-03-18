@@ -21,6 +21,8 @@ const SECTORS = [
 
 export function LandingHeader() {
     const [sectorOpen, setSectorOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mobileSectorOpen, setMobileSectorOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -33,9 +35,37 @@ export function LandingHeader() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Body scroll lock when mobile menu is open
+    useEffect(() => {
+        if (mobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [mobileMenuOpen]);
+
     return (
+        <>
         <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-md pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between">
+                {/* Hamburger Button (mobile only) */}
+                <button
+                    className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    aria-label="Menü"
+                >
+                    {mobileMenuOpen ? (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    )}
+                </button>
+
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 flex-1 md:flex-none justify-center md:justify-start">
                     <img
@@ -45,7 +75,7 @@ export function LandingHeader() {
                     />
                 </Link>
 
-                {/* Navigation */}
+                {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
                     <Link href="/hakkimizda" className="hover:text-primary transition-colors">Hakkımızda</Link>
                     <Link href="/#features" className="hover:text-primary transition-colors">Özellikler</Link>
@@ -100,6 +130,71 @@ export function LandingHeader() {
                 </div>
             </div>
         </header>
+
+        {/* Mobile Menu Panel — header dışında, fixed olarak çalışır */}
+        {mobileMenuOpen && (
+            <div className="md:hidden fixed inset-0 top-[73px] z-[60] bg-white overflow-y-auto">
+                <nav className="flex flex-col px-6 py-4 space-y-1">
+                    <Link href="/hakkimizda" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        Hakkımızda
+                    </Link>
+                    <Link href="/#features" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        Özellikler
+                    </Link>
+
+                    {/* Mobile Sektörler Accordion */}
+                    <div>
+                        <button
+                            className="w-full py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 rounded-xl transition-colors flex items-center justify-between"
+                            onClick={() => setMobileSectorOpen(!mobileSectorOpen)}
+                        >
+                            Sektörler
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${mobileSectorOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        {mobileSectorOpen && (
+                            <div className="ml-3 pl-3 border-l-2 border-orange-200 space-y-0.5 mb-1">
+                                {SECTORS.map((sector) => (
+                                    <Link
+                                        key={sector.slug}
+                                        href={`/cozumler/${sector.slug}`}
+                                        className="block py-2.5 px-3 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {sector.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <Link href="/#pricing" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        Paketler
+                    </Link>
+                    <Link href="/#faq" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        SSS
+                    </Link>
+                    <Link href="/#solutions" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        Çözümlerimiz
+                    </Link>
+                    <Link href="/blog" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        Blog
+                    </Link>
+                    <Link href="/#contact" className="py-3 px-3 text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                        İletişim
+                    </Link>
+
+                    {/* Mobile Login Button */}
+                    <div className="pt-4 px-3">
+                        <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                            <Button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white shadow-lg rounded-full px-6 py-3 transition-colors text-base font-semibold">
+                                İşletme Girişi
+                            </Button>
+                        </Link>
+                    </div>
+                </nav>
+            </div>
+        )}
+        </>
     );
 }
 
