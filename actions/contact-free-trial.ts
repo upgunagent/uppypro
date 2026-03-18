@@ -5,6 +5,55 @@ import { z } from 'zod';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ---- Yardımcı fonksiyonlar (inline) ----
+
+function isGibberish(text: string): boolean {
+  const cleaned = text.trim().toLowerCase().replace(/\s/g, '');
+  if (cleaned.length < 3) return false;
+  // Aynı 2+ karakter grubunun 3+ kez tekrarı (asdasdasd)
+  if (/(.{2,})\1{2,}/.test(cleaned)) return true;
+  // Aynı karakterin 4+ kez tekrarı (aaaa)
+  if (/(.)\1{3,}/.test(cleaned)) return true;
+  // Benzersiz karakter oranı çok düşük (5+ char metinlerde)
+  if (cleaned.length >= 5) {
+    const unique = new Set(cleaned).size;
+    if (unique / cleaned.length < 0.3) return true;
+  }
+  return false;
+}
+
+function validateFullName(name: string): string | null {
+  const trimmed = name.trim();
+  // Sadece harf, boşluk, Türkçe karakter
+  if (!/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$/.test(trimmed)) {
+    return 'Ad Soyad yalnızca harf içermelidir';
+  }
+  // En az 2 kelime
+  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+  if (words.length < 2) {
+    return 'Lütfen adınızı ve soyadınızı giriniz';
+  }
+  // Her kelime en az 2 karakter
+  if (words.some(w => w.length < 2)) {
+    return 'Ad ve soyad en az 2 karakter olmalıdır';
+  }
+  // Anlamsız metin kontrolü
+  if (isGibberish(trimmed)) {
+    return 'Lütfen gerçek adınızı ve soyadınızı giriniz';
+  }
+  return null;
+}
+
+function validatePhone(phone: string): string | null {
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (!/^(\+90|0)?5\d{9}$/.test(cleaned)) {
+    return 'Geçerli bir telefon numarası giriniz (05XX XXX XX XX)';
+  }
+  return null;
+}
+
+// ---- Zod Schema ----
+
 const freeTrialSchema = z.object({
   fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır"),
   companyName: z.string().min(2, "Firma Adı en az 2 karakter olmalıdır"),
@@ -32,6 +81,7 @@ export async function sendFreeTrialContact(prevState: FreeTrialState, formData: 
     consent: formData.get('consent') === 'on',
   };
 
+  // 1. Zod validasyonu
   const validatedFields = freeTrialSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
@@ -43,8 +93,33 @@ export async function sendFreeTrialContact(prevState: FreeTrialState, formData: 
 
   const { fullName, companyName, phone, email, description } = validatedFields.data;
 
+  // 2. Ek spam kontrolleri
+  const spamErrors: Record<string, string[]> = {};
+
+  const nameError = validateFullName(fullName);
+  if (nameError) spamErrors.fullName = [nameError];
+
+  const phoneError = validatePhone(phone);
+  if (phoneError) spamErrors.phone = [phoneError];
+
+  if (isGibberish(description)) {
+    spamErrors.description = ['Lütfen sektörünüzü ve iş akışınızı anlamlı bir şekilde açıklayınız.'];
+  }
+
+  if (isGibberish(companyName)) {
+    spamErrors.companyName = ['Lütfen gerçek firma adınızı giriniz.'];
+  }
+
+  if (Object.keys(spamErrors).length > 0) {
+    return {
+      success: false,
+      errors: spamErrors,
+    };
+  }
+
+  // 3. E-posta gönder
   try {
-    await resend.emails.send({
+    const { data, error: sendError } = await resend.emails.send({
       from: 'UppyPro <info@upgunai.com>',
       to: 'info@upgunai.com',
       subject: `🎉 Yeni Ücretsiz Deneme Talebi: ${companyName} - ${fullName}`,
@@ -90,6 +165,12 @@ export async function sendFreeTrialContact(prevState: FreeTrialState, formData: 
       `,
     });
 
+    if (sendError) {
+      console.error('Free trial email sending failed:', sendError);
+      return { success: false, error: 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.' };
+    }
+
+    console.log('Free trial email sent successfully:', data?.id);
     return { success: true };
   } catch (error) {
     console.error('Free trial email sending failed:', error);

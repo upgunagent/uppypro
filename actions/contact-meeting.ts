@@ -5,6 +5,48 @@ import { z } from 'zod';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ---- Yardımcı fonksiyonlar (inline) ----
+
+function isGibberish(text: string): boolean {
+  const cleaned = text.trim().toLowerCase().replace(/\s/g, '');
+  if (cleaned.length < 3) return false;
+  if (/(.{2,})\1{2,}/.test(cleaned)) return true;
+  if (/(.)\1{3,}/.test(cleaned)) return true;
+  if (cleaned.length >= 5) {
+    const unique = new Set(cleaned).size;
+    if (unique / cleaned.length < 0.3) return true;
+  }
+  return false;
+}
+
+function validateFullName(name: string): string | null {
+  const trimmed = name.trim();
+  if (!/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$/.test(trimmed)) {
+    return 'Ad Soyad yalnızca harf içermelidir';
+  }
+  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+  if (words.length < 2) {
+    return 'Lütfen adınızı ve soyadınızı giriniz';
+  }
+  if (words.some(w => w.length < 2)) {
+    return 'Ad ve soyad en az 2 karakter olmalıdır';
+  }
+  if (isGibberish(trimmed)) {
+    return 'Lütfen gerçek adınızı ve soyadınızı giriniz';
+  }
+  return null;
+}
+
+function validatePhone(phone: string): string | null {
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (!/^(\+90|0)?5\d{9}$/.test(cleaned)) {
+    return 'Geçerli bir telefon numarası giriniz (05XX XXX XX XX)';
+  }
+  return null;
+}
+
+// ---- Zod Schema ----
+
 const contactSchema = z.object({
   fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır"),
   companyName: z.string().optional(),
@@ -28,6 +70,7 @@ export async function sendMeetingRequest(prevState: ContactState, formData: Form
     description: formData.get('description'),
   };
 
+  // 1. Zod validasyonu
   const validatedFields = contactSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
@@ -39,9 +82,34 @@ export async function sendMeetingRequest(prevState: ContactState, formData: Form
 
   const { fullName, companyName, phone, email, description } = validatedFields.data;
 
+  // 2. Ek spam kontrolleri
+  const spamErrors: Record<string, string[]> = {};
+
+  const nameError = validateFullName(fullName);
+  if (nameError) spamErrors.fullName = [nameError];
+
+  const phoneError = validatePhone(phone);
+  if (phoneError) spamErrors.phone = [phoneError];
+
+  if (isGibberish(description)) {
+    spamErrors.description = ['Lütfen talebinizi anlamlı bir şekilde açıklayınız.'];
+  }
+
+  if (companyName && isGibberish(companyName)) {
+    spamErrors.companyName = ['Lütfen gerçek firma adınızı giriniz.'];
+  }
+
+  if (Object.keys(spamErrors).length > 0) {
+    return {
+      success: false,
+      errors: spamErrors,
+    };
+  }
+
+  // 3. E-posta gönder
   try {
-    await resend.emails.send({
-      from: 'UppyPro Meeting <info@upgunai.com>',
+    const { data, error: sendError } = await resend.emails.send({
+      from: 'UppyPro <info@upgunai.com>',
       to: 'info@upgunai.com',
       subject: `🚀 Yeni Görüşme Talebi: ${fullName}`,
       html: `
@@ -71,6 +139,12 @@ export async function sendMeetingRequest(prevState: ContactState, formData: Form
       `,
     });
 
+    if (sendError) {
+      console.error('Meeting email sending failed:', sendError);
+      return { success: false, error: 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.' };
+    }
+
+    console.log('Meeting email sent successfully:', data?.id);
     return { success: true };
   } catch (error) {
     console.error('Email sending failed:', error);
