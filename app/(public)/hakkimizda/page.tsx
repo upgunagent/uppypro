@@ -56,7 +56,6 @@ export default function AboutPage() {
                 {/* Hero */}
                 <section className="bg-slate-900 text-white py-20 md:py-28">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <span className="inline-block px-4 py-1.5 bg-orange-500/20 text-orange-400 text-xs font-bold rounded-full mb-6 border border-orange-500/30">Hakkımızda</span>
                         <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
                             İşletmelerin Dijital İletişimini<br />
                             <span className="text-orange-500">Dönüştürüyoruz</span>
