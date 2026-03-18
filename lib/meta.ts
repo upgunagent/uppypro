@@ -7,6 +7,76 @@ interface SendMessageResult {
     data?: any;
 }
 
+// Instagram DM API has a strict 1000 character limit per message.
+// This function intelligently splits long texts at natural boundaries.
+const IG_MAX_CHARS = 900; // Safety margin (actual limit is 1000)
+
+function smartChunkText(text: string, maxLength: number): string[] {
+    if (text.length <= maxLength) return [text];
+
+    const chunks: string[] = [];
+    let remaining = text;
+
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLength) {
+            chunks.push(remaining);
+            break;
+        }
+
+        const searchWindow = remaining.substring(0, maxLength);
+        let cutIndex = -1;
+        // Minimum %30 of maxLength to prevent tiny first chunks
+        const minCut = Math.floor(maxLength * 0.3);
+
+        // Priority 1: Paragraph break (\n\n)
+        const lastParagraph = searchWindow.lastIndexOf('\n\n');
+        if (lastParagraph > minCut) {
+            cutIndex = lastParagraph;
+        }
+
+        // Priority 2: Line break (\n)
+        if (cutIndex === -1) {
+            const lastNewline = searchWindow.lastIndexOf('\n');
+            if (lastNewline > minCut) {
+                cutIndex = lastNewline;
+            }
+        }
+
+        // Priority 3: Sentence end (. ! ?)
+        if (cutIndex === -1) {
+            for (let i = maxLength - 1; i > minCut; i--) {
+                if (remaining[i] === '.' || remaining[i] === '!' || remaining[i] === '?') {
+                    if (i + 1 >= remaining.length || remaining[i + 1] === ' ' || remaining[i + 1] === '\n') {
+                        cutIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Priority 4: Word boundary (space)
+        if (cutIndex === -1) {
+            const lastSpace = searchWindow.lastIndexOf(' ');
+            if (lastSpace > minCut) {
+                cutIndex = lastSpace;
+            }
+        }
+
+        // Fallback: hard cut at maxLength
+        if (cutIndex === -1) {
+            cutIndex = maxLength;
+        }
+
+        const chunk = remaining.substring(0, cutIndex).trim();
+        if (chunk.length > 0) {
+            chunks.push(chunk);
+        }
+        remaining = remaining.substring(cutIndex).trim();
+    }
+
+    return chunks;
+}
+
 export async function sendToChannel(
     tenantId: string,
     channel: "whatsapp" | "instagram",
@@ -53,6 +123,58 @@ export async function sendToChannel(
             url = `https://graph.facebook.com/v24.0/me/messages?access_token=${accessToken}`;
 
             if (type === 'text') {
+                // Smart chunking: split long texts for Instagram's 1000 char limit
+                const chunks = smartChunkText(text, IG_MAX_CHARS);
+
+                if (chunks.length > 1) {
+                    console.log(`[Meta Send] Instagram text too long (${text.length} chars). Splitting into ${chunks.length} chunks.`);
+
+                    const headers: any = {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${accessToken}`
+                    };
+
+                    let lastResult: SendMessageResult = { success: false };
+
+                    for (let i = 0; i < chunks.length; i++) {
+                        const chunkBody = {
+                            recipient: { id: recipientId },
+                            message: { text: chunks[i] }
+                        };
+
+                        const res = await fetch(url, {
+                            method: "POST",
+                            headers: headers,
+                            body: JSON.stringify(chunkBody)
+                        });
+
+                        const data = await res.json();
+
+                        // Log each chunk
+                        await supabaseWithAdmin.from("webhook_logs").insert({
+                            body: chunkBody,
+                            headers: { url: url, response: data, chunk: `${i + 1}/${chunks.length}` },
+                            error_message: !res.ok ? "OUTBOUND_ERROR" : "OUTBOUND_SUCCESS"
+                        });
+
+                        if (!res.ok || data.error) {
+                            console.error(`[Meta Send Error] Chunk ${i + 1}/${chunks.length}: ${JSON.stringify(data.error)}`);
+                            return { success: false, error: data.error?.message || "Meta API Error", data: data };
+                        }
+
+                        lastResult = { success: true, data: data };
+
+                        // Small delay between chunks to preserve message order
+                        if (i < chunks.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    }
+
+                    // All chunks sent successfully
+                    return lastResult;
+                }
+
+                // Single chunk — normal path (text <= 900 chars)
                 body = {
                     recipient: { id: recipientId },
                     message: { text: text }
