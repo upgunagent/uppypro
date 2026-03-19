@@ -643,11 +643,56 @@ export async function POST(request: Request) {
                     needsUpdate = true;
                 }
 
+                // --- AUTO-MATCH FOR EXISTING CONVERSATIONS WITHOUT CUSTOMER ---
+                if (!conversation.customer_id) {
+                    try {
+                        let matchedId: string | null = null;
+
+                        if (channel === 'whatsapp' && eventData.sender_id) {
+                            const normalizedPhone = normalizePhone(eventData.sender_id);
+                            const { data: customers } = await supabaseAdmin
+                                .from("customers")
+                                .select("id, phone")
+                                .eq("tenant_id", tenantId)
+                                .not("phone", "is", null);
+
+                            if (customers) {
+                                const match = customers.find(c => c.phone && normalizePhone(c.phone) === normalizedPhone);
+                                if (match) matchedId = match.id;
+                            }
+                        } else if (channel === 'instagram' && handleToUse) {
+                            const igUsername = handleToUse.replace('@', '').toLowerCase();
+                            const { data: customer } = await supabaseAdmin
+                                .from("customers")
+                                .select("id")
+                                .eq("tenant_id", tenantId)
+                                .ilike("instagram_username", igUsername)
+                                .limit(1)
+                                .maybeSingle();
+
+                            if (customer) matchedId = customer.id;
+                        }
+
+                        if (matchedId) {
+                            updates.customer_id = matchedId;
+                            needsUpdate = true;
+                            console.log(`[Auto-Match] Existing conversation ${conversation.id} linked to customer ${matchedId}`);
+                        }
+                    } catch (matchErr) {
+                        console.error("[Auto-Match] Error matching existing conversation:", matchErr);
+                    }
+                }
+
                 if (needsUpdate) {
                     await supabaseAdmin
                         .from("conversations")
                         .update(updates)
                         .eq("id", conversation.id);
+                    
+                    // Update local conversation object if customer was matched
+                    if (updates.customer_id) {
+                        conversation = { ...conversation, customer_id: updates.customer_id };
+                    }
                 }
             }
 
@@ -728,6 +773,33 @@ export async function POST(request: Request) {
                         }
                     }
 
+                    // --- FETCH CUSTOMER INFO FOR AI CONTEXT ---
+                    let customerInfo: any = null;
+                    if (conversation.customer_id) {
+                        try {
+                            const { data: customer } = await supabaseAdmin
+                                .from("customers")
+                                .select("id, full_name, phone, email, instagram_username, company_name")
+                                .eq("id", conversation.customer_id)
+                                .single();
+
+                            if (customer) {
+                                customerInfo = {
+                                    is_registered: true,
+                                    customer_id: customer.id,
+                                    full_name: customer.full_name || '',
+                                    phone: customer.phone || '',
+                                    email: customer.email || '',
+                                    instagram_username: customer.instagram_username || '',
+                                    company_name: customer.company_name || ''
+                                };
+                                console.log(`[Webhook] Customer info loaded for AI: ${customer.full_name}`);
+                            }
+                        } catch (custErr) {
+                            console.error('[Webhook] Failed to fetch customer info:', custErr);
+                        }
+                    }
+
                     const response = await fetch(settings.n8n_webhook_url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -743,7 +815,9 @@ export async function POST(request: Request) {
                             // Send media URL to n8n for reference
                             ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {}),
                             // Send base64 image data for AI vision (Gemini can directly analyze this)
-                            ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {})
+                            ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}),
+                            // Send customer info for AI to recognize returning customers
+                            ...(customerInfo ? { customer_info: customerInfo } : {})
                         })
                     });
 
