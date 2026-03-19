@@ -13,6 +13,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { summarizeConversation } from "@/actions/summarize-conversation";
 import { Sparkles } from "lucide-react";
 
+// Normalize phone number: strip all non-digits, ensure consistent format
+function normalizePhone(phone: string): string {
+    let digits = phone.replace(/\D/g, '');
+    if (digits.startsWith('0') && digits.length === 11) {
+        digits = '9' + digits;
+    }
+    if (digits.length === 10 && digits.startsWith('5')) {
+        digits = '90' + digits;
+    }
+    return digits;
+}
+
 interface ContactInfoSheetProps {
     isOpen: boolean;
     onClose: () => void;
@@ -138,7 +150,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                     .update({
                         full_name: formData.full_name,
                         company_name: formData.company_name,
-                        phone: formData.phone,
+                        phone: normalizePhone(formData.phone),
                         email: formData.email,
                         instagram_username: formData.instagram_username,
                         profile_pic: initialProfilePic || undefined,
@@ -158,7 +170,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         tenant_id: conv.tenant_id,
                         full_name: formData.full_name,
                         company_name: formData.company_name,
-                        phone: formData.phone,
+                        phone: normalizePhone(formData.phone),
                         email: formData.email,
                         instagram_username: formData.instagram_username,
                         profile_pic: initialProfilePic

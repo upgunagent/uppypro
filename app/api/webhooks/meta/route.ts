@@ -5,6 +5,21 @@ import { NextResponse } from "next/server";
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "uppypro_verify_token";
 const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY || "";
 
+// Normalize phone number: strip all non-digits, ensure consistent format
+function normalizePhone(phone: string): string {
+    // Remove all non-digit characters
+    let digits = phone.replace(/\D/g, '');
+    // If starts with 0 (Turkish local format like 05xx), remove leading 0 and add 90
+    if (digits.startsWith('0') && digits.length === 11) {
+        digits = '9' + digits; // 05332076252 -> 905332076252
+    }
+    // If it's 10 digits (no country code), assume Turkish
+    if (digits.length === 10 && digits.startsWith('5')) {
+        digits = '90' + digits; // 5332076252 -> 905332076252
+    }
+    return digits;
+}
+
 // Google Cloud Speech-to-Text: Transcribe audio to text
 async function transcribeAudio(audioUrl: string, mimeType: string | null): Promise<string | null> {
     if (!GOOGLE_CLOUD_API_KEY) {
@@ -551,6 +566,45 @@ export async function POST(request: Request) {
 
                 const initialMode = settings?.ai_operational_enabled ? 'BOT' : 'HUMAN';
 
+                // --- AUTO-MATCH EXISTING CUSTOMER ---
+                let matchedCustomerId: string | null = null;
+                try {
+                    if (channel === 'whatsapp' && eventData.sender_id) {
+                        // WhatsApp: match by normalized phone number
+                        const normalizedPhone = normalizePhone(eventData.sender_id);
+                        const { data: customers } = await supabaseAdmin
+                            .from("customers")
+                            .select("id, phone")
+                            .eq("tenant_id", tenantId)
+                            .not("phone", "is", null);
+
+                        if (customers) {
+                            const match = customers.find(c => c.phone && normalizePhone(c.phone) === normalizedPhone);
+                            if (match) {
+                                matchedCustomerId = match.id;
+                                console.log(`[Auto-Match] WhatsApp customer matched: ${match.id} (phone: ${normalizedPhone})`);
+                            }
+                        }
+                    } else if (channel === 'instagram' && handleToUse) {
+                        // Instagram: match by Instagram username
+                        const igUsername = handleToUse.replace('@', '').toLowerCase();
+                        const { data: customer } = await supabaseAdmin
+                            .from("customers")
+                            .select("id")
+                            .eq("tenant_id", tenantId)
+                            .ilike("instagram_username", igUsername)
+                            .limit(1)
+                            .maybeSingle();
+
+                        if (customer) {
+                            matchedCustomerId = customer.id;
+                            console.log(`[Auto-Match] Instagram customer matched: ${customer.id} (ig: ${igUsername})`);
+                        }
+                    }
+                } catch (matchErr) {
+                    console.error("[Auto-Match] Error during customer matching:", matchErr);
+                }
+
                 const { data: newConv } = await supabaseAdmin
                     .from("conversations")
                     .insert({
@@ -559,11 +613,16 @@ export async function POST(request: Request) {
                         external_thread_id: eventData.sender_id,
                         customer_handle: handleToUse,
                         mode: initialMode,
-                        profile_pic: currentProfilePic
+                        profile_pic: currentProfilePic,
+                        ...(matchedCustomerId ? { customer_id: matchedCustomerId } : {})
                     })
                     .select()
                     .single();
                 conversation = newConv;
+
+                if (matchedCustomerId) {
+                    console.log(`[Auto-Match] Conversation ${newConv?.id} linked to customer ${matchedCustomerId}`);
+                }
             } else {
                 const updates: any = {};
                 let needsUpdate = false;
@@ -677,7 +736,10 @@ export async function POST(request: Request) {
                             conversation_id: conversation.id,
                             tenant_id: tenantId,
                             sender_id: eventData.sender_id,
+                            sender_name: eventData.sender_name || handleToUse || '',
                             channel: channel,
+                            // Send customer handle for Instagram username tracking
+                            ...(channel === 'instagram' ? { instagram_username: handleToUse } : {}),
                             // Send media URL to n8n for reference
                             ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {}),
                             // Send base64 image data for AI vision (Gemini can directly analyze this)

@@ -83,3 +83,29 @@ body {
 .animate-shine {
   animation: shine 8s linear infinite;
 }
+
+@keyframes shimmer-glint {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer-glint 2.5s ease-in-out infinite;
+  pointer-events: none;
+}

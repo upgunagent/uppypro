@@ -11,6 +11,7 @@ import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
 import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, ArrowLeft, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
+import { UserPlus, UserCheck } from "lucide-react";
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { useMemo } from "react";
 import { TemplatePickerModal } from "./template-picker-modal";
@@ -122,6 +123,34 @@ export default function ChatInterface({
     // CRM UI State
     const [menuOpen, setMenuOpen] = useState(false);
     const [contactSheetOpen, setContactSheetOpen] = useState(false);
+
+    // Customer Card State
+    const [hasCustomerCard, setHasCustomerCard] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const checkCustomerCard = async () => {
+            const supabase = createClient();
+            const { data } = await supabase
+                .from("conversations")
+                .select("customer_id")
+                .eq("id", conversationId)
+                .single();
+            setHasCustomerCard(!!data?.customer_id);
+        };
+        checkCustomerCard();
+    }, [conversationId]);
+
+    // Refresh customer card status when contact sheet closes
+    const handleContactSheetClose = async () => {
+        setContactSheetOpen(false);
+        const supabase = createClient();
+        const { data } = await supabase
+            .from("conversations")
+            .select("customer_id")
+            .eq("id", conversationId)
+            .single();
+        setHasCustomerCard(!!data?.customer_id);
+    };
 
     const handleScroll = () => {
         if (!scrollRef.current) return;
@@ -636,6 +665,19 @@ export default function ChatInterface({
                         </Link>
                     )}
                     <span className="font-semibold text-sm text-slate-900 truncate">{customerName}</span>
+                    {hasCustomerCard !== null && (
+                        <button
+                            onClick={() => setContactSheetOpen(true)}
+                            className={clsx(
+                                "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all",
+                                hasCustomerCard
+                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                    : "bg-orange-100 text-orange-700 hover:bg-orange-200 animate-shimmer"
+                            )}
+                        >
+                            {hasCustomerCard ? <><UserCheck className="w-3 h-3" />Kayıtlı</> : <><UserPlus className="w-3 h-3" />Kart Oluştur</>}
+                        </button>
+                    )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                     <Button
@@ -728,6 +770,23 @@ export default function ChatInterface({
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-lg">{customerName}</span>
                         {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
+                        {hasCustomerCard !== null && (
+                            <button
+                                onClick={() => setContactSheetOpen(true)}
+                                className={clsx(
+                                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ml-2",
+                                    hasCustomerCard
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:shadow-sm"
+                                        : "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 hover:shadow-sm animate-shimmer"
+                                )}
+                            >
+                                {hasCustomerCard ? (
+                                    <><UserCheck className="w-3.5 h-3.5" />Kayıtlı Müşteri</>
+                                ) : (
+                                    <><UserPlus className="w-3.5 h-3.5" />Müşteri Kartı Oluştur</>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -1706,7 +1765,7 @@ export default function ChatInterface({
             </div>
             <ContactInfoSheet
                 isOpen={contactSheetOpen}
-                onClose={() => setContactSheetOpen(false)}
+                onClose={handleContactSheetClose}
                 conversationId={conversationId}
                 customerHandle={customerName}
                 platform={platform}
