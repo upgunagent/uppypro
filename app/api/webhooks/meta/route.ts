@@ -3,6 +3,108 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "uppypro_verify_token";
+const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY || "";
+
+// Google Cloud Speech-to-Text: Transcribe audio to text
+async function transcribeAudio(audioUrl: string, mimeType: string | null): Promise<string | null> {
+    if (!GOOGLE_CLOUD_API_KEY) {
+        console.log("[STT] No GOOGLE_CLOUD_API_KEY configured, skipping transcription");
+        return null;
+    }
+
+    try {
+        // 1. Download audio file
+        const audioRes = await fetch(audioUrl);
+        if (!audioRes.ok) {
+            console.error("[STT] Failed to download audio:", audioRes.status);
+            return null;
+        }
+
+        const buffer = await audioRes.arrayBuffer();
+        const audioBytes = Buffer.from(buffer);
+
+        // Skip if audio is too large (>10MB) or too small
+        if (audioBytes.byteLength > 10 * 1024 * 1024) {
+            console.log("[STT] Audio too large, skipping transcription");
+            return null;
+        }
+        if (audioBytes.byteLength < 100) {
+            console.log("[STT] Audio too small, skipping transcription");
+            return null;
+        }
+
+        const base64Audio = audioBytes.toString('base64');
+
+        // 2. Determine encoding based on mime type
+        let encoding = "OGG_OPUS"; // Default for WhatsApp
+        let sampleRateHertz = 16000;
+
+        if (mimeType) {
+            const mime = mimeType.toLowerCase();
+            if (mime.includes('ogg') || mime.includes('opus')) {
+                encoding = "OGG_OPUS";
+                sampleRateHertz = 16000;
+            } else if (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac')) {
+                encoding = "MP3"; // Google STT handles MP4/AAC under MP3
+                sampleRateHertz = 16000;
+            } else if (mime.includes('mp3') || mime.includes('mpeg')) {
+                encoding = "MP3";
+                sampleRateHertz = 16000;
+            } else if (mime.includes('webm')) {
+                encoding = "WEBM_OPUS";
+                sampleRateHertz = 16000;
+            } else if (mime.includes('wav')) {
+                encoding = "LINEAR16";
+                sampleRateHertz = 16000;
+            }
+        }
+
+        // 3. Call Google Speech-to-Text API
+        const sttResponse = await fetch(
+            `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_CLOUD_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    config: {
+                        encoding,
+                        sampleRateHertz,
+                        languageCode: "tr-TR",
+                        alternativeLanguageCodes: ["en-US", "de-DE", "ar-SA"],
+                        model: "default",
+                        enableAutomaticPunctuation: true
+                    },
+                    audio: {
+                        content: base64Audio
+                    }
+                })
+            }
+        );
+
+        if (!sttResponse.ok) {
+            const errText = await sttResponse.text();
+            console.error("[STT] API error:", sttResponse.status, errText);
+            return null;
+        }
+
+        const sttResult = await sttResponse.json();
+        const transcript = sttResult.results
+            ?.map((r: any) => r.alternatives?.[0]?.transcript)
+            .filter(Boolean)
+            .join(" ");
+
+        if (transcript) {
+            console.log(`[STT] Transcription successful: "${transcript.substring(0, 50)}..."`);
+            return transcript;
+        }
+
+        console.log("[STT] No transcription result");
+        return null;
+    } catch (error) {
+        console.error("[STT] Transcription failed:", error);
+        return null;
+    }
+}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -415,6 +517,14 @@ export async function POST(request: Request) {
 
                 if (permanentUrl) {
                     eventData.media_url = permanentUrl;
+                }
+            }
+
+            // --- TRANSCRIBE AUDIO IF NEEDED ---
+            if (eventData.type === 'audio' && eventData.media_url) {
+                const transcript = await transcribeAudio(eventData.media_url, eventData.media_type);
+                if (transcript) {
+                    eventData.text = `🎤 Sesli Mesaj: ${transcript}`;
                 }
             }
 
