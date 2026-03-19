@@ -205,10 +205,92 @@ export default function NotificationsPage() {
 
             {/* Notification List */}
             {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                    <Bell className="w-16 h-16 mb-4 opacity-30" />
-                    <p className="text-lg font-medium">Henüz bildirim yok</p>
-                    <p className="text-sm">Yeni bildirimler geldiğinde burada görünecek.</p>
+                <div className="flex flex-col items-center justify-center py-8 md:py-12 px-4">
+                    {/* Icon */}
+                    <div className="relative mb-6">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100/50">
+                            <BellRing className="w-10 h-10 text-amber-500" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                        </div>
+                    </div>
+
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Henüz bildirim yok</h2>
+                    <p className="text-sm text-slate-500 mb-8 text-center max-w-md">Bildirimleriniz geldiğinde burada listelenecek ve anında haberdar olacaksınız.</p>
+
+                    {/* Info Cards */}
+                    <div className="w-full max-w-lg space-y-3">
+                        {/* AI Asistan Bildirimleri */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4">
+                            <div className="flex gap-3">
+                                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                    <MessageSquare className="w-4.5 h-4.5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-800 text-sm mb-1">🤖 AI Asistan Yönlendirmeleri</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        Hesabınıza AI asistan tanımlıysa, müşterileriniz sohbet sırasında <strong>canlı destek isteğinde</strong> bulunduğunda 
+                                        veya <strong>yetkili biriyle görüşmek</strong> istediğinde, AI asistan müşterinizin iletişim bilgilerini alır ve 
+                                        size buradan bildirim gönderir. Bildirimde <strong>"Sohbeti Görüntüle"</strong> butonuyla ilgili sohbete doğrudan ulaşabilirsiniz.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Anahtar Kelime Tetiklemesi */}
+                        <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 border border-purple-100 rounded-xl p-4">
+                            <div className="flex gap-3">
+                                <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className="text-base">🔑</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-800 text-sm mb-1">Anahtar Kelime Bildirimleri</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        AI Asistan ayarlarından belirlediğiniz <strong>anahtar kelimeler</strong> müşteri ile sohbet sırasında kullanıldığında, 
+                                        AI asistan müşterinizi size yönlendirir ve iletişim bilgilerini topladıktan sonra buradan bildirim gönderir.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Admin Duyuruları */}
+                        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100 rounded-xl p-4">
+                            <div className="flex gap-3">
+                                <div className="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                    <Megaphone className="w-4.5 h-4.5 text-amber-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-800 text-sm mb-1">📢 Sistem & Admin Duyuruları</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        Admin, işletmenize özel veya tüm kullanıcılara yönelik genel duyurular yapmak istediğinde bu alandan 
+                                        size bildirim gönderebilir. Önemli güncellemeler ve haberlerden anında haberdar olun.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bildirim Sesi & Rozet */}
+                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4">
+                            <div className="flex gap-3">
+                                <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className="text-base">🔔</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-800 text-sm mb-1">Anlık Bildirim Sistemi</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        Yeni bir bildirim geldiğinde kısa bir <strong>bildirim sesi</strong> duyacaksınız. Ayrıca sol menüdeki 
+                                        bildirim butonunun üzerinde <strong>okunmamış bildirim sayısı</strong> kırmızı rozet halinde görünecektir. 
+                                        Böylece panelin herhangi bir sayfasındayken bile yeni bildirimleri kaçırmazsınız.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 mt-6 text-center">
+                        İlk bildiriminiz geldiğinde bu bilgilendirme alanı otomatik olarak kaldırılacak ve bildirimleriniz burada listelenecektir.
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-3">
