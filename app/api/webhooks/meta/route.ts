@@ -536,6 +536,29 @@ export async function POST(request: Request) {
 
             if (!skipReason) {
                 try {
+                    // Convert image to base64 for AI vision analysis (only for images under 3MB)
+                    let imageBase64: string | null = null;
+                    let imageMimeType: string | null = null;
+                    const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
+
+                    if (eventData.media_url && eventData.type === 'image') {
+                        try {
+                            const imgRes = await fetch(eventData.media_url);
+                            if (imgRes.ok) {
+                                const buffer = await imgRes.arrayBuffer();
+                                if (buffer.byteLength <= MAX_IMAGE_SIZE) {
+                                    imageBase64 = Buffer.from(buffer).toString('base64');
+                                    imageMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                                    console.log(`[Webhook] Image converted to base64 (${(buffer.byteLength / 1024).toFixed(0)}KB)`);
+                                } else {
+                                    console.log(`[Webhook] Image too large for base64 (${(buffer.byteLength / 1024 / 1024).toFixed(1)}MB), skipping vision`);
+                                }
+                            }
+                        } catch (imgErr) {
+                            console.error('[Webhook] Failed to convert image to base64:', imgErr);
+                        }
+                    }
+
                     const response = await fetch(settings.n8n_webhook_url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -545,8 +568,10 @@ export async function POST(request: Request) {
                             tenant_id: tenantId,
                             sender_id: eventData.sender_id,
                             channel: channel,
-                            // Send media URL to n8n so AI can analyze images/videos
-                            ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {})
+                            // Send media URL to n8n for reference
+                            ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {}),
+                            // Send base64 image data for AI vision (Gemini can directly analyze this)
+                            ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {})
                         })
                     });
 
