@@ -544,7 +544,9 @@ export async function POST(request: Request) {
                             conversation_id: conversation.id,
                             tenant_id: tenantId,
                             sender_id: eventData.sender_id,
-                            channel: channel
+                            channel: channel,
+                            // Send media URL to n8n so AI can analyze images/videos
+                            ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {})
                         })
                     });
 
