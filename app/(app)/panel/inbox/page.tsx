@@ -11,7 +11,7 @@ import { clsx } from "clsx";
 
 export const dynamic = "force-dynamic";
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string; tenantId?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ tab?: string; chatId?: string; tenantId?: string; customerNumber?: string }> }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return <div>Giriş yapmanız gerekiyor</div>;
@@ -58,6 +58,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
     const tab = resolvedParams?.tab || "all";
     const chatId = resolvedParams?.chatId;
+    const customerNumber = resolvedParams?.customerNumber;
 
     // Fetch Conversations List
     let query = queryClient
@@ -76,39 +77,62 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     let selectedConversation = null;
     let selectedMessages: any[] = [];
     let agentSettings = null;
+    let resolvedChatId = chatId;
 
-    if (chatId) {
-        // Fetch Conversation Details — try with regular client first
-        const { data: convData } = await queryClient
-            .from("conversations")
-            .select("*")
-            .eq("id", chatId)
-            .maybeSingle();
+    if (chatId || customerNumber) {
+        const adminClient = createAdminClient();
 
-        selectedConversation = convData;
-
-        // Fallback: if not found (e.g. RLS or tab filter issue), try with admin client
-        if (!selectedConversation) {
-            const adminFallback = createAdminClient();
-            const { data: adminConvData } = await adminFallback
+        // Step 1: Try by chatId with regular client
+        if (chatId) {
+            const { data: convData } = await queryClient
                 .from("conversations")
                 .select("*")
                 .eq("id", chatId)
-                .eq("tenant_id", tenantId) // Scoped to the user's tenant for security
                 .maybeSingle();
+            selectedConversation = convData;
+        }
 
+        // Step 2: Try by chatId with admin client (bypasses RLS)
+        if (!selectedConversation && chatId) {
+            const { data: adminConvData } = await adminClient
+                .from("conversations")
+                .select("*")
+                .eq("id", chatId)
+                .eq("tenant_id", tenantId)
+                .maybeSingle();
             selectedConversation = adminConvData;
         }
 
+        // Step 3: Search in already-loaded conversations list
+        if (!selectedConversation && chatId && conversations) {
+            const found = (conversations as any[])?.find((c: any) => c.id === chatId);
+            if (found) {
+                selectedConversation = found;
+            }
+        }
+
+        // Step 4: Search by customerNumber (external_thread_id) — most reliable fallback
+        if (!selectedConversation && customerNumber) {
+            const { data: convByNumber } = await adminClient
+                .from("conversations")
+                .select("*")
+                .eq("tenant_id", tenantId)
+                .eq("external_thread_id", customerNumber)
+                .order("updated_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            selectedConversation = convByNumber;
+        }
+
+        // Update resolvedChatId if we found the conversation through a fallback
         if (selectedConversation) {
-            // Use admin client to fetch messages to avoid RLS issues
-            const adminClient = createAdminClient();
+            resolvedChatId = selectedConversation.id;
 
             // Fetch Messages
             const { data: msgData } = await adminClient
                 .from("messages")
                 .select("*")
-                .eq("conversation_id", chatId)
+                .eq("conversation_id", selectedConversation.id)
                 .eq("tenant_id", selectedConversation.tenant_id)
                 .order("created_at", { ascending: true });
 
@@ -138,7 +162,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                     initialConversations={conversations as any}
                     tenantId={tenantId}
                     currentTab={tab}
-                    selectedChatId={chatId}
+                    selectedChatId={resolvedChatId}
                 />
             </div>
 

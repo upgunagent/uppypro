@@ -130,8 +130,14 @@ export default function NotificationsPage() {
             await handleMarkRead(notification.id);
         }
         const chatId = notification.metadata?.chat_id;
-        if (chatId) {
-            router.push(`/panel/inbox?tab=all&chatId=${chatId}`);
+        const customerNumber = notification.metadata?.customer_number;
+
+        let url = `/panel/inbox?tab=all`;
+        if (chatId) url += `&chatId=${chatId}`;
+        if (customerNumber) url += `&customerNumber=${encodeURIComponent(customerNumber)}`;
+        
+        if (chatId || customerNumber) {
+            router.push(url);
         }
     };
 
