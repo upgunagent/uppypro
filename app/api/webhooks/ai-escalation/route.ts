@@ -31,8 +31,8 @@ export async function POST(request: Request) {
 
         const supabaseAdmin = createAdminClient();
 
-        // Try to find the chat_id from conversations table using customer_number
-        let chatId = conversation_id || null;
+        // Sanitize conversation_id (some bots may send leading '=' characters)
+        let chatId = (conversation_id ? String(conversation_id).replace(/^=+/, '') : null) || null;
 
         if (!chatId && customer_number) {
             // Search by external_thread_id (phone number or IG user id)

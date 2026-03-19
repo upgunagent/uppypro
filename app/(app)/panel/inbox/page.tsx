@@ -57,7 +57,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     }
 
     const tab = resolvedParams?.tab || "all";
-    const chatId = resolvedParams?.chatId;
+    const chatId = resolvedParams?.chatId?.replace(/^=+/, '') || undefined; // Strip leading '=' from chatId
     const customerNumber = resolvedParams?.customerNumber;
 
     // Fetch Conversations List
@@ -103,21 +103,32 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             selectedConversation = adminConvData;
         }
 
-        // Step 3: Search in already-loaded conversations list
-        if (!selectedConversation && chatId && conversations) {
-            const found = (conversations as any[])?.find((c: any) => c.id === chatId);
+        // Step 3: Search in already-loaded conversations list (by ID or by phone number)
+        if (!selectedConversation && conversations) {
+            const normalizedNumber = customerNumber?.replace(/[^0-9]/g, '');
+            const found = (conversations as any[])?.find((c: any) => {
+                // Match by chatId
+                if (chatId && c.id === chatId) return true;
+                // Match by phone number (normalize both sides)
+                if (normalizedNumber) {
+                    const convNumber = (c.external_thread_id || '').replace(/[^0-9]/g, '');
+                    if (convNumber && convNumber === normalizedNumber) return true;
+                }
+                return false;
+            });
             if (found) {
                 selectedConversation = found;
             }
         }
 
-        // Step 4: Search by customerNumber (external_thread_id) — most reliable fallback
+        // Step 4: Search by customerNumber (external_thread_id) with normalized formats
         if (!selectedConversation && customerNumber) {
+            const digitsOnly = customerNumber.replace(/[^0-9]/g, '');
             const { data: convByNumber } = await adminClient
                 .from("conversations")
                 .select("*")
                 .eq("tenant_id", tenantId)
-                .eq("external_thread_id", customerNumber)
+                .or(`external_thread_id.eq.${digitsOnly},external_thread_id.eq.+${digitsOnly},external_thread_id.eq.${customerNumber}`)
                 .order("updated_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
