@@ -897,8 +897,15 @@ export default function ChatInterface({
                                             />
                                         </div>
                                     ) : msg.message_type === 'audio' && msg.media_url ? (
-                                        <div className="mb-1 min-w-[200px] flex items-center">
-                                            <audio src={msg.media_url} controls className="w-full h-8" />
+                                        <div className="mb-1 min-w-[200px]">
+                                            <div className="flex items-center">
+                                                <audio src={msg.media_url} controls className="w-full h-8" />
+                                            </div>
+                                            {msg.text && msg.text !== '[Audio]' && (
+                                                <div className="mt-1.5 px-1 text-xs text-slate-600 italic leading-relaxed">
+                                                    📝 {msg.text.replace(/^🎤\s*Sesli Mesaj:\s*/i, '')}
+                                                </div>
+                                            )}
                                         </div>
                                     ) : msg.message_type === 'document' && msg.media_url ? (
                                         <a
