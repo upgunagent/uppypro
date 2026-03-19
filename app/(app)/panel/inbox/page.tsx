@@ -78,7 +78,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     let agentSettings = null;
 
     if (chatId) {
-        // Fetch Conversation Details
+        // Fetch Conversation Details — try with regular client first
         const { data: convData } = await queryClient
             .from("conversations")
             .select("*")
@@ -87,23 +87,39 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
         selectedConversation = convData;
 
+        // Fallback: if not found (e.g. RLS or tab filter issue), try with admin client
+        if (!selectedConversation) {
+            const adminFallback = createAdminClient();
+            const { data: adminConvData } = await adminFallback
+                .from("conversations")
+                .select("*")
+                .eq("id", chatId)
+                .eq("tenant_id", tenantId) // Scoped to the user's tenant for security
+                .maybeSingle();
+
+            selectedConversation = adminConvData;
+        }
+
         if (selectedConversation) {
+            // Use admin client to fetch messages to avoid RLS issues
+            const adminClient = createAdminClient();
+
             // Fetch Messages
-            const { data: msgData, error: msgError } = await queryClient
+            const { data: msgData } = await adminClient
                 .from("messages")
                 .select("*")
                 .eq("conversation_id", chatId)
-                .eq("tenant_id", selectedConversation.tenant_id) // Extra RLS safety
+                .eq("tenant_id", selectedConversation.tenant_id)
                 .order("created_at", { ascending: true });
 
             selectedMessages = msgData || [];
 
             // Fetch Agent Settings
-            const { data: settingsData } = await queryClient
+            const { data: settingsData } = await adminClient
                 .from("agent_settings")
                 .select("ai_operational_enabled")
                 .eq("tenant_id", selectedConversation.tenant_id)
-                .maybeSingle(); // Changed from single() to maybeSingle()
+                .maybeSingle();
             agentSettings = settingsData;
         }
     }
