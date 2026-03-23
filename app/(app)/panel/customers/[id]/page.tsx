@@ -174,7 +174,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         setCampaignLogsLoading(true);
         const supabase = createClient();
         try {
-            // Fetch campaign logs for this customer, with campaign info (left join for direct sends)
+            // Step 1: Fetch ALL campaign logs for this customer (no join - avoids filtering out direct sends)
             const { data: logs, error } = await supabase
                 .from('customer_campaign_logs')
                 .select(`
@@ -189,13 +189,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     read_at,
                     failed_at,
                     created_at,
-                    row_metadata,
-                    campaigns!left(
-                        name,
-                        status,
-                        template_name,
-                        template_language
-                    )
+                    row_metadata
                 `)
                 .eq('customer_id', customerId)
                 .order('created_at', { ascending: false });
@@ -206,25 +200,48 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 return;
             }
 
-            if (logs) {
-                const mapped: CampaignLog[] = logs.map((log: any) => ({
-                    id: log.id,
-                    campaign_id: log.campaign_id,
-                    phone_number: log.phone_number,
-                    meta_message_id: log.meta_message_id,
-                    status: log.status,
-                    error_message: log.error_message,
-                    sent_at: log.sent_at,
-                    delivered_at: log.delivered_at,
-                    read_at: log.read_at,
-                    failed_at: log.failed_at,
-                    created_at: log.created_at,
-                    campaign_name: log.campaigns?.name || (log.row_metadata?.source === 'direct_send' ? 'Tekli Şablon Gönderimi' : 'İsimsiz Kampanya'),
-                    campaign_status: log.campaigns?.status || (log.row_metadata?.source === 'direct_send' ? 'DIRECT' : 'UNKNOWN'),
-                    template_name: log.campaigns?.template_name || log.row_metadata?.template_name || '-',
-                    template_language: log.campaigns?.template_language || log.row_metadata?.template_language || 'tr',
-                }));
+            if (logs && logs.length > 0) {
+                // Step 2: Fetch campaign details for logs that have campaign_id
+                const campaignIds = [...new Set(logs.filter((l: any) => l.campaign_id).map((l: any) => l.campaign_id))];
+                let campaignsMap: Record<string, any> = {};
+
+                if (campaignIds.length > 0) {
+                    const { data: campaigns } = await supabase
+                        .from('campaigns')
+                        .select('id, name, status, template_name, template_language')
+                        .in('id', campaignIds);
+
+                    if (campaigns) {
+                        campaigns.forEach((c: any) => { campaignsMap[c.id] = c; });
+                    }
+                }
+
+                // Step 3: Map logs with campaign info
+                const mapped: CampaignLog[] = logs.map((log: any) => {
+                    const campaign = log.campaign_id ? campaignsMap[log.campaign_id] : null;
+                    const isDirect = log.row_metadata?.source === 'direct_send';
+
+                    return {
+                        id: log.id,
+                        campaign_id: log.campaign_id,
+                        phone_number: log.phone_number,
+                        meta_message_id: log.meta_message_id,
+                        status: log.status,
+                        error_message: log.error_message,
+                        sent_at: log.sent_at,
+                        delivered_at: log.delivered_at,
+                        read_at: log.read_at,
+                        failed_at: log.failed_at,
+                        created_at: log.created_at,
+                        campaign_name: campaign?.name || (isDirect ? 'Tekli Şablon Gönderimi' : 'İsimsiz Kampanya'),
+                        campaign_status: campaign?.status || (isDirect ? 'DIRECT' : 'UNKNOWN'),
+                        template_name: campaign?.template_name || log.row_metadata?.template_name || '-',
+                        template_language: campaign?.template_language || log.row_metadata?.template_language || 'tr',
+                    };
+                });
                 setCampaignLogs(mapped);
+            } else {
+                setCampaignLogs([]);
             }
         } catch (err) {
             console.error('Error fetching campaign logs:', err);
@@ -233,6 +250,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             setCampaignLogsLoading(false);
         }
     };
+
 
     const fetchCustomer = async (customerId: string) => {
         const supabase = createClient();
