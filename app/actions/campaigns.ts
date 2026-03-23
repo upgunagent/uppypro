@@ -800,7 +800,7 @@ export async function sendTemplateToCustomer(data: {
             const messageId = result.messages?.[0]?.id;
 
             // Log kaydı oluştur
-            await supabase.from('customer_campaign_logs').insert({
+            const { error: logError } = await supabase.from('customer_campaign_logs').insert({
                 tenant_id: data.tenantId,
                 campaign_id: null,
                 customer_id: data.customerId,
@@ -818,13 +818,17 @@ export async function sendTemplateToCustomer(data: {
                 }
             });
 
+            if (logError) {
+                console.error(`[SingleSend] Log insert failed:`, logError.message, logError.details, logError.hint);
+            }
+
             console.log(`[SingleSend] Sent template "${data.templateName}" to ${phoneNumber}, msgId: ${messageId}`);
             return { success: true, messageId };
         } else {
             const errorMsg = result.error?.message || JSON.stringify(result.error) || "Bilinmeyen hata";
 
             // Hata logu
-            await supabase.from('customer_campaign_logs').insert({
+            const { error: failLogError } = await supabase.from('customer_campaign_logs').insert({
                 tenant_id: data.tenantId,
                 campaign_id: null,
                 customer_id: data.customerId,
@@ -841,6 +845,10 @@ export async function sendTemplateToCustomer(data: {
                     template_language: data.templateLanguage
                 }
             });
+
+            if (failLogError) {
+                console.error(`[SingleSend] Failed log insert error:`, failLogError.message);
+            }
 
             console.error(`[SingleSend] Failed for ${phoneNumber}:`, errorMsg);
             return { success: false, error: errorMsg };
