@@ -519,7 +519,7 @@ export default function LeadDiscoveryPage() {
                                                         }
 
                                                         // Enrich in batches of 10
-                                                        const leadIds = savedLeads.map(l => l.id);
+                                                        const leadIds = savedLeads.map((l: any) => l.id);
                                                         let totalResult: any = { summary: { found: 0, not_found: 0, no_website: 0, already_has: 0 } };
 
                                                         for (let i = 0; i < leadIds.length; i += 10) {

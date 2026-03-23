@@ -134,7 +134,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         if (customers) {
             const segments = new Set<string>();
             const tags = new Set<string>();
-            customers.forEach(c => {
+            customers.forEach((c: any) => {
                 if (c.segment && c.segment.trim()) segments.add(c.segment.trim());
                 if (c.tags && Array.isArray(c.tags)) {
                     c.tags.forEach((t: string) => { if (t && t.trim()) tags.add(t.trim()); });

@@ -207,7 +207,7 @@ export default function LeadsListPage() {
         if (listsData) {
             // Get actual lead counts for each list
             const listsWithCounts = await Promise.all(
-                listsData.map(async (list) => {
+                listsData.map(async (list: any) => {
                     const { count } = await supabase
                         .from("leads")
                         .select("id", { count: "exact", head: true })
@@ -342,7 +342,7 @@ export default function LeadsListPage() {
                 return;
             }
 
-            const leadIds = missingLeads.map(l => l.id);
+            const leadIds = missingLeads.map((l: any) => l.id);
             let totalFound = 0, totalNotFound = 0;
 
             for (let i = 0; i < leadIds.length; i += 10) {
@@ -428,7 +428,7 @@ export default function LeadsListPage() {
                 .select("google_place_id")
                 .eq("list_id", selectedList.id);
 
-            const existingPlaceIds = new Set((existingLeads || []).map(l => l.google_place_id).filter(Boolean));
+            const existingPlaceIds = new Set((existingLeads || []).map((l: any) => l.google_place_id).filter(Boolean));
 
             // Filter only new leads
             const newLeads = discoveredLeads.filter((l: any) => !existingPlaceIds.has(l.google_place_id));
@@ -486,7 +486,7 @@ export default function LeadsListPage() {
                     .not("website", "is", null);
 
                 if (newSavedLeads && newSavedLeads.length > 0) {
-                    const ids = newSavedLeads.map(l => l.id);
+                    const ids = newSavedLeads.map((l: any) => l.id);
                     let totalFound = 0, totalNotFound = 0;
 
                     for (let i = 0; i < ids.length; i += 10) {
