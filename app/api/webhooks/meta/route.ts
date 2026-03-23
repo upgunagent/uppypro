@@ -1,6 +1,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "uppypro_verify_token";
 const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY || "";
@@ -725,15 +726,17 @@ export async function POST(request: Request) {
                 .update({ updated_at: new Date().toISOString() })
                 .eq("id", conversation.id);
 
-            // 4. n8n Trigger Logic — Fire-and-Forget (don't block Meta's 200 OK)
-            // All AI processing happens in background so Meta receives 200 OK immediately
-            processAIResponseInBackground(
-                supabaseAdmin,
-                tenantId,
-                conversation,
-                eventData,
-                channel,
-                handleToUse,
+            // 4. n8n Trigger Logic — Background processing via waitUntil
+            // waitUntil keeps the serverless function alive after 200 OK is returned to Meta
+            waitUntil(
+                processAIResponseInBackground(
+                    supabaseAdmin,
+                    tenantId,
+                    conversation,
+                    eventData,
+                    channel,
+                    handleToUse,
+                )
             );
         }
 
