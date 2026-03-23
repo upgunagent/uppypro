@@ -190,7 +190,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     failed_at,
                     created_at,
                     row_metadata,
-                    campaigns!left (
+                    campaigns!left(
                         name,
                         status,
                         template_name,
