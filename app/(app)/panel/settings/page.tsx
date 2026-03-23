@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ChannelCard } from "@/components/channel-card";
@@ -20,12 +21,7 @@ import { CustomerListsCard } from "@/components/settings/customer-lists-card";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
-interface SettingsPageProps {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-export default async function SettingsPage(props: SettingsPageProps) {
-    const searchParams = await props.searchParams;
+export default async function SettingsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -208,15 +204,16 @@ export default async function SettingsPage(props: SettingsPageProps) {
                 </div>
             </div>
 
-            <SettingsTabs
-                defaultValue={searchParams.tab as string || "connections"}
-                connectionTab={connectionTab}
-                profileTab={profileTab}
-                whatsappTemplatesTab={whatsappTemplatesTab}
-                subscriptionTab={subscriptionTab}
-                employeeTab={employeeTab}
-                chatSettingsTab={chatSettingsTab}
-            />
+            <Suspense fallback={null}>
+                <SettingsTabs
+                    connectionTab={connectionTab}
+                    profileTab={profileTab}
+                    whatsappTemplatesTab={whatsappTemplatesTab}
+                    subscriptionTab={subscriptionTab}
+                    employeeTab={employeeTab}
+                    chatSettingsTab={chatSettingsTab}
+                />
+            </Suspense>
         </div>
     );
 }

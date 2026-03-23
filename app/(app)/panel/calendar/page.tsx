@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import { NoEmployeesWarning } from "@/components/calendar/no-employees-warning";
 
 export default async function CalendarPage() {
     const supabase = await createClient();
@@ -49,6 +50,8 @@ export default async function CalendarPage() {
         .eq("tenant_id", member.tenant_id)
         .order("name", { ascending: true });
 
+    const hasEmployees = (employees && employees.length > 0);
+
     return (
         <div className="h-[calc(100vh/var(--zoom-factor)-4rem)] p-6 bg-slate-50 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-6">
@@ -57,6 +60,8 @@ export default async function CalendarPage() {
                     <p className="text-slate-500">Randevu ve etkinliklerinizi yönetin.</p>
                 </div>
             </div>
+
+            {!hasEmployees && <NoEmployeesWarning />}
 
             <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 overflow-hidden">
                 <CalendarView

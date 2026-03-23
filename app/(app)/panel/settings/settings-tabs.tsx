@@ -2,7 +2,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, CreditCard, User, Plug, MessageSquare, Users, Megaphone } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useCallback } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 interface SettingsTabsProps {
     connectionTab: ReactNode;
@@ -15,8 +16,20 @@ interface SettingsTabsProps {
 }
 
 export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const currentTab = searchParams.get("tab") || defaultValue;
+
+    const handleTabChange = useCallback((value: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", value);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }, [router, pathname, searchParams]);
+
     return (
-        <Tabs defaultValue={defaultValue} className="w-full space-y-6">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto bg-slate-100 p-1.5 md:p-1 rounded-xl md:rounded-lg gap-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Plug className="w-4 h-4 shrink-0" />
