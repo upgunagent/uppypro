@@ -190,7 +190,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     failed_at,
                     created_at,
                     row_metadata,
-                    campaigns (
+                    campaigns!left (
                         name,
                         status,
                         template_name,
@@ -1316,7 +1316,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                             Müşterinin Kampanya Geçmişi
                                         </CardTitle>
                                         <CardDescription className="mt-1">
-                                            Bu müşteriye gönderilen tüm toplu mesaj (şablon) kampanyaları ve teslimat durumları.
+                                            Bu müşteriye gönderilen tüm şablon mesajları (tekli ve toplu) ve teslimat durumları.
                                         </CardDescription>
                                     </div>
                                     {campaignLogs.length > 0 && (
@@ -1359,7 +1359,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                             <Mail className="w-8 h-8 text-slate-300" />
                                         </div>
                                         <p className="font-medium text-slate-600 mb-1">Kampanya geçmişi bulunamadı</p>
-                                        <p className="text-sm text-slate-400">Bu müşteriye henüz toplu kampanya mesajı gönderilmemiş.</p>
+                                        <p className="text-sm text-slate-400">Bu müşteriye henüz şablon mesajı gönderilmemiş.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
@@ -1439,8 +1439,14 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                                                     {formatDate(log.created_at)}
                                                                 </span>
                                                             </div>
-                                                            <h4 className="font-bold text-slate-900 text-sm truncate">
+                                                            <h4 className="font-bold text-slate-900 text-sm truncate flex items-center gap-2">
                                                                 {log.campaign_name}
+                                                                {log.campaign_status === 'DIRECT' && (
+                                                                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-violet-100 text-violet-700 text-[10px] font-bold rounded-full uppercase tracking-wide">
+                                                                        <Send className="w-2.5 h-2.5" />
+                                                                        Tekli Gönderim
+                                                                    </span>
+                                                                )}
                                                             </h4>
                                                             <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
                                                                 <span className="flex items-center gap-1">
