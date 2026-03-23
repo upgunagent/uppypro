@@ -41,6 +41,8 @@ export interface CalendarEvent {
     description?: string;
     color?: string;
     allDay?: boolean;
+    is_reviewed?: boolean;
+    created_by_ai?: boolean;
     resource?: any; // Full DB object
 }
 
@@ -103,7 +105,9 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                 end: endDate,
                 description: item.description,
                 color: item.color,
-                allDay: false, // Force timed event rendering
+                allDay: false,
+                is_reviewed: item.is_reviewed ?? true,
+                created_by_ai: item.created_by_ai ?? false,
                 resource: item
             };
         });
@@ -148,7 +152,21 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
         setIsDialogOpen(true);
     };
 
-    const handleSelectEvent = (event: CalendarEvent) => {
+    const handleSelectEvent = async (event: CalendarEvent) => {
+        // Mark as reviewed if it's a new AI-created event
+        if (event.created_by_ai && !event.is_reviewed) {
+            const supabase = createClient();
+            await supabase
+                .from('calendar_events')
+                .update({ is_reviewed: true })
+                .eq('id', event.id);
+
+            // Update local state
+            setEvents(prev => prev.map(e =>
+                e.id === event.id ? { ...e, is_reviewed: true, resource: { ...e.resource, is_reviewed: true } } : e
+            ));
+        }
+
         setSelectedEvent(event);
         setSelectedSlot(null);
         setIsDialogOpen(true);
@@ -296,6 +314,11 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                 .rbc-today { background-color: #eff6ff; }
                 .rbc-current-time-indicator { background-color: #ef4444; }
                 .rbc-time-view .rbc-row { min-height: 20px; }
+                .cal-event-wrapper { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 4px; overflow: hidden; }
+                .cal-event-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .cal-badge-new { flex-shrink: 0; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; background: #fbbf24; color: #92400e; text-transform: uppercase; letter-spacing: 0.03em; animation: pulse-badge 2s ease-in-out infinite; }
+                .cal-badge-reviewed { flex-shrink: 0; font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 8px; background: rgba(255,255,255,0.25); color: rgba(255,255,255,0.85); }
+                @keyframes pulse-badge { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
             `}</style>
 
             <Calendar
@@ -337,7 +360,17 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                     };
                 }}
                 components={{
-                    toolbar: CustomToolbar
+                    toolbar: CustomToolbar,
+                    event: ({ event }: { event: CalendarEvent }) => (
+                        <div className="cal-event-wrapper">
+                            <span className="cal-event-title">{event.title}</span>
+                            {event.created_by_ai && (
+                                event.is_reviewed
+                                    ? <span className="cal-badge-reviewed">İncelendi</span>
+                                    : <span className="cal-badge-new">Yeni</span>
+                            )}
+                        </div>
+                    )
                 }}
                 messages={{
                     next: "İleri",

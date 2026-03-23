@@ -42,6 +42,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const [counts, setCounts] = useState({ all: 0, whatsapp: 0, instagram: 0 });
     const [notificationCount, setNotificationCount] = useState(0);
     const [unreadTicketsCount, setUnreadTicketsCount] = useState(0);
+    const [newCalendarCount, setNewCalendarCount] = useState(0);
     const prevNotifCountRef = useRef(0);
     const userInteractedRef = useRef(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -220,6 +221,46 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
             };
         }
     }, [tenantId, role]);
+
+    // Calendar unreviewed count
+    useEffect(() => {
+        if (!tenantId) return;
+        const supabase = createClient();
+
+        const fetchCalendarCount = async () => {
+            const { count } = await supabase
+                .from('calendar_events')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .eq('is_reviewed', false);
+            setNewCalendarCount(count || 0);
+        };
+
+        fetchCalendarCount();
+
+        const calChannel = supabase
+            .channel(`sidebar-calendar:${tenantId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'calendar_events',
+                    filter: `tenant_id=eq.${tenantId}`
+                },
+                () => {
+                    fetchCalendarCount();
+                }
+            )
+            .subscribe();
+
+        const calInterval = setInterval(fetchCalendarCount, 15000);
+
+        return () => {
+            supabase.removeChannel(calChannel);
+            clearInterval(calInterval);
+        };
+    }, [tenantId]);
 
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -475,6 +516,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     isActive={pathname.startsWith("/panel/calendar")}
                     gradient="bg-sky-500 shadow-sky-500/20"
                     iconColor="text-white"
+                    count={newCalendarCount}
                 />
                 <TenantSidebarItem
                     href="/panel/customers"
