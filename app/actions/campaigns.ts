@@ -96,11 +96,35 @@ export async function createCampaign(data: {
         await supabase.from('campaigns').update({ total_target: logsToInsert.length }).eq('id', campaign.id);
 
     } else if (data.audienceType === 'customers') {
-        // Önce sadece temel alanlarla dene (segment/tags henüz DB'de olmayabilir)
-        const { data: customers, error: customerError } = await supabase
+        // Build query with filters
+        let customerQuery = supabase
             .from('customers')
             .select('id, phone, full_name')
             .eq('tenant_id', data.tenantId);
+
+        // Apply segment filter
+        if (data.customerFilters?.segment && data.customerFilters.segment !== 'all') {
+            customerQuery = customerQuery.eq('segment', data.customerFilters.segment);
+        }
+
+        // Apply tag filter (PostgreSQL jsonb array contains)
+        if (data.customerFilters?.tag && data.customerFilters.tag !== 'all' && data.customerFilters.tag !== '') {
+            customerQuery = customerQuery.contains('tags', [data.customerFilters.tag]);
+        }
+
+        // Apply date range filter
+        if (data.customerFilters?.dateRange === 'today') {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            customerQuery = customerQuery.gte('created_at', today.toISOString());
+        } else if (data.customerFilters?.dateRange === 'this_week') {
+            const d = new Date(); d.setDate(d.getDate() - 7);
+            customerQuery = customerQuery.gte('created_at', d.toISOString());
+        } else if (data.customerFilters?.dateRange === 'this_month') {
+            const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0);
+            customerQuery = customerQuery.gte('created_at', d.toISOString());
+        }
+
+        const { data: customers, error: customerError } = await customerQuery;
 
         if (customerError) {
             console.error("Customer fetch error:", customerError);
@@ -597,4 +621,232 @@ export async function deleteCampaign(campaignId: string, tenantId: string) {
 
     revalidatePath("/panel/settings");
     return { success: true };
+}
+
+// =====================================================================
+// SINGLE CUSTOMER TEMPLATE SEND (Müşteri Detay Sayfasından Tekli Gönderim)
+// =====================================================================
+export async function sendTemplateToCustomer(data: {
+    tenantId: string;
+    customerId: string;
+    customerPhone: string;
+    customerName: string;
+    templateName: string;
+    templateLanguage: string;
+    variableValues: Record<string, string>; // key → value pairs
+}) {
+    const supabase = await createClient();
+
+    // 1. Yetki kontrolü
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Oturum bulunamadı." };
+
+    const { data: member } = await supabase
+        .from('tenant_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('tenant_id', data.tenantId)
+        .single();
+
+    if (!member) return { success: false, error: "Yetkisiz işlem." };
+
+    // 2. WABA bağlantı bilgilerini çek
+    const { data: connection } = await supabase
+        .from('channel_connections')
+        .select('access_token_encrypted, meta_identifiers')
+        .eq('tenant_id', data.tenantId)
+        .eq('channel', 'whatsapp')
+        .eq('status', 'connected')
+        .single();
+
+    const waAccessToken = connection?.access_token_encrypted;
+    const waPhoneNumberId = (connection?.meta_identifiers as any)?.phone_number_id;
+    const wabaId = (connection?.meta_identifiers as any)?.waba_id;
+
+    if (!waAccessToken || !waPhoneNumberId) {
+        return { success: false, error: "WhatsApp bağlantısı bulunamadı veya eksik." };
+    }
+
+    const phoneNumber = normalizePhoneForWhatsApp(data.customerPhone);
+    if (!phoneNumber || phoneNumber.length < 7) {
+        return { success: false, error: "Geçersiz telefon numarası." };
+    }
+
+    // 3. Medya header kontrol
+    const { data: templateAttachment } = await supabase
+        .from('whatsapp_template_attachments')
+        .select('file_url, file_type')
+        .eq('tenant_id', data.tenantId)
+        .eq('template_name', data.templateName)
+        .eq('language', data.templateLanguage)
+        .single();
+
+    let headerMediaId: string | null = null;
+    let headerMediaType: string | null = null;
+
+    if (templateAttachment?.file_url) {
+        headerMediaType = (templateAttachment.file_type || 'IMAGE').toLowerCase();
+        try {
+            const mediaResponse = await fetch(templateAttachment.file_url);
+            if (mediaResponse.ok) {
+                const blob = await mediaResponse.blob();
+                const formData = new FormData();
+                formData.append("messaging_product", "whatsapp");
+                formData.append("file", blob, templateAttachment.file_url.split('/').pop() || "media_file");
+
+                const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${waPhoneNumberId}/media`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${waAccessToken}` },
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.id) {
+                    headerMediaId = uploadData.id;
+                }
+            }
+        } catch (mediaErr: any) {
+            console.error("[SingleSend] Media upload error:", mediaErr.message);
+        }
+    }
+
+    // 4. Template body değişkenlerini Meta API'den çek
+    let templateBodyVars: string[] = [];
+    if (wabaId) {
+        try {
+            const tplRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/message_templates?name=${data.templateName}`, {
+                headers: { "Authorization": `Bearer ${waAccessToken}` }
+            });
+            const tplData = await tplRes.json();
+            const tpl = tplData.data?.find((t: any) => t.name === data.templateName && t.language === data.templateLanguage);
+            if (tpl) {
+                const bodyComp = tpl.components?.find((c: any) => c.type === "BODY");
+                if (bodyComp?.text) {
+                    const matches = bodyComp.text.match(/\{\{([^}]+)\}\}/g);
+                    if (matches) {
+                        templateBodyVars = [...new Set(matches.map((m: string) => m.replace(/[{}]/g, "")))] as string[];
+                    }
+                }
+            }
+        } catch (e: any) {
+            console.error("[SingleSend] Template vars fetch error:", e.message);
+        }
+    }
+
+    // 5. Components oluştur
+    let components: any[] = [];
+
+    // Body parametreleri
+    const varKeys = Object.keys(data.variableValues);
+    let varsToSend: string[] = varKeys.length > 0 ? [...varKeys] : [...templateBodyVars];
+
+    varsToSend.sort((a, b) => {
+        const numA = parseInt(a); const numB = parseInt(b);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        if (!isNaN(numA)) return -1;
+        if (!isNaN(numB)) return 1;
+        return a.localeCompare(b);
+    });
+
+    if (varsToSend.length > 0) {
+        const parameters = varsToSend.map(key => {
+            const textValue = data.variableValues[key] || " ";
+            const param: any = { type: "text", text: String(textValue).trim() || " " };
+            const isNumeric = !isNaN(parseInt(key));
+            if (!isNumeric) {
+                param.parameter_name = key;
+            }
+            return param;
+        });
+        components.push({ type: "body", parameters });
+    }
+
+    // Header medya
+    if (headerMediaId && headerMediaType) {
+        const mediaParam: any = { type: headerMediaType };
+        mediaParam[headerMediaType] = { id: headerMediaId };
+        components.unshift({ type: "header", parameters: [mediaParam] });
+    } else if (templateAttachment?.file_url && headerMediaType) {
+        const mediaParam: any = { type: headerMediaType };
+        mediaParam[headerMediaType] = { link: templateAttachment.file_url };
+        components.unshift({ type: "header", parameters: [mediaParam] });
+    }
+
+    // 6. WhatsApp API'ye gönder
+    const payload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "template",
+        template: {
+            name: data.templateName,
+            language: { code: data.templateLanguage },
+            components: components.length > 0 ? components : undefined
+        }
+    };
+
+    try {
+        const url = `https://graph.facebook.com/v21.0/${waPhoneNumberId}/messages`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${waAccessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            const messageId = result.messages?.[0]?.id;
+
+            // Log kaydı oluştur
+            await supabase.from('customer_campaign_logs').insert({
+                tenant_id: data.tenantId,
+                campaign_id: null,
+                customer_id: data.customerId,
+                phone_number: phoneNumber,
+                status: 'sent',
+                meta_message_id: messageId,
+                sent_at: new Date().toISOString(),
+                row_metadata: {
+                    name: data.customerName,
+                    full_name: data.customerName,
+                    phone: data.customerPhone,
+                    source: 'direct_send',
+                    template_name: data.templateName,
+                    template_language: data.templateLanguage
+                }
+            });
+
+            console.log(`[SingleSend] Sent template "${data.templateName}" to ${phoneNumber}, msgId: ${messageId}`);
+            return { success: true, messageId };
+        } else {
+            const errorMsg = result.error?.message || JSON.stringify(result.error) || "Bilinmeyen hata";
+
+            // Hata logu
+            await supabase.from('customer_campaign_logs').insert({
+                tenant_id: data.tenantId,
+                campaign_id: null,
+                customer_id: data.customerId,
+                phone_number: phoneNumber,
+                status: 'failed',
+                error_message: errorMsg,
+                failed_at: new Date().toISOString(),
+                row_metadata: {
+                    name: data.customerName,
+                    full_name: data.customerName,
+                    phone: data.customerPhone,
+                    source: 'direct_send',
+                    template_name: data.templateName,
+                    template_language: data.templateLanguage
+                }
+            });
+
+            console.error(`[SingleSend] Failed for ${phoneNumber}:`, errorMsg);
+            return { success: false, error: errorMsg };
+        }
+    } catch (err: any) {
+        console.error("[SingleSend] Exception:", err.message);
+        return { success: false, error: err.message };
+    }
 }

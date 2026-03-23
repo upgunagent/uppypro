@@ -58,6 +58,10 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
     const [customerPreview, setCustomerPreview] = useState<any[]>([]);
     const [customersLoading, setCustomersLoading] = useState(false);
 
+    // Available segments & tags from DB
+    const [availableSegments, setAvailableSegments] = useState<string[]>([]);
+    const [availableTags, setAvailableTags] = useState<string[]>([]);
+
     // Saved lists state
     const [savedLists, setSavedLists] = useState<any[]>([]);
     const [selectedSavedListId, setSelectedSavedListId] = useState<string>("");
@@ -104,9 +108,15 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
         const supabase = createClient();
         let query = supabase
             .from('customers')
-            .select('id, full_name, phone, created_at')
+            .select('id, full_name, phone, created_at, segment, tags')
             .eq('tenant_id', tenantId);
 
+        // Segment filtresi
+        if (customerFilters.segment && customerFilters.segment !== 'all') {
+            query = query.eq('segment', customerFilters.segment);
+        }
+
+        // Tarih filtresi
         if (customerFilters.dateRange === 'today') {
             const today = new Date(); today.setHours(0, 0, 0, 0);
             query = query.gte('created_at', today.toISOString());
@@ -118,6 +128,11 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
             query = query.gte('created_at', d.toISOString());
         }
 
+        // Etiket filtresi: PostgreSQL jsonb array contains
+        if (customerFilters.tag && customerFilters.tag !== 'all') {
+            query = query.contains('tags', [customerFilters.tag]);
+        }
+
         const { data } = await query.order('created_at', { ascending: false });
         setCustomerPreview(data || []);
         setCustomersLoading(false);
@@ -126,6 +141,33 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
     useEffect(() => {
         if (step === 2 && audienceType === 'customers') fetchCustomerPreview();
     }, [step, audienceType, fetchCustomerPreview]);
+
+    // Fetch available segments & tags when entering step 2
+    useEffect(() => {
+        if (step === 2) {
+            const fetchSegmentsAndTags = async () => {
+                const supabase = createClient();
+                const { data: customers } = await supabase
+                    .from('customers')
+                    .select('segment, tags')
+                    .eq('tenant_id', tenantId);
+
+                if (customers) {
+                    const segments = new Set<string>();
+                    const tags = new Set<string>();
+                    customers.forEach(c => {
+                        if (c.segment && c.segment.trim()) segments.add(c.segment.trim());
+                        if (c.tags && Array.isArray(c.tags)) {
+                            c.tags.forEach((t: string) => { if (t && t.trim()) tags.add(t.trim()); });
+                        }
+                    });
+                    setAvailableSegments(Array.from(segments).sort());
+                    setAvailableTags(Array.from(tags).sort());
+                }
+            };
+            fetchSegmentsAndTags();
+        }
+    }, [step, tenantId]);
 
     // Fetch saved lists
     useEffect(() => {
@@ -324,12 +366,20 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                 {step === 1 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="space-y-2 max-w-md">
-                            <Label className="text-base font-semibold">Kampanya Adı</Label>
+                            <Label className="text-base font-semibold">Kampanya Adı <span className="text-red-500">*</span></Label>
                             <Input
                                 placeholder="Örn: 2026 Yaz İndirimi Duyurusu"
                                 value={campaignName}
                                 onChange={(e) => setCampaignName(e.target.value)}
+                                className={`transition-colors ${
+                                    campaignName.trim()
+                                        ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20'
+                                        : 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                                }`}
                             />
+                            {!campaignName.trim() && (
+                                <p className="text-xs text-red-500 mt-1">Kampanya adı zorunludur.</p>
+                            )}
                         </div>
 
                         <div className="space-y-4">
@@ -471,16 +521,23 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
                                                 <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="all">Tüm Segmentler</SelectItem>
-                                                    <SelectItem value="VIP">VIP</SelectItem>
-                                                    <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                                                    <SelectItem value="Kurumsal">Kurumsal</SelectItem>
-                                                    <SelectItem value="Bireysel">Bireysel</SelectItem>
+                                                    {availableSegments.map(seg => (
+                                                        <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-slate-600">Etiket (Tag)</Label>
-                                            <Input value={customerFilters.tag} onChange={(e) => setCustomerFilters({ ...customerFilters, tag: e.target.value })} placeholder="Örn: yeni_kampanya" className="bg-white" />
+                                            <Select value={customerFilters.tag || 'all'} onValueChange={(v) => setCustomerFilters({ ...customerFilters, tag: v === 'all' ? '' : v })}>
+                                                <SelectTrigger className="bg-white"><SelectValue placeholder="Tüm Etiketler" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">Tüm Etiketler</SelectItem>
+                                                    {availableTags.map(tag => (
+                                                        <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-slate-600">Kayıt Tarihi</Label>
@@ -728,7 +785,7 @@ export function CampaignBuilder({ tenantId }: CampaignBuilderProps) {
 
                 {step < 4 ? (
                     <Button className='bg-orange-600 hover:bg-orange-700 text-white border-0' onClick={handleNext}
-                        disabled={(step === 1 && (!selectedTemplate || isMissingMedia)) || (step === 3 && audienceType === 'excel' && !selectedPhoneColumn)}
+                        disabled={(step === 1 && (!selectedTemplate || isMissingMedia || !campaignName.trim())) || (step === 3 && audienceType === 'excel' && !selectedPhoneColumn)}
                     >
                         İleri
                         <ChevronRight className="w-4 h-4 ml-2" />

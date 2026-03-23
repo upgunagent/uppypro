@@ -725,170 +725,215 @@ export async function POST(request: Request) {
                 .update({ updated_at: new Date().toISOString() })
                 .eq("id", conversation.id);
 
-            // 4. n8n Trigger Logic
-            const { data: settings } = await supabaseAdmin
-                .from("agent_settings")
-                .select("*")
-                .eq("tenant_id", tenantId)
-                .single();
-
-            // RE-FETCH FRESH MODE: Ensure we don't trigger AI if user just switched to HUMAN
-            const { data: freshConv } = await supabaseAdmin
-                .from("conversations")
-                .select("mode")
-                .eq("id", conversation.id)
-                .single();
-
-            const currentRealMode = freshConv?.mode || conversation.mode;
-
-            let n8nStatus = "SKIPPED";
-            let skipReason = "";
-
-            if (!settings?.ai_operational_enabled) skipReason = "AI Disabled";
-            else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
-            else if (currentRealMode !== 'BOT') skipReason = `Mode is ${currentRealMode}`;
-
-            if (!skipReason) {
-                try {
-                    // Convert image to base64 for AI vision analysis (only for images under 3MB)
-                    let imageBase64: string | null = null;
-                    let imageMimeType: string | null = null;
-                    const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
-
-                    if (eventData.media_url && eventData.type === 'image') {
-                        try {
-                            const imgRes = await fetch(eventData.media_url);
-                            if (imgRes.ok) {
-                                const buffer = await imgRes.arrayBuffer();
-                                if (buffer.byteLength <= MAX_IMAGE_SIZE) {
-                                    imageBase64 = Buffer.from(buffer).toString('base64');
-                                    imageMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
-                                    console.log(`[Webhook] Image converted to base64 (${(buffer.byteLength / 1024).toFixed(0)}KB)`);
-                                } else {
-                                    console.log(`[Webhook] Image too large for base64 (${(buffer.byteLength / 1024 / 1024).toFixed(1)}MB), skipping vision`);
-                                }
-                            }
-                        } catch (imgErr) {
-                            console.error('[Webhook] Failed to convert image to base64:', imgErr);
-                        }
-                    }
-
-                    // --- FETCH CUSTOMER INFO FOR AI CONTEXT ---
-                    let customerInfo: any = null;
-                    if (conversation.customer_id) {
-                        try {
-                            const { data: customer } = await supabaseAdmin
-                                .from("customers")
-                                .select("id, full_name, phone, email, instagram_username, company_name")
-                                .eq("id", conversation.customer_id)
-                                .single();
-
-                            if (customer) {
-                                customerInfo = {
-                                    is_registered: true,
-                                    customer_id: customer.id,
-                                    full_name: customer.full_name || '',
-                                    phone: customer.phone || '',
-                                    email: customer.email || '',
-                                    instagram_username: customer.instagram_username || '',
-                                    company_name: customer.company_name || ''
-                                };
-                                console.log(`[Webhook] Customer info loaded for AI: ${customer.full_name}`);
-                            }
-                        } catch (custErr) {
-                            console.error('[Webhook] Failed to fetch customer info:', custErr);
-                        }
-                    }
-
-                    const response = await fetch(settings.n8n_webhook_url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: eventData.text,
-                            conversation_id: conversation.id,
-                            tenant_id: tenantId,
-                            sender_id: eventData.sender_id,
-                            sender_name: eventData.sender_name || handleToUse || '',
-                            channel: channel,
-                            // Send customer handle for Instagram username tracking
-                            ...(channel === 'instagram' ? { instagram_username: handleToUse } : {}),
-                            // Send media URL to n8n for reference
-                            ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {}),
-                            // Send base64 image data for AI vision (Gemini can directly analyze this)
-                            ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}),
-                            // Send customer info for AI to recognize returning customers
-                            ...(customerInfo ? { customer_info: customerInfo } : {})
-                        })
-                    });
-
-                    if (response.ok) {
-                        n8nStatus = "SUCCESS";
-
-                        // --- HANDLE n8n RESPONSE ---
-                        try {
-                            const resJson = await response.json();
-                            let replyText = "";
-
-                            if (Array.isArray(resJson)) {
-                                replyText = resJson[0]?.output || resJson[0]?.text || resJson[0]?.message;
-                            } else {
-                                replyText = resJson.output || resJson.text || resJson.message;
-                            }
-
-                            // CHECK FOR SPAM / DEFAULT RESPONSE
-                            if (replyText && replyText !== "Workflow was started") {
-                                console.log(`[n8n] Received Reply: ${replyText.substring(0, 50)}...`);
-
-                                await supabaseAdmin
-                                    .from("messages")
-                                    .insert({
-                                        tenant_id: tenantId,
-                                        conversation_id: conversation.id,
-                                        direction: 'OUT',
-                                        sender: 'BOT',
-                                        text: replyText, // Verified content
-                                        message_type: 'text',
-                                        is_read: true
-                                    });
-
-                                const { sendToChannel } = await import("@/lib/meta");
-                                await sendToChannel(
-                                    tenantId,
-                                    channel as "whatsapp" | "instagram",
-                                    eventData.sender_id,
-                                    replyText
-                                );
-                            } else if (replyText === "Workflow was started") {
-                                console.warn("[n8n] Workflow returned default 'Workflow was started' message. Ignoring.");
-                                n8nStatus = "SUCCESS_BUT_NO_OUTPUT_CONFIGURED";
-                            }
-                        } catch (parseError) {
-                            console.warn("[n8n] Could not parse response JSON", parseError);
-                        }
-                    } else {
-                        n8nStatus = `FAILED (${response.status})`;
-                    }
-                } catch (e: any) {
-                    n8nStatus = `ERROR: ${e.message}`;
-                }
-            } else {
-                n8nStatus = `SKIPPED: ${skipReason}`;
-            }
-
-            await supabaseAdmin.from("webhook_logs").insert({
-                body: {
-                    event: "n8n_trigger_attempt",
-                    status: n8nStatus,
-                    tenant_id: tenantId,
-                    settings: settings,
-                    conversation_mode: conversation?.mode
-                },
-                error_message: n8nStatus
-            });
+            // 4. n8n Trigger Logic — Fire-and-Forget (don't block Meta's 200 OK)
+            // All AI processing happens in background so Meta receives 200 OK immediately
+            processAIResponseInBackground(
+                supabaseAdmin,
+                tenantId,
+                conversation,
+                eventData,
+                channel,
+                handleToUse,
+            );
         }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 200 });
+    }
+}
+
+/**
+ * Background AI processing — runs after 200 OK is returned to Meta.
+ * This prevents Meta webhook timeouts (20s limit) when n8n/AI takes 5-15s to respond.
+ */
+async function processAIResponseInBackground(
+    supabaseAdmin: any,
+    tenantId: string,
+    conversation: any,
+    eventData: {
+        text: string;
+        sender_id: string;
+        sender_name: string | null;
+        media_url: string | null;
+        media_type: string | null;
+        type: string;
+    },
+    channel: 'whatsapp' | 'instagram',
+    handleToUse: string,
+) {
+    try {
+        const { data: settings } = await supabaseAdmin
+            .from("agent_settings")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .single();
+
+        // RE-FETCH FRESH MODE: Ensure we don't trigger AI if user just switched to HUMAN
+        const { data: freshConv } = await supabaseAdmin
+            .from("conversations")
+            .select("mode")
+            .eq("id", conversation.id)
+            .single();
+
+        const currentRealMode = freshConv?.mode || conversation.mode;
+
+        let n8nStatus = "SKIPPED";
+        let skipReason = "";
+
+        if (!settings?.ai_operational_enabled) skipReason = "AI Disabled";
+        else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
+        else if (currentRealMode !== 'BOT') skipReason = `Mode is ${currentRealMode}`;
+
+        if (!skipReason) {
+            try {
+                // Convert image to base64 for AI vision analysis (only for images under 3MB)
+                let imageBase64: string | null = null;
+                let imageMimeType: string | null = null;
+                const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
+
+                if (eventData.media_url && eventData.type === 'image') {
+                    try {
+                        const imgRes = await fetch(eventData.media_url);
+                        if (imgRes.ok) {
+                            const buffer = await imgRes.arrayBuffer();
+                            if (buffer.byteLength <= MAX_IMAGE_SIZE) {
+                                imageBase64 = Buffer.from(buffer).toString('base64');
+                                imageMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                                console.log(`[Webhook] Image converted to base64 (${(buffer.byteLength / 1024).toFixed(0)}KB)`);
+                            } else {
+                                console.log(`[Webhook] Image too large for base64 (${(buffer.byteLength / 1024 / 1024).toFixed(1)}MB), skipping vision`);
+                            }
+                        }
+                    } catch (imgErr) {
+                        console.error('[Webhook] Failed to convert image to base64:', imgErr);
+                    }
+                }
+
+                // --- FETCH CUSTOMER INFO FOR AI CONTEXT ---
+                let customerInfo: any = null;
+                if (conversation.customer_id) {
+                    try {
+                        const { data: customer } = await supabaseAdmin
+                            .from("customers")
+                            .select("id, full_name, phone, email, instagram_username, company_name")
+                            .eq("id", conversation.customer_id)
+                            .single();
+
+                        if (customer) {
+                            customerInfo = {
+                                is_registered: true,
+                                customer_id: customer.id,
+                                full_name: customer.full_name || '',
+                                phone: customer.phone || '',
+                                email: customer.email || '',
+                                instagram_username: customer.instagram_username || '',
+                                company_name: customer.company_name || ''
+                            };
+                            console.log(`[Webhook] Customer info loaded for AI: ${customer.full_name}`);
+                        }
+                    } catch (custErr) {
+                        console.error('[Webhook] Failed to fetch customer info:', custErr);
+                    }
+                }
+
+                const response = await fetch(settings.n8n_webhook_url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: eventData.text,
+                        conversation_id: conversation.id,
+                        tenant_id: tenantId,
+                        sender_id: eventData.sender_id,
+                        sender_name: eventData.sender_name || handleToUse || '',
+                        channel: channel,
+                        // Send customer handle for Instagram username tracking
+                        ...(channel === 'instagram' ? { instagram_username: handleToUse } : {}),
+                        // Send media URL to n8n for reference
+                        ...(eventData.media_url ? { image_url: eventData.media_url, media_type: eventData.type } : {}),
+                        // Send base64 image data for AI vision (Gemini can directly analyze this)
+                        ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}),
+                        // Send customer info for AI to recognize returning customers
+                        ...(customerInfo ? { customer_info: customerInfo } : {})
+                    })
+                });
+
+                if (response.ok) {
+                    n8nStatus = "SUCCESS";
+
+                    // --- HANDLE n8n RESPONSE ---
+                    try {
+                        const resJson = await response.json();
+                        let replyText = "";
+
+                        if (Array.isArray(resJson)) {
+                            replyText = resJson[0]?.output || resJson[0]?.text || resJson[0]?.message;
+                        } else {
+                            replyText = resJson.output || resJson.text || resJson.message;
+                        }
+
+                        // CHECK FOR SPAM / DEFAULT RESPONSE
+                        if (replyText && replyText !== "Workflow was started") {
+                            console.log(`[n8n] Received Reply: ${replyText.substring(0, 50)}...`);
+
+                            await supabaseAdmin
+                                .from("messages")
+                                .insert({
+                                    tenant_id: tenantId,
+                                    conversation_id: conversation.id,
+                                    direction: 'OUT',
+                                    sender: 'BOT',
+                                    text: replyText, // Verified content
+                                    message_type: 'text',
+                                    is_read: true
+                                });
+
+                            const { sendToChannel } = await import("@/lib/meta");
+                            await sendToChannel(
+                                tenantId,
+                                channel as "whatsapp" | "instagram",
+                                eventData.sender_id,
+                                replyText
+                            );
+                        } else if (replyText === "Workflow was started") {
+                            console.warn("[n8n] Workflow returned default 'Workflow was started' message. Ignoring.");
+                            n8nStatus = "SUCCESS_BUT_NO_OUTPUT_CONFIGURED";
+                        }
+                    } catch (parseError) {
+                        console.warn("[n8n] Could not parse response JSON", parseError);
+                    }
+                } else {
+                    n8nStatus = `FAILED (${response.status})`;
+                }
+            } catch (e: any) {
+                n8nStatus = `ERROR: ${e.message}`;
+            }
+        } else {
+            n8nStatus = `SKIPPED: ${skipReason}`;
+        }
+
+        await supabaseAdmin.from("webhook_logs").insert({
+            body: {
+                event: "n8n_trigger_attempt",
+                status: n8nStatus,
+                tenant_id: tenantId,
+                settings: settings,
+                conversation_mode: conversation?.mode
+            },
+            error_message: n8nStatus
+        });
+    } catch (bgError: any) {
+        console.error("[Webhook] Background AI processing error:", bgError);
+        try {
+            await supabaseAdmin.from("webhook_logs").insert({
+                body: {
+                    event: "n8n_background_error",
+                    error: bgError.message,
+                    tenant_id: tenantId,
+                    conversation_id: conversation?.id
+                },
+                error_message: bgError.message
+            });
+        } catch (_) { /* ignore logging errors */ }
     }
 }

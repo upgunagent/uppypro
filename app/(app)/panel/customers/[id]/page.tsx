@@ -9,16 +9,38 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Building2, User, Plus, Trash2, ChevronDown, CheckCircle2, Loader2, MessageCircle, Instagram, History } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Save, Building2, User, Plus, Trash2, ChevronDown, CheckCircle2, Loader2, MessageCircle, Instagram, History, Check, CheckCheck, AlertCircle, Clock, Send, FileText, Mail, X, Tag, LayoutTemplate, ChevronRight, ChevronLeft, Image as ImageIcon, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { clsx } from "clsx";
 import { fetchInstagramProfile } from "@/app/actions/crm";
+import { getWhatsAppTemplates } from "@/app/actions/whatsapp-templates";
+import { sendTemplateToCustomer } from "@/app/actions/campaigns";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Note {
     id: string;
     note: string;
     created_at: string;
+}
+
+interface CampaignLog {
+    id: string;
+    campaign_id: string;
+    phone_number: string;
+    meta_message_id: string | null;
+    status: string;
+    error_message: string | null;
+    sent_at: string | null;
+    delivered_at: string | null;
+    read_at: string | null;
+    failed_at: string | null;
+    created_at: string;
+    campaign_name: string;
+    campaign_status: string;
+    template_name: string;
+    template_language: string;
 }
 
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,16 +74,165 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     const [noteLoading, setNoteLoading] = useState(false);
     const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
+    // Campaign Logs State
+    const [campaignLogs, setCampaignLogs] = useState<CampaignLog[]>([]);
+    const [campaignLogsLoading, setCampaignLogsLoading] = useState(false);
+
+    // Segment & Tag State
+    const [availableSegments, setAvailableSegments] = useState<string[]>([]);
+    const [availableTags, setAvailableTags] = useState<string[]>([]);
+    const [newTagInput, setNewTagInput] = useState("");
+    const [showSegmentDropdown, setShowSegmentDropdown] = useState(false);
+    const [segmentSearch, setSegmentSearch] = useState("");
+
+    // Template Send State
+    const [sendStep, setSendStep] = useState(1);
+    const [sendTemplates, setSendTemplates] = useState<any[]>([]);
+    const [sendTemplatesLoading, setSendTemplatesLoading] = useState(false);
+    const [selectedSendTemplate, setSelectedSendTemplate] = useState<string>("");
+    const [templateVarValues, setTemplateVarValues] = useState<Record<string, string>>({});
+    const [isSending, setIsSending] = useState(false);
+    const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [tenantId, setTenantId] = useState<string>("");
+    const { toast } = useToast();
+
     useEffect(() => {
         params.then(p => {
             setId(p.id);
             if (p.id !== 'new') {
                 fetchCustomer(p.id);
+                fetchCampaignLogs(p.id);
+                fetchAvailableSegmentsAndTags();
             } else {
                 setLoading(false);
+                fetchAvailableSegmentsAndTags();
             }
         });
     }, [params]);
+
+    const fetchAvailableSegmentsAndTags = async () => {
+        const supabase = createClient();
+        // Get current user's tenant
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: member } = await supabase
+            .from('tenant_members')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .single();
+        if (!member) return;
+
+        // Save tenantId for template sending
+        setTenantId(member.tenant_id);
+
+        // Fetch all segments and tags from tenant's customers
+        const { data: customers } = await supabase
+            .from('customers')
+            .select('segment, tags')
+            .eq('tenant_id', member.tenant_id);
+
+        if (customers) {
+            const segments = new Set<string>();
+            const tags = new Set<string>();
+            customers.forEach(c => {
+                if (c.segment && c.segment.trim()) segments.add(c.segment.trim());
+                if (c.tags && Array.isArray(c.tags)) {
+                    c.tags.forEach((t: string) => { if (t && t.trim()) tags.add(t.trim()); });
+                }
+            });
+            setAvailableSegments(Array.from(segments).sort());
+            setAvailableTags(Array.from(tags).sort());
+        }
+
+        // Fetch approved templates for template send tab
+        fetchSendTemplates(member.tenant_id);
+    };
+
+    const fetchSendTemplates = async (tid: string) => {
+        setSendTemplatesLoading(true);
+        const res = await getWhatsAppTemplates(tid);
+        if (res.success && res.data) {
+            const approved = res.data.filter((tpl: any) => tpl.status === "APPROVED");
+            setSendTemplates(approved);
+        }
+        setSendTemplatesLoading(false);
+    };
+
+    const handleAddTag = (tag: string) => {
+        const trimmed = tag.trim();
+        if (!trimmed) return;
+        if (formData.tags.includes(trimmed)) return;
+        setFormData(prev => ({ ...prev, tags: [...prev.tags, trimmed] }));
+        setNewTagInput("");
+    };
+
+    const handleRemoveTag = (tag: string) => {
+        setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
+    };
+
+    const fetchCampaignLogs = async (customerId: string) => {
+        setCampaignLogsLoading(true);
+        const supabase = createClient();
+        try {
+            // Fetch campaign logs for this customer, with campaign info (left join for direct sends)
+            const { data: logs, error } = await supabase
+                .from('customer_campaign_logs')
+                .select(`
+                    id,
+                    campaign_id,
+                    phone_number,
+                    meta_message_id,
+                    status,
+                    error_message,
+                    sent_at,
+                    delivered_at,
+                    read_at,
+                    failed_at,
+                    created_at,
+                    row_metadata,
+                    campaigns (
+                        name,
+                        status,
+                        template_name,
+                        template_language
+                    )
+                `)
+                .eq('customer_id', customerId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching campaign logs:', error);
+                setCampaignLogs([]);
+                return;
+            }
+
+            if (logs) {
+                const mapped: CampaignLog[] = logs.map((log: any) => ({
+                    id: log.id,
+                    campaign_id: log.campaign_id,
+                    phone_number: log.phone_number,
+                    meta_message_id: log.meta_message_id,
+                    status: log.status,
+                    error_message: log.error_message,
+                    sent_at: log.sent_at,
+                    delivered_at: log.delivered_at,
+                    read_at: log.read_at,
+                    failed_at: log.failed_at,
+                    created_at: log.created_at,
+                    campaign_name: log.campaigns?.name || (log.row_metadata?.source === 'direct_send' ? 'Tekli Şablon Gönderimi' : 'İsimsiz Kampanya'),
+                    campaign_status: log.campaigns?.status || (log.row_metadata?.source === 'direct_send' ? 'DIRECT' : 'UNKNOWN'),
+                    template_name: log.campaigns?.template_name || log.row_metadata?.template_name || '-',
+                    template_language: log.campaigns?.template_language || log.row_metadata?.template_language || 'tr',
+                }));
+                setCampaignLogs(mapped);
+            }
+        } catch (err) {
+            console.error('Error fetching campaign logs:', err);
+            setCampaignLogs([]);
+        } finally {
+            setCampaignLogsLoading(false);
+        }
+    };
 
     const fetchCustomer = async (customerId: string) => {
         const supabase = createClient();
@@ -340,6 +511,12 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                         Profil Bilgileri
                     </TabsTrigger>
                     {id !== 'new' && (
+                        <TabsTrigger value="send_template" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm px-6">
+                            <Send className="w-4 h-4 mr-2" />
+                            Şablon Gönder
+                        </TabsTrigger>
+                    )}
+                    {id !== 'new' && (
                         <TabsTrigger value="campaigns" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm px-6">
                             <History className="w-4 h-4 mr-2" />
                             Kampanya Geçmişi
@@ -433,21 +610,122 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                                         {/* Yeni Eklenen Alanlar: Segment ve Etiketler */}
                                         <div className="space-y-2.5">
                                             <Label className="text-slate-600 font-medium">Segment</Label>
-                                            <Input
-                                                value={formData.segment}
-                                                onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
-                                                placeholder="Örn: VIP, Potansiyel, Kurumsal..."
-                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
-                                            />
+                                            <Select
+                                                value={formData.segment || "__none__"}
+                                                onValueChange={(val) => {
+                                                    if (val === "__custom__") {
+                                                        // Trigger custom input
+                                                        const custom = prompt("Yeni segment adı giriniz:");
+                                                        if (custom && custom.trim()) {
+                                                            setFormData(prev => ({ ...prev, segment: custom.trim() }));
+                                                        }
+                                                    } else if (val === "__none__") {
+                                                        setFormData(prev => ({ ...prev, segment: "" }));
+                                                    } else {
+                                                        setFormData(prev => ({ ...prev, segment: val }));
+                                                    }
+                                                }}
+                                            >
+                                                <SelectTrigger className="h-12 rounded-xl border-slate-200 focus:ring-orange-500/20">
+                                                    <SelectValue placeholder="Segment seçiniz...">
+                                                        {formData.segment || "Segment seçiniz..."}
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="__none__">
+                                                        <span className="text-slate-400">Segment yok</span>
+                                                    </SelectItem>
+                                                    {availableSegments.map(seg => (
+                                                        <SelectItem key={seg} value={seg}>
+                                                            {seg}
+                                                        </SelectItem>
+                                                    ))}
+                                                    {formData.segment && !availableSegments.includes(formData.segment) && (
+                                                        <SelectItem value={formData.segment}>
+                                                            {formData.segment}
+                                                        </SelectItem>
+                                                    )}
+                                                    <SelectItem value="__custom__">
+                                                        <span className="text-orange-600 font-medium flex items-center gap-1">
+                                                            <Plus className="w-3 h-3" /> Yeni segment ekle...
+                                                        </span>
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                        <div className="space-y-2.5">
-                                            <Label className="text-slate-600 font-medium">Etiketler (Virgülle Ayırın)</Label>
-                                            <Input
-                                                value={formData.tags.join(", ")}
-                                                onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
-                                                placeholder="Örn: yeni_kayıt, kampanyaya_katildi"
-                                                className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20 text-sm"
-                                            />
+                                        <div className="space-y-2.5 md:col-span-2">
+                                            <Label className="text-slate-600 font-medium">Etiketler</Label>
+                                            {/* Mevcut Etiketler - Chip olarak */}
+                                            {formData.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mb-2">
+                                                    {formData.tags.map(tag => (
+                                                        <Badge
+                                                            key={tag}
+                                                            className="bg-orange-100 text-orange-700 hover:bg-orange-200 border-0 gap-1 px-3 py-1.5 text-sm font-medium cursor-default"
+                                                        >
+                                                            <Tag className="w-3 h-3" />
+                                                            {tag}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveTag(tag)}
+                                                                className="ml-1 hover:text-red-600 transition-colors"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {/* Etiket Ekleme */}
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Input
+                                                        value={newTagInput}
+                                                        onChange={(e) => setNewTagInput(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                handleAddTag(newTagInput);
+                                                            }
+                                                        }}
+                                                        placeholder="Etiket yazın..."
+                                                        className="h-12 rounded-xl border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"
+                                                        list="tag-suggestions"
+                                                    />
+                                                    <datalist id="tag-suggestions">
+                                                        {availableTags
+                                                            .filter(t => !formData.tags.includes(t))
+                                                            .map(t => (
+                                                                <option key={t} value={t} />
+                                                            ))}
+                                                    </datalist>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => handleAddTag(newTagInput)}
+                                                    disabled={!newTagInput.trim()}
+                                                    className="h-12 px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white"
+                                                >
+                                                    <Plus className="w-4 h-4 mr-1" />
+                                                    Ekle
+                                                </Button>
+                                            </div>
+                                            {/* Mevcut etiket önerileri */}
+                                            {availableTags.filter(t => !formData.tags.includes(t)).length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                                    <span className="text-[11px] text-slate-400 mr-1">Mevcut etiketler:</span>
+                                                    {availableTags.filter(t => !formData.tags.includes(t)).map(tag => (
+                                                        <button
+                                                            key={tag}
+                                                            type="button"
+                                                            onClick={() => handleAddTag(tag)}
+                                                            className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 hover:bg-orange-100 hover:text-orange-700 transition-colors cursor-pointer"
+                                                        >
+                                                            + {tag}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                     </div>
@@ -636,23 +914,614 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                 </TabsContent>
 
+                {/* ŞABLON GÖNDER TAB */}
+                {id !== 'new' && (
+                    <TabsContent value="send_template" className="outline-none">
+                        <Card className="border-2 border-slate-200 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden min-h-[400px]">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                            <Send className="w-5 h-5 text-green-600" />
+                                            Şablon Mesaj Gönder
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Bu müşteriye onaylı WhatsApp şablon mesajı gönderin.
+                                        </CardDescription>
+                                    </div>
+                                    {/* Adım göstergesi */}
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3].map((s) => (
+                                            <div key={s} className="flex items-center">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mx-1 transition-colors ${sendStep >= s ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                                    {s}
+                                                </div>
+                                                {s < 3 && <div className={`w-4 h-[2px] ${sendStep > s ? 'bg-green-600' : 'bg-slate-200'}`} />}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                {/* Müşteri bilgi kartı */}
+                                <div className="mt-4 flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3">
+                                    <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 font-bold text-sm">
+                                        {formData.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-800 text-sm">{formData.full_name || 'İsimsiz Müşteri'}</div>
+                                        <div className="text-xs text-slate-500 font-mono">{formData.phone || 'Telefon yok'}</div>
+                                    </div>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="pt-6 min-h-[350px]">
+                                {/* ADIM 1: Şablon Seçimi */}
+                                {sendStep === 1 && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        <h4 className="font-semibold text-slate-800">Göndermek istediğiniz şablonu seçin</h4>
+                                        <p className="text-sm text-slate-500">Sadece Meta tarafından onaylanan şablonlar listelenmiştir.</p>
+
+                                        {sendTemplatesLoading ? (
+                                            <div className="flex items-center justify-center py-16 text-slate-400">
+                                                <Loader2 className="w-8 h-8 animate-spin mr-3" />
+                                                <span>Şablonlar yükleniyor...</span>
+                                            </div>
+                                        ) : sendTemplates.length === 0 ? (
+                                            <div className="text-center py-16 border border-dashed rounded-xl bg-slate-50">
+                                                <LayoutTemplate className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                                <p className="font-medium text-slate-600">Onaylı şablon bulunamadı</p>
+                                                <p className="text-sm text-slate-400 mt-1">Ayarlar &gt; WhatsApp Şablonları bölümünden şablon oluşturup Meta onayına gönderin.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {sendTemplates.map((tpl: any) => {
+                                                    const isSelected = selectedSendTemplate === tpl.id;
+                                                    return (
+                                                        <div
+                                                            key={tpl.id}
+                                                            className={`border rounded-lg p-5 cursor-pointer flex flex-col gap-3 transition-all h-full ${isSelected ? 'border-green-500 bg-green-600/5 ring-1 ring-green-500 shadow-sm' : 'border-slate-200 hover:border-green-500/40 bg-white'}`}
+                                                            onClick={() => {
+                                                                setSelectedSendTemplate(tpl.id);
+                                                                setTemplateVarValues({});
+                                                                setSendResult(null);
+                                                            }}
+                                                        >
+                                                            {/* Header */}
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="font-bold text-slate-900 flex items-center gap-2 break-all">
+                                                                    <LayoutTemplate className={`w-4 h-4 ${isSelected ? 'text-green-600' : 'text-slate-500'}`} />
+                                                                    {tpl.name}
+                                                                </div>
+                                                                {isSelected && <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />}
+                                                                {!isSelected && <Badge variant="secondary" className="bg-green-100 text-green-800 shrink-0">APPROVED</Badge>}
+                                                            </div>
+
+                                                            {/* Labels */}
+                                                            <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium tracking-wide">
+                                                                <span className="uppercase">{tpl.category}</span>
+                                                                <span>•</span>
+                                                                <span className="uppercase">{tpl.language}</span>
+                                                            </div>
+
+                                                            {/* Media Tag */}
+                                                            {tpl.components?.find((c: any) => c.type === "HEADER" && (c.format === "IMAGE" || c.format === "VIDEO" || c.format === "DOCUMENT")) && (
+                                                                <div className={`flex flex-col gap-2 p-2 rounded-md border mt-1 ${isSelected ? 'bg-white border-green-500/20' : 'bg-slate-100/70 border-slate-100 text-slate-600'}`}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && <ImageIcon className="w-4 h-4 text-green-500" />}
+                                                                        {tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" && <Video className="w-4 h-4 text-red-500" />}
+                                                                        {tpl.components?.find((c: any) => c.type === "HEADER").format === "DOCUMENT" && <FileText className="w-4 h-4 text-green-500" />}
+                                                                        <span className="text-xs font-semibold">
+                                                                            {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && "Görselli Şablon"}
+                                                                            {tpl.components?.find((c: any) => c.type === "HEADER").format === "VIDEO" && "Videolu Şablon"}
+                                                                            {tpl.components?.find((c: any) => c.type === "HEADER").format === "DOCUMENT" && "Belgeli Şablon"}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* Image Display */}
+                                                                    {tpl.components?.find((c: any) => c.type === "HEADER").format === "IMAGE" && (tpl as any).uppypro_media?.file_url && (
+                                                                        <div className="relative w-full h-32 rounded bg-slate-100 overflow-hidden border border-slate-200 mt-1">
+                                                                            <img src={(tpl as any).uppypro_media.file_url} alt="Template Image" className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Body Text */}
+                                                            <div className={`text-sm p-3 rounded-md line-clamp-none whitespace-pre-wrap flex-1 min-h-[80px] overflow-y-auto max-h-[200px] ${isSelected ? 'bg-white border-green-500/20 text-slate-800 border' : 'bg-slate-50 border-slate-100 text-slate-700'}`}>
+                                                                {tpl.components?.find((c: any) => c.type === "BODY")?.text || "Gövde bulunmuyor."}
+                                                            </div>
+
+                                                            {/* Buttons */}
+                                                            {tpl.components?.find((c: any) => c.type === "BUTTONS") && (
+                                                                <div className="flex flex-col gap-1.5 mt-1">
+                                                                    {tpl.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => (
+                                                                        <div key={idx} className={`flex items-center gap-1.5 text-[11px] p-2 rounded border font-semibold ${isSelected ? 'bg-white border-green-500/20 text-green-600' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
+                                                                            <span className="truncate">{btn.text}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* ADIM 2: Değişken Eşleştirme & Önizleme */}
+                                {sendStep === 2 && (() => {
+                                    const activeTpl = sendTemplates.find((t: any) => t.id === selectedSendTemplate);
+                                    const bodyText = activeTpl?.components?.find((c: any) => c.type === "BODY")?.text || "";
+                                    const regex = /\{\{([^}]*)\}\}/g;
+                                    const vars: string[] = [];
+                                    let match;
+                                    while ((match = regex.exec(bodyText)) !== null) vars.push(match[1]);
+                                    const uniqueVars = [...new Set(vars)].sort((a, b) => {
+                                        const numA = Number(a); const numB = Number(b);
+                                        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                        return a.localeCompare(b);
+                                    });
+
+                                    // Preview
+                                    let previewText = bodyText;
+                                    uniqueVars.forEach(v => {
+                                        const val = templateVarValues[v];
+                                        previewText = previewText.replace(new RegExp(`\\{\\{${v}\\}\\}`, 'g'), val || `{{${v}}}`);
+                                    });
+
+                                    return (
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                            <h4 className="font-semibold text-slate-800">Değişkenleri Doldurun</h4>
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                {/* Sol: Değişken formları */}
+                                                <div className="space-y-4">
+                                                    {uniqueVars.length === 0 ? (
+                                                        <div className="text-center py-8 text-slate-500 border border-dashed rounded-xl bg-slate-50">
+                                                            <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                                                            <p className="text-sm font-medium">Bu şablonda değişken bulunmuyor.</p>
+                                                            <p className="text-xs text-slate-400 mt-1">Doğrudan gönderime hazır.</p>
+                                                        </div>
+                                                    ) : (
+                                                        uniqueVars.map((v) => (
+                                                            <div key={v} className="space-y-1.5">
+                                                                <Label className="text-slate-600 flex items-center gap-2">
+                                                                    <Badge variant="secondary" className="font-mono text-xs">{`{{${v}}}`}</Badge>
+                                                                </Label>
+                                                                <Select
+                                                                    value={templateVarValues[`__mode_${v}`] || "name"}
+                                                                    onValueChange={(val) => {
+                                                                        const newVals = { ...templateVarValues, [`__mode_${v}`]: val };
+                                                                        if (val === "name") newVals[v] = formData.full_name;
+                                                                        else if (val === "phone") newVals[v] = formData.phone;
+                                                                        else if (val === "custom") newVals[v] = templateVarValues[v] || "";
+                                                                        setTemplateVarValues(newVals);
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger className="bg-white">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="name">Müşteri Adı ({formData.full_name})</SelectItem>
+                                                                        <SelectItem value="phone">Telefon ({formData.phone})</SelectItem>
+                                                                        <SelectItem value="custom">Özel Değer (Elle Giriş)</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                {(templateVarValues[`__mode_${v}`] === "custom") && (
+                                                                    <Input
+                                                                        value={templateVarValues[v] || ""}
+                                                                        onChange={(e) => setTemplateVarValues(prev => ({ ...prev, [v]: e.target.value }))}
+                                                                        placeholder="Değer giriniz..."
+                                                                        className="mt-1"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+
+                                                {/* Sağ: Önizleme */}
+                                                <div>
+                                                    <Label className="text-sm font-semibold text-slate-700 mb-3 block">Mesaj Önizlemesi</Label>
+                                                    <div className="border border-green-200 bg-green-50/30 rounded-xl p-5 space-y-3">
+                                                        <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                                                            <LayoutTemplate className="w-4 h-4 text-green-600" />
+                                                            {activeTpl?.name}
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">
+                                                            {activeTpl?.category} • {activeTpl?.language}
+                                                        </div>
+                                                        {(activeTpl as any)?.uppypro_media?.file_url && (
+                                                            <div className="w-full h-32 rounded-lg overflow-hidden bg-slate-100">
+                                                                <img src={(activeTpl as any).uppypro_media.file_url} alt="" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                        <div className="text-sm text-slate-700 bg-white rounded-lg p-3 border border-green-100 whitespace-pre-wrap leading-relaxed">
+                                                            {previewText}
+                                                        </div>
+                                                        {activeTpl?.components?.find((c: any) => c.type === "BUTTONS") && (
+                                                            <div className="flex flex-col gap-1">
+                                                                {activeTpl.components.find((c: any) => c.type === "BUTTONS").buttons.map((btn: any, idx: number) => (
+                                                                    <div key={idx} className="text-[11px] font-semibold text-green-700 bg-white border border-green-200 rounded px-2 py-1.5 text-center">
+                                                                        {btn.text}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* ADIM 3: Onay & Gönder */}
+                                {sendStep === 3 && (() => {
+                                    const activeTpl = sendTemplates.find((t: any) => t.id === selectedSendTemplate);
+                                    return (
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                            <div className="text-center py-6">
+                                                <Send className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                                                <h2 className="text-2xl font-bold text-slate-900 mb-2">Gönderime Hazır!</h2>
+                                                <p className="text-slate-500 max-w-lg mx-auto">Aşağıdaki bilgileri kontrol edip onaylayın.</p>
+                                            </div>
+
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 max-w-2xl mx-auto">
+                                                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                                    <div>
+                                                        <p className="text-sm text-slate-500 mb-1">Müşteri</p>
+                                                        <p className="font-semibold text-slate-900">{formData.full_name}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-slate-500 mb-1">Telefon (WhatsApp)</p>
+                                                        <p className="font-semibold text-slate-900 font-mono">{formData.phone}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-slate-500 mb-1">Şablon</p>
+                                                        <p className="font-semibold text-slate-900">{activeTpl?.name}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-slate-500 mb-1">Dil</p>
+                                                        <p className="font-semibold text-slate-900 uppercase">{activeTpl?.language}</p>
+                                                    </div>
+                                                </div>
+
+                                                {sendResult && (
+                                                    <div className={`mt-4 p-4 rounded-lg text-sm flex items-start gap-3 ${sendResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+                                                        {sendResult.success ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+                                                        <div>{sendResult.message}</div>
+                                                    </div>
+                                                )}
+
+                                                <div className="mt-6 flex justify-center">
+                                                    <Button
+                                                        onClick={async () => {
+                                                            if (!tenantId || !activeTpl) return;
+                                                            setIsSending(true);
+                                                            setSendResult(null);
+
+                                                            // Clean variable values (remove __mode_ keys)
+                                                            const cleanVars: Record<string, string> = {};
+                                                            Object.entries(templateVarValues).forEach(([k, v]) => {
+                                                                if (!k.startsWith('__mode_')) cleanVars[k] = v;
+                                                            });
+
+                                                            const result = await sendTemplateToCustomer({
+                                                                tenantId,
+                                                                customerId: id,
+                                                                customerPhone: formData.phone,
+                                                                customerName: formData.full_name,
+                                                                templateName: activeTpl.name,
+                                                                templateLanguage: activeTpl.language,
+                                                                variableValues: cleanVars,
+                                                            });
+
+                                                            setIsSending(false);
+
+                                                            if (result.success) {
+                                                                setSendResult({ success: true, message: `Şablon mesajı başarıyla gönderildi!` });
+                                                                toast({ title: "Mesaj Gönderildi! ✅", description: `${formData.full_name} kişisine "${activeTpl.name}" şablonu gönderildi.` });
+                                                                // Kampanya loglarını yenile
+                                                                fetchCampaignLogs(id);
+                                                            } else {
+                                                                setSendResult({ success: false, message: result.error || "Gönderim sırasında bir hata oluştu." });
+                                                                toast({ title: "Gönderim Hatası", description: result.error, variant: "destructive" });
+                                                            }
+                                                        }}
+                                                        disabled={isSending || (sendResult?.success === true)}
+                                                        className="bg-[#25D366] hover:bg-[#128C7E] text-white px-8 h-12 text-base font-semibold rounded-xl shadow-lg"
+                                                    >
+                                                        {isSending ? (
+                                                            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gönderiliyor...</>
+                                                        ) : sendResult?.success ? (
+                                                            <><CheckCircle2 className="w-5 h-5 mr-2" /> Gönderildi!</>
+                                                        ) : (
+                                                            <><Send className="w-5 h-5 mr-2" /> Onayla ve Gönder</>
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </CardContent>
+
+                            {/* İleri/Geri Butonları */}
+                            <div className="bg-slate-50 border-t flex justify-between py-4 px-6">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => { setSendStep(s => Math.max(s - 1, 1)); setSendResult(null); }}
+                                    disabled={sendStep === 1}
+                                >
+                                    <ChevronLeft className="w-4 h-4 mr-2" />
+                                    Geri
+                                </Button>
+
+                                {sendStep < 3 ? (
+                                    <Button
+                                        className="bg-green-600 hover:bg-green-700 text-white border-0"
+                                        onClick={() => {
+                                            if (sendStep === 1) {
+                                                // Auto-fill first variable with customer name
+                                                const activeTpl = sendTemplates.find((t: any) => t.id === selectedSendTemplate);
+                                                const bodyText = activeTpl?.components?.find((c: any) => c.type === "BODY")?.text || "";
+                                                const varMatches = bodyText.match(/\{\{([^}]*)\}\}/g);
+                                                if (varMatches) {
+                                                    const vars: string[] = Array.from(new Set(varMatches.map((m: string) => m.replace(/[{}]/g, "")))) as string[];
+                                                    const autoVals: Record<string, string> = {};
+                                                    vars.forEach((v: string, i: number) => {
+                                                        if (i === 0) {
+                                                            autoVals[v] = formData.full_name;
+                                                            autoVals[`__mode_${v}`] = "name";
+                                                        }
+                                                    });
+                                                    setTemplateVarValues(prev => ({ ...autoVals, ...prev }));
+                                                }
+                                            }
+                                            setSendStep(s => Math.min(s + 1, 3));
+                                        }}
+                                        disabled={sendStep === 1 && !selectedSendTemplate}
+                                    >
+                                        İleri
+                                        <ChevronRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                ) : (
+                                    sendResult?.success && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSendStep(1);
+                                                setSelectedSendTemplate("");
+                                                setTemplateVarValues({});
+                                                setSendResult(null);
+                                            }}
+                                        >
+                                            Yeni Gönderim Yap
+                                        </Button>
+                                    )
+                                )}
+                            </div>
+                        </Card>
+                    </TabsContent>
+                )}
+
                 {id !== 'new' && (
                     <TabsContent value="campaigns" className="outline-none">
                         <Card className="border-2 border-slate-200 shadow-xl shadow-gray-200 rounded-[2rem] overflow-hidden min-h-[400px]">
                             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
-                                <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                    <History className="w-5 h-5 text-orange-500" />
-                                    Müşterinin Kampanya Geçmişi
-                                </CardTitle>
-                                <CardDescription>
-                                    Bu müşteriye gönderilen geçmiş toplu mesaj (şablon) pazarlama kampanyaları ve teslimat (webhook) logları bu sayfada yer alacaktır.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="pt-8">
-                                <div className="text-center py-12 text-slate-500 border border-dashed rounded-xl bg-slate-50">
-                                    <MessageCircle className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-                                    Kampanya geçmişi (Webhook entegrasyonu ile) yakında buraya eklenecektir.
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                            <History className="w-5 h-5 text-orange-500" />
+                                            Müşterinin Kampanya Geçmişi
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Bu müşteriye gönderilen tüm toplu mesaj (şablon) kampanyaları ve teslimat durumları.
+                                        </CardDescription>
+                                    </div>
+                                    {campaignLogs.length > 0 && (
+                                        <div className="hidden md:flex items-center gap-4 text-xs">
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full">
+                                                <Mail className="w-3.5 h-3.5 text-slate-500" />
+                                                <span className="font-semibold text-slate-700">{campaignLogs.length}</span>
+                                                <span className="text-slate-500">mesaj</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full">
+                                                <CheckCheck className="w-3.5 h-3.5 text-green-600" />
+                                                <span className="font-semibold text-green-700">{campaignLogs.filter(l => l.status === 'delivered' || l.status === 'read').length}</span>
+                                                <span className="text-green-600">teslim</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full">
+                                                <CheckCheck className="w-3.5 h-3.5 text-orange-500" />
+                                                <span className="font-semibold text-orange-600">{campaignLogs.filter(l => l.status === 'read').length}</span>
+                                                <span className="text-orange-500">okundu</span>
+                                            </div>
+                                            {campaignLogs.filter(l => l.status === 'failed').length > 0 && (
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-full">
+                                                    <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                                                    <span className="font-semibold text-red-600">{campaignLogs.filter(l => l.status === 'failed').length}</span>
+                                                    <span className="text-red-500">hatalı</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
+                            </CardHeader>
+                            <CardContent className="pt-6">
+                                {campaignLogsLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                                        <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                                        <p className="text-sm">Kampanya geçmişi yükleniyor...</p>
+                                    </div>
+                                ) : campaignLogs.length === 0 ? (
+                                    <div className="text-center py-16 text-slate-500 border border-dashed rounded-xl bg-slate-50">
+                                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Mail className="w-8 h-8 text-slate-300" />
+                                        </div>
+                                        <p className="font-medium text-slate-600 mb-1">Kampanya geçmişi bulunamadı</p>
+                                        <p className="text-sm text-slate-400">Bu müşteriye henüz toplu kampanya mesajı gönderilmemiş.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {campaignLogs.map((log) => {
+                                            const getStatusBadge = (status: string) => {
+                                                switch (status?.toLowerCase()) {
+                                                    case 'read':
+                                                        return (
+                                                            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-0 gap-1">
+                                                                <CheckCheck className="w-3 h-3" /> Okundu
+                                                            </Badge>
+                                                        );
+                                                    case 'delivered':
+                                                        return (
+                                                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0 gap-1">
+                                                                <CheckCheck className="w-3 h-3" /> Teslim Edildi
+                                                            </Badge>
+                                                        );
+                                                    case 'sent':
+                                                        return (
+                                                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 gap-1">
+                                                                <Check className="w-3 h-3" /> Gönderildi
+                                                            </Badge>
+                                                        );
+                                                    case 'failed':
+                                                        return (
+                                                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0 gap-1">
+                                                                <AlertCircle className="w-3 h-3" /> Başarısız
+                                                            </Badge>
+                                                        );
+                                                    case 'pending':
+                                                        return (
+                                                            <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-0 gap-1">
+                                                                <Clock className="w-3 h-3" /> Bekliyor
+                                                            </Badge>
+                                                        );
+                                                    default:
+                                                        return (
+                                                            <Badge variant="outline" className="gap-1">
+                                                                {status}
+                                                            </Badge>
+                                                        );
+                                                }
+                                            };
+
+                                            const formatDate = (dateStr: string | null) => {
+                                                if (!dateStr) return null;
+                                                try {
+                                                    return new Date(dateStr).toLocaleDateString('tr-TR', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    });
+                                                } catch {
+                                                    return dateStr;
+                                                }
+                                            };
+
+                                            return (
+                                                <div
+                                                    key={log.id}
+                                                    className={`border rounded-xl p-5 transition-all hover:shadow-md bg-white ${
+                                                        log.status === 'failed' ? 'border-red-200 hover:border-red-300' :
+                                                        log.status === 'read' ? 'border-orange-200 hover:border-orange-300' :
+                                                        log.status === 'delivered' ? 'border-green-200 hover:border-green-300' :
+                                                        'border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                                        {/* Sol: Kampanya Bilgisi */}
+                                                        <div className="flex-1 min-w-0 space-y-2">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                {getStatusBadge(log.status)}
+                                                                <span className="text-xs text-slate-400 font-medium">
+                                                                    {formatDate(log.created_at)}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className="font-bold text-slate-900 text-sm truncate">
+                                                                {log.campaign_name}
+                                                            </h4>
+                                                            <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                                                                <span className="flex items-center gap-1">
+                                                                    <FileText className="w-3.5 h-3.5" />
+                                                                    <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                                                                        {log.template_name}
+                                                                    </span>
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Send className="w-3.5 h-3.5" />
+                                                                    {log.phone_number}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Orta: Zaman Çizelgesi */}
+                                                        <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
+                                                            {log.sent_at && (
+                                                                <div className="flex items-center gap-1.5 text-xs">
+                                                                    <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
+                                                                        <Check className="w-3 h-3 text-blue-500" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Gönderildi</div>
+                                                                        <div className="text-slate-600 font-medium">{formatDate(log.sent_at)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {log.delivered_at && (
+                                                                <>
+                                                                    <div className="hidden lg:block w-4 h-px bg-slate-200" />
+                                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                                        <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center">
+                                                                            <CheckCheck className="w-3 h-3 text-green-500" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Teslim</div>
+                                                                            <div className="text-slate-600 font-medium">{formatDate(log.delivered_at)}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            {log.read_at && (
+                                                                <>
+                                                                    <div className="hidden lg:block w-4 h-px bg-slate-200" />
+                                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                                        <div className="w-6 h-6 rounded-full bg-orange-50 flex items-center justify-center">
+                                                                            <CheckCheck className="w-3 h-3 text-orange-500" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Okundu</div>
+                                                                            <div className="text-orange-600 font-medium">{formatDate(log.read_at)}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            {log.status === 'failed' && (
+                                                                <div className="flex items-center gap-1.5 text-xs">
+                                                                    <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center">
+                                                                        <AlertCircle className="w-3 h-3 text-red-500" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="text-red-400 text-[10px] font-medium uppercase tracking-wide">Hata</div>
+                                                                        <div className="text-red-600 font-medium">{formatDate(log.failed_at)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Hata Mesajı */}
+                                                    {log.status === 'failed' && log.error_message && (
+                                                        <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">
+                                                            <span className="font-semibold">Hata detayı:</span> {log.error_message}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
