@@ -6,6 +6,12 @@ import { waitUntil } from "@vercel/functions";
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "uppypro_verify_token";
 const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY || "";
 
+// Cooldown map: conversation_id → last error message sent timestamp
+// Prevents sending repeated error messages to the same customer
+const lastErrorMessageSent = new Map<string, number>();
+const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const FALLBACK_ERROR_MESSAGE = "Şu anda geçici bir teknik sorun yaşıyoruz. Lütfen yaklaşık 5 dakika bekleyip son mesajınızı tekrar gönderir misiniz? Anlayışınız için teşekkür ederiz 🙏";
+
 // Normalize phone number: strip all non-digits, ensure consistent format
 function normalizePhone(phone: string): string {
     // Remove all non-digit characters
@@ -907,9 +913,21 @@ async function processAIResponseInBackground(
                     }
                 } else {
                     n8nStatus = `FAILED (${response.status})`;
+
+                    // Send fallback error message to customer for server errors (5xx)
+                    if (response.status >= 500) {
+                        await sendFallbackErrorMessage(
+                            supabaseAdmin, tenantId, conversation, channel, eventData.sender_id
+                        );
+                    }
                 }
             } catch (e: any) {
                 n8nStatus = `ERROR: ${e.message}`;
+
+                // Send fallback error message on network/connection errors
+                await sendFallbackErrorMessage(
+                    supabaseAdmin, tenantId, conversation, channel, eventData.sender_id
+                );
             }
         } else {
             n8nStatus = `SKIPPED: ${skipReason}`;
@@ -938,5 +956,59 @@ async function processAIResponseInBackground(
                 error_message: bgError.message
             });
         } catch (_) { /* ignore logging errors */ }
+    }
+}
+
+/**
+ * Send a fallback error message to the customer when n8n/AI fails.
+ * Uses a cooldown to prevent spamming the same customer.
+ */
+async function sendFallbackErrorMessage(
+    supabaseAdmin: any,
+    tenantId: string,
+    conversation: any,
+    channel: 'whatsapp' | 'instagram',
+    senderId: string,
+) {
+    try {
+        const convId = conversation?.id;
+        if (!convId) return;
+
+        // Check cooldown — don't send if we sent one recently
+        const lastSent = lastErrorMessageSent.get(convId);
+        if (lastSent && Date.now() - lastSent < ERROR_COOLDOWN_MS) {
+            console.log(`[Fallback] Cooldown active for conversation ${convId}, skipping error message`);
+            return;
+        }
+
+        // Mark cooldown
+        lastErrorMessageSent.set(convId, Date.now());
+
+        // Send the fallback message to the customer via WhatsApp/Instagram
+        const { sendToChannel } = await import("@/lib/meta");
+        await sendToChannel(tenantId, channel, senderId, FALLBACK_ERROR_MESSAGE);
+
+        // Save to messages table so it appears in the panel
+        await supabaseAdmin.from("messages").insert({
+            tenant_id: tenantId,
+            conversation_id: convId,
+            direction: 'OUT',
+            sender: 'SYSTEM',
+            text: FALLBACK_ERROR_MESSAGE,
+            message_type: 'text',
+            is_read: true,
+        });
+
+        console.log(`[Fallback] Error message sent to conversation ${convId}`);
+
+        // Clean up old cooldown entries (prevent memory leak for long-running instances)
+        const now = Date.now();
+        for (const [key, timestamp] of lastErrorMessageSent.entries()) {
+            if (now - timestamp > ERROR_COOLDOWN_MS * 2) {
+                lastErrorMessageSent.delete(key);
+            }
+        }
+    } catch (fallbackErr: any) {
+        console.error("[Fallback] Failed to send error message:", fallbackErr.message);
     }
 }
