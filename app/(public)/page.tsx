@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/landing/hero";
 import { FeaturesSection, PricingSection, HowItWorks, ContactSection } from "@/components/landing/sections";
 import { MobileAccessSection } from "@/components/landing/mobile-access";
 import { SolutionsSection } from "@/components/landing/solutions";
+import { ReferencesSection } from "@/components/landing/references";
 import { FaqSection } from "@/components/landing/faq";
 import { PackageFinderSection } from "@/components/landing/package-finder";
 import { BlogPreviewSection } from "@/components/landing/blog-preview";
@@ -154,6 +155,8 @@ export default async function LandingPage() {
                 <BlogPreviewSection />
 
                 <SolutionsSection />
+
+                <ReferencesSection />
 
                 <ContactSection />
             </main>
