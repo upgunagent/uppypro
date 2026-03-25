@@ -165,7 +165,7 @@ export function ReferencesSection() {
                                 onClick={() => handleToggle(ref.id)}
                                 className={`
                                     group relative flex flex-col items-center justify-center
-                                    rounded-2xl p-3 md:p-4
+                                    rounded-xl sm:rounded-2xl p-1 sm:p-3 md:p-4
                                     transition-all duration-300 ease-out cursor-pointer
                                     border-2
                                     ${
@@ -187,7 +187,7 @@ export function ReferencesSection() {
                                 <div
                                     className={`
                                         relative w-full aspect-[16/9] flex items-center justify-center
-                                        rounded-xl overflow-hidden
+                                        rounded-lg sm:rounded-xl overflow-hidden
                                         transition-all duration-300
                                         ${isActive ? "bg-gradient-to-br " + ref.bgColor : "bg-slate-50 group-hover:bg-gradient-to-br group-hover:" + ref.bgColor}
                                     `}
@@ -196,7 +196,7 @@ export function ReferencesSection() {
                                         src={ref.logo}
                                         alt={ref.title}
                                         fill
-                                        className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                                        className="object-contain p-0.5 sm:p-2 transition-transform duration-300 group-hover:scale-105"
                                     />
                                 </div>
 
