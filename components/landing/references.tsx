@@ -152,7 +152,7 @@ export function ReferencesSection() {
                 </motion.div>
 
                 {/* Logo Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-2">
+                <div className="grid grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto mb-2">
                     {references.map((ref, index) => {
                         const isActive = activeId === ref.id;
                         return (
