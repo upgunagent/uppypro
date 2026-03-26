@@ -74,6 +74,9 @@ async function sendViaSMTP(
       user: settings.smtp_user,
       pass: settings.smtp_pass_encrypted, // TODO: decrypt if encrypted
     },
+    tls: {
+      rejectUnauthorized: false, // Eski SSL sertifikalı sunucular için
+    },
   });
 
   await transporter.sendMail({
@@ -195,6 +198,9 @@ export async function testSmtpConnection(settings: {
       auth: {
         user: settings.smtp_user,
         pass: settings.smtp_pass,
+      },
+      tls: {
+        rejectUnauthorized: false, // Eski SSL sertifikalı sunucular için
       },
     });
 
