@@ -19,6 +19,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
     const [isAiEnabled, setIsAiEnabled] = useState(settings?.ai_operational_enabled || false);
     const [showWizard, setShowWizard] = useState(false);
     const [wizardCompleted, setWizardCompleted] = useState(false);
+    const [localMessage, setLocalMessage] = useState<string | null>(null);
     const { toast } = useToast();
 
     // Sistem mesajı boşsa ve sihirbaz henüz tamamlanmadıysa overlay göster
@@ -59,15 +60,20 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
     }
 
     function handleWizardComplete(systemMessage: string) {
-        // Set the textarea value
-        if (textareaRef.current) {
-            // Use native setter to trigger React's controlled input
-            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-            nativeInputValueSetter?.call(textareaRef.current, systemMessage);
-            textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+        // Sihirbaz çıktısını local state'e yaz — textarea mount olduğunda bu değeri kullanacak
+        setLocalMessage(systemMessage);
         setWizardCompleted(true);
         setShowWizard(false);
+        
+        // Textarea zaten mount ise native setter ile değeri yaz
+        setTimeout(() => {
+            if (textareaRef.current) {
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+                nativeInputValueSetter?.call(textareaRef.current, systemMessage);
+                textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, 100);
+        
         toast({
             title: "Sistem Mesajı Oluşturuldu ✨",
             description: "Mesaj alanına eklendi. Kontrol edip 'Ayarları Kaydet' butonuna basın.",
@@ -206,7 +212,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                         name="systemMessage"
                                         className="min-h-[300px]"
                                         placeholder="Örneğin: Biz X firmasıyız. Şu hizmetleri veririz... Müşteriye her zaman kibar davran..."
-                                        defaultValue={settings?.system_message || ""}
+                                        defaultValue={localMessage ?? settings?.system_message ?? ""}
                                         disabled={!isAiAllowed}
                                     />
                                     {/* Uyarı notu - önemli alanlar silinmesin */}
