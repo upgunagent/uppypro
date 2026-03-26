@@ -401,10 +401,16 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
     return (
         <>
             <div className={clsx(
-                "p-6 rounded-2xl border flex flex-col justify-between min-h-[15rem] relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]",
+                "p-6 rounded-2xl border flex flex-col justify-between min-h-[15rem] relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] animate-card-shimmer",
                 cardClass
             )}>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+                {/* Twinkling star sparkles */}
+                <span className="card-sparkle sparkle-1" />
+                <span className="card-sparkle sparkle-2" />
+                <span className="card-sparkle sparkle-3" />
+                <span className="card-sparkle sparkle-4" />
+                <span className="card-sparkle sparkle-5" />
 
                 <div className="flex justify-between items-start z-10 relative">
                     <div className="flex items-center gap-4">
