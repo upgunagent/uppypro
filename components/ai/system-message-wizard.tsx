@@ -260,7 +260,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                   </div>
                   <div className="text-center">
                     <p className="font-semibold text-lg text-slate-800">Sistem mesajınız oluşturuluyor...</p>
-                    <p className="text-sm text-slate-500 mt-1">Gemini AI sektörünüze özel mesajı hazırlıyor</p>
+                    <p className="text-sm text-slate-500 mt-1">Yapay Zeka ile sektörünüze özel sistem mesajı hazırlıyor</p>
                   </div>
                 </>
               ) : error ? (
