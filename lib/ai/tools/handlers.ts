@@ -344,14 +344,25 @@ async function handleCheckTrendyolOrder(
 ): Promise<string> {
   const creds = await getTrendyolCredentials(context.tenantId);
   if (!creds) {
+    console.error("[Trendyol Tool] No credentials for tenant:", context.tenantId);
     return JSON.stringify({
-      error: "Trendyol mağazası bağlı değil.",
+      error: "Trendyol mağazası bağlı değil veya API bilgileri eksik.",
+    });
+  }
+
+  // Sipariş numarasını temizle (#, boşluk, tire kaldır)
+  const rawOrderNumber = String(args.order_number || "").trim();
+  const orderNumber = rawOrderNumber.replace(/^#/, "").replace(/[\s-]/g, "");
+
+  if (!orderNumber) {
+    return JSON.stringify({
+      error: "Sipariş numarası belirtilmedi.",
     });
   }
 
   try {
     const result = await getShipmentPackages(creds, {
-      orderNumber: args.order_number,
+      orderNumber,
     });
 
     if (!result.content || result.content.length === 0) {
@@ -405,15 +416,19 @@ async function handleCreateTrendyolReturn(
 ): Promise<string> {
   const creds = await getTrendyolCredentials(context.tenantId);
   if (!creds) {
+    console.error("[Trendyol Tool] No credentials for return, tenant:", context.tenantId);
     return JSON.stringify({
-      error: "Trendyol mağazası bağlı değil.",
+      error: "Trendyol mağazası bağlı değil veya API bilgileri eksik.",
     });
   }
+
+  // Sipariş numarasını temizle
+  const orderNumber = String(args.order_number || "").trim().replace(/^#/, "").replace(/[\s-]/g, "");
 
   try {
     // Önce siparişi bul
     const result = await getShipmentPackages(creds, {
-      orderNumber: args.order_number,
+      orderNumber,
     });
 
     if (!result.content || result.content.length === 0) {
