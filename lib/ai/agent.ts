@@ -104,11 +104,27 @@ export async function processWithBuiltInAI(
   // 6. Gemini model & chat oluştur
   const model = getGeminiModel(modelName);
 
+  // Bugünün tarihi ve saatini sistem mesajına ekle (Türkiye timezone)
+  const now = new Date();
+  const turkeyTime = now.toLocaleString("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const turkeyDateISO = now.toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" }); // YYYY-MM-DD format
+  const dateContext = `\n\n[SİSTEM BİLGİSİ]\nBugünün tarihi: ${turkeyDateISO} (${turkeyTime})\nTüm tarih işlemlerinde bu bilgiyi referans al. "Yarın" dendiğinde bugüne 1 gün ekle.`;
+
+  const fullSystemMessage = settings.system_message + dateContext;
+
   const chat = model.startChat({
     history,
     systemInstruction: { 
       role: "user", 
-      parts: [{ text: settings.system_message }] 
+      parts: [{ text: fullSystemMessage }] 
     },
     tools: aiToolDefinitions as any,
   });

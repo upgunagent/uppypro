@@ -166,23 +166,17 @@ async function handleNotifyHumanAgent(
 ): Promise<string> {
   const supabase = createAdminClient();
 
-  // 1. Bildirim oluştur
+  // Bildirim oluştur (conversation modunu DEĞİŞTİRME - işletme sahibi manuel devralacak)
   await supabase.from("notifications").insert({
     tenant_id: context.tenantId,
     type: "AI_ESCALATION",
-    title: "🔔 Canlı Destek Talebi",
+    title: "\ud83d\udd14 Canlı Destek Talebi",
     message: args.summary,
     metadata: {
       conversation_id: context.conversationId,
       customer_number: context.senderPhone,
     },
   });
-
-  // 2. Konuşma modunu HUMAN'a geçir
-  await supabase
-    .from("conversations")
-    .update({ mode: "HUMAN" })
-    .eq("id", context.conversationId);
 
   return JSON.stringify({
     success: true,
