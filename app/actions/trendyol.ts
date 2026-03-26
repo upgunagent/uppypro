@@ -221,7 +221,7 @@ async function syncTrendyolProductsBackground(
         {}
       ),
       product_url: p.productUrl || buildProductUrl(
-        p.contentId || (p as any).productContentId || Number(p.id),
+        p.productContentId,
         p.brand?.name,
         p.title,
         creds.supplierId

@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
             // Ürünleri DB'ye güncelle
             for (const product of updatedProducts) {
               const productUrl = product.productUrl || buildProductUrl(
-                product.contentId || (product as any).productContentId || Number(product.id),
+                product.productContentId,
                 product.brand?.name,
                 product.title,
                 creds.supplierId

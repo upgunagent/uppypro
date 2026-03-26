@@ -14,7 +14,7 @@ export interface TrendyolCredentials {
 export interface TrendyolProduct {
   id: string;
   productCode: number;
-  contentId: number;
+  productContentId: number;
   barcode: string;
   title: string;
   description: string;
@@ -169,22 +169,6 @@ export async function fetchAllProducts(
 
     totalElements = data.totalElements || 0;
     const products = data.content || [];
-    
-    // Debug: ilk ürünün tüm alanlarını logla (URL yapısını anlamak için)
-    if (page === 0 && products.length > 0) {
-      const sample = products[0];
-      console.log("[Trendyol] Sample product keys:", Object.keys(sample));
-      console.log("[Trendyol] Sample product URL fields:", {
-        id: sample.id,
-        productCode: sample.productCode,
-        contentId: sample.contentId,
-        productContentId: (sample as any).productContentId,
-        productUrl: sample.productUrl,
-        productPageUrl: (sample as any).productPageUrl,
-        pimCategoryId: (sample as any).pimCategoryId,
-      });
-    }
-    
     allProducts.push(...products);
 
     if (onProgress) {
