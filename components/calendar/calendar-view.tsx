@@ -125,7 +125,30 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
 
     useEffect(() => {
         fetchEvents();
-    }, [fetchEvents]);
+
+        // Supabase Realtime: calendar_events tablosundaki değişiklikleri dinle
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`calendar-events-${tenantId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // INSERT, UPDATE, DELETE
+                    schema: 'public',
+                    table: 'calendar_events',
+                    filter: `tenant_id=eq.${tenantId}`,
+                },
+                (payload) => {
+                    console.log('[Calendar Realtime] Event changed:', payload.eventType);
+                    fetchEvents(); // Takvimi yenile
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchEvents, tenantId]);
 
     const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
         const now = new Date();
