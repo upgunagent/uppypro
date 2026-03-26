@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
         setStep(4);
       }
     } catch (e: any) {
-      setError("Bağlantı hatası: " + e.message);
+      setError("BaÄŸlantÄ± hatasÄ±: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -80,14 +80,14 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-orange-500 flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-900 to-orange-500 flex items-center justify-center shadow-md">
               <Wand2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-900">Sistem Mesajı Sihirbazı</h3>
+              <h3 className="font-bold text-lg text-slate-900">Sistem MesajÄ± SihirbazÄ±</h3>
               <p className="text-xs text-slate-500">
-                Adım {step}/{totalSteps}
-                {selectedSector && step > 1 && ` — ${selectedSector.emoji} ${selectedSector.label}`}
+                AdÄ±m {step}/{totalSteps}
+                {selectedSector && step > 1 && ` â€” ${selectedSector.emoji} ${selectedSector.label}`}
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
               <div
                 key={s}
                 className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${
-                  s <= step ? "bg-gradient-to-r from-slate-800 to-orange-500" : "bg-slate-200"
+                  s <= step ? "bg-gradient-to-r from-blue-900 to-orange-500" : "bg-slate-200"
                 }`}
               />
             ))}
@@ -112,17 +112,17 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
 
         {/* Content - scrollable */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* STEP 1: Sektör Seçimi */}
+          {/* STEP 1: SektÃ¶r SeÃ§imi */}
           {step === 1 && (
             <div>
-              <h4 className="font-semibold text-slate-800 mb-1">Sektörünüzü Seçin</h4>
-              <p className="text-sm text-slate-500 mb-4">İşletmenize en uygun sektörü seçin. Sistem mesajı bu sektöre göre özelleştirilecektir.</p>
+              <h4 className="font-semibold text-slate-800 mb-1">SektÃ¶rÃ¼nÃ¼zÃ¼ SeÃ§in</h4>
+              <p className="text-sm text-slate-500 mb-4">Ä°ÅŸletmenize en uygun sektÃ¶rÃ¼ seÃ§in. Sistem mesajÄ± bu sektÃ¶re gÃ¶re Ã¶zelleÅŸtirilecektir.</p>
               
               {/* Search */}
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Sektör ara..."
+                  placeholder="SektÃ¶r ara..."
                   value={sectorSearch}
                   onChange={(e) => setSectorSearch(e.target.value)}
                   className="pl-9"
@@ -151,11 +151,11 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
             </div>
           )}
 
-          {/* STEP 2: Firma Soruları */}
+          {/* STEP 2: Firma SorularÄ± */}
           {step === 2 && selectedSector && (
             <div>
               <h4 className="font-semibold text-slate-800 mb-1">Firma Bilgilerinizi Girin</h4>
-              <p className="text-sm text-slate-500 mb-5">Bu bilgiler AI asistanınızın doğru çalışması için gereklidir.</p>
+              <p className="text-sm text-slate-500 mb-5">Bu bilgiler AI asistanÄ±nÄ±zÄ±n doÄŸru Ã§alÄ±ÅŸmasÄ± iÃ§in gereklidir.</p>
               
               <div className="space-y-4">
                 {/* Common Questions */}
@@ -180,7 +180,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                         onChange={(e) => setAnswer(q.id, e.target.value)}
                         className="w-full border rounded-md px-3 py-2 text-sm border-slate-200 bg-white"
                       >
-                        <option value="">Seçiniz...</option>
+                        <option value="">SeÃ§iniz...</option>
                         {q.options?.map((o) => (
                           <option key={o} value={o}>{o}</option>
                         ))}
@@ -194,17 +194,17 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     )}
                     {q.id === 'appointment_duration' && (
                       <div className="flex gap-2 items-start bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 mt-1">
-                        <span className="text-blue-500 text-base mt-0.5 shrink-0">💡</span>
+                        <span className="text-blue-500 text-base mt-0.5 shrink-0">ğŸ’¡</span>
                         <p className="text-xs text-blue-800 leading-relaxed">
-                          Bu alan genel varsayılan süredir. Aşağıdaki <strong>Hizmetler</strong> bölümünde her hizmetin yanına ayrıca işlem süresini de belirtebilirsiniz. <em>Örn: {selectedSector.placeholderOverrides?.duration_hint || 'Saç kesimi (30 dk), Boya (90 dk)'}</em>
+                          Bu alan genel varsayÄ±lan sÃ¼redir. AÅŸaÄŸÄ±daki <strong>Hizmetler</strong> bÃ¶lÃ¼mÃ¼nde her hizmetin yanÄ±na ayrÄ±ca iÅŸlem sÃ¼resini de belirtebilirsiniz. <em>Ã–rn: {selectedSector.placeholderOverrides?.duration_hint || 'SaÃ§ kesimi (30 dk), Boya (90 dk)'}</em>
                         </p>
                       </div>
                     )}
                     {q.id === 'employees' && (
                       <div className="flex gap-2 items-start bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-1">
-                        <span className="text-amber-500 text-base mt-0.5 shrink-0">⚠️</span>
+                        <span className="text-amber-500 text-base mt-0.5 shrink-0">âš ï¸</span>
                         <p className="text-xs text-amber-800 leading-relaxed">
-                          AI asistanın randevuları takvime otomatik olarak doğru personele işleyebilmesi için, burada yazdığınız personel isimleri ile <strong>Ayarlar → Çalışanlar</strong> sekmesindeki çalışan kayıtlarının isimleri <strong>birebir aynı</strong> olmalıdır.
+                          AI asistanÄ±n randevularÄ± takvime otomatik olarak doÄŸru personele iÅŸleyebilmesi iÃ§in, burada yazdÄ±ÄŸÄ±nÄ±z personel isimleri ile <strong>Ayarlar â†’ Ã‡alÄ±ÅŸanlar</strong> sekmesindeki Ã§alÄ±ÅŸan kayÄ±tlarÄ±nÄ±n isimleri <strong>birebir aynÄ±</strong> olmalÄ±dÄ±r.
                         </p>
                       </div>
                     )}
@@ -212,12 +212,12 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                   );
                 })}
 
-                {/* Extra Questions - sektöre özel */}
+                {/* Extra Questions - sektÃ¶re Ã¶zel */}
                 {selectedSector.extraQuestions.length > 0 && (
                   <>
                     <div className="border-t border-dashed border-slate-200 pt-4 mt-4">
                       <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-3">
-                        {selectedSector.emoji} {selectedSector.label} — Sektöre Özel Sorular
+                        {selectedSector.emoji} {selectedSector.label} â€” SektÃ¶re Ã–zel Sorular
                       </p>
                     </div>
                     {selectedSector.extraQuestions.map((q) => (
@@ -248,19 +248,19 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
             </div>
           )}
 
-          {/* STEP 3: Oluşturuluyor */}
+          {/* STEP 3: OluÅŸturuluyor */}
           {step === 3 && (
             <div className="flex flex-col items-center justify-center py-16 gap-6">
               {loading ? (
                 <>
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-slate-800 to-orange-500 flex items-center justify-center animate-pulse">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-900 to-orange-500 flex items-center justify-center animate-pulse">
                       <Sparkles className="w-10 h-10 text-white" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-lg text-slate-800">Sistem mesajınız oluşturuluyor...</p>
-                    <p className="text-sm text-slate-500 mt-1">Gemini AI sektörünüze özel mesajı hazırlıyor</p>
+                    <p className="font-semibold text-lg text-slate-800">Sistem mesajÄ±nÄ±z oluÅŸturuluyor...</p>
+                    <p className="text-sm text-slate-500 mt-1">Gemini AI sektÃ¶rÃ¼nÃ¼ze Ã¶zel mesajÄ± hazÄ±rlÄ±yor</p>
                   </div>
                 </>
               ) : error ? (
@@ -269,7 +269,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     <X className="w-10 h-10 text-red-500" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-lg text-red-700">Hata Oluştu</p>
+                    <p className="font-semibold text-lg text-red-700">Hata OluÅŸtu</p>
                     <p className="text-sm text-red-500 mt-1">{error}</p>
                   </div>
                   <Button onClick={handleGenerate} variant="outline" className="mt-2">
@@ -280,13 +280,13 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
             </div>
           )}
 
-          {/* STEP 4: Önizleme & Düzenleme */}
+          {/* STEP 4: Ã–nizleme & DÃ¼zenleme */}
           {step === 4 && (
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h4 className="font-semibold text-slate-800">Oluşturulan Sistem Mesajı</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Kontrol edin, düzenleyin ve onaylayın.</p>
+                  <h4 className="font-semibold text-slate-800">OluÅŸturulan Sistem MesajÄ±</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">Kontrol edin, dÃ¼zenleyin ve onaylayÄ±n.</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -296,7 +296,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     className="text-xs"
                   >
                     {isEditing ? <Check className="w-3 h-3 mr-1" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                    {isEditing ? "Önizlemeye Dön" : "Düzenle"}
+                    {isEditing ? "Ã–nizlemeye DÃ¶n" : "DÃ¼zenle"}
                   </Button>
                   <Button
                     variant="outline"
@@ -304,7 +304,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     onClick={() => { setStep(3); handleGenerate(); }}
                     className="text-xs"
                   >
-                    <RefreshCw className="w-3 h-3 mr-1" /> Yeniden Oluştur
+                    <RefreshCw className="w-3 h-3 mr-1" /> Yeniden OluÅŸtur
                   </Button>
                 </div>
               </div>
@@ -344,16 +344,16 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                   const allRequired = [...requiredCommon, ...requiredExtra];
                   const missing = allRequired.filter(q => !answers[q.id]?.trim());
                   if (missing.length > 0) {
-                    setError(`Lütfen zorunlu alanları doldurun: ${missing.map(q => q.label).join(", ")}`);
+                    setError(`LÃ¼tfen zorunlu alanlarÄ± doldurun: ${missing.map(q => q.label).join(", ")}`);
                     return;
                   }
                   setError("");
                   setStep(3);
                   setTimeout(() => handleGenerate(), 100);
                 }}
-                className="bg-gradient-to-r from-slate-800 to-orange-500 hover:from-slate-900 hover:to-orange-600 text-white"
+                className="bg-gradient-to-r from-blue-900 to-orange-500 hover:from-blue-950 hover:to-orange-600 text-white"
               >
-                <Sparkles className="w-4 h-4 mr-2" /> AI ile Oluştur
+                <Sparkles className="w-4 h-4 mr-2" /> AI ile OluÅŸtur
               </Button>
             )}
             {step === 2 && error && (
@@ -362,7 +362,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
             {step === 4 && (
               <Button
                 onClick={handleApply}
-                className="bg-gradient-to-r from-slate-800 to-orange-500 hover:from-slate-900 hover:to-orange-600 text-white"
+                className="bg-gradient-to-r from-blue-900 to-orange-500 hover:from-blue-950 hover:to-orange-600 text-white"
               >
                 <Check className="w-4 h-4 mr-2" /> Onayla ve Uygula
               </Button>
