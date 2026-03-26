@@ -176,9 +176,14 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                             AI asistanınızın <strong className="text-orange-300">doğru çalışabilmesi</strong> için sistem mesajının sihirbaz ile oluşturulması zorunludur.
                                             Sihirbaz, asistanın ihtiyaç duyduğu <strong className="text-orange-300">araç tanımlarını ve yapılandırmaları otomatik olarak</strong> oluşturur.
                                         </p>
-                                        <p className="text-slate-400 text-xs leading-relaxed max-w-md mb-5">
+                                        <p className="text-slate-400 text-xs leading-relaxed max-w-md mb-3">
                                             Sistem mesajı oluşturulduktan sonra bu alan açılacak ve dilediğiniz düzenlemeleri manuel olarak yapıp kaydedebileceksiniz.
                                         </p>
+                                        <div className="bg-white/10 border border-white/15 rounded-lg px-4 py-2.5 max-w-md mb-5">
+                                            <p className="text-slate-300 text-xs leading-relaxed">
+                                                💡 Sistem mesajınızı oluşturup kaydettikten sonra, AI asistanı devreye almak için sağ üst köşedeki <strong className="text-orange-300">Pasif / Aktif</strong> butonunu tıklayarak <strong className="text-green-400">Aktif</strong> konuma getiriniz. Asistanı geçici olarak durdurmak istediğinizde ise aynı butonu tekrar tıklayarak <strong className="text-slate-300">Pasif</strong> duruma alabilirsiniz.
+                                            </p>
+                                        </div>
 
                                         {/* Sihirbaz butonu */}
                                         <Button
