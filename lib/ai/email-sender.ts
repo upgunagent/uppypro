@@ -4,6 +4,7 @@
  */
 
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resend, EMAIL_FROM } from "@/lib/resend";
 
@@ -72,10 +73,12 @@ async function sendViaSMTP(
     secure: settings.smtp_port === 465,
     auth: {
       user: settings.smtp_user,
-      pass: settings.smtp_pass_encrypted, // TODO: decrypt if encrypted
+      pass: settings.smtp_pass_encrypted,
     },
     tls: {
-      rejectUnauthorized: false, // Eski SSL sertifikalı sunucular için
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1' as any,
+      secureOptions: crypto.constants?.SSL_OP_LEGACY_SERVER_CONNECT,
     },
   });
 
@@ -200,7 +203,9 @@ export async function testSmtpConnection(settings: {
         pass: settings.smtp_pass,
       },
       tls: {
-        rejectUnauthorized: false, // Eski SSL sertifikalı sunucular için
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1' as any,
+        secureOptions: crypto.constants?.SSL_OP_LEGACY_SERVER_CONNECT,
       },
     });
 
