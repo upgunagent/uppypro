@@ -220,7 +220,13 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                         {selectedSector.emoji} {selectedSector.label} — Sektöre Özel Sorular
                       </p>
                     </div>
-                    {selectedSector.extraQuestions.map((q) => (
+                    {selectedSector.extraQuestions
+                      .filter((q) => {
+                        // trendyol_integrate sorusu sadece has_trendyol=Evet ise göster
+                        if (q.id === 'trendyol_integrate') return answers['has_trendyol'] === 'Evet';
+                        return true;
+                      })
+                      .map((q) => (
                       <div key={q.id} className="space-y-1.5">
                         <Label className="text-sm">
                           {q.label}
@@ -233,12 +239,33 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                             onChange={(e) => setAnswer(q.id, e.target.value)}
                             className="min-h-[80px]"
                           />
+                        ) : q.type === 'select' ? (
+                          <select
+                            value={answers[q.id] || ""}
+                            onChange={(e) => setAnswer(q.id, e.target.value)}
+                            className="w-full border rounded-md px-3 py-2 text-sm border-slate-200 bg-white"
+                          >
+                            <option value="">Seçiniz...</option>
+                            {q.options?.map((o) => (
+                              <option key={o} value={o}>{o}</option>
+                            ))}
+                          </select>
                         ) : (
                           <Input
                             placeholder={q.placeholder}
                             value={answers[q.id] || ""}
                             onChange={(e) => setAnswer(q.id, e.target.value)}
                           />
+                        )}
+                        {/* Trendyol entegrasyon bilgi kutusu */}
+                        {q.id === 'trendyol_integrate' && answers['trendyol_integrate'] === 'Evet' && (
+                          <div className="flex gap-2 items-start bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 mt-1">
+                            <span className="text-orange-500 text-base mt-0.5 shrink-0">🛍️</span>
+                            <p className="text-xs text-orange-800 leading-relaxed">
+                              Harika! Sistem mesajınız Trendyol mağaza entegrasyonuna uygun olarak oluşturulacak.
+                              AI asistanınız ürün önerme, sipariş sorgulama ve iade talebi oluşturma yeteneklerine sahip olacak.
+                            </p>
+                          </div>
                         )}
                       </div>
                     ))}

@@ -165,6 +165,8 @@ export const sectors: SectorDefinition[] = [
       employees: 'Örn: Müşteri hizmetleri ekibi',
     },
     extraQuestions: [
+      { id: 'has_trendyol', label: 'Trendyol Mağazanız Var Mı?', placeholder: '', type: 'select', options: ['Evet', 'Hayır'], required: true },
+      { id: 'trendyol_integrate', label: 'Trendyol Mağazanızı Entegre Edecek Misiniz?', placeholder: '', type: 'select', options: ['Evet', 'Hayır'] },
       { id: 'product_categories', label: 'Ürün Kategorileri', placeholder: 'Örn: Giyim, aksesuar, hediyeik, kozmetik', type: 'textarea', required: true },
       { id: 'shipping_policy', label: 'Kargo & İade Politikası', placeholder: 'Örn: 500 TL üzeri ücretsiz kargo, 14 gün iade', type: 'textarea' },
     ]
@@ -508,6 +510,39 @@ export function buildGenerationPrompt(
     .map(([k, v]) => `- ${k}: ${v}`)
     .join('\n');
 
+  // Trendyol entegrasyonu bilgisi
+  const hasTrendyol = answers.has_trendyol === 'Evet' && answers.trendyol_integrate === 'Evet';
+  const trendyolBlock = hasTrendyol ? `
+10. İşletme Trendyol marketplace entegrasyonu kullanacaktır. Sistem mesajına aşağıdaki TRENDYOL bölümünü de ekle:
+
+### TRENDYOL MAĞAZA YÖNETİMİ
+Sen aynı zamanda işletmenin Trendyol mağazasının AI asistanısın.
+
+**Ürün Önerisi ve Satış:**
+- Müşteri bir ürün sorduğunda, aradığında veya almak istediğinde 'search_trendyol_products' aracını kullan.
+- Bulunan ürünleri fiyat, stok ve özellikleriyle birlikte listele.
+- Her ürünün Trendyol satış linkini MUTLAKA paylaş.
+- İndirimli ürünlerde eski fiyatı üstü çizili, yeni fiyatı vurgulu göster.
+- Stokta olmayan ürünleri önerme.
+- Müşterinin bütçesine ve ihtiyaçlarına göre en uygun ürünleri seç.
+- En fazla 3-4 ürün öner, çok uzun listeler yapma.
+
+**Sipariş Sorgulama:**
+- Müşteri sipariş durumu sorduğunda 'check_trendyol_order' aracını kullan.
+- Sipariş numarası ile sorgulama yap.
+- Kargo takip numarası ve tahmini teslim tarihini paylaş.
+
+**İade İşlemleri:**
+- Müşteri iade talebinde bulunduğunda 'create_trendyol_return' aracını kullan.
+- İade sebebini mutlaka sor.
+- İade kodunu ve kargo bilgilerini müşteriye ilet.
+
+### ARAÇ KULLANIM TALİMATLARI (TRENDYOL)
+1. search_trendyol_products — Ürün arama, filtreleme ve müşteriye önerme
+2. check_trendyol_order — Sipariş durumu sorgulama
+3. create_trendyol_return — İade talebi oluşturma
+` : '';
+
   return `Sen bir AI asistan sistem mesajı oluşturma uzmanısın. Aşağıdaki bilgilere göre bir işletmenin WhatsApp ve Instagram üzerinden müşterilerle iletişim kuracak AI asistanı için kapsamlı ve profesyonel bir sistem mesajı oluştur.
 
 ## SEKTÖR: ${sectorLabel}
@@ -530,5 +565,5 @@ ${FIXED_TOOL_RULES}
 
 8. Sadece sistem mesajını üret, başka bir açıklama veya yorum ekleme.
 9. Mesaj en az 800, en fazla 2000 kelime olsun.
-`;
+${trendyolBlock}`;
 }
