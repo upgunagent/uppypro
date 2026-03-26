@@ -192,6 +192,22 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                         onChange={(e) => setAnswer(q.id, e.target.value)}
                       />
                     )}
+                    {q.id === 'appointment_duration' && (
+                      <div className="flex gap-2 items-start bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 mt-1">
+                        <span className="text-blue-500 text-base mt-0.5 shrink-0">💡</span>
+                        <p className="text-xs text-blue-800 leading-relaxed">
+                          Bu alan genel varsayılan süredir. Aşağıdaki <strong>Hizmetler</strong> bölümünde her hizmetin yanına ayrıca işlem süresini de belirtebilirsiniz. <em>Örn: {selectedSector.placeholderOverrides?.duration_hint || 'Saç kesimi (30 dk), Boya (90 dk)'}</em>
+                        </p>
+                      </div>
+                    )}
+                    {q.id === 'employees' && (
+                      <div className="flex gap-2 items-start bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-1">
+                        <span className="text-amber-500 text-base mt-0.5 shrink-0">⚠️</span>
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          AI asistanın randevuları takvime otomatik olarak doğru personele işleyebilmesi için, burada yazdığınız personel isimleri ile <strong>Ayarlar → Çalışanlar</strong> sekmesindeki çalışan kayıtlarının isimleri <strong>birebir aynı</strong> olmalıdır.
+                        </p>
+                      </div>
+                    )}
                   </div>
                   );
                 })}

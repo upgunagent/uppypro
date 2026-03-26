@@ -43,6 +43,7 @@ export const sectors: SectorDefinition[] = [
       working_hours: 'Örn: Pzt-Cmt 10:00-20:00, Pazar Kapalı',
       contact_info: 'Örn: 0212 555 12 34 - Nişantaşı, İstanbul',
       appointment_duration: 'Örn: 45, 60, 90',
+      duration_hint: 'Cilt bakımı (60 dk), Manikür (45 dk), Epilasyon (30 dk)',
       employees: 'Örn: Selin (Cilt Bakım), Merve (Manikür), Elif (Epilasyon)',
     },
     extraQuestions: [
@@ -57,6 +58,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Zen, Huzur, Asistan',
       working_hours: 'Örn: Her gün 10:00-22:00',
       appointment_duration: 'Örn: 60, 90, 120',
+      duration_hint: 'Klasik masaj (60 dk), Aromaterapi (90 dk), VIP paket (120 dk)',
       employees: 'Örn: Aylin (Masöz), Kemal (Hamam), Deniz (Aromaterapi)',
     },
     extraQuestions: [
@@ -71,6 +73,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Ink, Art, Asistan',
       working_hours: 'Örn: Sal-Cmt 12:00-21:00',
       appointment_duration: 'Örn: 60, 120, 180',
+      duration_hint: 'Piercing (30 dk), Küçük dövme (60 dk), Büyük dövme (180 dk)',
       employees: 'Örn: Kaan (Dövme Sanatçısı), Ece (Piercing), Zeynep (Kalıcı Makyaj)',
     },
     extraQuestions: [
@@ -85,6 +88,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Concierge, Asistan',
       working_hours: 'Örn: 7/24 Resepsiyon',
       appointment_duration: 'Örn: Gecelik konaklama',
+      duration_hint: 'Standart konaklama (1 gece), Spa paketi (2 saat)',
       employees: 'Örn: Resepsiyon ekibi, Housekeeping',
     },
     extraQuestions: [
@@ -100,6 +104,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Stil, Bella, Asistan',
       working_hours: 'Örn: Pzt-Cmt 09:00-20:00, Pazar 10:00-18:00',
       appointment_duration: 'Örn: 30 (kesim), 60 (boya), 90 (özel bakım)',
+      duration_hint: 'Saç kesimi (30 dk), Boya (60 dk), Keratin bakımı (90 dk)',
       employees: 'Örn: Mehmet (Erkek Kuaför), Ayşe (Bayan Kuaför), Seda (Boya Uzmanı)',
     },
     extraQuestions: [
@@ -113,6 +118,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Aura Medikal Estetik',
       ai_name: 'Örn: Aura, Asistan',
       appointment_duration: 'Örn: 30 (kontrol), 60 (işlem)',
+      duration_hint: 'Botox (30 dk), Dolgu (45 dk), Lazer (60 dk)',
       employees: 'Örn: Dr. Ayşe (Dermatoloji), Dr. Mehmet (Estetik Cerrah)',
     },
     extraQuestions: [
@@ -126,6 +132,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Hareket Fizyoterapi Merkezi',
       ai_name: 'Örn: Asistan, Sağlık',
       appointment_duration: 'Örn: 45, 60',
+      duration_hint: 'Manuel terapi (45 dk), Egzersiz programı (60 dk)',
       employees: 'Örn: Fzt. Ali (Manuel Terapi), Fzt. Zeynep (Elektroterapi)',
     },
     extraQuestions: [
@@ -140,6 +147,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Usta, Asistan',
       working_hours: 'Örn: Pzt-Cmt 08:30-18:30',
       appointment_duration: 'Örn: 60 (bakım), 120 (onarım)',
+      duration_hint: 'Yağ değişimi (30 dk), Periyodik bakım (60 dk), Motor onarımı (120 dk)',
       employees: 'Örn: Usta Ahmet (Motor), Usta Murat (Elektrik), Hasan (Lastik)',
     },
     extraQuestions: [
@@ -167,6 +175,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Gülüş Diş Kliniği',
       ai_name: 'Örn: Dişçim, Asistan',
       appointment_duration: 'Örn: 30 (kontrol), 60 (tedavi), 90 (cerrahi)',
+      duration_hint: 'Kontrol (30 dk), Dolgu (45 dk), Kanal tedavisi (60 dk), İmplant (90 dk)',
       employees: 'Örn: Dr. Zeynep (İmplant), Dr. Can (Ortodonti), Dr. Selin (Çocuk Diş)',
     },
     extraQuestions: [
@@ -180,6 +189,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Aesthetic Center İstanbul',
       ai_name: 'Örn: Estetik, Asistan',
       appointment_duration: 'Örn: 30 (konsültasyon), 60 (kontrol)',
+      duration_hint: 'Konsültasyon (30 dk), Kontrol (45 dk)',
       employees: 'Örn: Prof. Dr. Ali (Plastik Cerrahi), Op. Dr. Seda (Rinoplasti)',
     },
     extraQuestions: [
@@ -194,6 +204,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Frame, Lens, Asistan',
       working_hours: 'Örn: Pzt-Cum 10:00-19:00, hafta sonu çekim var',
       appointment_duration: 'Örn: 60 (portre), 120 (ürün), tüm gün (düğün)',
+      duration_hint: 'Portre çekimi (60 dk), Ürün çekimi (120 dk), Düğün (tüm gün)',
       employees: 'Örn: Emre (Düğün Fotoğrafçısı), Deniz (Video), Sude (Ürün Çekimi)',
     },
     extraQuestions: [
@@ -207,6 +218,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: İç Dünya Psikoloji Merkezi',
       ai_name: 'Örn: Destek, Asistan',
       appointment_duration: 'Örn: 50 (bireysel), 60 (çift terapisi)',
+      duration_hint: 'Bireysel seans (50 dk), Çift terapisi (60 dk), Çocuk seans (40 dk)',
       employees: 'Örn: Psk. Elif (Bireysel), Psk. Ahmet (Çift Terapisi), Psk. Sema (Çocuk)',
     },
     extraQuestions: [
@@ -221,6 +233,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Garson, Lezzet, Asistan',
       working_hours: 'Örn: Her gün 11:00-23:00',
       appointment_duration: 'Örn: Masa rezervasyonu için süre belirtilmez',
+      duration_hint: 'Kahvaltı (90 dk), Öğle yemeği (60 dk), Akşam yemeği (120 dk)',
       employees: 'Örn: Şef Ahmet (Mutfak), Barista Selin (Kafe)',
     },
     extraQuestions: [
@@ -234,6 +247,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Premium Oto Galeri',
       ai_name: 'Örn: Oto, Asistan',
       appointment_duration: 'Örn: 30 (test sürüşü)',
+      duration_hint: 'Test sürüşü (30 dk), Ekspertiz (45 dk)',
       employees: 'Örn: Ali (Satış Danışmanı), Veli (Kiralama), Murat (Ekspertiz)',
     },
     extraQuestions: [
@@ -247,6 +261,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Dream Wedding Organizasyon',
       ai_name: 'Örn: Dream, Düğün, Asistan',
       appointment_duration: 'Örn: 60 (keşif görüşmesi)',
+      duration_hint: 'Keşif görüşmesi (60 dk), Mekan gezisi (90 dk)',
       employees: 'Örn: Ayşe (Koordinatör), Fatma (Dekorasyon), Kemal (DJ)',
     },
     extraQuestions: [
@@ -260,6 +275,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Sağlıklı Yaşam Diyetisyenlik',
       ai_name: 'Örn: Diyetim, Asistan',
       appointment_duration: 'Örn: 60 (ilk görüşme), 30 (kontrol)',
+      duration_hint: 'İlk görüşme (60 dk), Kontrol (30 dk), Ölçüm (15 dk)',
       employees: 'Örn: Dyt. Selen (Kilo Yönetimi), Dyt. Burak (Sporcu Beslenmesi)',
     },
     extraQuestions: [
@@ -273,6 +289,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Güven Mali Müşavirlik',
       ai_name: 'Örn: Mali, Asistan',
       appointment_duration: 'Örn: 30 (danışmanlık)',
+      duration_hint: 'Vergi danışmanlık (30 dk), Şirket kuruluş görüşmesi (60 dk)',
       employees: 'Örn: SMMM Ali Bey, Muhasebeci Ayşe Hanım',
     },
     extraQuestions: [
@@ -286,6 +303,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Prestij Emlak',
       ai_name: 'Örn: Emlak, Asistan',
       appointment_duration: 'Örn: 30 (görüşme), 60 (gezi)',
+      duration_hint: 'Ofis görüşmesi (30 dk), Emlak gezisi (60 dk)',
       employees: 'Örn: Mehmet (Satılık), Zeynep (Kiralık), Hakan (Ticari)',
     },
     extraQuestions: [
@@ -299,6 +317,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Bilgi Akademi',
       ai_name: 'Örn: Akademi, Asistan',
       appointment_duration: 'Örn: 40 (ders), 60 (özel ders)',
+      duration_hint: 'Grup dersi (40 dk), Özel ders (60 dk), Deneme dersi (30 dk)',
       employees: 'Örn: Öğr. Ahmet (İngilizce), Öğr. Selin (Matematik), Öğr. Can (Müzik)',
     },
     extraQuestions: [
@@ -313,6 +332,7 @@ export const sectors: SectorDefinition[] = [
       ai_name: 'Örn: Coach, Asistan',
       working_hours: 'Örn: Pzt-Cum 06:00-23:00, Cmt-Paz 08:00-20:00',
       appointment_duration: 'Örn: 60 (PT), 45 (grup dersi)',
+      duration_hint: 'PT seansı (60 dk), Pilates (45 dk), Yoga (60 dk)',
       employees: 'Örn: PT Murat (Fitness), Eğitmen Seda (Pilates), Eğitmen Deniz (Yoga)',
     },
     extraQuestions: [
@@ -326,6 +346,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Can Dostum Veteriner Kliniği',
       ai_name: 'Örn: Patici, Asistan',
       appointment_duration: 'Örn: 20 (kontrol), 30 (aşı), 60+ (ameliyat)',
+      duration_hint: 'Kontrol (20 dk), Aşı (30 dk), Diş temizliği (45 dk)',
       employees: 'Örn: Vet. Dr. Ali (Cerrahi), Vet. Dr. Sena (İç Hastalıkları)',
     },
     extraQuestions: [
@@ -339,6 +360,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Adalet Hukuk Bürosu',
       ai_name: 'Örn: Hukuk, Asistan',
       appointment_duration: 'Örn: 30 (ön görüşme), 60 (detaylı danışmanlık)',
+      duration_hint: 'Ön görüşme (30 dk), Detaylı danışmanlık (60 dk)',
       employees: 'Örn: Av. Mehmet (İş Hukuku), Av. Elif (Aile Hukuku), Av. Burak (Ceza)',
     },
     extraQuestions: [
@@ -352,6 +374,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Pirıl Temizlik Hizmetleri',
       ai_name: 'Örn: Pirıl, Asistan',
       appointment_duration: 'Örn: 120 (standart), 240 (derin temizlik)',
+      duration_hint: 'Standart temizlik (120 dk), Derin temizlik (240 dk), Halı yıkama (60 dk)',
       employees: 'Örn: Ekip 1 (Ev), Ekip 2 (Ofis), Ekip 3 (Halı Yıkama)',
     },
     extraQuestions: [
@@ -378,6 +401,7 @@ export const sectors: SectorDefinition[] = [
       business_name: 'Örn: Net Görüş Optik',
       ai_name: 'Örn: Optik, Asistan',
       appointment_duration: 'Örn: 20 (muayene), 30 (lens uygulaması)',
+      duration_hint: 'Göz muayenesi (20 dk), Lens uygulaması (30 dk)',
       employees: 'Örn: Optisyen Elif, Dr. Kemal (Göz Muayenesi)',
     },
     extraQuestions: [
