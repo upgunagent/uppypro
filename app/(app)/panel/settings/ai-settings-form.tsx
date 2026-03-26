@@ -2,19 +2,22 @@
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Assuming Textarea component exists, if not I will use just 'textarea' with classes
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { updateAiSettings } from "./actions";
-import { Bot, Save, Loader2 } from "lucide-react";
+import { Bot, Save, Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState, useRef } from "react";
+import { SystemMessageWizard } from "@/components/ai/system-message-wizard";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
 export function AiSettingsForm({ settings, subscription }: { settings: any, subscription: any }) {
     const formRef = useRef<HTMLFormElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [loading, setLoading] = useState(false);
     const [isAiEnabled, setIsAiEnabled] = useState(settings?.ai_operational_enabled || false);
+    const [showWizard, setShowWizard] = useState(false);
     const { toast } = useToast();
 
     const packageName = getPackageName(subscription);
@@ -26,7 +29,6 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
 
         setLoading(true);
         try {
-            // value is injected via hidden input instead of relying on stale state
             const result = await updateAiSettings(formData);
             if (result?.error) {
                 toast({
@@ -51,7 +53,23 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
         }
     }
 
+    function handleWizardComplete(systemMessage: string) {
+        // Set the textarea value
+        if (textareaRef.current) {
+            // Use native setter to trigger React's controlled input
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+            nativeInputValueSetter?.call(textareaRef.current, systemMessage);
+            textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        setShowWizard(false);
+        toast({
+            title: "Sistem Mesajı Oluşturuldu ✨",
+            description: "Mesaj alanına eklendi. Kontrol edip 'Ayarları Kaydet' butonuna basın.",
+        });
+    }
+
     return (
+        <>
         <form ref={formRef} action={handleSubmit} className="space-y-6">
             <input type="hidden" name="aiOperationalEnabled" value={isAiEnabled ? "true" : "false"} />
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -69,7 +87,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                 <span className={isAiEnabled ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200" : "bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-200"}>
                                     {isAiEnabled ? "Aktif" : "Pasif"}
                                 </span>
-                                <div className="flex items-center gap-2" title={settings?.ai_mode === 'disabled' ? "AI modu admin tarafından henüz ayarlanmadı." : "AI Asistanı Aç/Kapat"}>
+                                <div className="flex items-center gap-2" title="AI Asistanı Aç/Kapat">
                                     <Switch
                                         checked={isAiEnabled}
                                         onCheckedChange={(val) => {
@@ -95,19 +113,33 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                     <div className="bg-orange-50 text-orange-800 p-4 rounded-lg text-sm mb-4 border border-orange-200">
                         <strong>Mevcut aboneliğiniz UppyPro Inbox paketidir.</strong>
                         <p className="mt-1">Bu paket dahilinde AI Asistan özellikleri kapalıdır. AI asistan özelliklerinin açılması için paketinizi Abonelik sayfasından <strong>UppyPro AI</strong> ya da özel otomasyonlar için <strong>UppyPro Kurumsal</strong> paketlerinden birine yükseltmeniz gerekmektedir.</p>
-                        <p className="mt-2">Kurumsal Paket'e geçiş için <a href="mailto:info@upgunai.com" className="font-semibold underline">info@upgunai.com</a> adresine e-posta göndererek veya destek sayfasından talep oluşturarak UPGUN AI ekibi ile iletişime geçebilirsiniz.</p>
+                        <p className="mt-2">Kurumsal Paket&apos;e geçiş için <a href="mailto:info@upgunai.com" className="font-semibold underline">info@upgunai.com</a> adresine e-posta göndererek veya destek sayfasından talep oluşturarak UPGUN AI ekibi ile iletişime geçebilirsiniz.</p>
                     </div>
                 )}
 
                 <div className={!isAiAllowed ? "opacity-50 pointer-events-none select-none grayscale" : ""}>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Sistem Mesajı & Firma Bilgi Tabanı</Label>
-                            <p className="text-xs text-slate-500">
-                                Buraya firmanızın hizmetleri, çalışma saatleri, fiyat politikası ve asistanın müşterilere nasıl davranması gerektiği hakkında detaylı bilgi giriniz.
-                                Bu bilgi asistanın "beyni" olarak kullanılacaktır.
-                            </p>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label>Sistem Mesajı & Firma Bilgi Tabanı</Label>
+                                    <p className="text-xs text-slate-500">
+                                        Buraya firmanızın hizmetleri, çalışma saatleri, fiyat politikası ve asistanın müşterilere nasıl davranması gerektiği hakkında detaylı bilgi giriniz.
+                                        Bu bilgi asistanın &quot;beyni&quot; olarak kullanılacaktır.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowWizard(true)}
+                                    className="shrink-0 ml-4 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                                >
+                                    <Wand2 className="w-4 h-4 mr-2" />
+                                    Sihirbaz ile Oluştur
+                                </Button>
+                            </div>
                             <Textarea
+                                ref={textareaRef}
                                 name="systemMessage"
                                 className="min-h-[300px]"
                                 placeholder="Örneğin: Biz X firmasıyız. Şu hizmetleri veririz... Müşteriye her zaman kibar davran..."
@@ -126,5 +158,14 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                 </div>
             </div>
         </form>
+
+        {/* System Message Wizard Modal */}
+        {showWizard && (
+            <SystemMessageWizard
+                onComplete={handleWizardComplete}
+                onClose={() => setShowWizard(false)}
+            />
+        )}
+        </>
     );
 }
