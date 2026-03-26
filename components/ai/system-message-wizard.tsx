@@ -80,7 +80,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-orange-500 flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-orange-500 flex items-center justify-center shadow-md">
               <Wand2 className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
               <div
                 key={s}
                 className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${
-                  s <= step ? "bg-gradient-to-r from-purple-500 to-orange-500" : "bg-slate-200"
+                  s <= step ? "bg-gradient-to-r from-slate-800 to-orange-500" : "bg-slate-200"
                 }`}
               />
             ))}
@@ -139,8 +139,8 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     }}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-all duration-150 hover:shadow-md ${
                       selectedSector?.id === sector.id
-                        ? "border-purple-400 bg-purple-50 shadow-sm"
-                        : "border-slate-200 hover:border-purple-300 hover:bg-purple-50/50"
+                        ? "border-orange-400 bg-orange-50 shadow-sm"
+                        : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
                     }`}
                   >
                     <span className="text-xl shrink-0">{sector.emoji}</span>
@@ -216,7 +216,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                 {selectedSector.extraQuestions.length > 0 && (
                   <>
                     <div className="border-t border-dashed border-slate-200 pt-4 mt-4">
-                      <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-3">
+                      <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-3">
                         {selectedSector.emoji} {selectedSector.label} — Sektöre Özel Sorular
                       </p>
                     </div>
@@ -254,7 +254,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
               {loading ? (
                 <>
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-orange-500 flex items-center justify-center animate-pulse">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-slate-800 to-orange-500 flex items-center justify-center animate-pulse">
                       <Sparkles className="w-10 h-10 text-white" />
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                   setStep(3);
                   setTimeout(() => handleGenerate(), 100);
                 }}
-                className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
+                className="bg-gradient-to-r from-slate-800 to-orange-500 hover:from-slate-900 hover:to-orange-600 text-white"
               >
                 <Sparkles className="w-4 h-4 mr-2" /> AI ile Oluştur
               </Button>
@@ -362,7 +362,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
             {step === 4 && (
               <Button
                 onClick={handleApply}
-                className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white"
+                className="bg-gradient-to-r from-slate-800 to-orange-500 hover:from-slate-900 hover:to-orange-600 text-white"
               >
                 <Check className="w-4 h-4 mr-2" /> Onayla ve Uygula
               </Button>

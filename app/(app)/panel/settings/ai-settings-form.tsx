@@ -132,7 +132,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                     type="button"
                                     variant="outline"
                                     onClick={() => setShowWizard(true)}
-                                    className="shrink-0 ml-4 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                                    className="shrink-0 ml-4 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
                                 >
                                     <Wand2 className="w-4 h-4 mr-2" />
                                     Sihirbaz ile Oluştur
