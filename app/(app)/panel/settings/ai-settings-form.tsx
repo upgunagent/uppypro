@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { updateAiSettings } from "./actions";
-import { Bot, Save, Loader2, Wand2 } from "lucide-react";
+import { Bot, Save, Loader2, Wand2, ShieldAlert, Sparkles, Lock, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState, useRef } from "react";
 import { SystemMessageWizard } from "@/components/ai/system-message-wizard";
@@ -18,7 +18,12 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
     const [loading, setLoading] = useState(false);
     const [isAiEnabled, setIsAiEnabled] = useState(settings?.ai_operational_enabled || false);
     const [showWizard, setShowWizard] = useState(false);
+    const [wizardCompleted, setWizardCompleted] = useState(false);
     const { toast } = useToast();
+
+    // Sistem mesajı boşsa ve sihirbaz henüz tamamlanmadıysa overlay göster
+    const hasExistingMessage = !!(settings?.system_message?.trim());
+    const showOverlay = !hasExistingMessage && !wizardCompleted;
 
     const packageName = getPackageName(subscription);
 
@@ -61,6 +66,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
             nativeInputValueSetter?.call(textareaRef.current, systemMessage);
             textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
         }
+        setWizardCompleted(true);
         setShowWizard(false);
         toast({
             title: "Sistem Mesajı Oluşturuldu ✨",
@@ -137,14 +143,84 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                     Sihirbaz ile Oluştur
                                 </Button>
                             </div>
-                            <Textarea
-                                ref={textareaRef}
-                                name="systemMessage"
-                                className="min-h-[300px]"
-                                placeholder="Örneğin: Biz X firmasıyız. Şu hizmetleri veririz... Müşteriye her zaman kibar davran..."
-                                defaultValue={settings?.system_message || ""}
-                                disabled={!isAiAllowed}
-                            />
+
+                            {/* Overlay / Perde - Sistem mesajı boşsa göster */}
+                            {showOverlay && (
+                                <div className="relative">
+                                    {/* Arka planda blur edilmiş textarea */}
+                                    <Textarea
+                                        name="systemMessage"
+                                        className="min-h-[300px] blur-[2px] select-none"
+                                        placeholder=""
+                                        defaultValue=""
+                                        disabled
+                                        tabIndex={-1}
+                                    />
+                                    {/* Şık overlay perde */}
+                                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-slate-900/95 via-blue-950/95 to-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-orange-400/40 shadow-lg">
+                                        {/* Üst ikon */}
+                                        <div className="relative mb-4">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center shadow-xl shadow-orange-500/20 animate-pulse">
+                                                <Lock className="w-8 h-8 text-white" />
+                                            </div>
+                                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white shadow">
+                                                <Sparkles className="w-3 h-3 text-white" />
+                                            </div>
+                                        </div>
+
+                                        {/* Başlık */}
+                                        <h4 className="text-white font-bold text-lg mb-2">Sistem Mesajı Sihirbazı Gerekli</h4>
+
+                                        {/* Açıklama */}
+                                        <p className="text-slate-300 text-sm leading-relaxed max-w-md mb-2">
+                                            AI asistanınızın <strong className="text-orange-300">doğru çalışabilmesi</strong> için sistem mesajının sihirbaz ile oluşturulması zorunludur.
+                                            Sihirbaz, asistanın ihtiyaç duyduğu <strong className="text-orange-300">araç tanımlarını ve yapılandırmaları otomatik olarak</strong> oluşturur.
+                                        </p>
+                                        <p className="text-slate-400 text-xs leading-relaxed max-w-md mb-5">
+                                            Sistem mesajı oluşturulduktan sonra bu alan açılacak ve dilediğiniz düzenlemeleri manuel olarak yapıp kaydedebileceksiniz.
+                                        </p>
+
+                                        {/* Sihirbaz butonu */}
+                                        <Button
+                                            type="button"
+                                            onClick={() => setShowWizard(true)}
+                                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-orange-500/30 transition-all duration-200 hover:scale-105 hover:shadow-xl"
+                                        >
+                                            <Wand2 className="w-5 h-5 mr-2" />
+                                            Sihirbazı Başlat
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Normal textarea - Overlay yokken göster */}
+                            {!showOverlay && (
+                                <>
+                                    <Textarea
+                                        ref={textareaRef}
+                                        name="systemMessage"
+                                        className="min-h-[300px]"
+                                        placeholder="Örneğin: Biz X firmasıyız. Şu hizmetleri veririz... Müşteriye her zaman kibar davran..."
+                                        defaultValue={settings?.system_message || ""}
+                                        disabled={!isAiAllowed}
+                                    />
+                                    {/* Uyarı notu - önemli alanlar silinmesin */}
+                                    <div className="flex gap-2.5 items-start bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-3">
+                                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                        <div className="text-xs text-amber-800 leading-relaxed">
+                                            <p className="font-semibold mb-1">Önemli Uyarı — Manuel Düzenleme</p>
+                                            <p>
+                                                Sistem mesajınızı istediğiniz gibi düzenleyebilirsiniz. Ancak mesajın içindeki
+                                                <strong> "### ARAÇ KULLANIM TALİMATLARI"</strong>,
+                                                <strong> "### TAKVİM VE RANDEVU YÖNETİMİ"</strong> ve
+                                                <strong> "### İLETİŞİM KURALLARI"</strong> gibi bölümleri
+                                                <span className="text-red-600 font-bold"> silmemeye</span> dikkat ediniz.
+                                                Bu bölümler AI asistanın randevu oluşturma, takvim yönetimi ve araçları doğru kullanabilmesi için gereklidir.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
