@@ -54,9 +54,10 @@ export async function GET(req: NextRequest) {
             // Ürünleri DB'ye güncelle
             for (const product of updatedProducts) {
               const productUrl = buildProductUrl(
-                product.productCode,
+                product.contentId,
                 product.brand?.name,
-                product.title
+                product.title,
+                creds.supplierId
               );
 
               await supabase.from("trendyol_products").upsert(

@@ -14,6 +14,7 @@ export interface TrendyolCredentials {
 export interface TrendyolProduct {
   id: string;
   productCode: number;
+  contentId: number;
   barcode: string;
   title: string;
   description: string;
@@ -26,6 +27,7 @@ export interface TrendyolProduct {
   attributes: { attributeName: string; attributeValue: string }[];
   approved: boolean;
   productMainId: string;
+  productUrl?: string;
 }
 
 export interface TrendyolOrder {
@@ -312,18 +314,27 @@ export async function createClaim(
 
 /**
  * Ürün URL'sini oluşturur
+ * Gerçek Trendyol URL formatı: trendyol.com/{brand-slug}/{title-slug}-p-{contentId}?boutiqueId=61&merchantId={supplierId}
  */
-export function buildProductUrl(productCode: number, brand?: string, title?: string): string {
-  // Trendyol URL formatı: trendyol.com/marka/urun-adi-p-{productCode}
+export function buildProductUrl(
+  contentId: number,
+  brand?: string,
+  title?: string,
+  supplierId?: string
+): string {
   const slug = (title || "urun")
     .toLowerCase()
-    .replace(/[^a-z0-9çğıöşü\s-]/g, "")
+    .replace(/[^a-z0-9çğıöşüü\s-]/g, "")
     .replace(/\s+/g, "-")
     .substring(0, 80);
   const brandSlug = (brand || "marka")
     .toLowerCase()
-    .replace(/[^a-z0-9çğıöşü\s-]/g, "")
+    .replace(/[^a-z0-9çğıöşüü\s-]/g, "")
     .replace(/\s+/g, "-");
 
-  return `https://www.trendyol.com/${brandSlug}/${slug}-p-${productCode}`;
+  let url = `https://www.trendyol.com/${brandSlug}/${slug}-p-${contentId}`;
+  if (supplierId) {
+    url += `?boutiqueId=61&merchantId=${supplierId}`;
+  }
+  return url;
 }
