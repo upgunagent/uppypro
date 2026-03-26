@@ -11,3 +11,8 @@ export function getPackageName(subscription: any): PackageType {
     if (key === 'uppypro_ai') return 'UppyPro AI';
     return 'UppyPro Inbox';
 }
+
+export function isKurumsal(subscription: any): boolean {
+    const key = subscription?.ai_product_key || '';
+    return key.startsWith('uppypro_corporate') || key === 'uppypro_enterprise';
+}

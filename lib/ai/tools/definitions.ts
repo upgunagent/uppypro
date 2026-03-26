@@ -219,6 +219,70 @@ export const aiToolDefinitions = [
           ],
         },
       },
+      // ─── TRENDYOL TOOLS ───
+      {
+        name: "search_trendyol_products",
+        description:
+          "Trendyol mağazasındaki ürünleri arar. Müşteri bir ürün sorduğunda, ürün bilgisi istediğinde, alışveriş yapmak istediğinde veya ürün önerisi talep ettiğinde bu aracı kullan. Sonuçlarda ürün adı, fiyatı, stok durumu, özellikleri ve Trendyol satış linki döner.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            query: {
+              type: SchemaType.STRING,
+              description:
+                "Aranacak ürün (ör: 'kırmızı spor ayakkabı', 'laptop çantası 15.6 inç', 'hediye öneri')",
+            },
+            category: {
+              type: SchemaType.STRING,
+              description: "Opsiyonel kategori filtresi (ör: 'Elektronik', 'Giyim')",
+            },
+            max_price: {
+              type: SchemaType.NUMBER,
+              description: "Opsiyonel: Maksimum fiyat filtresi (TL)",
+            },
+            min_price: {
+              type: SchemaType.NUMBER,
+              description: "Opsiyonel: Minimum fiyat filtresi (TL)",
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "check_trendyol_order",
+        description:
+          "Trendyol siparişinin durumunu sorgular. Müşteri sipariş durumunu, kargo takibini veya teslimat süresini sorduğunda bu aracı kullan.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            order_number: {
+              type: SchemaType.STRING,
+              description: "Trendyol sipariş numarası",
+            },
+          },
+          required: ["order_number"],
+        },
+      },
+      {
+        name: "create_trendyol_return",
+        description:
+          "Trendyol siparişi için iade talebi oluşturur. Müşteri iade, değişim veya ürünle ilgili şikayette bulunduğunda bu aracı kullan. Önce sipariş numarasını ve iade sebebini sor.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            order_number: {
+              type: SchemaType.STRING,
+              description: "İade edilecek siparişin numarası",
+            },
+            reason: {
+              type: SchemaType.STRING,
+              description:
+                "İade sebebi (ör: 'Ürün hasarlı geldi', 'Yanlış ürün gönderildi', 'Beğenmedim')",
+            },
+          },
+          required: ["order_number", "reason"],
+        },
+      },
     ],
   },
 ];

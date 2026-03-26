@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { RepairTenantButton } from "@/components/repair-tenant-button";
 import { ChannelCard } from "@/components/channel-card";
+import { TrendyolCard } from "@/components/trendyol/trendyol-card";
 import { ConnectionGuide } from "@/components/settings/connection-guide";
 import { SettingsTabs, ConnectionTabs, WhatsappTemplatesTabs } from "./settings-tabs";
 import { BillingForm } from "./billing-form";
@@ -20,7 +21,7 @@ import { CampaignBuilder } from "@/components/settings/campaign-builder";
 import { CampaignReportsCard } from "@/components/settings/campaign-reports-card";
 import { CustomerListsCard } from "@/components/settings/customer-lists-card";
 
-import { getPackageName } from "@/lib/subscription-utils";
+import { getPackageName, isKurumsal } from "@/lib/subscription-utils";
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -93,6 +94,8 @@ export default async function SettingsPage() {
 
     const wa = channels?.find((c) => c.channel === "whatsapp");
     const ig = channels?.find((c) => c.channel === "instagram");
+    const ty = channels?.find((c) => c.channel === "trendyol");
+    const isKurumsalPackage = isKurumsal(subscription);
 
     // Compose Tabs Content
 
@@ -102,6 +105,9 @@ export default async function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ChannelCard type="whatsapp" connection={wa} />
                 <ChannelCard type="instagram" connection={ig} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TrendyolCard connection={ty} isKurumsal={isKurumsalPackage} />
             </div>
             <ConnectionGuide />
         </div>
