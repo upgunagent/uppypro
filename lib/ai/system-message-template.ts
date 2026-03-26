@@ -16,6 +16,8 @@ export interface SectorDefinition {
   label: string;
   emoji: string;
   extraQuestions: SectorQuestion[];
+  /** Ortak soruların placeholder'larını sektöre göre özelleştirir */
+  placeholderOverrides?: Record<string, string>;
 }
 
 // Ortak sorular - tüm sektörler için
@@ -35,6 +37,14 @@ export const commonQuestions: SectorQuestion[] = [
 export const sectors: SectorDefinition[] = [
   {
     id: 'beauty', label: 'Güzellik & Cilt Bakım Merkezi', emoji: '💆‍♀️',
+    placeholderOverrides: {
+      business_name: 'Örn: Bella Güzellik Merkezi',
+      ai_name: 'Örn: Bella, Liya, Asistan',
+      working_hours: 'Örn: Pzt-Cmt 10:00-20:00, Pazar Kapalı',
+      contact_info: 'Örn: 0212 555 12 34 - Nişantaşı, İstanbul',
+      appointment_duration: 'Örn: 45, 60, 90',
+      employees: 'Örn: Selin (Cilt Bakım), Merve (Manikür), Elif (Epilasyon)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmet Listesi', placeholder: 'Örn: Cilt bakımı, manikür, pedikür, kaş tasarımı, kirpik, epilasyon', type: 'textarea', required: true },
       { id: 'price_range', label: 'Fiyat Aralığı', placeholder: 'Örn: Cilt bakımı 500-1500 TL, Manikür 200-400 TL', type: 'textarea' },
@@ -42,6 +52,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'spa', label: 'SPA & Masaj Merkezi', emoji: '🧖',
+    placeholderOverrides: {
+      business_name: 'Örn: Zen SPA & Wellness',
+      ai_name: 'Örn: Zen, Huzur, Asistan',
+      working_hours: 'Örn: Her gün 10:00-22:00',
+      appointment_duration: 'Örn: 60, 90, 120',
+      employees: 'Örn: Aylin (Masöz), Kemal (Hamam), Deniz (Aromaterapi)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler ve Paketler', placeholder: 'Örn: Klasik masaj, aromaterapi, hamam, wellness paketleri', type: 'textarea', required: true },
       { id: 'price_range', label: 'Fiyat Aralığı', placeholder: 'Örn: Masaj 800-2000 TL, Hamam 500-1000 TL', type: 'textarea' },
@@ -49,6 +66,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'tattoo', label: 'Dövme & Tattoo Stüdyosu', emoji: '🎨',
+    placeholderOverrides: {
+      business_name: 'Örn: Ink Art Tattoo Studio',
+      ai_name: 'Örn: Ink, Art, Asistan',
+      working_hours: 'Örn: Sal-Cmt 12:00-21:00',
+      appointment_duration: 'Örn: 60, 120, 180',
+      employees: 'Örn: Kaan (Dövme Sanatçısı), Ece (Piercing), Zeynep (Kalıcı Makyaj)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Dövme, piercing, kalıcı makyaj, cover-up', type: 'textarea', required: true },
       { id: 'consultation_policy', label: 'Danışmanlık Politikası', placeholder: 'Örn: İlk danışmanlık ücretsiz, tasarım süreci vb.', type: 'textarea' },
@@ -56,6 +80,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'hotel', label: 'Otel & Konaklama', emoji: '🏨',
+    placeholderOverrides: {
+      business_name: 'Örn: Grand Palace Hotel',
+      ai_name: 'Örn: Concierge, Asistan',
+      working_hours: 'Örn: 7/24 Resepsiyon',
+      appointment_duration: 'Örn: Gecelik konaklama',
+      employees: 'Örn: Resepsiyon ekibi, Housekeeping',
+    },
     extraQuestions: [
       { id: 'room_types', label: 'Oda Tipleri', placeholder: 'Örn: Standart, Deluxe, Suite, Aile Odası', type: 'textarea', required: true },
       { id: 'checkin_policy', label: 'Giriş-Çıkış Saatleri & İptal Politikası', placeholder: 'Örn: Check-in 14:00, Check-out 12:00, 48 saat öncesine kadar ücretsiz iptal', type: 'textarea' },
@@ -64,6 +95,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'hair_salon', label: 'Kuaför & Saç Tasarım', emoji: '✂️',
+    placeholderOverrides: {
+      business_name: 'Örn: Studio Hair Design',
+      ai_name: 'Örn: Stil, Bella, Asistan',
+      working_hours: 'Örn: Pzt-Cmt 09:00-20:00, Pazar 10:00-18:00',
+      appointment_duration: 'Örn: 30 (kesim), 60 (boya), 90 (özel bakım)',
+      employees: 'Örn: Mehmet (Erkek Kuaför), Ayşe (Bayan Kuaför), Seda (Boya Uzmanı)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Saç kesimi, boya, fön, keratin bakımı, sakal tıraşı', type: 'textarea', required: true },
       { id: 'price_range', label: 'Fiyat Listesi', placeholder: 'Örn: Erkek kesim 200 TL, Bayan kesim+fön 400 TL, Boya 600-1200 TL', type: 'textarea' },
@@ -71,6 +109,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'medical_aesthetic', label: 'Medikal Estetik Merkezi', emoji: '💉',
+    placeholderOverrides: {
+      business_name: 'Örn: Aura Medikal Estetik',
+      ai_name: 'Örn: Aura, Asistan',
+      appointment_duration: 'Örn: 30 (kontrol), 60 (işlem)',
+      employees: 'Örn: Dr. Ayşe (Dermatoloji), Dr. Mehmet (Estetik Cerrah)',
+    },
     extraQuestions: [
       { id: 'treatments', label: 'Tedavi ve İşlemler', placeholder: 'Örn: Botox, dolgu, lazer, mezoterapi, PRP, cilt yenileme', type: 'textarea', required: true },
       { id: 'doctor_info', label: 'Doktor/Uzman Bilgisi', placeholder: 'Örn: Dr. Ahmet Yılmaz - Dermatoloji Uzmanı', type: 'text' },
@@ -78,6 +122,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'physiotherapy', label: 'Fizyoterapi & Rehabilitasyon', emoji: '🏥',
+    placeholderOverrides: {
+      business_name: 'Örn: Hareket Fizyoterapi Merkezi',
+      ai_name: 'Örn: Asistan, Sağlık',
+      appointment_duration: 'Örn: 45, 60',
+      employees: 'Örn: Fzt. Ali (Manuel Terapi), Fzt. Zeynep (Elektroterapi)',
+    },
     extraQuestions: [
       { id: 'treatments', label: 'Tedavi Yöntemleri', placeholder: 'Örn: Manuel terapi, elektroterapi, egzersiz, hidroterapi', type: 'textarea', required: true },
       { id: 'insurance_policy', label: 'Sigorta Politikası', placeholder: 'Örn: SGK anlaşmalı, özel sigorta kabul edilir', type: 'text' },
@@ -85,6 +135,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'auto_service', label: 'Oto Servis & Yedek Parça', emoji: '🔧',
+    placeholderOverrides: {
+      business_name: 'Örn: Master Oto Servis',
+      ai_name: 'Örn: Usta, Asistan',
+      working_hours: 'Örn: Pzt-Cmt 08:30-18:30',
+      appointment_duration: 'Örn: 60 (bakım), 120 (onarım)',
+      employees: 'Örn: Usta Ahmet (Motor), Usta Murat (Elektrik), Hasan (Lastik)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Servis Hizmetleri', placeholder: 'Örn: Bakım, onarım, lastik, oto yıkama, oto elektrik', type: 'textarea', required: true },
       { id: 'vehicle_types', label: 'Kabul Edilen Araç Tipleri', placeholder: 'Örn: Binek, SUV, hafif ticari', type: 'text' },
@@ -92,6 +149,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'ecommerce', label: 'E-ticaret & Butik Mağaza', emoji: '🛍️',
+    placeholderOverrides: {
+      business_name: 'Örn: Chic Boutique',
+      ai_name: 'Örn: Stil, Butik, Asistan',
+      working_hours: 'Örn: Online 7/24, Mağaza Pzt-Cmt 10:00-20:00',
+      appointment_duration: 'Randevu gerektirmezse boş bırakın',
+      employees: 'Örn: Müşteri hizmetleri ekibi',
+    },
     extraQuestions: [
       { id: 'product_categories', label: 'Ürün Kategorileri', placeholder: 'Örn: Giyim, aksesuar, hediyeik, kozmetik', type: 'textarea', required: true },
       { id: 'shipping_policy', label: 'Kargo & İade Politikası', placeholder: 'Örn: 500 TL üzeri ücretsiz kargo, 14 gün iade', type: 'textarea' },
@@ -99,6 +163,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'dental', label: 'Diş Kliniği & Diş Hekimi', emoji: '🦷',
+    placeholderOverrides: {
+      business_name: 'Örn: Gülüş Diş Kliniği',
+      ai_name: 'Örn: Dişçim, Asistan',
+      appointment_duration: 'Örn: 30 (kontrol), 60 (tedavi), 90 (cerrahi)',
+      employees: 'Örn: Dr. Zeynep (İmplant), Dr. Can (Ortodonti), Dr. Selin (Çocuk Diş)',
+    },
     extraQuestions: [
       { id: 'treatments', label: 'Tedaviler', placeholder: 'Örn: Dolgu, kanal tedavisi, implant, ortodonti, diş protez', type: 'textarea', required: true },
       { id: 'emergency_policy', label: 'Acil Durum Politikası', placeholder: 'Örn: 7/24 acil diş hattı mevcut', type: 'text' },
@@ -106,6 +176,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'plastic_surgery', label: 'Estetik & Plastik Cerrahi', emoji: '🏥',
+    placeholderOverrides: {
+      business_name: 'Örn: Aesthetic Center İstanbul',
+      ai_name: 'Örn: Estetik, Asistan',
+      appointment_duration: 'Örn: 30 (konsültasyon), 60 (kontrol)',
+      employees: 'Örn: Prof. Dr. Ali (Plastik Cerrahi), Op. Dr. Seda (Rinoplasti)',
+    },
     extraQuestions: [
       { id: 'procedures', label: 'İşlemler', placeholder: 'Örn: Burun estetiği, yüz germe, liposuction, meme estetiği', type: 'textarea', required: true },
       { id: 'consultation_info', label: 'Konsültasyon Bilgisi', placeholder: 'Örn: İlk muayene ücretsiz, online konsültasyon mevcut', type: 'text' },
@@ -113,6 +189,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'photography', label: 'Fotoğrafçılık & Video', emoji: '📸',
+    placeholderOverrides: {
+      business_name: 'Örn: Frame Studio',
+      ai_name: 'Örn: Frame, Lens, Asistan',
+      working_hours: 'Örn: Pzt-Cum 10:00-19:00, hafta sonu çekim var',
+      appointment_duration: 'Örn: 60 (portre), 120 (ürün), tüm gün (düğün)',
+      employees: 'Örn: Emre (Düğün Fotoğrafçısı), Deniz (Video), Sude (Ürün Çekimi)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Düğün fotoğrafı, ürün çekimi, tanıtım videosu, drone', type: 'textarea', required: true },
       { id: 'packages', label: 'Paketler', placeholder: 'Örn: Düğün paketi 15.000 TL, Ürün çekimi 200 TL/adet', type: 'textarea' },
@@ -120,6 +203,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'psychology', label: 'Psikoloji & Terapi', emoji: '🧠',
+    placeholderOverrides: {
+      business_name: 'Örn: İç Dünya Psikoloji Merkezi',
+      ai_name: 'Örn: Destek, Asistan',
+      appointment_duration: 'Örn: 50 (bireysel), 60 (çift terapisi)',
+      employees: 'Örn: Psk. Elif (Bireysel), Psk. Ahmet (Çift Terapisi), Psk. Sema (Çocuk)',
+    },
     extraQuestions: [
       { id: 'specializations', label: 'Uzmanlık Alanları', placeholder: 'Örn: Bireysel terapi, çift terapisi, çocuk psikolojisi', type: 'textarea', required: true },
       { id: 'session_info', label: 'Seans Bilgisi', placeholder: 'Örn: 50 dakika, online seans mevcut', type: 'text' },
@@ -127,6 +216,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'restaurant', label: 'Restoran & Kafe', emoji: '🍽️',
+    placeholderOverrides: {
+      business_name: 'Örn: Lezzet Durağı Restoran',
+      ai_name: 'Örn: Garson, Lezzet, Asistan',
+      working_hours: 'Örn: Her gün 11:00-23:00',
+      appointment_duration: 'Örn: Masa rezervasyonu için süre belirtilmez',
+      employees: 'Örn: Şef Ahmet (Mutfak), Barista Selin (Kafe)',
+    },
     extraQuestions: [
       { id: 'cuisine', label: 'Mutfak & Menü Bilgisi', placeholder: 'Örn: Türk mutfağı, İtalyan, kahvaltı, vegan seçenekler', type: 'textarea', required: true },
       { id: 'reservation_policy', label: 'Rezervasyon Politikası', placeholder: 'Örn: Online rezervasyon, minimum 2 kişi, kapora gerekli', type: 'textarea' },
@@ -134,6 +230,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'car_rental', label: 'Oto Galeri & Araç Kiralama', emoji: '🚗',
+    placeholderOverrides: {
+      business_name: 'Örn: Premium Oto Galeri',
+      ai_name: 'Örn: Oto, Asistan',
+      appointment_duration: 'Örn: 30 (test sürüşü)',
+      employees: 'Örn: Ali (Satış Danışmanı), Veli (Kiralama), Murat (Ekspertiz)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: 2. el satış, kiralama, takas, ekspertiz', type: 'textarea', required: true },
       { id: 'rental_policy', label: 'Kiralama Şartları', placeholder: 'Örn: Ehliyet 2 yıl, depozito, günlük/aylık kiralama', type: 'textarea' },
@@ -141,6 +243,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'wedding', label: 'Düğün & Organizasyon', emoji: '💒',
+    placeholderOverrides: {
+      business_name: 'Örn: Dream Wedding Organizasyon',
+      ai_name: 'Örn: Dream, Düğün, Asistan',
+      appointment_duration: 'Örn: 60 (keşif görüşmesi)',
+      employees: 'Örn: Ayşe (Koordinatör), Fatma (Dekorasyon), Kemal (DJ)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Düğün organizasyonu, nişan, kına, parti, kurumsal etkinlik', type: 'textarea', required: true },
       { id: 'capacity', label: 'Kapasite & Mekan Bilgisi', placeholder: 'Örn: 50-500 kişilik salonlar, açık hava seçeneği', type: 'textarea' },
@@ -148,6 +256,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'dietitian', label: 'Diyetisyen & Beslenme', emoji: '🥗',
+    placeholderOverrides: {
+      business_name: 'Örn: Sağlıklı Yaşam Diyetisyenlik',
+      ai_name: 'Örn: Diyetim, Asistan',
+      appointment_duration: 'Örn: 60 (ilk görüşme), 30 (kontrol)',
+      employees: 'Örn: Dyt. Selen (Kilo Yönetimi), Dyt. Burak (Sporcu Beslenmesi)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Kilo verme, sporcu beslenmesi, hamilelik diyeti', type: 'textarea', required: true },
       { id: 'session_format', label: 'Görüşme Formatı', placeholder: 'Örn: Yüz yüze ve online, ilk görüşme 60 dk, kontrol 30 dk', type: 'text' },
@@ -155,6 +269,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'accounting', label: 'Muhasebe & Mali Müşavirlik', emoji: '📊',
+    placeholderOverrides: {
+      business_name: 'Örn: Güven Mali Müşavirlik',
+      ai_name: 'Örn: Mali, Asistan',
+      appointment_duration: 'Örn: 30 (danışmanlık)',
+      employees: 'Örn: SMMM Ali Bey, Muhasebeci Ayşe Hanım',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Defter tutma, vergi danışmanlığı, şirket kuruluş, SGK işlemleri', type: 'textarea', required: true },
       { id: 'client_types', label: 'Müşteri Tipleri', placeholder: 'Örn: Şahıs firmaları, limited, anonim şirketler', type: 'text' },
@@ -162,6 +282,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'real_estate', label: 'Emlak Ofisi', emoji: '🏠',
+    placeholderOverrides: {
+      business_name: 'Örn: Prestij Emlak',
+      ai_name: 'Örn: Emlak, Asistan',
+      appointment_duration: 'Örn: 30 (görüşme), 60 (gezi)',
+      employees: 'Örn: Mehmet (Satılık), Zeynep (Kiralık), Hakan (Ticari)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Satılık, kiralık, gayrimenkul danışmanlığı', type: 'textarea', required: true },
       { id: 'regions', label: 'Hizmet Bölgeleri', placeholder: 'Örn: İstanbul Avrupa yakası, Beşiktaş, Şişli, Kadıköy', type: 'text' },
@@ -169,6 +295,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'education', label: 'Eğitim & Kurs Merkezi', emoji: '📚',
+    placeholderOverrides: {
+      business_name: 'Örn: Bilgi Akademi',
+      ai_name: 'Örn: Akademi, Asistan',
+      appointment_duration: 'Örn: 40 (ders), 60 (özel ders)',
+      employees: 'Örn: Öğr. Ahmet (İngilizce), Öğr. Selin (Matematik), Öğr. Can (Müzik)',
+    },
     extraQuestions: [
       { id: 'courses', label: 'Kurslar / Eğitimler', placeholder: 'Örn: İngilizce, müzik, dans, yazılım, özel ders', type: 'textarea', required: true },
       { id: 'age_groups', label: 'Yaş Grupları', placeholder: 'Örn: Çocuk (5-12), Genç (13-18), Yetişkin', type: 'text' },
@@ -176,6 +308,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'fitness', label: 'Spor & Fitness', emoji: '🏋️',
+    placeholderOverrides: {
+      business_name: 'Örn: Power Gym Fitness',
+      ai_name: 'Örn: Coach, Asistan',
+      working_hours: 'Örn: Pzt-Cum 06:00-23:00, Cmt-Paz 08:00-20:00',
+      appointment_duration: 'Örn: 60 (PT), 45 (grup dersi)',
+      employees: 'Örn: PT Murat (Fitness), Eğitmen Seda (Pilates), Eğitmen Deniz (Yoga)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Fitness, pilates, yoga, yüzme, CrossFit, PT', type: 'textarea', required: true },
       { id: 'membership_info', label: 'Üyelik Bilgisi', placeholder: 'Örn: Aylık 1500 TL, yıllık 12000 TL, PT ek ücret', type: 'textarea' },
@@ -183,6 +322,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'veterinary', label: 'Veteriner & Pet', emoji: '🐾',
+    placeholderOverrides: {
+      business_name: 'Örn: Can Dostum Veteriner Kliniği',
+      ai_name: 'Örn: Patici, Asistan',
+      appointment_duration: 'Örn: 20 (kontrol), 30 (aşı), 60+ (ameliyat)',
+      employees: 'Örn: Vet. Dr. Ali (Cerrahi), Vet. Dr. Sena (İç Hastalıkları)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Muayene, aşı, ameliyat, diş temizliği, tıraş', type: 'textarea', required: true },
       { id: 'pet_types', label: 'Kabul Edilen Hayvanlar', placeholder: 'Örn: Kedi, köpek, kuş, egzotik hayvanlar', type: 'text' },
@@ -190,6 +335,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'law', label: 'Hukuk & Avukatlık', emoji: '⚖️',
+    placeholderOverrides: {
+      business_name: 'Örn: Adalet Hukuk Bürosu',
+      ai_name: 'Örn: Hukuk, Asistan',
+      appointment_duration: 'Örn: 30 (ön görüşme), 60 (detaylı danışmanlık)',
+      employees: 'Örn: Av. Mehmet (İş Hukuku), Av. Elif (Aile Hukuku), Av. Burak (Ceza)',
+    },
     extraQuestions: [
       { id: 'practice_areas', label: 'Uzmanlık Alanları', placeholder: 'Örn: İş hukuku, aile hukuku, ceza hukuku, ticaret hukuku', type: 'textarea', required: true },
       { id: 'consultation_fee', label: 'Danışmanlık Ücreti', placeholder: 'Örn: İlk görüşme ücretsiz, saat başı 2000 TL', type: 'text' },
@@ -197,6 +348,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'cleaning', label: 'Temizlik & Ev Hizmetleri', emoji: '🧹',
+    placeholderOverrides: {
+      business_name: 'Örn: Pirıl Temizlik Hizmetleri',
+      ai_name: 'Örn: Pirıl, Asistan',
+      appointment_duration: 'Örn: 120 (standart), 240 (derin temizlik)',
+      employees: 'Örn: Ekip 1 (Ev), Ekip 2 (Ofis), Ekip 3 (Halı Yıkama)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Ev temizliği, ofis temizliği, tadilat sonrası, halı yıkama', type: 'textarea', required: true },
       { id: 'pricing_model', label: 'Fiyatlandırma Modeli', placeholder: 'Örn: Saatlik 250 TL, günlük 1500 TL', type: 'text' },
@@ -204,6 +361,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'printing', label: 'Matbaa & Reklam', emoji: '🖨️',
+    placeholderOverrides: {
+      business_name: 'Örn: Baskı Merkezi Matbaa',
+      ai_name: 'Örn: Baskı, Asistan',
+      appointment_duration: 'Randevu gerektirmezse boş bırakın',
+      employees: 'Örn: Grafiker Emre, Baskı Operatörü Kemal',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Kartvizit, broşür, tabela, dijital baskı', type: 'textarea', required: true },
       { id: 'min_order', label: 'Minimum Sipariş', placeholder: 'Örn: Min 100 adet kartvizit, 50 adet broşür', type: 'text' },
@@ -211,6 +374,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'optics', label: 'Optik & Gözlükçü', emoji: '👓',
+    placeholderOverrides: {
+      business_name: 'Örn: Net Görüş Optik',
+      ai_name: 'Örn: Optik, Asistan',
+      appointment_duration: 'Örn: 20 (muayene), 30 (lens uygulaması)',
+      employees: 'Örn: Optisyen Elif, Dr. Kemal (Göz Muayenesi)',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Göz muayenesi, numaralı gözlük, lens, güneş gözlüğü', type: 'textarea', required: true },
       { id: 'brands', label: 'Markalar', placeholder: 'Örn: Ray-Ban, Oakley, Essilor lensler', type: 'text' },
@@ -218,6 +387,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'florist', label: 'Çiçekçi & Peyzaj', emoji: '💐',
+    placeholderOverrides: {
+      business_name: 'Örn: Çiçek Bahçem',
+      ai_name: 'Örn: Çiçek, Asistan',
+      working_hours: 'Örn: Her gün 08:00-20:00',
+      appointment_duration: 'Randevu gerektirmezse boş bırakın',
+      employees: 'Örn: Aranjman ekibi, Teslimat ekibi',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: Buket, aranjman, çelenk, düğün çiçeği, peyzaj', type: 'textarea', required: true },
       { id: 'delivery_info', label: 'Teslimat Bilgisi', placeholder: 'Örn: Aynı gün teslimat, şehir içi ücretsiz', type: 'text' },
@@ -225,6 +401,12 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'architecture', label: 'Mimarlık & İç Mimarlık', emoji: '🏗️',
+    placeholderOverrides: {
+      business_name: 'Örn: Tasarım Evi Mimarlık',
+      ai_name: 'Örn: Tasarım, Asistan',
+      appointment_duration: 'Örn: 60 (keşif görüşmesi)',
+      employees: 'Örn: Mimar Selin, İç Mimar Deniz, 3D Tasarımcı Emre',
+    },
     extraQuestions: [
       { id: 'services', label: 'Hizmetler', placeholder: 'Örn: İç mimarlık, dekorasyon, proje çizimi, 3D tasarım', type: 'textarea', required: true },
       { id: 'project_types', label: 'Proje Türleri', placeholder: 'Örn: Konut, ofis, restoran, otel renovasyonu', type: 'text' },
@@ -232,6 +414,13 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'pharmacy', label: 'Eczane', emoji: '💊',
+    placeholderOverrides: {
+      business_name: 'Örn: Şifa Eczanesi',
+      ai_name: 'Örn: Eczacım, Asistan',
+      working_hours: 'Örn: Pzt-Cmt 08:30-19:30',
+      appointment_duration: 'Randevu gerektirmezse boş bırakın',
+      employees: 'Örn: Ecz. Ayşe, Ecz. Mehmet',
+    },
     extraQuestions: [
       { id: 'services', label: 'Ek Hizmetler', placeholder: 'Örn: Tansiyon ölçümü, şeker ölçümü, dermokozmetik danışmanlık', type: 'textarea' },
       { id: 'nöbet_info', label: 'Nöbet Bilgisi', placeholder: 'Örn: Nöbet günleri web sitesinde yayınlanır', type: 'text' },
@@ -239,6 +428,10 @@ export const sectors: SectorDefinition[] = [
   },
   {
     id: 'other', label: 'Diğer Sektör', emoji: '🏢',
+    placeholderOverrides: {
+      business_name: 'Örn: Firma adınız',
+      ai_name: 'Örn: Asistan',
+    },
     extraQuestions: [
       { id: 'sector_name', label: 'Sektörünüzü Belirtin', placeholder: 'Örn: Sigorta acentesi, turizm acentası', type: 'text', required: true },
       { id: 'services', label: 'Hizmetleriniz', placeholder: 'Sunduğunuz hizmetleri detaylı yazın', type: 'textarea', required: true },

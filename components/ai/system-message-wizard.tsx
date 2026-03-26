@@ -159,7 +159,9 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
               
               <div className="space-y-4">
                 {/* Common Questions */}
-                {commonQuestions.map((q) => (
+                {commonQuestions.map((q) => {
+                  const placeholder = selectedSector.placeholderOverrides?.[q.id] || q.placeholder;
+                  return (
                   <div key={q.id} className="space-y-1.5">
                     <Label className="text-sm">
                       {q.label}
@@ -167,7 +169,7 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                     </Label>
                     {q.type === 'textarea' ? (
                       <Textarea
-                        placeholder={q.placeholder}
+                        placeholder={placeholder}
                         value={answers[q.id] || ""}
                         onChange={(e) => setAnswer(q.id, e.target.value)}
                         className="min-h-[80px]"
@@ -185,13 +187,14 @@ export function SystemMessageWizard({ onComplete, onClose }: Props) {
                       </select>
                     ) : (
                       <Input
-                        placeholder={q.placeholder}
+                        placeholder={placeholder}
                         value={answers[q.id] || ""}
                         onChange={(e) => setAnswer(q.id, e.target.value)}
                       />
                     )}
                   </div>
-                ))}
+                  );
+                })}
 
                 {/* Extra Questions - sektöre özel */}
                 {selectedSector.extraQuestions.length > 0 && (
