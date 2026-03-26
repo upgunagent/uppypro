@@ -3,6 +3,19 @@
 -- UppyPro Kurumsal paket için e-ticaret entegrasyonu
 -- ================================================
 
+-- 0. channel_type enum'una 'trendyol' değerini ekle
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum 
+    WHERE enumlabel = 'trendyol' 
+    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'channel_type')
+  ) THEN
+    ALTER TYPE channel_type ADD VALUE 'trendyol';
+  END IF;
+END
+$$;
+
 -- 1. Trendyol ürün kataloğu
 CREATE TABLE IF NOT EXISTS trendyol_products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
