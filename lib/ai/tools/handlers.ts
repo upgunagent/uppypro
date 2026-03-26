@@ -5,7 +5,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAppointmentEmail } from "@/lib/ai/email-sender";
-import { getTrendyolCredentials } from "@/app/actions/trendyol";
+import { getTrendyolCredentials } from "@/lib/trendyol/credentials";
 import {
   getShipmentPackages,
   createClaim,
