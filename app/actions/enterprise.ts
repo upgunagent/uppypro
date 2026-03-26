@@ -133,7 +133,7 @@ export async function createEnterpriseInvite(data: EnterpriseInviteData) {
         });
 
         // 7. Generate Link
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://uppypro.vercel.app";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.upgunai.com";
         let inviteLink = "";
 
         if (isFreePlan) {
@@ -342,11 +342,12 @@ export async function activateSubscription(tenantId: string, cardData: { cardHol
     if (member) {
         // Generate a recovery link that redirects to /update-password
         // This effectively logs the user in so they can set their password
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.upgunai.com";
         const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
             type: "recovery",
             email: await getUserEmail(admin, member.user_id),
             options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/update-password`
+                redirectTo: `${baseUrl}/update-password`
             }
         });
 

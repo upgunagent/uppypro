@@ -26,7 +26,7 @@ export default function UserAgreementPage() {
 
                     <p>
                         <strong>Platform (UppyPro):</strong><br />
-                        Test/önizleme ortamı: <a href="https://uppypro.vercel.app/" target="_blank" rel="noopener noreferrer">https://uppypro.vercel.app/</a><br />
+                        Test/önizleme ortamı: <a href="https://www.upgunai.com/" target="_blank" rel="noopener noreferrer">https://www.upgunai.com/</a><br />
                         Canlı yayında: <a href="http://www.upgunai.com" target="_blank" rel="noopener noreferrer">www.upgunai.com</a> alan adı üzerinden Platform’a yönlendirme yapılabilir.<br />
                         (“Platform” tanımı her iki adresi ve bunların alt alan adlarını/kapsamını içerir.)<br />
                         <strong>İletişim:</strong> <a href="mailto:info@upgunai.com">info@upgunai.com</a>

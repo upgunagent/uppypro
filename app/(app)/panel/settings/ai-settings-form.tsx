@@ -78,7 +78,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                                 formRef.current?.requestSubmit();
                                             }, 50);
                                         }}
-                                        disabled={!settings?.ai_mode || settings?.ai_mode === 'disabled' || loading}
+                                        disabled={loading}
                                         className="data-[state=checked]:bg-green-500"
                                     />
                                 </div>
@@ -91,23 +91,11 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                     </div>
                 </div>
 
-                {settings?.ai_mode === 'disabled' && isAiAllowed && (
-                    <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm mb-4 border border-amber-200">
-                        <strong>AI Kurulum Bekleniyor:</strong> Sistem mesajınızı kaydedebilirsiniz. UppyPro ekibi AI ayarlarınızı yapılandırdıktan sonra asistanınızı aktif edebileceksiniz.
-                    </div>
-                )}
-
-                {settings?.ai_mode === 'built_in' && isAiAllowed && !settings?.system_message && (
-                    <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm mb-4 border border-blue-200">
-                        <strong>Sistem mesajınızı yazın:</strong> AI asistanınız hemen çalışmaya başlayacaktır. Firmanızın hizmetleri, çalışma saatleri ve politikalarını detaylı yazın.
-                    </div>
-                )}
-
                 {!isAiAllowed && (
                     <div className="bg-orange-50 text-orange-800 p-4 rounded-lg text-sm mb-4 border border-orange-200">
-                        <strong>Bu özellik paketinizde bulunmamaktadır.</strong>
-                        <br />
-                        AI Asistanı kullanmak için lütfen paketinizi yükseltin.
+                        <strong>Mevcut aboneliğiniz UppyPro Inbox paketidir.</strong>
+                        <p className="mt-1">Bu paket dahilinde AI Asistan özellikleri kapalıdır. AI asistan özelliklerinin açılması için paketinizi Abonelik sayfasından <strong>UppyPro AI</strong> ya da özel otomasyonlar için <strong>UppyPro Kurumsal</strong> paketlerinden birine yükseltmeniz gerekmektedir.</p>
+                        <p className="mt-2">Kurumsal Paket'e geçiş için <a href="mailto:info@upgunai.com" className="font-semibold underline">info@upgunai.com</a> adresine e-posta göndererek veya destek sayfasından talep oluşturarak UPGUN AI ekibi ile iletişime geçebilirsiniz.</p>
                     </div>
                 )}
 

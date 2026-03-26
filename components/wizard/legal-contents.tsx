@@ -300,7 +300,7 @@ export const TermsContent = () => {
 
             <p>
                 <strong>Platform (UppyPro):</strong><br />
-                Test/önizleme ortamı: https://uppypro.vercel.app/<br />
+                Test/önizleme ortamı: https://www.upgunai.com/<br />
                 Canlı yayında: www.upgunai.com<br />
                 <strong>İletişim:</strong> info@upgunai.com
             </p>

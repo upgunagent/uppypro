@@ -38,12 +38,20 @@ export async function updateAiSettings(formData: FormData) {
 
     const adminDb = createAdminClient();
 
-    // Update agent settings
-    const { error } = await adminDb.from("agent_settings").upsert({
+    const { data: existingSettings } = await adminDb.from("agent_settings").select("ai_mode, ai_operational_enabled").eq("tenant_id", member.tenant_id).maybeSingle();
+
+    const updates: any = {
         tenant_id: member.tenant_id,
         system_message: systemMessage,
         ai_operational_enabled: aiOperationalEnabled,
-    }, { onConflict: 'tenant_id' });
+    };
+
+    if (aiOperationalEnabled && (!existingSettings?.ai_mode || existingSettings?.ai_mode === 'disabled')) {
+        updates.ai_mode = 'built_in';
+    }
+
+    // Update agent settings
+    const { error } = await adminDb.from("agent_settings").upsert(updates, { onConflict: 'tenant_id' });
 
     if (error) {
         console.error("Error updating agent settings:", error);
