@@ -110,7 +110,7 @@ export async function connectTrendyolAction(data: {
     totalProducts: testResult.totalProducts || 0,
     systemMessageUpdated: injectResult.updated,
     cloudflareWarning: isCloudflareBlock
-      ? "Trendyol API güvenlik duvarı localhost'tan bağlantıyı engelledi. Bilgileriniz kaydedildi. Deploy edildikten sonra Trendyol bağlantısı otomatik çalışacaktır."
+      ? "Trendyol API güvenlik duvarı bağlantıyı engelledi ancak bilgileriniz kaydedildi. Birkaç dakika sonra 'Ürünleri Senkronize Et' butonuyla tekrar deneyin."
       : undefined,
   };
 }

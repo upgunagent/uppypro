@@ -3,7 +3,7 @@
  * RESTful API client for product, order, question, and return management.
  */
 
-const TRENDYOL_BASE_URL = "https://api.trendyol.com/sapigw";
+const TRENDYOL_BASE_URL = "https://apigw.trendyol.com";
 
 export interface TrendyolCredentials {
   supplierId: string;
@@ -105,9 +105,8 @@ async function trendyolFetch(
     if (res.status === 403 && (errorBody.includes("Cloudflare") || errorBody.includes("cf-error"))) {
       throw new Error(
         "Trendyol API güvenlik duvarı (Cloudflare) isteği engelledi. " +
-        "Bu genellikle localhost'tan yapılan isteklerde olur. " +
-        "Uygulama sunucuya (Vercel) deploy edildiğinde çalışacaktır. " +
-        "API bilgilerinizin doğru olduğundan emin olun."
+        "Bu genellikle sunucu IP adresi henüz Trendyol tarafından tanınmadığında olur. " +
+        "API bilgilerinizin doğru olduğundan emin olun ve birkaç dakika sonra tekrar deneyin."
       );
     }
     
@@ -136,7 +135,7 @@ export async function testConnection(creds: TrendyolCredentials): Promise<{
   try {
     const data = await trendyolFetch(
       creds,
-      `/suppliers/${creds.supplierId}/products?size=1&page=0`
+      `/integration/product/sellers/${creds.supplierId}/products?size=1&page=0`
     );
     return {
       success: true,
@@ -163,7 +162,7 @@ export async function fetchAllProducts(
   do {
     const data = await trendyolFetch(
       creds,
-      `/suppliers/${creds.supplierId}/products?size=${pageSize}&page=${page}`
+      `/integration/product/sellers/${creds.supplierId}/products?size=${pageSize}&page=${page}`
     );
 
     totalElements = data.totalElements || 0;
@@ -200,7 +199,7 @@ export async function fetchUpdatedProducts(
   do {
     const data = await trendyolFetch(
       creds,
-      `/suppliers/${creds.supplierId}/products?size=${pageSize}&page=${page}&lastUpdateDate=${sinceTimestamp}`
+      `/integration/product/sellers/${creds.supplierId}/products?size=${pageSize}&page=${page}&lastUpdateDate=${sinceTimestamp}`
     );
 
     totalElements = data.totalElements || 0;
@@ -240,7 +239,7 @@ export async function getShipmentPackages(
 
   const data = await trendyolFetch(
     creds,
-    `/suppliers/${creds.supplierId}/orders?${queryParams.toString()}`
+    `/integration/order/sellers/${creds.supplierId}/orders?${queryParams.toString()}`
   );
 
   return {
@@ -299,7 +298,7 @@ export async function createClaim(
 ): Promise<any> {
   return trendyolFetch(
     creds,
-    `/suppliers/${creds.supplierId}/claims`,
+    `/integration/order/sellers/${creds.supplierId}/claims`,
     {
       method: "POST",
       body: JSON.stringify({

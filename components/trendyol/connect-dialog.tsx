@@ -55,7 +55,9 @@ export function TrendyolConnectDialog({
         }
         setSuccess(msg);
         onConnectionChange();
-        setTimeout(() => onClose(), 4000);
+        if (!result.cloudflareWarning) {
+          setTimeout(() => onClose(), 3000);
+        }
       } else {
         setError(result.error || "Bağlantı kurulamadı");
       }
