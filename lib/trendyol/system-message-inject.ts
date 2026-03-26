@@ -60,6 +60,12 @@ export async function injectTrendyolToolsToSystemMessage(
 
   const currentMessage = settings.system_message || "";
 
+  // Sistem mesajı boşsa (sihirbaz henüz kullanılmamış), enjeksiyon yapma.
+  // Sihirbaz tamamlandığında otomatik olarak eklenecek.
+  if (!currentMessage.trim()) {
+    return { updated: false };
+  }
+
   // Zaten ekli mi kontrol et
   if (currentMessage.includes(TRENDYOL_BLOCK_MARKER)) {
     return { updated: false };

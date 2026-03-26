@@ -58,6 +58,21 @@ export async function updateAiSettings(formData: FormData) {
         return { error: "Failed to update AI settings" };
     }
 
+    // Trendyol bağlıysa ve sistem mesajında Trendyol bloğu yoksa otomatik ekle
+    if (systemMessage?.trim()) {
+        const { data: trendyolConn } = await adminDb
+            .from("channel_connections")
+            .select("status")
+            .eq("tenant_id", member.tenant_id)
+            .eq("channel", "trendyol")
+            .maybeSingle();
+
+        if (trendyolConn?.status === "connected" && !systemMessage.includes("### TRENDYOL MAĞAZA YÖNETİMİ")) {
+            const { injectTrendyolToolsToSystemMessage } = await import("@/lib/trendyol/system-message-inject");
+            await injectTrendyolToolsToSystemMessage(member.tenant_id);
+        }
+    }
+
     // Admin bilgilendirme e-postası
     try {
         const { data: profile } = await adminDb
