@@ -44,7 +44,7 @@ export async function processWithBuiltInAI(
     return null;
   }
 
-  const modelName = settings.ai_model || "gemini-2.0-flash";
+  const modelName = settings.ai_model || "gemini-2.5-flash";
 
   // 2. Konuşma geçmişini çek
   const { data: messages } = await supabase

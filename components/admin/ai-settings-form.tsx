@@ -19,7 +19,7 @@ interface AiSettingsFormProps {
 }
 
 const AI_MODELS = [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Hızlı & Ucuz)" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Hızlı & Ucuz)" },
     { value: "gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro (Güçlü)" },
     { value: "gemini-3-flash-preview", label: "Gemini 3 Flash (Yeni)" },
     { value: "gemini-3-pro-preview", label: "Gemini 3 Pro (Yeni & Güçlü)" },
@@ -102,7 +102,7 @@ export function AiSettingsForm({ tenantId, initialSettings }: AiSettingsFormProp
                     </label>
                     <select
                         name="ai_model"
-                        defaultValue={initialSettings?.ai_model || 'gemini-2.0-flash'}
+                        defaultValue={initialSettings?.ai_model || 'gemini-2.5-flash'}
                         className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-white"
                         disabled={isPending}
                     >

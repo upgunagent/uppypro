@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 
 const AI_MODELS = [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Hızlı & Ucuz)" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Hızlı & Ucuz)" },
     { value: "gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro (Güçlü)" },
     { value: "gemini-3-flash-preview", label: "Gemini 3 Flash (Yeni)" },
     { value: "gemini-3-pro-preview", label: "Gemini 3 Pro (Yeni & Güçlü)" },
@@ -123,7 +123,7 @@ export function AdminAiSettingsForm({ settings, tenantId }: { settings: any, ten
                             </Label>
                             <select
                                 name="ai_model"
-                                defaultValue={settings?.ai_model || 'gemini-2.0-flash'}
+                                defaultValue={settings?.ai_model || 'gemini-2.5-flash'}
                                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
                                 disabled={loading}
                             >

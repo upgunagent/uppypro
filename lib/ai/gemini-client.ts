@@ -8,7 +8,7 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY || "");
 
-export function getGeminiModel(modelName: string = "gemini-2.0-flash") {
+export function getGeminiModel(modelName: string = "gemini-2.5-flash") {
   return genAI.getGenerativeModel({ model: modelName });
 }
 

@@ -125,7 +125,7 @@ export async function updateTenantAiSettings(formData: FormData) {
     const n8nWebhookUrl = formData.get("n8n_webhook_url") as string;
     const aiEnabled = formData.get("ai_operational_enabled") === "on";
     const aiMode = formData.get("ai_mode") as string || "disabled";
-    const aiModel = formData.get("ai_model") as string || "gemini-2.0-flash";
+    const aiModel = formData.get("ai_model") as string || "gemini-2.5-flash";
 
     const adminDb = createAdminClient();
 
