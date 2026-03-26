@@ -828,9 +828,9 @@ export default function ChatInterface({
                     </div>
 
                     <div className="flex items-center gap-2 hidden sm:flex">
-                        <div className="w-3 h-3 rounded-full bg-green-500 shadow-green-500/50 shadow-lg"></div>
+                        <div className={clsx("w-3 h-3 rounded-full shadow-lg", !aiOperational ? "bg-gray-400 shadow-gray-400/50" : currentMode === "BOT" ? "bg-green-500 shadow-green-500/50" : "bg-orange-500 shadow-orange-500/50")}></div>
                         <span className="font-bold text-sm text-slate-600">
-                            {currentMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
+                            {!aiOperational ? "AI Pasif" : currentMode === "BOT" ? "AI Modu Aktif" : "Manuel Mod (Human)"}
                         </span>
                     </div>
 
@@ -1374,13 +1374,12 @@ export default function ChatInterface({
             <div
                 className="bg-white border-t border-slate-200 z-40 shrink-0 relative"
             >
-                {currentMode === 'BOT' ? (
+                {currentMode === 'BOT' && aiOperational ? (
                     <div className="flex items-center justify-center px-3 py-3 bg-red-600/90 gap-2">
                         <span className="animate-pulse text-sm">⚠️</span>
                         <span className="text-white text-xs md:text-sm font-semibold">AI yanıtlıyor.</span>
                         <button
                             onClick={handleToggle}
-                            disabled={!aiOperational}
                             className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg shadow-lg border border-white/20 flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer"
                         >
                             <User className="w-3 h-3" />
