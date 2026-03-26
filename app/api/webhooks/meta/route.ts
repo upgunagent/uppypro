@@ -2,6 +2,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { waitUntil } from "@vercel/functions";
+import { processWithBuiltInAI } from "@/lib/ai/agent";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "uppypro_verify_token";
 const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY || "";
@@ -791,10 +792,71 @@ async function processAIResponseInBackground(
         let skipReason = "";
 
         if (!settings?.ai_operational_enabled) skipReason = "AI Disabled";
-        else if (!settings?.n8n_webhook_url) skipReason = "No Webhook URL";
         else if (currentRealMode !== 'BOT') skipReason = `Mode is ${currentRealMode}`;
 
+        // Determine AI mode: built_in (Gemini), webhook (n8n), or disabled
+        const aiMode = settings?.ai_mode || (settings?.n8n_webhook_url ? 'webhook' : 'disabled');
+
+        if (!skipReason && aiMode === 'disabled') {
+            skipReason = "AI mode disabled";
+        }
+        if (!skipReason && aiMode === 'webhook' && !settings?.n8n_webhook_url) {
+            skipReason = "No Webhook URL";
+        }
+
         if (!skipReason) {
+            // ═══════════════════════════════════════════════════════════
+            // BUILT-IN MODE: Process with Gemini API directly
+            // ═══════════════════════════════════════════════════════════
+            if (aiMode === 'built_in') {
+                try {
+                    const replyText = await processWithBuiltInAI(
+                        tenantId,
+                        conversation,
+                        eventData,
+                        channel,
+                        handleToUse
+                    );
+
+                    if (replyText) {
+                        n8nStatus = "BUILT_IN_SUCCESS";
+                        console.log(`[AI Agent] Built-in reply: ${replyText.substring(0, 50)}...`);
+
+                        await supabaseAdmin
+                            .from("messages")
+                            .insert({
+                                tenant_id: tenantId,
+                                conversation_id: conversation.id,
+                                direction: 'OUT',
+                                sender: 'BOT',
+                                text: replyText,
+                                message_type: 'text',
+                                is_read: true
+                            });
+
+                        const { sendToChannel } = await import("@/lib/meta");
+                        await sendToChannel(
+                            tenantId,
+                            channel as "whatsapp" | "instagram",
+                            eventData.sender_id,
+                            replyText
+                        );
+                    } else {
+                        n8nStatus = "BUILT_IN_NO_RESPONSE";
+                    }
+                } catch (e: any) {
+                    n8nStatus = `BUILT_IN_ERROR: ${e.message}`;
+                    console.error("[AI Agent] Built-in processing error:", e);
+
+                    await sendFallbackErrorMessage(
+                        supabaseAdmin, tenantId, conversation, channel, eventData.sender_id
+                    );
+                }
+            }
+            // ═══════════════════════════════════════════════════════════
+            // WEBHOOK MODE: Forward to n8n (existing behavior)
+            // ═══════════════════════════════════════════════════════════
+            else if (aiMode === 'webhook') {
             try {
                 // Convert image to base64 for AI vision analysis (only for images under 3MB)
                 let imageBase64: string | null = null;
@@ -928,6 +990,7 @@ async function processAIResponseInBackground(
                 await sendFallbackErrorMessage(
                     supabaseAdmin, tenantId, conversation, channel, eventData.sender_id
                 );
+            }
             }
         } else {
             n8nStatus = `SKIPPED: ${skipReason}`;

@@ -73,6 +73,32 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
     const { data: conversations } = await query;
 
+    // Müşteri profil fotoğraflarını conversations verisine birleştir
+    if (conversations && conversations.length > 0) {
+        const customerIds = conversations
+            .filter((c: any) => c.customer_id && !c.profile_pic)
+            .map((c: any) => c.customer_id);
+
+        if (customerIds.length > 0) {
+            const { data: customers } = await queryClient
+                .from('customers')
+                .select('id, profile_pic')
+                .in('id', customerIds);
+
+            if (customers) {
+                const picMap: Record<string, string> = {};
+                customers.forEach((c: any) => {
+                    if (c.profile_pic) picMap[c.id] = c.profile_pic;
+                });
+                conversations.forEach((conv: any) => {
+                    if (!conv.profile_pic && conv.customer_id && picMap[conv.customer_id]) {
+                        conv.profile_pic = picMap[conv.customer_id];
+                    }
+                });
+            }
+        }
+    }
+
     // Fetch Selected Chat Data (if any)
     let selectedConversation = null;
     let selectedMessages: any[] = [];
@@ -156,6 +182,18 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 .eq("tenant_id", selectedConversation.tenant_id)
                 .maybeSingle();
             agentSettings = settingsData;
+
+            // Müşterinin profil fotoğrafını conversation'a birleştir
+            if (!selectedConversation.profile_pic && selectedConversation.customer_id) {
+                const { data: customerData } = await adminClient
+                    .from('customers')
+                    .select('profile_pic')
+                    .eq('id', selectedConversation.customer_id)
+                    .single();
+                if (customerData?.profile_pic) {
+                    selectedConversation.profile_pic = customerData.profile_pic;
+                }
+            }
         }
     }
 

@@ -192,7 +192,33 @@ export default function ChatInterface({
     useEffect(() => {
         setActiveProfilePic(profilePic);
         markConversationAsRead(conversationId);
-    }, [conversationId, profilePic]);
+
+        // WhatsApp için müşteri profil fotoğrafını kontrol et
+        if (platform === 'whatsapp' && !profilePic) {
+            const fetchCustomerProfilePic = async () => {
+                const supabase = createClient();
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .select('customer_id, profile_pic')
+                    .eq('id', conversationId)
+                    .single();
+
+                if (conv?.profile_pic) {
+                    setActiveProfilePic(conv.profile_pic);
+                } else if (conv?.customer_id) {
+                    const { data: customer } = await supabase
+                        .from('customers')
+                        .select('profile_pic')
+                        .eq('id', conv.customer_id)
+                        .single();
+                    if (customer?.profile_pic) {
+                        setActiveProfilePic(customer.profile_pic);
+                    }
+                }
+            };
+            fetchCustomerProfilePic();
+        }
+    }, [conversationId, profilePic, platform]);
 
 
     const handleEditSave = async (msgId: string, originalText: string) => {
@@ -742,27 +768,25 @@ export default function ChatInterface({
                             <div className="absolute -inset-2 border-2 border-green-500/60 rounded-full animate-ping duration-[2000ms]" />
                         )}
                         <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 border border-slate-200 relative z-10">
-                            {platform === 'whatsapp' ? (
+                            {activeProfilePic ? (
+                                <div
+                                    className="w-full h-full cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => {
+                                        setLightboxMedia({ url: activeProfilePic, type: 'image' });
+                                    }}
+                                    title="Profil fotoğrafını büyüt"
+                                >
+                                    <img
+                                        src={activeProfilePic}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                </div>
+                            ) : platform === 'whatsapp' ? (
                                 <MessageCircle className="text-green-500 w-5 h-5" />
                             ) : (
-                                activeProfilePic ? (
-                                    <div
-                                        className="w-full h-full cursor-pointer hover:opacity-80 transition-opacity"
-                                        onClick={() => {
-                                            setLightboxMedia({ url: activeProfilePic, type: 'image' });
-                                        }}
-                                        title="Profil fotoğrafını büyüt"
-                                    >
-                                        <img
-                                            src={activeProfilePic}
-                                            alt="Profile"
-                                            className="w-full h-full object-cover"
-                                            referrerPolicy="no-referrer"
-                                        />
-                                    </div>
-                                ) : (
-                                    <Instagram className="text-pink-500 w-5 h-5" />
-                                )
+                                <Instagram className="text-pink-500 w-5 h-5" />
                             )}
                         </div>
                     </div>

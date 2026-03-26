@@ -69,7 +69,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                 <span className={isAiEnabled ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200" : "bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-200"}>
                                     {isAiEnabled ? "Aktif" : "Pasif"}
                                 </span>
-                                <div className="flex items-center gap-2" title={!settings?.n8n_webhook_url ? "Sistem kurulumu henüz tamamlanmadı. Lütfen bekleyin veya destekle iletişime geçin." : "AI Asistanı Aç/Kapat"}>
+                                <div className="flex items-center gap-2" title={settings?.ai_mode === 'disabled' ? "AI modu admin tarafından henüz ayarlanmadı." : "AI Asistanı Aç/Kapat"}>
                                     <Switch
                                         checked={isAiEnabled}
                                         onCheckedChange={(val) => {
@@ -78,7 +78,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                                 formRef.current?.requestSubmit();
                                             }, 50);
                                         }}
-                                        disabled={!settings?.n8n_webhook_url || loading}
+                                        disabled={!settings?.ai_mode || settings?.ai_mode === 'disabled' || loading}
                                         className="data-[state=checked]:bg-green-500"
                                     />
                                 </div>
@@ -91,9 +91,15 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                     </div>
                 </div>
 
-                {!settings?.n8n_webhook_url && isAiAllowed && (
+                {settings?.ai_mode === 'disabled' && isAiAllowed && (
                     <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm mb-4 border border-amber-200">
-                        <strong>AI Kurulum Bekleniyor:</strong> Sistem mesajınızı kaydedebilirsiniz ancak UppyPro ekibinin arka planda asistan yapılandırmanızı tamamlaması gerekmektedir. İşlem sonrası asistanınızı aktif edebilirsiniz.
+                        <strong>AI Kurulum Bekleniyor:</strong> Sistem mesajınızı kaydedebilirsiniz. UppyPro ekibi AI ayarlarınızı yapılandırdıktan sonra asistanınızı aktif edebileceksiniz.
+                    </div>
+                )}
+
+                {settings?.ai_mode === 'built_in' && isAiAllowed && !settings?.system_message && (
+                    <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm mb-4 border border-blue-200">
+                        <strong>Sistem mesajınızı yazın:</strong> AI asistanınız hemen çalışmaya başlayacaktır. Firmanızın hizmetleri, çalışma saatleri ve politikalarını detaylı yazın.
                     </div>
                 )}
 

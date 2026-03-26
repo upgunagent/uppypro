@@ -68,6 +68,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
     const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
     const [customerId, setCustomerId] = useState<string | null>(null);
+    const [customerProfilePic, setCustomerProfilePic] = useState<string | null>(null);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -94,6 +95,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
                 if (customer) {
                     setCustomerId(customer.id);
+                    setCustomerProfilePic(customer.profile_pic || null);
                     setFormData({
                         full_name: customer.full_name || "",
                         company_name: customer.company_name || "",
@@ -112,6 +114,7 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                 }
             } else {
                 setCustomerId(null);
+                setCustomerProfilePic(null);
                 // Extract only phone number from customerHandle (e.g. "Hayri Topkan/ Happy IK (+905491013425)" -> "905491013425")
                 let extractedPhone = "";
                 if (platform === 'whatsapp') {
@@ -335,7 +338,14 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
                         <SheetDescription></SheetDescription>
                     </SheetHeader>
                     <Avatar className="w-20 h-20 border-[3px] border-white/20 shadow-2xl ring-4 ring-white/10">
-                        {platform === 'whatsapp' ? (
+                        {(customerProfilePic || initialProfilePic) ? (
+                            <>
+                                <AvatarImage src={customerProfilePic || initialProfilePic} className="object-cover" />
+                                <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-green-400 to-green-600 text-white">
+                                    {(formData.full_name || customerHandle).slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </>
+                        ) : platform === 'whatsapp' ? (
                             <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                                 <MessageCircle className="w-10 h-10 text-white drop-shadow" />
                             </div>
@@ -546,33 +556,49 @@ export function ContactInfoSheet({ isOpen, onClose, conversationId, customerHand
 
             {/* SUMMARY DIALOG */}
             <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
-                <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-600" /> Yapay Zeka Özeti
-                        </DialogTitle>
-                        <DialogDescription>
-                            Görüşme geçmişine dayalı oluşturulan otomatik özet. Dilerseniz düzenleyebilirsiniz.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
+                <DialogContent className="sm:max-w-[640px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
+                    {/* Header */}
+                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-6 py-5">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2.5 text-white text-lg font-bold">
+                                <div className="p-2 bg-orange-500/20 rounded-xl">
+                                    <Sparkles className="w-5 h-5 text-orange-400" />
+                                </div>
+                                Yapay Zeka Özeti
+                            </DialogTitle>
+                            <DialogDescription className="text-slate-400 text-sm mt-1.5 leading-relaxed">
+                                Görüşme geçmişine dayalı oluşturulan otomatik özet. Dilerseniz düzenleyebilirsiniz.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-6 py-5">
                         <Textarea
                             value={summaryText}
                             onChange={(e) => setSummaryText(e.target.value)}
-                            className="min-h-[200px] font-normal leading-relaxed"
+                            className="min-h-[280px] font-normal text-[15px] leading-relaxed text-slate-800 bg-slate-50/80 border-slate-200 rounded-xl placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all resize-none"
                             placeholder="Özet burada görünecek..."
                         />
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setSummaryOpen(false)}>İptal</Button>
+
+                    {/* Footer */}
+                    <div className="px-6 pb-5 flex items-center justify-end gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => setSummaryOpen(false)}
+                            className="h-11 px-6 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold transition-all"
+                        >
+                            İptal
+                        </Button>
                         <Button
                             onClick={handleSaveSummary}
                             disabled={noteLoading || !summaryText.trim()}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            className="h-11 px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/20 font-bold rounded-xl border-0 transition-all duration-200 hover:shadow-xl hover:shadow-orange-500/30"
                         >
-                            {noteLoading ? "Kaydediliyor..." : "Özeti Kaydet"}
+                            {noteLoading ? "Kaydediliyor..." : <><Save className="mr-2 w-4 h-4" /> Özeti Kaydet</>}
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </Sheet>

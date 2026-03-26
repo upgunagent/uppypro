@@ -190,10 +190,17 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
 
             const { data } = await query;
             if (data && data.length > 0) {
-                // Sadece gerçek bir değişiklik varsa güncelleyerek React'ın boşuna render etmesini engelleyebiliriz 
-                // ya da listeyi direkt set edebiliriz. React'ın sanal DOM yapısında direkt set etmek de hızlıdır,
-                // ama listeyi direkt set edeceğiz.
-                setConversations(data as Conversation[]);
+                // Mevcut profil fotoğraflarını koru (sunucu tarafında birleştirilmiş olanlar)
+                setConversations(prev => {
+                    const existingPicMap: Record<string, string> = {};
+                    prev.forEach(c => {
+                        if (c.profile_pic) existingPicMap[c.id] = c.profile_pic;
+                    });
+                    return (data as Conversation[]).map(conv => ({
+                        ...conv,
+                        profile_pic: conv.profile_pic || existingPicMap[conv.id] || undefined
+                    }));
+                });
             }
         };
 
@@ -332,19 +339,17 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     ? "bg-white/20 border-white/30"
                                                     : "bg-slate-50 border-slate-200"
                                             )}>
-                                                {conv.channel === 'whatsapp' ? (
-                                                    <MessageCircle className={clsx("w-4 h-4 md:w-6 md:h-6", (conv.channel === 'whatsapp') ? "text-white" : "text-green-600")} />
+                                                {conv.profile_pic ? (
+                                                    <img
+                                                        src={conv.profile_pic}
+                                                        alt="Profile"
+                                                        className="w-full h-full object-cover rounded-full"
+                                                        referrerPolicy="no-referrer"
+                                                    />
+                                                ) : conv.channel === 'whatsapp' ? (
+                                                    <MessageCircle className={clsx("w-4 h-4 md:w-6 md:h-6", "text-white")} />
                                                 ) : (
-                                                    conv.profile_pic ? (
-                                                        <img
-                                                            src={conv.profile_pic}
-                                                            alt="Profile"
-                                                            className="w-full h-full object-cover rounded-full"
-                                                            referrerPolicy="no-referrer"
-                                                        />
-                                                    ) : (
-                                                        <Instagram className={clsx("w-4 h-4 md:w-6 md:h-6", (conv.channel === 'instagram') ? "text-white" : "text-pink-600")} />
-                                                    )
+                                                    <Instagram className={clsx("w-4 h-4 md:w-6 md:h-6", (conv.channel === 'instagram') ? "text-white" : "text-pink-600")} />
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">

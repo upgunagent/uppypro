@@ -6,6 +6,7 @@ import { ConnectionGuide } from "@/components/settings/connection-guide";
 import { SettingsTabs, ConnectionTabs, WhatsappTemplatesTabs } from "./settings-tabs";
 import { BillingForm } from "./billing-form";
 import { AiSettingsForm } from "./ai-settings-form";
+import { EmailSettingsForm } from "./email-settings-form";
 import { AlertTriangle } from "lucide-react";
 import { SubscriptionCard } from "./subscription-card";
 import { PaymentMethodsCard } from "./payment-methods-card";
@@ -51,7 +52,8 @@ export default async function SettingsPage() {
         { data: paymentMethods },
         { data: tenant_locations },
         { data: employees },
-        { data: cannedResponses }
+        { data: cannedResponses },
+        { data: emailSettings }
     ] = await Promise.all([
         supabase.from("tenants").select("*").eq("id", member.tenant_id).single(),
         supabase.from("profiles").select("*").eq("user_id", user.id).single(),
@@ -62,7 +64,8 @@ export default async function SettingsPage() {
         supabase.from("payment_methods").select("*").eq("tenant_id", member.tenant_id),
         supabase.from("tenant_locations").select("*").eq("tenant_id", member.tenant_id).order("created_at", { ascending: false }),
         supabase.from("tenant_employees").select("*").eq("tenant_id", member.tenant_id).order("name", { ascending: true }),
-        supabase.from("canned_responses").select("*").eq("tenant_id", member.tenant_id).order("shortcut", { ascending: true })
+        supabase.from("canned_responses").select("*").eq("tenant_id", member.tenant_id).order("shortcut", { ascending: true }),
+        supabase.from("email_settings").select("*").eq("tenant_id", member.tenant_id).maybeSingle()
     ]);
 
     // Fetch pricing for both plans to support upgrade/downgrade UI
@@ -103,7 +106,12 @@ export default async function SettingsPage() {
             <ConnectionGuide />
         </div>
     );
-    const aiContent = <AiSettingsForm settings={agentSettings} subscription={subscription} />;
+    const aiContent = (
+        <div className="space-y-6">
+            <AiSettingsForm settings={agentSettings} subscription={subscription} />
+            <EmailSettingsForm settings={emailSettings} />
+        </div>
+    );
 
     const connectionTab = <ConnectionTabs channelsContent={channelsContent} aiContent={aiContent} />;
 

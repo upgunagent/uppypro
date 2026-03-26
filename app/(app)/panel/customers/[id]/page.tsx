@@ -380,6 +380,15 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     .eq('id', id);
 
                 if (error) throw error;
+
+                // Profil fotoğrafını ilişkili tüm conversations'a da yansıt
+                if (formData.profile_pic) {
+                    await supabase
+                        .from('conversations')
+                        .update({ profile_pic: formData.profile_pic })
+                        .eq('customer_id', id);
+                }
+
                 alert("Değişiklikler kaydedildi.");
             }
         } catch (err: any) {

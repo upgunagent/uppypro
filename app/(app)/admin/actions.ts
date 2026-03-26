@@ -122,16 +122,21 @@ export async function updateTenantAiSettings(formData: FormData) {
 
     const tenantId = formData.get("tenantId") as string;
     const systemMessage = formData.get("systemMessage") as string;
-    const n8nWebhookUrl = formData.get("n8nWebhookUrl") as string;
-    const aiEnabled = formData.get("aiEnabled") === "on";
+    const n8nWebhookUrl = formData.get("n8n_webhook_url") as string;
+    const aiEnabled = formData.get("ai_operational_enabled") === "on";
+    const aiMode = formData.get("ai_mode") as string || "disabled";
+    const aiModel = formData.get("ai_model") as string || "gemini-2.0-flash";
 
     const adminDb = createAdminClient();
 
     const { error } = await adminDb.from("agent_settings").upsert({
         tenant_id: tenantId,
-        system_message: systemMessage,
-        n8n_webhook_url: n8nWebhookUrl,
-        ai_operational_enabled: aiEnabled
+        system_message: systemMessage || null,
+        n8n_webhook_url: n8nWebhookUrl || null,
+        ai_operational_enabled: aiEnabled,
+        ai_mode: aiMode,
+        ai_model: aiModel,
+        updated_by: "admin",
     }, { onConflict: 'tenant_id' });
 
     if (error) {
