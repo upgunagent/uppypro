@@ -131,7 +131,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                 <Button
                                     type="button"
                                     onClick={() => setShowWizard(true)}
-                                    className="shrink-0 ml-4 bg-blue-900 hover:bg-blue-950 text-orange-400"
+                                    className="shrink-0 ml-4 bg-blue-900 hover:bg-blue-950 text-orange-400 animate-shimmer"
                                 >
                                     <Wand2 className="w-4 h-4 mr-2" />
                                     Sihirbaz ile Oluştur
