@@ -53,8 +53,8 @@ export async function GET(req: NextRequest) {
           if (updatedProducts.length > 0) {
             // Ürünleri DB'ye güncelle
             for (const product of updatedProducts) {
-              const productUrl = buildProductUrl(
-                product.contentId,
+              const productUrl = product.productUrl || buildProductUrl(
+                product.contentId || (product as any).productContentId || Number(product.id),
                 product.brand?.name,
                 product.title,
                 creds.supplierId

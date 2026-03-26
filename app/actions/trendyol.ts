@@ -220,7 +220,12 @@ async function syncTrendyolProductsBackground(
         },
         {}
       ),
-      product_url: buildProductUrl(p.contentId, p.brand?.name, p.title, creds.supplierId),
+      product_url: p.productUrl || buildProductUrl(
+        p.contentId || (p as any).productContentId || Number(p.id),
+        p.brand?.name,
+        p.title,
+        creds.supplierId
+      ),
       is_active: p.approved !== false,
       last_synced_at: new Date().toISOString(),
     }));
