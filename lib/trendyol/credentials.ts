@@ -17,7 +17,7 @@ export async function getTrendyolCredentials(
 
   const { data: conn } = await supabase
     .from("channel_connections")
-    .select("meta_identifiers, status")
+    .select("meta_identifiers, access_token_encrypted, status")
     .eq("tenant_id", tenantId)
     .eq("channel", "trendyol")
     .maybeSingle();
@@ -25,12 +25,30 @@ export async function getTrendyolCredentials(
   if (!conn || conn.status !== "connected") return null;
 
   const meta = conn.meta_identifiers as any;
-  if (!meta?.supplier_id || !meta?.api_key || !meta?.api_secret) return null;
+  if (!meta?.supplier_id) return null;
+
+  // API key ve secret access_token_encrypted alanında JSON olarak saklanıyor
+  let apiKey = meta?.api_key;
+  let apiSecret = meta?.api_secret;
+
+  if (!apiKey || !apiSecret) {
+    try {
+      const tokenData = typeof conn.access_token_encrypted === 'string'
+        ? JSON.parse(conn.access_token_encrypted)
+        : conn.access_token_encrypted;
+      apiKey = tokenData?.apiKey;
+      apiSecret = tokenData?.apiSecret;
+    } catch {
+      return null;
+    }
+  }
+
+  if (!apiKey || !apiSecret) return null;
 
   return {
     supplierId: meta.supplier_id,
-    apiKey: meta.api_key,
-    apiSecret: meta.api_secret,
+    apiKey,
+    apiSecret,
   };
 }
 
