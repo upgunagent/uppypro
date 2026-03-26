@@ -74,8 +74,8 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
             <input type="hidden" name="aiOperationalEnabled" value={isAiEnabled ? "true" : "false"} />
             <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-purple-50 rounded-lg">
-                        <Bot className="text-purple-600 w-5 h-5" />
+                    <div className="p-2 bg-orange-50 rounded-lg">
+                        <Bot className="text-orange-600 w-5 h-5" />
                     </div>
                     <div className="flex-1">
                         <h3 className="font-bold text-lg text-slate-900">AI Asistan Ayarları</h3>
@@ -130,9 +130,8 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                 </div>
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     onClick={() => setShowWizard(true)}
-                                    className="shrink-0 ml-4 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
+                                    className="shrink-0 ml-4 bg-blue-900 hover:bg-blue-950 text-orange-400"
                                 >
                                     <Wand2 className="w-4 h-4 mr-2" />
                                     Sihirbaz ile Oluştur
