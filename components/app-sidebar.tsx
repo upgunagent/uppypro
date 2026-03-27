@@ -23,7 +23,8 @@ import {
     Search,
     Target,
     Mail,
-    BarChart3
+    BarChart3,
+    ShoppingBag
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -335,6 +336,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/leads", label: "Lead Listesi", icon: Target },
         { href: "/admin/lead-campaigns", label: "Kampanyalar", icon: Mail },
         { href: "/admin/lead-analytics", label: "Raporlar", icon: BarChart3 },
+        { href: "/admin/trendyol-leads", label: "Trendyol Lead", icon: ShoppingBag },
     ];
 
     const AdminSidebarItem = ({ href, icon: Icon, label, isActive, count }: any) => (
