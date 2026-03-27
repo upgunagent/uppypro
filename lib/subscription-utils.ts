@@ -9,10 +9,16 @@ export function getPackageName(subscription: any): PackageType {
     if (key === 'uppypro_corporate_xl') return 'UppyPro Kurumsal (XL)';
     if (key === 'uppypro_enterprise') return 'UppyPro Kurumsal';
     if (key === 'uppypro_ai') return 'UppyPro AI';
+    if (key === 'uppypro_ai_trendyol') return 'UppyPro AI Trendyol';
     return 'UppyPro Inbox';
 }
 
 export function isKurumsal(subscription: any): boolean {
     const key = subscription?.ai_product_key || '';
     return key.startsWith('uppypro_corporate') || key === 'uppypro_enterprise';
+}
+
+export function isTrendyolAllowed(subscription: any): boolean {
+    const key = subscription?.ai_product_key || '';
+    return key.startsWith('uppypro_corporate') || key === 'uppypro_enterprise' || key === 'uppypro_ai_trendyol';
 }

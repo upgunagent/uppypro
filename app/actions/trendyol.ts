@@ -11,7 +11,7 @@ import {
   type TrendyolProduct,
 } from "@/lib/trendyol/client";
 import { injectTrendyolToolsToSystemMessage } from "@/lib/trendyol/system-message-inject";
-import { isKurumsal } from "@/lib/subscription-utils";
+import { isTrendyolAllowed } from "@/lib/subscription-utils";
 
 /**
  * Trendyol mağaza bağlantısını kurar
@@ -46,10 +46,10 @@ export async function connectTrendyolAction(data: {
     .limit(1)
     .maybeSingle();
 
-  if (!isKurumsal(subscription)) {
+  if (!isTrendyolAllowed(subscription)) {
     return {
       success: false,
-      error: "Trendyol entegrasyonu sadece UppyPro Kurumsal paketinde kullanılabilir.",
+      error: "Trendyol entegrasyonu sadece UppyPro AI Trendyol ve Kurumsal paketlerde kullanılabilir.",
     };
   }
 

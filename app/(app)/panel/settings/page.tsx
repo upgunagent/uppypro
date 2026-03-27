@@ -21,7 +21,7 @@ import { CampaignBuilder } from "@/components/settings/campaign-builder";
 import { CampaignReportsCard } from "@/components/settings/campaign-reports-card";
 import { CustomerListsCard } from "@/components/settings/customer-lists-card";
 
-import { getPackageName, isKurumsal } from "@/lib/subscription-utils";
+import { getPackageName, isKurumsal, isTrendyolAllowed } from "@/lib/subscription-utils";
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -96,6 +96,7 @@ export default async function SettingsPage() {
     const ig = channels?.find((c) => c.channel === "instagram");
     const ty = channels?.find((c) => c.channel === "trendyol");
     const isKurumsalPackage = isKurumsal(subscription);
+    const isTrendyolAccess = isTrendyolAllowed(subscription);
 
     // Compose Tabs Content
 
@@ -107,7 +108,7 @@ export default async function SettingsPage() {
                 <ChannelCard type="instagram" connection={ig} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TrendyolCard connection={ty} isKurumsal={isKurumsalPackage} />
+                <TrendyolCard connection={ty} isKurumsal={isTrendyolAccess} />
             </div>
             <ConnectionGuide />
         </div>
