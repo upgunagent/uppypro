@@ -105,7 +105,7 @@ async function scrapeTrendyolSellers(searchQuery: string, maxPages: number = 2):
 
             // Extract seller data from HTML using regex patterns
             // Trendyol embeds JSON data in script tags
-            const jsonDataMatch = html.match(/__SEARCH_APP_INITIAL_STATE__\s*=\s*({.*?});\s*<\/script>/s);
+            const jsonDataMatch = html.match(/__SEARCH_APP_INITIAL_STATE__\s*=\s*([\s\S]*?);\s*<\/script>/);
             
             if (jsonDataMatch) {
                 try {
