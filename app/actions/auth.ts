@@ -60,7 +60,7 @@ export async function signupAction(data: SignupData) {
 
         // 5. Create Subscription (Pending)
         const baseProductKey = 'base_inbox';
-        // tier comes as "starter", "medium" etc. We mapped it in DBseed as "ai_starter"
+        // tier comes as "starter", "medium", "trendyol" etc. We mapped it in DBseed as "ai_starter", "ai_trendyol"
         const aiProductKey = data.planIdx.tier === 'none' ? null : `ai_${data.planIdx.tier}`;
 
         const { error: subError } = await supabaseAdmin

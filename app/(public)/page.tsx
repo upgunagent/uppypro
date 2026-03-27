@@ -15,6 +15,7 @@ export default async function LandingPage() {
 
     const inboxPrice = prices?.uppypro_inbox || prices?.base_inbox || prices?.inbox || 895;
     const aiPrice = prices?.ai || prices?.uppypro_ai || 4794;
+    const aiTrendyolPrice = prices?.uppypro_ai_trendyol || 4995;
 
     // JSON-LD Structured Data
     const organizationSchema = {
@@ -61,6 +62,13 @@ export default async function LandingPage() {
                 price: String(aiPrice),
                 priceCurrency: "TRY",
                 description: "7/24 AI asistan, takvim, çeviri, metin düzeltme, devral/devret",
+            },
+            {
+                "@type": "Offer",
+                name: "UppyPro AI Trendyol",
+                price: String(aiTrendyolPrice),
+                priceCurrency: "TRY",
+                description: "AI asistan + Trendyol mağaza entegrasyonu, sipariş takibi, otomatik soru cevaplama",
             },
         ],
         aggregateRating: {
@@ -146,7 +154,7 @@ export default async function LandingPage() {
                 <HowItWorks />
                 <FeaturesSection />
                 <MobileAccessSection />
-                <PricingSection inboxPrice={inboxPrice} aiPrice={aiPrice} />
+                <PricingSection inboxPrice={inboxPrice} aiPrice={aiPrice} aiTrendyolPrice={aiTrendyolPrice} />
 
                 <PackageFinderSection />
 

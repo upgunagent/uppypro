@@ -46,6 +46,7 @@ export function StepSummary({ data, onNext }: StepProps) {
     const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number }>>({
         "base": { name: "UppyPro Inbox", price: 0 },
         "ai_starter": { name: "UppyPro AI", price: 0 },
+        "ai_trendyol": { name: "UppyPro AI Trendyol", price: 0 },
         "ai_medium": { name: "UppyPro AI Orta", price: 0 },
         "ai_pro": { name: "UppyPro AI Profesyonel", price: 0 },
     });
@@ -61,6 +62,7 @@ export function StepSummary({ data, onNext }: StepProps) {
                 let prices = {
                     inbox: 895,
                     ai: 3995,
+                    ai_trendyol: 4995,
                     ai_medium: 6995,
                     ai_pro: 9995
                 };
@@ -80,6 +82,7 @@ export function StepSummary({ data, onNext }: StepProps) {
                         prices = {
                             inbox: priceMap.uppypro_inbox || 895,
                             ai: priceMap.uppypro_ai || 3995,
+                            ai_trendyol: priceMap.uppypro_ai_trendyol || 4995,
                             ai_medium: priceMap.uppypro_ai_medium || 6995,
                             ai_pro: priceMap.uppypro_ai_pro || 9995
                         };
@@ -92,6 +95,7 @@ export function StepSummary({ data, onNext }: StepProps) {
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: prices.inbox },
                     "ai_starter": { name: "UppyPro AI", price: prices.ai },
+                    "ai_trendyol": { name: "UppyPro AI Trendyol", price: prices.ai_trendyol },
                     "ai_medium": { name: "UppyPro AI Orta", price: prices.ai_medium },
                     "ai_pro": { name: "UppyPro AI Profesyonel", price: prices.ai_pro },
                 });
@@ -101,6 +105,7 @@ export function StepSummary({ data, onNext }: StepProps) {
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: 895 },
                     "ai_starter": { name: "UppyPro AI", price: 3995 },
+                    "ai_trendyol": { name: "UppyPro AI Trendyol", price: 4995 },
                     "ai_medium": { name: "UppyPro AI Orta", price: 6995 },
                     "ai_pro": { name: "UppyPro AI Profesyonel", price: 9995 },
                 });
@@ -459,6 +464,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
     const [dynamicPlans, setDynamicPlans] = useState<Record<string, { name: string, price: number }>>({
         "base": { name: "UppyPro Inbox", price: 0 },
         "ai_starter": { name: "UppyPro AI", price: 0 },
+        "ai_trendyol": { name: "UppyPro AI Trendyol", price: 0 },
         "ai_medium": { name: "UppyPro AI Orta", price: 0 },
         "ai_pro": { name: "UppyPro AI Profesyonel", price: 0 },
     });
@@ -474,6 +480,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 let prices = {
                     inbox: 895,
                     ai: 3995,
+                    ai_trendyol: 4995,
                     ai_medium: 6995,
                     ai_pro: 9995
                 };
@@ -493,6 +500,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                         prices = {
                             inbox: priceMap.uppypro_inbox || 895,
                             ai: priceMap.uppypro_ai || 3995,
+                            ai_trendyol: priceMap.uppypro_ai_trendyol || 4995,
                             ai_medium: priceMap.uppypro_ai_medium || 6995,
                             ai_pro: priceMap.uppypro_ai_pro || 9995
                         };
@@ -504,6 +512,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: prices.inbox },
                     "ai_starter": { name: "UppyPro AI", price: prices.ai },
+                    "ai_trendyol": { name: "UppyPro AI Trendyol", price: prices.ai_trendyol },
                     "ai_medium": { name: "UppyPro AI Orta", price: prices.ai_medium },
                     "ai_pro": { name: "UppyPro AI Profesyonel", price: prices.ai_pro },
                 });
@@ -513,6 +522,7 @@ export function StepAgreements({ data, updateData, onNext, onBack }: StepProps) 
                 setDynamicPlans({
                     "base": { name: "UppyPro Inbox", price: 895 },
                     "ai_starter": { name: "UppyPro AI", price: 3995 },
+                    "ai_trendyol": { name: "UppyPro AI Trendyol", price: 4995 },
                     "ai_medium": { name: "UppyPro AI Orta", price: 6995 },
                     "ai_pro": { name: "UppyPro AI Profesyonel", price: 9995 },
                 });

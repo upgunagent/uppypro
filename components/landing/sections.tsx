@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle, ChevronDown } from "lucide-react";
+import { Check, ArrowRight, Zap, MessageSquare, Users, BarChart3, ShieldCheck, Send, Calendar, X, FileText, Reply, Wand2, Globe, Lock, MessageCircle, ChevronDown, RefreshCw, Package, HelpCircle, Bell, RotateCcw, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
@@ -13,7 +13,8 @@ import { EnterpriseContactModal } from "./enterprise-contact-modal";
 import { sendMeetingRequest } from "@/actions/contact-meeting";
 
 export function FeaturesSection() {
-    const [activeFeature, setActiveFeature] = useState<number | null>(0);
+    const [activeFeature, setActiveFeature] = useState<number | null>(null);
+    const [trendyolExpanded, setTrendyolExpanded] = useState(false);
 
     useEffect(() => {
         // Mobilde tek inbox kartının başlangıçta kapalı gelmesini sağla
@@ -259,6 +260,158 @@ export function FeaturesSection() {
                         Karmaşık panellere ve excel tablolarına veda edin. UppyPro ile müşteri iletişimi hiç bu kadar kolay olmamıştı.
                     </p>
                 </div>
+
+                {/* ═══════════ TRENDYOL ENTEGRASYON KARTI ═══════════ */}
+                <motion.div
+                    onClick={() => setTrendyolExpanded(!trendyolExpanded)}
+                    className="mb-6 md:mb-8 cursor-pointer group"
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <div className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300"
+                        style={{ backgroundColor: '#e77200' }}
+                    >
+                        {/* Parlama efekti */}
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none z-0" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-3xl pointer-events-none z-0" />
+
+                        {/* Üst turuncu alan - sadece mobilde küçük padding */}
+                        <div className="pt-3 md:pt-4" />
+
+                        {/* ━━━ SİYAH YATAY ŞERİT ━━━ */}
+                        <div className="bg-black/90 backdrop-blur-sm px-4 md:px-8 py-3 md:py-4 flex items-center gap-4 md:gap-6">
+                            {/* Logo - sol tarafta */}
+                            <div className="flex-shrink-0">
+                                <img
+                                    src="/trendyol-transparan.png"
+                                    alt="Trendyol"
+                                    className="h-8 md:h-12 w-auto object-contain drop-shadow-lg"
+                                />
+                            </div>
+                            {/* Başlık - logonun bitişi ile satır sonu arasında ortalanmış */}
+                            <div className="flex-1 min-w-0 flex justify-center">
+                                <h3 className="text-white text-sm md:text-xl lg:text-2xl font-extrabold leading-tight text-center">
+                                    Trendyol Mağazanı Entegre Et,{" "}
+                                    <span className="relative inline-block">
+                                        <span className="text-orange-400">AI Asistanın Hemen Satışa Başlasın!</span>
+                                        <span className="absolute inset-0 text-transparent bg-clip-text bg-[linear-gradient(90deg,transparent_45%,rgba(255,255,255,0.8)_50%,transparent_55%)] bg-[length:200%_auto] bg-no-repeat animate-shine pointer-events-none" aria-hidden="true">
+                                            AI Asistanın Hemen Satışa Başlasın!
+                                        </span>
+                                    </span>
+                                </h3>
+                            </div>
+                        </div>
+
+                        {/* Alt turuncu alan - maddeler */}
+                        <div className="px-4 md:px-8 py-3 md:py-5">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                                {[
+                                    { icon: <Zap className="w-3.5 h-3.5 md:w-4 md:h-4" />, text: "AI satış temsilcin 7/24 satış yapar" },
+                                    { icon: <Package className="w-3.5 h-3.5 md:w-4 md:h-4" />, text: "Müşterinin sipariş durumunu sorgular" },
+                                    { icon: <HelpCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />, text: "Müşteri sorularını 7/24 cevaplar" },
+                                    { icon: <Bell className="w-3.5 h-3.5 md:w-4 md:h-4" />, text: "Stok alarmlarıyla satışları korur" },
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-1.5 md:gap-2.5">
+                                        <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-black/80 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-orange-400">{item.icon}</span>
+                                        </div>
+                                        <span className="text-[10px] md:text-sm font-semibold text-black/80">{item.text}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Detaylar butonu */}
+                            <div className="flex items-center justify-center mt-2 md:mt-3">
+                                <span className="text-white/80 text-[10px] md:text-xs font-medium flex items-center gap-1">
+                                    {trendyolExpanded ? "Gizle" : "Tüm özellikleri gör"}
+                                    <motion.span
+                                        animate={trendyolExpanded ? { rotate: 180 } : { rotate: 0, y: [0, 3, 0] }}
+                                        transition={trendyolExpanded ? { duration: 0.3 } : { repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                                    >
+                                        <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                    </motion.span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Trendyol Detay Paneli - Accordion */}
+                <AnimatePresence mode="wait">
+                    {trendyolExpanded && (
+                        <motion.div
+                            key="trendyol-detail"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            className="overflow-hidden -mt-4 md:-mt-6 mb-6 md:mb-8"
+                        >
+                            <div className="rounded-b-2xl md:rounded-b-3xl shadow-xl overflow-hidden border-x border-b border-orange-200 relative" style={{ backgroundColor: '#fff8f0' }}>
+                                {/* Başlık Badge - açıklama alanının başlığı */}
+                                <div className="flex justify-center pt-5 md:pt-6 pb-2">
+                                    <div className="relative inline-flex items-center gap-2 px-6 py-3 rounded-full shadow-xl text-white text-xs md:text-sm font-bold animate-shimmer" style={{ background: 'linear-gradient(135deg, #ff8c00, #e77200, #ff6a00)' }}>
+                                        <Zap className="w-4 h-4 md:w-5 md:h-5" />
+                                        <span>Ücretsiz Entegre Et — AI Asistanın Hemen İş Başı Yapsın!</span>
+                                    </div>
+                                </div>
+                                <div className="p-4 md:p-8 lg:p-10 pt-4 md:pt-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                        {[
+                                            {
+                                                icon: <Zap className="w-5 h-5" />,
+                                                title: "AI Satış Temsilcisi",
+                                                desc: "Yapay zekanız Trendyol mağazanızdaki tüm ürünleri, özelliklerini ve fiyatlarını bilir. WhatsApp ve Instagram'dan yazan müşterilerinizle sohbet eder, ihtiyaçlarına göre ürün önerilerinde bulunur ve doğrudan satışa yönlendirir. Mağazanız için %100 verimli, 7/24 çalışan bir satış uzmanı!"
+                                            },
+                                            {
+                                                icon: <HelpCircle className="w-5 h-5" />,
+                                                title: "AI ile Müşteri Soru Cevaplama",
+                                                desc: "Mağazanıza gelen müşteri soruları yapay zeka tarafından ürün bilgisiyle zenginleştirilerek otomatik cevaplanır. 7/24 kesintisiz, profesyonel tonla müşteri memnuniyetini katlayın."
+                                            },
+                                            {
+                                                icon: <Package className="w-5 h-5" />,
+                                                title: "Anlık Sipariş Takibi",
+                                                desc: "Müşteri sipariş numarasını paylaştığında, AI asistanınız anında kargo durumunu, tahmini teslimat tarihini ve takip bilgisini sunar. Beklemeye son!"
+                                            },
+                                            {
+                                                icon: <Bell className="w-5 h-5" />,
+                                                title: "Akıllı Stok Alarmları",
+                                                desc: "Stok 5'in altına düştüğünde sarı uyarı, 1'in altına düştüğünde kırmızı kritik alarm! Panel bildirimlerinize düşer, satış kaybını sıfıra indirin."
+                                            },
+                                            {
+                                                icon: <RotateCcw className="w-5 h-5" />,
+                                                title: "Otomatik İade Yönetimi",
+                                                desc: "Müşteriniz iade talep ettiğinde, AI asistanınız sipariş bilgisini doğrular ve Trendyol API üzerinden otomatik iade sürecini başlatır. Sorunsuz iade deneyimi."
+                                            },
+                                            {
+                                                icon: <ShoppingCart className="w-5 h-5" />,
+                                                title: "Akıllı Ürün Önerisi",
+                                                desc: "Instagram veya WhatsApp'tan yazan müşteriye AI, mağazanızdaki en uygun ürünleri fiyat, stok ve doğru Trendyol linkiyle önerir. Her mesajı satışa çevirin!"
+                                            }
+                                        ].map((item, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, y: 15 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3, delay: i * 0.08 }}
+                                                className="bg-white rounded-xl md:rounded-2xl p-4 md:p-5 shadow-sm border border-orange-100 hover:shadow-md hover:border-orange-300 transition-all duration-200"
+                                            >
+                                                <div className="flex items-center gap-2.5 mb-2 md:mb-3">
+                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#e77200' }}>
+                                                        <span className="text-white">{item.icon}</span>
+                                                    </div>
+                                                    <h4 className="text-sm md:text-base font-bold text-slate-900">{item.title}</h4>
+                                                </div>
+                                                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">{item.desc}</p>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Mobile Grid - 9 features (excluding Güvenlik), 3 per row, square cards */}
                 <div className="md:hidden grid grid-cols-3 gap-2">
                     {features.slice(0, 9).map((f, i) => {
@@ -689,10 +842,11 @@ export function FeaturesSection() {
     );
 }
 
-export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, aiPrice?: number }) {
+export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inboxPrice?: number, aiPrice?: number, aiTrendyolPrice?: number }) {
     // Default values if not provided (fallback)
     const inboxPriceVal = inboxPrice || 19;
     const aiPriceVal = aiPrice || 79;
+    const aiTrendyolPriceVal = aiTrendyolPrice || 4995;
     const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
     const [inboxExpanded, setInboxExpanded] = useState(false);
 
@@ -794,8 +948,38 @@ export function PricingSection({ inboxPrice, aiPrice }: { inboxPrice?: number, a
                         </ul>
                     </div>
 
-                    {/* Enterprise Plan */}
-                    <div className="col-span-2 lg:col-span-1 max-w-[280px] md:max-w-none mx-auto w-full bg-gradient-to-br from-purple-700 to-indigo-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
+                    {/* AI Trendyol Plan */}
+                    <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-amber-700 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <div className="absolute top-0 right-0 left-0 -mt-3 md:-mt-4 flex justify-center">
+                            <div className="bg-black rounded-full px-3 py-1 md:px-4 md:py-1.5 shadow-lg">
+                                <img src="/trendyol-transparan.png" alt="Trendyol" className="h-4 md:h-5 w-auto object-contain" />
+                            </div>
+                        </div>
+                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro AI Trendyol</h3>
+                        <p className="text-orange-100 text-[10px] md:text-sm mb-3 md:mb-6">E-ticaret satışlarını otomasyone edin.</p>
+                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
+                            <span className="text-xl md:text-4xl font-extrabold text-white">{formatPrice(aiTrendyolPriceVal)}</span>
+                            <span className="text-orange-200 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
+                        </div>
+                        <Link href="/uyelik?plan=ai_trendyol">
+                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-black/80 hover:bg-black text-white text-xs md:text-sm font-bold shadow-lg border border-orange-300/20">
+                                AI Trendyol Seç
+                            </Button>
+                        </Link>
+                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-orange-100">
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">AI Paketi Dahil</span></li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">Trendyol Entegrasyonu</span></li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> AI Satış Temsilcisi</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Sipariş Takibi</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Stok Alarmları</li>
+                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Otomatik Soru Cevaplama</li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Enterprise Plan - ortalı alt satır */}
+                <div className="flex justify-center mt-6 md:mt-8 max-w-6xl mx-auto">
+                    <div className="w-full max-w-[280px] md:max-w-sm bg-gradient-to-br from-purple-700 to-indigo-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
                         <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro Kurumsal</h3>
                         <p className="text-slate-200 text-[10px] md:text-sm mb-3 md:mb-6">Özel çözümler ve yüksek hacimler.</p>
                         <div className="flex items-baseline gap-1 mb-3 md:mb-6">

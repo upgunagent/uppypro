@@ -22,14 +22,14 @@ export default async function AdminPricingPage() {
     const { data: prices } = await supabase
         .from("pricing")
         .select("*")
-        .in("product_key", ["uppypro_inbox", "base_inbox", "inbox", "uppypro_ai", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
+        .in("product_key", ["uppypro_inbox", "base_inbox", "inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
         .eq("billing_cycle", "monthly");
 
     // Fetch Product Reference Codes
     const { data: products } = await supabase
         .from("products")
         .select("key, iyzico_product_reference_code")
-        .in("key", ["uppypro_inbox", "base_inbox", "uppypro_ai", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"]);
+        .in("key", ["uppypro_inbox", "base_inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"]);
 
     const getPriceData = (key: string, defaultPrice: number) => {
         // Handle alternative keys for inbox just in case
@@ -46,6 +46,7 @@ export default async function AdminPricingPage() {
 
     const inbox = getPriceData("uppypro_inbox", 895);
     const ai = getPriceData("uppypro_ai", 4794);
+    const aiTrendyol = getPriceData("uppypro_ai_trendyol", 4995);
     const cSmall = getPriceData("uppypro_corporate_small", 5994);
     const cMedium = getPriceData("uppypro_corporate_medium", 8394);
     const cLarge = getPriceData("uppypro_corporate_large", 11994);
@@ -77,6 +78,15 @@ export default async function AdminPricingPage() {
                     currentCode={ai.code}
                     currentProductCode={ai.productCode}
                     description="Otomasyon ve AI asistan içeren paket fiyatı."
+                />
+
+                <PricingForm
+                    label="UppyPro AI Trendyol"
+                    productKey={aiTrendyol.key}
+                    currentPrice={aiTrendyol.price}
+                    currentCode={aiTrendyol.code}
+                    currentProductCode={aiTrendyol.productCode}
+                    description="AI + Trendyol entegrasyonu paketi fiyatı."
                 />
 
                 <h3 className="text-xl font-bold text-slate-800 mt-6 border-b pb-2">Kurumsal Paketler</h3>
