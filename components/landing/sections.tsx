@@ -349,44 +349,50 @@ export function FeaturesSection() {
                         >
                             <div className="rounded-b-2xl md:rounded-b-3xl shadow-xl overflow-hidden border-x border-b border-orange-200 relative" style={{ backgroundColor: '#fff8f0' }}>
                                 {/* Başlık Badge - açıklama alanının başlığı */}
-                                <div className="flex justify-center pt-5 md:pt-6 pb-2">
-                                    <div className="relative inline-flex items-center gap-2 px-6 py-3 rounded-full shadow-xl text-white text-xs md:text-sm font-bold animate-shimmer" style={{ background: 'linear-gradient(135deg, #ff8c00, #e77200, #ff6a00)' }}>
-                                        <Zap className="w-4 h-4 md:w-5 md:h-5" />
-                                        <span>Ücretsiz Entegre Et — AI Asistanın Hemen İş Başı Yapsın!</span>
+                                <div className="flex justify-center pt-5 md:pt-6 pb-2 px-2">
+                                    <div className="relative inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-full shadow-xl text-white font-bold animate-shimmer max-w-full overflow-hidden" style={{ background: 'linear-gradient(135deg, #ff8c00, #e77200, #ff6a00)' }}>
+                                        <Zap className="w-3.5 h-3.5 md:w-5 md:h-5 flex-shrink-0" />
+                                        <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs md:text-sm whitespace-nowrap tracking-tighter sm:tracking-normal truncate md:overflow-visible">Ücretsiz Entegre Et — AI Asistanın Hemen İş Başı Yapsın!</span>
                                     </div>
                                 </div>
                                 <div className="p-4 md:p-8 lg:p-10 pt-4 md:pt-5">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                         {[
                                             {
-                                                icon: <Zap className="w-5 h-5" />,
+                                                icon: <Zap className="w-4 h-4 md:w-5 md:h-5" />,
                                                 title: "AI Satış Temsilcisi",
-                                                desc: "Yapay zekanız Trendyol mağazanızdaki tüm ürünleri, özelliklerini ve fiyatlarını bilir. WhatsApp ve Instagram'dan yazan müşterilerinizle sohbet eder, ihtiyaçlarına göre ürün önerilerinde bulunur ve doğrudan satışa yönlendirir. Mağazanız için %100 verimli, 7/24 çalışan bir satış uzmanı!"
+                                                desc: "Yapay zekanız Trendyol mağazanızdaki tüm ürünleri, özelliklerini ve fiyatlarını bilir. WhatsApp ve Instagram'dan yazan müşterilerinizle sohbet eder, ihtiyaçlarına göre ürün önerilerinde bulunur ve doğrudan satışa yönlendirir. Mağazanız için %100 verimli, 7/24 çalışan bir satış uzmanı!",
+                                                shortDesc: "Trendyol ürünlerinizi bilir, müşterilere önerir ve satışa yönlendirir."
                                             },
                                             {
-                                                icon: <HelpCircle className="w-5 h-5" />,
-                                                title: "AI ile Müşteri Soru Cevaplama",
-                                                desc: "Mağazanıza gelen müşteri soruları yapay zeka tarafından ürün bilgisiyle zenginleştirilerek otomatik cevaplanır. 7/24 kesintisiz, profesyonel tonla müşteri memnuniyetini katlayın."
+                                                icon: <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />,
+                                                title: "Müşteri Soru Cevaplama",
+                                                desc: "Mağazanıza gelen müşteri soruları yapay zeka tarafından ürün bilgisiyle zenginleştirilerek otomatik cevaplanır. 7/24 kesintisiz, profesyonel tonla müşteri memnuniyetini katlayın.",
+                                                shortDesc: "Müşteri sorularını ürün bilgisiyle 7/24 otomatik cevaplar."
                                             },
                                             {
-                                                icon: <Package className="w-5 h-5" />,
-                                                title: "Anlık Sipariş Takibi",
-                                                desc: "Müşteri sipariş numarasını paylaştığında, AI asistanınız anında kargo durumunu, tahmini teslimat tarihini ve takip bilgisini sunar. Beklemeye son!"
+                                                icon: <Package className="w-4 h-4 md:w-5 md:h-5" />,
+                                                title: "Sipariş Takibi",
+                                                desc: "Müşteri sipariş numarasını paylaştığında, AI asistanınız anında kargo durumunu, tahmini teslimat tarihini ve takip bilgisini sunar. Beklemeye son!",
+                                                shortDesc: "Sipariş durumunu anında sorgular ve müşteriye bildirir."
                                             },
                                             {
-                                                icon: <Bell className="w-5 h-5" />,
-                                                title: "Akıllı Stok Alarmları",
-                                                desc: "Stok 5'in altına düştüğünde sarı uyarı, 1'in altına düştüğünde kırmızı kritik alarm! Panel bildirimlerinize düşer, satış kaybını sıfıra indirin."
+                                                icon: <Bell className="w-4 h-4 md:w-5 md:h-5" />,
+                                                title: "Stok Alarmları",
+                                                desc: "Stok 5'in altına düştüğünde sarı uyarı, 1'in altına düştüğünde kırmızı kritik alarm! Panel bildirimlerinize düşer, satış kaybını sıfıra indirin.",
+                                                shortDesc: "Stok azaldığında otomatik uyarı verir, satış kaybını önler."
                                             },
                                             {
-                                                icon: <RotateCcw className="w-5 h-5" />,
-                                                title: "Otomatik İade Yönetimi",
-                                                desc: "Müşteriniz iade talep ettiğinde, AI asistanınız sipariş bilgisini doğrular ve Trendyol API üzerinden otomatik iade sürecini başlatır. Sorunsuz iade deneyimi."
+                                                icon: <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />,
+                                                title: "İade Yönetimi",
+                                                desc: "Müşteriniz iade talep ettiğinde, AI asistanınız sipariş bilgisini doğrular ve Trendyol API üzerinden otomatik iade sürecini başlatır. Sorunsuz iade deneyimi.",
+                                                shortDesc: "İade taleplerini otomatik doğrular ve süreci başlatır."
                                             },
                                             {
-                                                icon: <ShoppingCart className="w-5 h-5" />,
-                                                title: "Akıllı Ürün Önerisi",
-                                                desc: "Instagram veya WhatsApp'tan yazan müşteriye AI, mağazanızdaki en uygun ürünleri fiyat, stok ve doğru Trendyol linkiyle önerir. Her mesajı satışa çevirin!"
+                                                icon: <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />,
+                                                title: "Ürün Önerisi",
+                                                desc: "Instagram veya WhatsApp'tan yazan müşteriye AI, mağazanızdaki en uygun ürünleri fiyat, stok ve doğru Trendyol linkiyle önerir. Her mesajı satışa çevirin!",
+                                                shortDesc: "Müşteriye en uygun ürünleri fiyat ve linkiyle önerir."
                                             }
                                         ].map((item, i) => (
                                             <motion.div
@@ -394,15 +400,16 @@ export function FeaturesSection() {
                                                 initial={{ opacity: 0, y: 15 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3, delay: i * 0.08 }}
-                                                className="bg-white rounded-xl md:rounded-2xl p-4 md:p-5 shadow-sm border border-orange-100 hover:shadow-md hover:border-orange-300 transition-all duration-200"
+                                                className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 shadow-sm border border-orange-100 hover:shadow-md hover:border-orange-300 transition-all duration-200"
                                             >
-                                                <div className="flex items-center gap-2.5 mb-2 md:mb-3">
-                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#e77200' }}>
+                                                <div className="flex items-center gap-2 md:gap-2.5 mb-1.5 md:mb-3">
+                                                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#e77200' }}>
                                                         <span className="text-white">{item.icon}</span>
                                                     </div>
-                                                    <h4 className="text-sm md:text-base font-bold text-slate-900">{item.title}</h4>
+                                                    <h4 className="text-xs md:text-base font-bold text-slate-900">{item.title}</h4>
                                                 </div>
-                                                <p className="text-xs md:text-sm text-slate-600 leading-relaxed">{item.desc}</p>
+                                                <p className="text-[10px] leading-snug md:hidden text-slate-600">{item.shortDesc}</p>
+                                                <p className="hidden md:block text-sm text-slate-600 leading-relaxed">{item.desc}</p>
                                             </motion.div>
                                         ))}
                                     </div>
@@ -865,26 +872,26 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 max-w-6xl mx-auto items-start">
+                <div className="grid grid-cols-3 gap-2 md:gap-8 max-w-6xl mx-auto items-start">
                     {/* Basic Plan */}
-                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
-                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro Inbox</h3>
-                        <p className="text-slate-100 text-[10px] md:text-sm mb-3 md:mb-6">Küçük işletmeler ve butikler için.</p>
-                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
-                            <span className="text-xl md:text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
-                            <span className="text-slate-200 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
+                    <div className="bg-gradient-to-br from-green-500 to-blue-900 p-2.5 md:p-8 rounded-xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2">UppyPro Inbox</h3>
+                        <p className="text-slate-100 text-[8px] md:text-sm mb-2 md:mb-6">Küçük işletmeler ve butikler için.</p>
+                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                            <span className="text-sm md:text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
+                            <span className="text-slate-200 text-[7px] md:text-sm">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=base">
-                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-white text-slate-900 text-xs md:text-sm font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
+                            <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-white text-slate-900 text-[8px] md:text-sm font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
                                 Paketi Seç
                             </Button>
                         </Link>
-                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-100">
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Tek Inbox Yönetimi</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> CRM/ Müşteri Kartı</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Görüşme Özeti</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Takvim (1-10 personel)</li>
+                        <ul className="space-y-1 md:space-y-4 text-[8px] md:text-sm text-slate-100">
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Instagram + WhatsApp</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Tek Inbox</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> CRM / Müşteri Kartı</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Görüşme Özeti</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Takvim</li>
                         </ul>
 
                         {/* Expandable section */}
@@ -895,20 +902,20 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                                     animate={{ opacity: 1, height: "auto" }}
                                     exit={{ opacity: 0, height: 0 }}
                                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                                    className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-100 overflow-hidden mt-2 md:mt-4"
+                                    className="space-y-1 md:space-y-4 text-[8px] md:text-sm text-slate-100 overflow-hidden mt-1 md:mt-4"
                                 >
-                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> WA Şablon Yönetimi</li>
-                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Hazır Cevaplar</li>
-                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Metin Düzeltme</li>
-                                    <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Her Dilde Çeviri</li>
-                                    <li className="flex items-center gap-1.5 md:gap-3 text-slate-300"><X className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-500 flex-shrink-0" /> AI Asistan</li>
+                                    <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Şablon Yönetimi</li>
+                                    <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Hazır Cevaplar</li>
+                                    <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Metin Düzeltme</li>
+                                    <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Çeviri</li>
+                                    <li className="flex items-center gap-1 md:gap-3 text-slate-300"><X className="w-3 h-3 md:w-5 md:h-5 text-red-500 flex-shrink-0" /> AI Asistan</li>
                                 </motion.ul>
                             )}
                         </AnimatePresence>
 
                         <button
                             onClick={() => setInboxExpanded(!inboxExpanded)}
-                            className="flex items-center gap-2 mt-4 text-xs font-semibold text-white/80 hover:text-white transition-colors mx-auto cursor-pointer"
+                            className="flex items-center gap-1 mt-2 md:mt-4 text-[8px] md:text-xs font-semibold text-white/80 hover:text-white transition-colors mx-auto cursor-pointer"
                         >
                             {inboxExpanded ? "Gizle" : "Devamını oku..."}
                             <motion.span
@@ -921,76 +928,76 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                     </div>
 
                     {/* AI Plan (Highlighted) */}
-                    <div className="bg-slate-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl ring-2 md:ring-4 ring-orange-500/20 relative transform lg:-translate-y-4 hover:scale-105 duration-300 transition-all">
-                        <div className="absolute top-0 right-0 left-0 -mt-3 md:-mt-4 flex justify-center">
-                            <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 md:px-4 py-0.5 md:py-1 rounded-full text-[8px] md:text-xs font-bold uppercase tracking-wide shadow-lg">
+                    <div className="bg-slate-900 p-2.5 md:p-8 rounded-xl md:rounded-3xl shadow-2xl ring-1 md:ring-4 ring-orange-500/20 relative transform lg:-translate-y-4 hover:scale-105 duration-300 transition-all">
+                        <div className="absolute top-0 right-0 left-0 -mt-2.5 md:-mt-4 flex justify-center">
+                            <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-1.5 md:px-4 py-0.5 md:py-1 rounded-full text-[6px] md:text-xs font-bold uppercase tracking-wide shadow-lg">
                                 En Çok Tercih Edilen
                             </span>
                         </div>
-                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro AI</h3>
-                        <p className="text-slate-400 text-[10px] md:text-sm mb-3 md:mb-6">Otomasyon isteyen markalar.</p>
-                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
-                            <span className="text-xl md:text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
-                            <span className="text-slate-500 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
+                        <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2">UppyPro AI</h3>
+                        <p className="text-slate-400 text-[8px] md:text-sm mb-2 md:mb-6">Otomasyon isteyen markalar.</p>
+                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                            <span className="text-sm md:text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
+                            <span className="text-slate-500 text-[7px] md:text-sm">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=ai_starter">
-                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-orange-600 hover:bg-orange-700 text-white text-xs md:text-sm font-bold shadow-lg shadow-orange-500/25">
+                            <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-orange-600 hover:bg-orange-700 text-white text-[8px] md:text-sm font-bold shadow-lg shadow-orange-500/25">
                                 AI Paketi Seç
                             </Button>
                         </Link>
-                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-300">
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Inbox Paketi Dahil</span></li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">AI Asistan</span></li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI Takvim</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI CRM</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> 7/24 Yanıt</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> Devral / Devret</li>
+                        <ul className="space-y-1 md:space-y-4 text-[8px] md:text-sm text-slate-300">
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">Inbox Dahil</span></li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> <span className="text-white font-medium">AI Asistan</span></li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI Takvim</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> AI CRM</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> 7/24 Yanıt</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" /> Devral / Devret</li>
                         </ul>
                     </div>
 
                     {/* AI Trendyol Plan */}
-                    <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-amber-700 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl hover:scale-105 duration-300 transition-all relative group text-white">
-                        <div className="absolute top-0 right-0 left-0 -mt-3 md:-mt-4 flex justify-center">
-                            <div className="bg-black rounded-full px-3 py-1 md:px-4 md:py-1.5 shadow-lg">
-                                <img src="/trendyol-transparan.png" alt="Trendyol" className="h-4 md:h-5 w-auto object-contain" />
+                    <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-amber-700 p-2.5 md:p-8 rounded-xl md:rounded-3xl shadow-lg hover:shadow-2xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <div className="absolute top-0 right-0 left-0 -mt-2.5 md:-mt-4 flex justify-center">
+                            <div className="bg-black rounded-full px-2 py-0.5 md:px-4 md:py-1.5 shadow-lg">
+                                <img src="/trendyol-transparan.png" alt="Trendyol" className="h-3 md:h-5 w-auto object-contain" />
                             </div>
                         </div>
-                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro AI Trendyol</h3>
-                        <p className="text-orange-100 text-[10px] md:text-sm mb-3 md:mb-6">E-ticaret satışlarını otomasyone edin.</p>
-                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
-                            <span className="text-xl md:text-4xl font-extrabold text-white">{formatPrice(aiTrendyolPriceVal)}</span>
-                            <span className="text-orange-200 text-[9px] md:text-sm ml-0.5 md:ml-1">+ KDV / ay</span>
+                        <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2 mt-1 md:mt-0">UppyPro AI Trendyol</h3>
+                        <p className="text-orange-100 text-[8px] md:text-sm mb-2 md:mb-6">E-ticaret satışlarını otomasyone edin.</p>
+                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                            <span className="text-sm md:text-4xl font-extrabold text-white">{formatPrice(aiTrendyolPriceVal)}</span>
+                            <span className="text-orange-200 text-[7px] md:text-sm">+ KDV / ay</span>
                         </div>
                         <Link href="/uyelik?plan=ai_trendyol">
-                            <Button className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-black/80 hover:bg-black text-white text-xs md:text-sm font-bold shadow-lg border border-orange-300/20">
+                            <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-black/80 hover:bg-black text-white text-[8px] md:text-sm font-bold shadow-lg border border-orange-300/20">
                                 AI Trendyol Seç
                             </Button>
                         </Link>
-                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-orange-100">
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">AI Paketi Dahil</span></li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">Trendyol Entegrasyonu</span></li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> AI Satış Temsilcisi</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Sipariş Takibi</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Stok Alarmları</li>
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> Otomatik Soru Cevaplama</li>
+                        <ul className="space-y-1 md:space-y-4 text-[8px] md:text-sm text-orange-100">
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">AI Paketi Dahil</span></li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="text-white font-medium">Trendyol Entegrasyonu</span></li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> AI Satış Temsilcisi</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Sipariş Takibi</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Stok Alarmları</li>
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> Soru Cevaplama</li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Enterprise Plan - ortalı alt satır */}
                 <div className="flex justify-center mt-6 md:mt-8 max-w-6xl mx-auto">
-                    <div className="w-full max-w-[280px] md:max-w-sm bg-gradient-to-br from-purple-700 to-indigo-900 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
-                        <h3 className="text-sm md:text-xl font-bold text-white mb-1 md:mb-2">UppyPro Kurumsal</h3>
-                        <p className="text-slate-200 text-[10px] md:text-sm mb-3 md:mb-6">Özel çözümler ve yüksek hacimler.</p>
-                        <div className="flex items-baseline gap-1 mb-3 md:mb-6">
-                            <span className="text-xl md:text-3xl font-bold text-white">Teklif Al</span>
+                    <div className="w-full max-w-[140px] md:max-w-sm bg-gradient-to-br from-purple-700 to-indigo-900 p-2.5 md:p-8 rounded-xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
+                        <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2">UppyPro Kurumsal</h3>
+                        <p className="text-slate-200 text-[8px] md:text-sm mb-2 md:mb-6">Özel çözümler ve yüksek hacimler.</p>
+                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                            <span className="text-sm md:text-3xl font-bold text-white">Teklif Al</span>
                         </div>
-                        <Button onClick={() => setIsEnterpriseModalOpen(true)} className="w-full h-8 md:h-12 rounded-lg md:rounded-xl mb-4 md:mb-8 bg-white text-slate-900 text-xs md:text-sm font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
+                        <Button onClick={() => setIsEnterpriseModalOpen(true)} className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-white text-slate-900 text-[8px] md:text-sm font-bold hover:bg-slate-50 hover:text-purple-700 transition-colors border-0">
                             İletişime Geç
                         </Button>
-                        <ul className="space-y-2 md:space-y-4 text-[10px] md:text-sm text-slate-200">
-                            <li className="flex items-center gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="font-medium">AI Paketi Dahil</span></li>
-                            <li className="flex items-start gap-1.5 md:gap-3"><Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-white flex-shrink-0 mt-0.5" /> <span>Özel otomasyon hizmetleri</span></li>
+                        <ul className="space-y-1 md:space-y-4 text-[8px] md:text-sm text-slate-200">
+                            <li className="flex items-center gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0" /> <span className="font-medium">AI Paketi Dahil</span></li>
+                            <li className="flex items-start gap-1 md:gap-3"><Check className="w-3 h-3 md:w-5 md:h-5 text-white flex-shrink-0 mt-0.5" /> <span>Özel otomasyon</span></li>
                         </ul>
                     </div>
                 </div>
@@ -1020,40 +1027,40 @@ export function HowItWorks() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-12 relative">
-                    {/* Connecting Line (Hidden on Mobile) */}
-                    <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-orange-100 via-orange-200 to-orange-100 -z-10" />
+                <div className="grid grid-cols-3 gap-3 md:gap-12 relative">
+                    {/* Connecting Line */}
+                    <div className="absolute top-6 md:top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-orange-100 via-orange-200 to-orange-100 -z-10" />
 
                     {/* Step 1 */}
                     <div className="text-center relative">
-                        <div className="w-24 h-24 bg-white rounded-full border-4 border-orange-50 flex items-center justify-center mx-auto mb-6 shadow-sm z-10 relative">
-                            <div className="text-3xl font-black text-orange-500">1</div>
+                        <div className="w-12 h-12 md:w-24 md:h-24 bg-white rounded-full border-2 md:border-4 border-orange-50 flex items-center justify-center mx-auto mb-2 md:mb-6 shadow-sm z-10 relative">
+                            <div className="text-lg md:text-3xl font-black text-orange-500">1</div>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-3">Kanalları Bağla</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed px-4">
-                            WhatsApp Business ve Instagram hesaplarını otomatik izin  girişleri ile 2 dakikada bağla.
+                        <h3 className="text-[10px] md:text-xl font-bold text-slate-900 mb-1 md:mb-3">Kanalları Bağla</h3>
+                        <p className="text-slate-500 text-[8px] md:text-sm leading-snug md:leading-relaxed px-0 md:px-4">
+                            WhatsApp ve Instagram hesaplarını 2 dakikada bağla.
                         </p>
                     </div>
 
                     {/* Step 2 */}
                     <div className="text-center relative">
-                        <div className="w-24 h-24 bg-white rounded-full border-4 border-orange-50 flex items-center justify-center mx-auto mb-6 shadow-sm z-10 relative">
-                            <div className="text-3xl font-black text-orange-500">2</div>
+                        <div className="w-12 h-12 md:w-24 md:h-24 bg-white rounded-full border-2 md:border-4 border-orange-50 flex items-center justify-center mx-auto mb-2 md:mb-6 shadow-sm z-10 relative">
+                            <div className="text-lg md:text-3xl font-black text-orange-500">2</div>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-3">Tek Panelde Yönet</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed px-4">
-                            Tüm mesajlar tek bir inbox'a düşsün. Ekip arkadaşlarınla karmaşa yaşamadan yanıtla.
+                        <h3 className="text-[10px] md:text-xl font-bold text-slate-900 mb-1 md:mb-3">Tek Panelde Yönet</h3>
+                        <p className="text-slate-500 text-[8px] md:text-sm leading-snug md:leading-relaxed px-0 md:px-4">
+                            Tüm mesajlar tek bir inbox'a düşsün, karmaşa yaşamadan yanıtla.
                         </p>
                     </div>
 
                     {/* Step 3 */}
                     <div className="text-center relative">
-                        <div className="w-24 h-24 bg-white rounded-full border-4 border-orange-50 flex items-center justify-center mx-auto mb-6 shadow-sm z-10 relative">
-                            <div className="text-3xl font-black text-orange-500">3</div>
+                        <div className="w-12 h-12 md:w-24 md:h-24 bg-white rounded-full border-2 md:border-4 border-orange-50 flex items-center justify-center mx-auto mb-2 md:mb-6 shadow-sm z-10 relative">
+                            <div className="text-lg md:text-3xl font-black text-orange-500">3</div>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-3">Yapay Zeka'ya Devret</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed px-4">
-                            Mesai saati dışında veya yoğunlukta AI modunu aç. O müşterilerle ilgilensin, müşterilerilerini ve satışları kaçırma.
+                        <h3 className="text-[10px] md:text-xl font-bold text-slate-900 mb-1 md:mb-3">AI'ya Devret</h3>
+                        <p className="text-slate-500 text-[8px] md:text-sm leading-snug md:leading-relaxed px-0 md:px-4">
+                            Yoğunlukta AI modunu aç, müşterilerini ve satışları kaçırma.
                         </p>
                     </div>
                 </div>

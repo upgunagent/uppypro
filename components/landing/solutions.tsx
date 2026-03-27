@@ -15,7 +15,8 @@ export function SolutionsSection() {
                     </p>
                 </div>
 
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                {/* MASAÜSTÜ GÖRÜNÜM */}
+                <div className="hidden md:grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                     {/* Left: Image */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
@@ -67,6 +68,69 @@ export function SolutionsSection() {
                                     "Aklınızdaki projeyi gerçeğe dönüştürmek ve size en uygun yol haritasını belirlemek için hemen tanışalım."
                                 </p>
                             </div>
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* MOBİL GÖRÜNÜM */}
+                <div className="md:hidden flex flex-col gap-5 px-1 mt-4">
+                    {/* Üst Satır: Görsel ve ilk paragraf */}
+                    <div className="flex gap-4 items-center">
+                        <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5 }}
+                            className="w-[45%] shrink-0 relative"
+                        >
+                            <div className="absolute -inset-2 bg-gradient-to-tr from-orange-100 to-blue-50 rounded-xl transform -rotate-2 -z-10" />
+                            <div className="bg-white p-1 rounded-xl shadow-md border border-slate-100">
+                                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-slate-50">
+                                    <Image
+                                        src="/solutions-banner.jpg"
+                                        alt="UPGUN AI Çözümleri"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                        
+                        <motion.div
+                            initial={{ opacity: 0, x: 10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                            className="w-[55%] space-y-1.5"
+                        >
+                            <h2 className="text-[13px] font-bold text-slate-900 leading-tight">
+                                İşletmenizin DNA'sına Uygun, <span className="text-orange-600 block">Sınırları Kaldıran Çözümler</span>
+                            </h2>
+                            <p className="text-[10px] min-[375px]:text-[11px] leading-snug text-slate-600">
+                                İşletmenizin vizyonu standartların ötesindeyse, kullandığınız yazılım da size ayak uydurmalı. UPGUN AI olarak, "terzi işi" yaklaşımımızla sektörünüzün dinamiklerine <strong className="text-slate-900 font-medium">%100 uyumlu akıllı yönetim panelleri</strong> tasarlıyoruz.
+                            </p>
+                        </motion.div>
+                    </div>
+
+                    {/* Alt Satır: Kalan paragraflar */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="space-y-3"
+                    >
+                        <p className="text-[11px] min-[375px]:text-[12px] leading-relaxed text-slate-600">
+                            Sadece standart bir CRM değil; <strong className="text-slate-900 font-medium">sağlık ve turizmde</strong> kusursuz rezervasyon yönetiminden, <strong className="text-slate-900 font-medium">perakendede</strong> müşteri sadakat programlarına; <strong className="text-slate-900 font-medium">insan kaynaklarında</strong> aday havuzlarını otomatize eden iş akışlarından, <strong className="text-slate-900 font-medium">depo ve proje takibine</strong> kadar geniş bir yelpazede çözüm üretiyoruz.
+                        </p>
+                        <p className="text-[11px] min-[375px]:text-[12px] leading-relaxed text-slate-600">
+                            Geliştirdiğimiz sistemler, otomatik teklif oluşturma, anlık veri takibi ve detaylı raporlama araçlarıyla <strong className="text-slate-900 font-medium">finanstan operasyona</strong> tüm birimlerinizi tek bir bulut merkezinde birleştirir. Manuel süreçleri geride bırakın; <strong className="text-slate-900 font-medium">uçtan uca müşteri yönetimi</strong> ve yapay zeka destekli analizlerle hatasız, hızlı ve dijital bir geleceğe adım atın.
+                        </p>
+
+                        <div className="bg-orange-50 border-l-4 border-orange-500 p-2.5 mt-2 rounded-r-lg">
+                            <p className="text-orange-900 font-medium italic text-[11px] min-[375px]:text-[12px]">
+                                "Aklınızdaki projeyi gerçeğe dönüştürmek ve size en uygun yol haritasını belirlemek için hemen tanışalım."
+                            </p>
                         </div>
                     </motion.div>
                 </div>
