@@ -326,6 +326,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         { href: "/admin/cancellations", label: "İptal Talepleri", icon: LogOut },
         { href: "/admin/notifications", label: "Bildirim Gönder", icon: Bell },
         { href: "/admin/tickets", label: "Destek Talepleri", icon: HelpCircle },
+        { href: "/admin/reports", label: "Raporlar", icon: BarChart3 },
         { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 

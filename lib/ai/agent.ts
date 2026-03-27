@@ -7,6 +7,7 @@ import { getGeminiModel } from "@/lib/ai/gemini-client";
 import { aiToolDefinitions } from "@/lib/ai/tools/definitions";
 import { executeToolCall } from "@/lib/ai/tools/handlers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logAiUsage } from "@/lib/usage-logger";
 import type { Content, Part } from "@google/generative-ai";
 
 const MAX_TOOL_ROUNDS = 5; // Sonsuz döngü koruması
@@ -169,6 +170,24 @@ export async function processWithBuiltInAI(
 
     // Final yanıtı al
     const finalText = response.text();
+
+    // Token kullanımını logla (raporlama için)
+    try {
+      const usage = response.usageMetadata;
+      if (usage) {
+        logAiUsage({
+          tenantId,
+          model: modelName,
+          inputTokens: usage.promptTokenCount || 0,
+          outputTokens: usage.candidatesTokenCount || 0,
+          endpoint: "chat",
+          metadata: { channel, conversationId: conversation.id },
+        });
+      }
+    } catch (logErr) {
+      // Loglama hatası ana işlemi bloklamasın
+    }
+
     if (finalText) {
       console.log(`[AI Agent] Final response: ${finalText.substring(0, 80)}...`);
       return finalText;
