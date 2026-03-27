@@ -93,6 +93,7 @@ export function FeaturesSection() {
                         <li><strong>Tam Yetkili Randevu Yönetimi:</strong> Sadece boşluk doldurmaz; sizin ve ekibinizin ayrı ayrı randevularını oluşturur, değişiklik taleplerini yönetir ve iptalleri takvime işler. Hata yapmaz, çifte rezervasyona izin vermez.</li>
                         <li><strong>Satış ve CRM Uzmanı:</strong> Müşteriyle sohbet ederken iletişim bilgilerini toplar, otomatik olarak CRM’e kaydeder ve satış hunisine dahil eder.</li>
                         <li><strong>İşletmenize Özel Eğitim:</strong> Firmanızın kurallarını, fiyatlarını ve dilini öğrenir. Robotik değil, personeliniz gibi doğal konuşur.</li>
+                        <li><strong>2 Dakikada Hızlı Kurulum:</strong> Özel <strong className="text-orange-500">Sistem Mesajı Sihirbazı</strong> sayesinde standart karmaşık süreçlerle uğraşmadan AI asistanınızın kurulumunu sadece 2 dakikada tamamlayıp hemen aktif hale getirebilirsiniz.</li>
                     </ul>
                 </div>
             ),

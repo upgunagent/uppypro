@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const faqs = [
     {
         q: "AI kurulumu ve entegrasyonu zor mu?",
-        a: "Hayır! İşletmenizle ilgili temel bilgileri (çalışma saatleri, fiyat listesi, adres, hizmetler) panele girmeniz yeterlidir. AI modelimiz teknik ekibimiz tarafından bu bilgilerle göre eğitilir ve 2 iş günü içinde yanıt vermeye başlar."
+        a: "Kesinlikle hayır! Aksine \"Sistem Mesajı Sihirbazı\" ile birkaç adımda işletmenizle ilgili temel bilgileri (çalışma saatleri, fiyat listesi, adres, hizmetler) girerek yapay zeka yardımıyla AI asistanınızın eğitimini tamamlayabilir ve 2 dakika içinde aktif hale getirebilirsiniz."
     },
     {
         q: "İstediğim zaman araya girebilir miyim?",
