@@ -79,6 +79,7 @@ export default async function TenantListPage() {
                             const isCorporate = sub?.ai_product_key?.startsWith('uppypro_corporate_');
                             const isPro = sub?.ai_product_key === 'uppypro_ai';
                             const corporateSize = sub?.ai_product_key?.replace('uppypro_corporate_', '').toUpperCase();
+                            const isInTrial = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) > new Date();
 
                             return (
                                 <TableRow key={tenant.id} className="hover:bg-orange-50/50 transition-colors">
@@ -108,9 +109,16 @@ export default async function TenantListPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100 border-none' : ''}>
-                                            {sub?.status === 'active' ? "Aktif" : (sub?.status || "Pasif")}
-                                        </Badge>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            {isInTrial && (
+                                                <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none whitespace-nowrap">
+                                                    🎁 Deneme Süresi
+                                                </Badge>
+                                            )}
+                                            <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100 border-none' : ''}>
+                                                {sub?.status === 'active' ? "Aktif" : (sub?.status || "Pasif")}
+                                            </Badge>
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-center w-8">
