@@ -76,7 +76,7 @@ export function TrendyolCard({ connection, isKurumsal }: TrendyolCardProps) {
                 />
                 <p className="text-xs font-medium">
                   {!isKurumsal
-                    ? "Kurumsal Paket Gerekli"
+                    ? "Üst Paket Gerekli"
                     : isConnected
                     ? "Sistem Aktif"
                     : "Bağlantı Yok"}
@@ -92,13 +92,11 @@ export function TrendyolCard({ connection, isKurumsal }: TrendyolCardProps) {
             // Paket uyarısı
             <div className="space-y-3">
               <p className="text-xs opacity-75">
-                Trendyol mağaza entegrasyonu sadece UppyPro Kurumsal paketinde
-                kullanılabilir.
+                Trendyol mağaza entegrasyonu sadece UppyPro AI Trendyol ve UppyPro Kurumsal paketlerinde kullanılabilir.
               </p>
               <div className="bg-white/10 rounded-xl p-3 border border-white/5">
                 <p className="text-xs">
-                  🔒 Paket yükseltmek için{" "}
-                  <strong>info@upgunai.com</strong> adresine ulaşın.
+                  🔒 Paketinizi <strong>Abonelik</strong> sayfanızdan yükseltebilirsiniz.
                 </p>
               </div>
             </div>
