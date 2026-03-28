@@ -677,6 +677,14 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                         setFormLoaded(true);
                     }
                 }, 100);
+            } else {
+                // Unexpected response - no error, no form
+                toast({
+                    variant: "destructive",
+                    title: "Hata",
+                    description: "Ödeme formu yüklenemedi. Lütfen tekrar deneyin."
+                });
+                setLoading(false);
             }
         } catch (e) {
             toast({

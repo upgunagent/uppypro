@@ -40,7 +40,9 @@ export default async function AdminPricingPage() {
             code: found?.iyzico_pricing_plan_reference_code || "",
             productCode: productFound?.iyzico_product_reference_code || "",
             // Use the actual product key from DB if it exists (e.g., base_inbox instead of uppypro_inbox) so updates go to the right row
-            key: found?.product_key || key
+            key: found?.product_key || key,
+            // Track the actual products table key separately
+            productDbKey: productFound?.key || key
         };
     };
 
@@ -68,6 +70,7 @@ export default async function AdminPricingPage() {
                     currentPrice={inbox.price}
                     currentCode={inbox.code}
                     currentProductCode={inbox.productCode}
+                    productDbKey={inbox.productDbKey}
                     description="Küçük işletmeler için temel paket fiyatı."
                 />
 
@@ -77,6 +80,7 @@ export default async function AdminPricingPage() {
                     currentPrice={ai.price}
                     currentCode={ai.code}
                     currentProductCode={ai.productCode}
+                    productDbKey={ai.productDbKey}
                     description="Otomasyon ve AI asistan içeren paket fiyatı."
                 />
 
@@ -86,6 +90,7 @@ export default async function AdminPricingPage() {
                     currentPrice={aiTrendyol.price}
                     currentCode={aiTrendyol.code}
                     currentProductCode={aiTrendyol.productCode}
+                    productDbKey={aiTrendyol.productDbKey}
                     description="AI + Trendyol entegrasyonu paketi fiyatı."
                 />
 
@@ -97,6 +102,7 @@ export default async function AdminPricingPage() {
                     currentPrice={cSmall.price}
                     currentCode={cSmall.code}
                     currentProductCode={cSmall.productCode}
+                    productDbKey={cSmall.productDbKey}
                     description="Small seviye kurumsal işletme paketi."
                 />
 
@@ -106,6 +112,7 @@ export default async function AdminPricingPage() {
                     currentPrice={cMedium.price}
                     currentCode={cMedium.code}
                     currentProductCode={cMedium.productCode}
+                    productDbKey={cMedium.productDbKey}
                     description="Medium seviye kurumsal işletme paketi."
                 />
 
@@ -115,6 +122,7 @@ export default async function AdminPricingPage() {
                     currentPrice={cLarge.price}
                     currentCode={cLarge.code}
                     currentProductCode={cLarge.productCode}
+                    productDbKey={cLarge.productDbKey}
                     description="Large seviye kurumsal işletme paketi."
                 />
 
@@ -124,6 +132,7 @@ export default async function AdminPricingPage() {
                     currentPrice={cXL.price}
                     currentCode={cXL.code}
                     currentProductCode={cXL.productCode}
+                    productDbKey={cXL.productDbKey}
                     description="XL seviye kurumsal işletme paketi."
                 />
             </div>

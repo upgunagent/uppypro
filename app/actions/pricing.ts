@@ -8,7 +8,8 @@ export async function updatePricing(
     productKey: string,
     priceTry: number,
     iyzicoCode: string,
-    iyzicoProductCode?: string
+    iyzicoProductCode?: string,
+    productDbKey?: string
 ) {
     const admin = createAdminClient();
 
@@ -77,10 +78,11 @@ export async function updatePricing(
 
     // 2. Ürün ref kodu varsa products tablosunu da güncelle
     if (iyzicoProductCode !== undefined) {
+        const actualProductKey = productDbKey || productKey;
         await admin
             .from('products')
             .update({ iyzico_product_reference_code: iyzicoProductCode || null })
-            .eq('key', productKey);
+            .eq('key', actualProductKey);
     }
 
     revalidatePath('/');

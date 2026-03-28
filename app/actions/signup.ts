@@ -123,14 +123,30 @@ export async function completeSignupWithInvite(data: WizardData) {
 
         // 8. Initialize Iyzico
         const productKey = aiKey || baseKey;
-        const { data: prices } = await supabaseAdmin.from("pricing").select("iyzico_pricing_plan_reference_code").eq("product_key", productKey).single();
-
-        let planCode = prices?.iyzico_pricing_plan_reference_code;
+        
+        // Try multiple keys since DB might use 'base_inbox' or 'inbox' instead of 'uppypro_inbox'
+        let planCode: string | null = null;
+        const keysToTry = productKey === 'uppypro_inbox' 
+            ? ['uppypro_inbox', 'base_inbox', 'inbox'] 
+            : [productKey];
+        
+        for (const tryKey of keysToTry) {
+            const { data: prices } = await supabaseAdmin
+                .from("pricing")
+                .select("iyzico_pricing_plan_reference_code")
+                .eq("product_key", tryKey)
+                .eq("billing_cycle", "monthly")
+                .maybeSingle();
+            
+            if (prices?.iyzico_pricing_plan_reference_code) {
+                planCode = prices.iyzico_pricing_plan_reference_code;
+                console.log(`[SIGNUP] Found plan code for key '${tryKey}': ${planCode}`);
+                break;
+            }
+        }
 
         if (!planCode) {
-            console.error("Plan code not found for", productKey);
-            // Fail gracefully? Or allow signup but payment manual?
-            // Since this is payment flow, fail.
+            console.error("Plan code not found for", productKey, "tried keys:", keysToTry);
             throw new Error("Ödeme planı bulunamadı. Lütfen yönetici ile iletişime geçin.");
         }
 

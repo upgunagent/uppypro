@@ -13,10 +13,11 @@ interface PricingFormProps {
     currentPrice: number; // in TL
     currentCode?: string;         // Iyzico Plan Ref Kodu (pricing tablosu)
     currentProductCode?: string;  // Iyzico Ürün Ref Kodu (products tablosu)
+    productDbKey?: string;        // Actual key in products table (may differ from productKey)
     description: string;
 }
 
-export function PricingForm({ label, productKey, currentPrice, currentCode = "", currentProductCode = "", description }: PricingFormProps) {
+export function PricingForm({ label, productKey, currentPrice, currentCode = "", currentProductCode = "", productDbKey, description }: PricingFormProps) {
     const [price, setPrice] = useState(currentPrice);
     const [code, setCode] = useState(currentCode);
     const [productCode, setProductCode] = useState(currentProductCode);
@@ -26,7 +27,7 @@ export function PricingForm({ label, productKey, currentPrice, currentCode = "",
     const handleUpdate = async () => {
         setLoading(true);
         try {
-            const res = await updatePricing(productKey, price, code, productCode);
+            const res = await updatePricing(productKey, price, code, productCode, productDbKey);
             if (res.error) {
                 toast({ variant: "destructive", title: "Hata", description: res.error });
             } else {
