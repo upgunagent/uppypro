@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { updateLeadStatus, deleteLead, deleteLeadList, renameLeadList } from "@/app/(app)/admin/leads/actions";
+import { useRouter, useSearchParams } from "next/navigation";
+import { updateLeadStatus, deleteLead, deleteLeadList, renameLeadList, createLeadFolder, renameLeadFolder, deleteLeadFolder, moveLeadList } from "@/app/(app)/admin/leads/actions";
 import {
     Search, Star, Phone, Globe, Mail, AlertCircle,
     Trash2, MoreHorizontal, Target, MapPin, Building2,
     ArrowUpDown, Loader2, ArrowLeft, FolderOpen, Edit3, Check, X, RefreshCw,
-    Upload, Download, FileUp, FileSpreadsheet
+    Upload, Download, FileUp, FileSpreadsheet, Folder, FolderPlus, LogOut, GripVertical
 } from "lucide-react";
 import { saveDiscoveredLeads } from "@/app/(app)/admin/leads/actions";
 import * as XLSX from "xlsx";
@@ -113,6 +114,13 @@ interface LeadList {
     lead_count: number;
     status: string;
     created_at: string;
+    folder_id: string | null;
+}
+
+interface LeadFolder {
+    id: string;
+    name: string;
+    created_at: string;
 }
 
 interface Lead {
@@ -146,9 +154,31 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
 };
 
 export default function LeadsListPage() {
+    return (
+        <Suspense fallback={<div className="p-6 text-center text-slate-400 py-20">Yükleniyor...</div>}>
+            <LeadsListWrapper />
+        </Suspense>
+    );
+}
+
+function LeadsListWrapper() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const listIdFromUrl = searchParams.get("listId");
+    const folderIdFromUrl = searchParams.get("folderId");
+
     // View modes: "lists" or "leads"
     const [view, setView] = useState<"lists" | "leads">("lists");
     const [selectedList, setSelectedList] = useState<LeadList | null>(null);
+
+    // Folders state
+    const [folders, setFolders] = useState<LeadFolder[]>([]);
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState("");
+    const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+    const [editingFolderName, setEditingFolderName] = useState("");
+    const [moveListId, setMoveListId] = useState<string | null>(null);
 
     // Lists state
     const [lists, setLists] = useState<LeadList[]>([]);
@@ -197,6 +227,13 @@ export default function LeadsListPage() {
         setListsLoading(true);
         const supabase = createClient();
 
+        // Get folders
+        const { data: foldersData } = await supabase
+            .from("lead_folders")
+            .select("*")
+            .order("created_at", { ascending: false });
+        if (foldersData) setFolders(foldersData);
+
         // Get lists
         const { data: listsData } = await supabase
             .from("lead_lists")
@@ -228,6 +265,38 @@ export default function LeadsListPage() {
     }, []);
 
     useEffect(() => { fetchLists(); fetchSectors(); }, [fetchLists, fetchSectors]);
+
+    // Handle outside clicks to close menus
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (moveListId) setMoveListId(null);
+            if (actionMenuId) setActionMenuId(null);
+        };
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, [moveListId, actionMenuId]);
+
+    // Handle URL param driven list selection
+    useEffect(() => {
+        if (lists.length > 0) {
+            if (listIdFromUrl) {
+                const list = lists.find(l => l.id === listIdFromUrl);
+                if (list && list.id !== selectedList?.id) {
+                    setSelectedList(list);
+                    setView("leads");
+                    setPage(0);
+                    setSearchQuery("");
+                    setStatusFilter("all");
+                    setEmailFilter("all");
+                    setPhoneFilter("all");
+                }
+            } else {
+                setView("lists");
+                setSelectedList(null);
+            }
+        }
+        setSelectedFolderId(folderIdFromUrl || null);
+    }, [listIdFromUrl, folderIdFromUrl, lists]);
 
     // Fetch leads for selected list
     const fetchLeads = useCallback(async () => {
@@ -264,20 +333,23 @@ export default function LeadsListPage() {
     }, [view, selectedList, fetchLeads]);
 
     const openList = (list: LeadList) => {
-        setSelectedList(list);
-        setView("leads");
-        setPage(0);
-        setSearchQuery("");
-        setStatusFilter("all");
-        setEmailFilter("all");
-        setPhoneFilter("all");
+        router.push(`/admin/leads?listId=${list.id}`);
+    };
+
+    const openFolder = (folderId: string | null) => {
+        if (folderId) {
+            router.push(`/admin/leads?folderId=${folderId}`);
+        } else {
+            router.push(`/admin/leads`);
+        }
     };
 
     const goBackToLists = () => {
-        setView("lists");
-        setSelectedList(null);
-        setLeads([]);
-        fetchLists();
+        if (selectedList && selectedList.folder_id) {
+            router.push(`/admin/leads?folderId=${selectedList.folder_id}`);
+        } else {
+            router.push(`/admin/leads`);
+        }
     };
 
     const handleSort = (field: string) => {
@@ -520,6 +592,37 @@ export default function LeadsListPage() {
         }
     };
 
+    // Folder Handlers
+    const handleCreateFolder = async () => {
+        if (!newFolderName.trim()) return;
+        setIsCreatingFolder(false);
+        const res = await createLeadFolder(newFolderName.trim());
+        if (res.success) {
+            setNewFolderName("");
+            fetchLists();
+        }
+    };
+    const handleRenameFolder = async (id: string) => {
+        if (!editingFolderName.trim()) return;
+        await renameLeadFolder(id, editingFolderName.trim());
+        setEditingFolderId(null);
+        fetchLists();
+    };
+    const handleDeleteFolder = async (id: string) => {
+        if (!confirm("Klasörü silmek istediğinize emin misiniz? (İçindeki listeler silinmez, korumasız kalır)")) return;
+        await deleteLeadFolder(id);
+        if (selectedFolderId === id) openFolder(null);
+        fetchLists();
+    };
+    const handleMoveList = async (listId: string, folderId: string | null) => {
+        await moveLeadList(listId, folderId);
+        setMoveListId(null);
+        fetchLists();
+    };
+
+    const activeFolder = selectedFolderId ? folders.find(f => f.id === selectedFolderId) : null;
+    const listsToShow = selectedFolderId ? lists.filter(l => l.folder_id === selectedFolderId) : lists.filter(l => !l.folder_id);
+
     const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
     // ==================== LISTS VIEW ====================
@@ -529,12 +632,34 @@ export default function LeadsListPage() {
             <div className="p-6 max-w-5xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Lead Listeleri</h1>
+                        <div className="flex items-center gap-2">
+                            {selectedFolderId && (
+                                <button onClick={() => openFolder(null)} className="p-1 hover:bg-slate-100 rounded-md transition-colors text-slate-500">
+                                    <ArrowLeft size={18} />
+                                </button>
+                            )}
+                            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                {selectedFolderId ? (
+                                    <>
+                                        <FolderOpen className="text-violet-500" size={24} /> 
+                                        {activeFolder?.name}
+                                    </>
+                                ) : "Lead Listeleri"}
+                            </h1>
+                        </div>
                         <p className="text-slate-500 mt-1">
-                            {lists.length} liste oluşturulmuş
+                            {selectedFolderId ? `Bu klasörde ${listsToShow.length} liste var` : `${lists.length} toplam liste, ${folders.length} klasör`}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {!selectedFolderId && (
+                            <button
+                                onClick={() => setIsCreatingFolder(true)}
+                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center gap-2"
+                            >
+                                <FolderPlus size={16} /> Yeni Klasör
+                            </button>
+                        )}
                         <button
                             onClick={() => {
                                 setShowImportModal(true);
@@ -560,100 +685,209 @@ export default function LeadsListPage() {
                     </div>
                 </div>
 
+                {/* Create Folder Inline Input */}
+                {isCreatingFolder && (
+                    <div className="bg-white border text-sm border-violet-200 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
+                        <Folder className="text-violet-400" size={20} />
+                        <input
+                            type="text"
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+                            placeholder="Klasör Adı..."
+                            className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-violet-500"
+                            autoFocus
+                        />
+                        <button onClick={handleCreateFolder} className="px-4 py-1.5 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors">
+                            Oluştur
+                        </button>
+                        <button onClick={() => { setIsCreatingFolder(false); setNewFolderName(''); }} className="px-3 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                            İptal
+                        </button>
+                    </div>
+                )}
+
                 {listsLoading ? (
                     <div className="text-center py-20 text-slate-400">Yükleniyor...</div>
-                ) : lists.length === 0 ? (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center">
-                        <FolderOpen size={48} className="mx-auto mb-4 text-slate-300" />
-                        <h2 className="text-lg font-semibold text-slate-700 mb-2">Henüz liste yok</h2>
-                        <p className="text-slate-500 mb-6">Lead Keşfi ile yeni işletmeleri tarayın ve listeye kaydedin</p>
-                        <Link
-                            href="/admin/lead-discovery"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors"
-                        >
-                            Lead Keşfine Git →
-                        </Link>
-                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {lists.map(list => (
-                            <div
-                                key={list.id}
-                                className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-lg hover:border-orange-300 transition-all group"
-                            >
-                                {editingListId === list.id ? (
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <input
-                                            type="text"
-                                            value={editingName}
-                                            onChange={(e) => setEditingName(e.target.value)}
-                                            onKeyDown={(e) => e.key === "Enter" && handleRenameList(list.id)}
-                                            className="flex-1 px-2 py-1 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-                                            autoFocus
-                                        />
-                                        <button onClick={() => handleRenameList(list.id)} className="text-green-600 hover:text-green-700">
-                                            <Check size={16} />
-                                        </button>
-                                        <button onClick={() => setEditingListId(null)} className="text-slate-400 hover:text-slate-600">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start justify-between mb-3">
-                                        <button onClick={() => openList(list)} className="text-left flex-1">
-                                            <h3 className="font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
-                                                {list.name}
-                                            </h3>
-                                        </button>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => { setEditingListId(list.id); setEditingName(list.name); }}
-                                                className="p-1 rounded hover:bg-slate-100"
-                                                title="Yeniden adlandır"
-                                            >
-                                                <Edit3 size={14} className="text-slate-400" />
+                    <>
+                        {/* Folders List (only on root) */}
+                        {!selectedFolderId && folders.length > 0 && (
+                            <div className="mb-8">
+                                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Klasörler</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {folders.map(folder => (
+                                        <div key={folder.id} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 hover:border-violet-300 hover:shadow-md transition-all group">
+                                            <button onClick={() => openFolder(folder.id)} className="flex items-center gap-3 flex-1 text-left">
+                                                <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center text-violet-500 group-hover:bg-violet-100 transition-colors">
+                                                    <Folder size={18} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    {editingFolderId === folder.id ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={editingFolderName}
+                                                            onChange={e => setEditingFolderName(e.target.value)}
+                                                            onKeyDown={e => e.key === 'Enter' && handleRenameFolder(folder.id)}
+                                                            className="w-full text-sm border-b border-violet-300 outline-none"
+                                                            autoFocus
+                                                            onBlur={() => handleRenameFolder(folder.id)}
+                                                        />
+                                                    ) : (
+                                                        <h4 className="font-semibold text-slate-800 text-sm truncate">{folder.name}</h4>
+                                                    )}
+                                                </div>
                                             </button>
-                                            <button
-                                                onClick={() => handleDeleteList(list.id, list.name)}
-                                                className="p-1 rounded hover:bg-red-50"
-                                                title="Sil"
-                                            >
-                                                <Trash2 size={14} className="text-red-400" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <button onClick={() => openList(list)} className="w-full text-left">
-                                    <div className="flex items-center gap-4 mb-3">
-                                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                                            <Target size={14} className="text-orange-400" />
-                                            <span className="font-semibold text-orange-600">{list.lead_count}</span> Lead
-                                        </div>
-                                        {list.sector_name && (
-                                            <div className="flex items-center gap-1 text-xs text-slate-400">
-                                                <Building2 size={12} />
-                                                {list.sector_name}
+                                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }} className="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600">
+                                                    <Edit3 size={14} />
+                                                </button>
+                                                <button onClick={() => handleDeleteFolder(folder.id)} className="p-1.5 hover:bg-red-50 rounded text-red-400 hover:text-red-600">
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {list.city && (
-                                        <div className="flex items-center gap-1 text-xs text-slate-400 mb-2">
-                                            <MapPin size={12} />
-                                            {list.city}{list.district ? ` / ${list.district}` : ""}
                                         </div>
-                                    )}
-
-                                    <div className="text-xs text-slate-400">
-                                        {new Date(list.created_at).toLocaleDateString("tr-TR", {
-                                            day: "numeric", month: "long", year: "numeric"
-                                        })}
-                                    </div>
-                                </button>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
-                    </div>
+                        )}
+
+                        {/* Lists */}
+                        <div>
+                            {!selectedFolderId && <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Listeler</h3>}
+                            {listsToShow.length === 0 ? (
+                                <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center">
+                                    <FolderOpen size={48} className="mx-auto mb-4 text-slate-300" />
+                                    <h2 className="text-lg font-semibold text-slate-700 mb-2">Henüz liste yok</h2>
+                                    <p className="text-slate-500 mb-6">Lead Keşfi ile yeni işletmeleri tarayın ve listeye kaydedin</p>
+                                    <Link
+                                        href="/admin/lead-discovery"
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors"
+                                    >
+                                        Lead Keşfine Git →
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {listsToShow.map(list => (
+                                        <div
+                                            key={list.id}
+                                            className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-lg hover:border-orange-300 transition-all group"
+                                        >
+                                            {editingListId === list.id ? (
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <input
+                                                        type="text"
+                                                        value={editingName}
+                                                        onChange={(e) => setEditingName(e.target.value)}
+                                                        onKeyDown={(e) => e.key === "Enter" && handleRenameList(list.id)}
+                                                        className="flex-1 px-2 py-1 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                                                        autoFocus
+                                                    />
+                                                    <button onClick={() => handleRenameList(list.id)} className="text-green-600 hover:text-green-700">
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button onClick={() => setEditingListId(null)} className="text-slate-400 hover:text-slate-600">
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-start justify-between mb-3 relative">
+                                                    <button onClick={() => openList(list)} className="text-left flex-1">
+                                                        <h3 className="font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
+                                                            {list.name}
+                                                        </h3>
+                                                    </button>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                setMoveListId(moveListId === list.id ? null : list.id);
+                                                            }}
+                                                            className={`p-1 rounded ${moveListId === list.id ? 'bg-violet-100 text-violet-600' : 'hover:bg-violet-50 text-slate-400'}`}
+                                                            title="Klasöre Taşı"
+                                                        >
+                                                            <FolderOpen size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setEditingListId(list.id); setEditingName(list.name); }}
+                                                            className="p-1 rounded hover:bg-slate-100"
+                                                            title="Yeniden adlandır"
+                                                        >
+                                                            <Edit3 size={14} className="text-slate-400" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteList(list.id, list.name)}
+                                                            className="p-1 rounded hover:bg-red-50"
+                                                            title="Sil"
+                                                        >
+                                                            <Trash2 size={14} className="text-red-400" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Move List Modal/Dropdown */}
+                                                    {moveListId === list.id && (
+                                                        <div className="absolute top-8 right-0 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-20 py-2">
+                                                            <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase">Klasöre Taşı</div>
+                                                            <button 
+                                                                onClick={() => handleMoveList(list.id, null)} 
+                                                                className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                                            >
+                                                                <LogOut size={14} />
+                                                                Ana Dizine Çıkar
+                                                            </button>
+                                                            <div className="my-1 border-t border-slate-100"></div>
+                                                            {folders.map(f => (
+                                                                <button
+                                                                    key={f.id}
+                                                                    onClick={() => handleMoveList(list.id, f.id)}
+                                                                    className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50 transition-colors flex items-center justify-between"
+                                                                >
+                                                                    <div className="flex items-center gap-2 truncate">
+                                                                        <Folder size={14} className="text-violet-400 flex-shrink-0" />
+                                                                        <span className="truncate">{f.name}</span>
+                                                                    </div>
+                                                                    {f.id === list.folder_id && <Check size={14} className="text-violet-600" />}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <button onClick={() => openList(list)} className="w-full text-left">
+                                                <div className="flex items-center gap-4 mb-3">
+                                                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                                                        <Target size={14} className="text-orange-400" />
+                                                        <span className="font-semibold text-orange-600">{list.lead_count}</span> Lead
+                                                    </div>
+                                                    {list.sector_name && (
+                                                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                                                            <Building2 size={12} />
+                                                            {list.sector_name}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {list.city && (
+                                                    <div className="flex items-center gap-1 text-xs text-slate-400 mb-2">
+                                                        <MapPin size={12} />
+                                                        {list.city}{list.district ? ` / ${list.district}` : ""}
+                                                    </div>
+                                                )}
+
+                                                <div className="text-xs text-slate-400">
+                                                    {new Date(list.created_at).toLocaleDateString("tr-TR", {
+                                                        day: "numeric", month: "long", year: "numeric"
+                                                    })}
+                                                </div>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
 

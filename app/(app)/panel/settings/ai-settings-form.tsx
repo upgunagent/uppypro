@@ -12,7 +12,7 @@ import { SystemMessageWizard } from "@/components/ai/system-message-wizard";
 
 import { getPackageName } from "@/lib/subscription-utils";
 
-export function AiSettingsForm({ settings, subscription }: { settings: any, subscription: any }) {
+export function AiSettingsForm({ settings, subscription, tenantId }: { settings: any, subscription: any, tenantId: string }) {
     const formRef = useRef<HTMLFormElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [loading, setLoading] = useState(false);
@@ -75,8 +75,8 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
         }, 100);
         
         toast({
-            title: "Sistem Mesajı Oluşturuldu ✨",
-            description: "Mesaj alanına eklendi. Kontrol edip 'Ayarları Kaydet' butonuna basın.",
+            title: "AI Eğitim Dokümanı Oluşturuldu ✨",
+            description: "Doküman alana eklendi. Kontrol edip 'Ayarları Kaydet' butonuna basın.",
         });
     }
 
@@ -96,7 +96,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                     <div className="flex items-center space-x-3">
                         {isAiAllowed ? (
                             <>
-                                <span className={isAiEnabled ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200" : "bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold border border-slate-200"}>
+                                <span className={isAiEnabled ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200" : "bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold border border-red-200"}>
                                     {isAiEnabled ? "Aktif" : "Pasif"}
                                 </span>
                                 <div className="flex items-center gap-2" title="AI Asistanı Aç/Kapat">
@@ -108,8 +108,9 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                                 formRef.current?.requestSubmit();
                                             }, 50);
                                         }}
-                                        disabled={loading}
+                                        disabled={loading || (!hasExistingMessage && !wizardCompleted)}
                                         className="data-[state=checked]:bg-green-500"
+                                        title={!hasExistingMessage && !wizardCompleted ? "Önce AI Eğitim Dokümanı oluşturmalısınız" : ""}
                                     />
                                 </div>
                             </>
@@ -134,7 +135,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <Label>Sistem Mesajı & Firma Bilgi Tabanı</Label>
+                                    <Label>AI Eğitim Dokümanı & Firma Bilgi Tabanı</Label>
                                     <p className="text-xs text-slate-500">
                                         Buraya firmanızın hizmetleri, çalışma saatleri, fiyat politikası ve asistanın müşterilere nasıl davranması gerektiği hakkında detaylı bilgi giriniz.
                                         Bu bilgi asistanın &quot;beyni&quot; olarak kullanılacaktır.
@@ -156,7 +157,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                     {/* Arka planda blur edilmiş textarea */}
                                     <Textarea
                                         name="systemMessage"
-                                        className="min-h-[300px] blur-[2px] select-none"
+                                        className="min-h-[420px] blur-[2px] select-none"
                                         placeholder=""
                                         defaultValue=""
                                         disabled
@@ -175,19 +176,24 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                         </div>
 
                                         {/* Başlık */}
-                                        <h4 className="text-white font-bold text-lg mb-2">Sistem Mesajı Sihirbazı Gerekli</h4>
+                                        <h4 className="text-white font-bold text-lg mb-2">AI Eğitim Dokümanı Oluşturulmalı</h4>
 
                                         {/* Açıklama */}
                                         <p className="text-slate-300 text-sm leading-relaxed max-w-md mb-2">
-                                            AI asistanınızın <strong className="text-orange-300">doğru çalışabilmesi</strong> için sistem mesajının sihirbaz ile oluşturulması zorunludur.
-                                            Sihirbaz, asistanın ihtiyaç duyduğu <strong className="text-orange-300">araç tanımlarını ve yapılandırmaları otomatik olarak</strong> oluşturur.
+                                            AI asistanınızın <strong className="text-orange-300">doğru çalışabilmesi</strong> için eğitim dokümanının sihirbaz ile oluşturulması zorunludur.
+                                            Sihirbaz, firma bilgileriniz ve kayıtlı kaynaklarınızı kullanarak asistanınızın ihtiyaç duyduğu <strong className="text-orange-300">bilgi tabanını otomatik olarak</strong> oluşturur.
                                         </p>
+                                        <div className="bg-orange-500/15 border border-orange-400/30 rounded-lg px-4 py-2.5 max-w-md mb-3">
+                                            <p className="text-orange-200 text-xs leading-relaxed">
+                                                <strong>📋 Önce Kaynaklarınızı Ekleyin:</strong> Sihirbazı başlatmadan önce <strong>Takvim & Kaynak</strong> sekmesinden personel, oda, araç, tekne, masa gibi kaynaklarınızı ekleyin. Sihirbaz bu bilgileri otomatik olarak algılayacak ve eğitim dokümanına dahil edecektir.
+                                            </p>
+                                        </div>
                                         <p className="text-slate-400 text-xs leading-relaxed max-w-md mb-3">
-                                            Sistem mesajı oluşturulduktan sonra bu alan açılacak ve dilediğiniz düzenlemeleri manuel olarak yapıp kaydedebileceksiniz.
+                                            Eğitim dokümanı oluşturulduktan sonra bu alan açılacak ve dilediğiniz düzenlemeleri manuel olarak yapıp kaydedebileceksiniz.
                                         </p>
                                         <div className="bg-white/10 border border-white/15 rounded-lg px-4 py-2.5 max-w-md mb-5">
                                             <p className="text-slate-300 text-xs leading-relaxed">
-                                                💡 Sistem mesajınızı oluşturup kaydettikten sonra, AI asistanı devreye almak için sağ üst köşedeki <strong className="text-orange-300">Pasif / Aktif</strong> butonunu tıklayarak <strong className="text-green-400">Aktif</strong> konuma getiriniz. Asistanı geçici olarak durdurmak istediğinizde ise aynı butonu tekrar tıklayarak <strong className="text-slate-300">Pasif</strong> duruma alabilirsiniz.
+                                                💡 Eğitim dokümanını oluşturup kaydettikten sonra, AI asistanı devreye almak için sağ üst köşedeki <strong className="text-orange-300">Pasif / Aktif</strong> butonunu tıklayarak <strong className="text-green-400">Aktif</strong> konuma getiriniz. Asistanı geçici olarak durdurmak istediğinizde ise aynı butonu tekrar tıklayarak <strong className="text-slate-300">Pasif</strong> duruma alabilirsiniz.
                                             </p>
                                         </div>
 
@@ -221,7 +227,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
                                         <div className="text-xs text-amber-800 leading-relaxed">
                                             <p className="font-semibold mb-1">Önemli Uyarı — Manuel Düzenleme</p>
                                             <p>
-                                                Sistem mesajınızı istediğiniz gibi düzenleyebilirsiniz. Ancak mesajın içindeki
+                                                Eğitim dokümanınızı istediğiniz gibi düzenleyebilirsiniz. Ancak dokümanın içindeki
                                                 <strong> "### ARAÇ KULLANIM TALİMATLARI"</strong>,
                                                 <strong> "### TAKVİM VE RANDEVU YÖNETİMİ"</strong> ve
                                                 <strong> "### İLETİŞİM KURALLARI"</strong> gibi bölümleri
@@ -248,6 +254,7 @@ export function AiSettingsForm({ settings, subscription }: { settings: any, subs
         {/* System Message Wizard Modal */}
         {showWizard && (
             <SystemMessageWizard
+                tenantId={tenantId}
                 onComplete={handleWizardComplete}
                 onClose={() => setShowWizard(false)}
             />

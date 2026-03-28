@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Package, Tag, AlertTriangle, RefreshCw, ArrowLeftRight, RotateCcw, X } from "lucide-react";
-import { getPackageName } from "@/lib/subscription-utils";
+import { Calendar, Package, Tag, AlertTriangle, RefreshCw, ArrowLeftRight, RotateCcw, X, ArrowUp, ArrowDown, Building2, Mail, Check, Clock, Info } from "lucide-react";
+import { getPackageName, isPlanUpgrade, isPlanDowngrade, PLAN_FEATURES, SELF_SERVICE_PLANS } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelUserSubscription, retryUserPayment, changeUserPlan, reactivateUserSubscription } from "@/app/actions/subscription";
+import { cancelUserSubscription, retryUserPayment, upgradeUserPlan, downgradeUserPlan, cancelPendingDowngrade, changeUserPlan, reactivateUserSubscription } from "@/app/actions/subscription";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -44,12 +44,13 @@ export function SubscriptionCard({
     usdRate?: number
 }) {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isPlanChangeModalOpen, setIsPlanChangeModalOpen] = useState(false);
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
     const [cancelReason, setCancelReason] = useState<string>("");
     const [cancelDetails, setCancelDetails] = useState<string>("");
 
+    const [selectedChangePlan, setSelectedChangePlan] = useState<string>("");
     const [selectedReactivatePlan, setSelectedReactivatePlan] = useState<string>("");
     const [checkoutFormContent, setCheckoutFormContent] = useState<string>("");
     // Dialog dışında, sayfada gösterilecek checkout formu
@@ -137,7 +138,6 @@ export function SubscriptionCard({
     const isCorporate = ai_product_key?.startsWith('uppypro_corporate_');
 
     // Trial kontrolü
-    const isInTrial = is_trial && trial_ends_at && new Date(trial_ends_at) > new Date();
     const trialEndDate = trial_ends_at ? new Date(trial_ends_at) : null;
     const formattedTrialEndDate = trialEndDate?.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -158,10 +158,14 @@ export function SubscriptionCard({
         : '-';
 
     const currentProductKey = ai_product_key || 'uppypro_inbox';
-    const targetProductKey = currentProductKey === 'uppypro_ai' ? 'uppypro_inbox' : 'uppypro_ai';
-    const targetPrice = allPrices?.find(p => p.product_key === targetProductKey);
-    const targetPlanName = targetProductKey === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
-    const isUpgrade = targetProductKey === 'uppypro_ai';
+    const isInTrial = is_trial && trial_ends_at && new Date(trial_ends_at) > new Date();
+    const hasPendingDowngrade = !!subscription.pending_product_key;
+    const pendingPlanName = subscription.pending_product_key ? getPackageName({ ai_product_key: subscription.pending_product_key }) : '';
+
+    // Self-service paketleri filtrele (mevcut paket hariç)
+    const availablePlans = allPrices?.filter(p =>
+        SELF_SERVICE_PLANS.includes(p.product_key as any) && p.product_key !== currentProductKey
+    ) || [];
 
     const handleCancel = async () => {
         if (!cancelReason) return;
@@ -201,23 +205,56 @@ export function SubscriptionCard({
         }
     };
 
-    const handleChangePlan = async () => {
+    const handlePlanChange = async () => {
+        if (!selectedChangePlan) return;
         setIsLoading(true);
         try {
-            const result = await changeUserPlan(targetProductKey);
-            if (result.error) {
-                toast({ variant: "destructive", title: "Hata", description: result.error });
-                return;
-            }
-            if (result.checkoutFormContent) {
-                setCheckoutFormContent(result.checkoutFormContent);
-                setIsUpgradeModalOpen(false);
-                setTimeout(() => {
-                    setShowCheckoutInPage(true);
-                }, 350);
+            const isUpgrading = isPlanUpgrade(currentProductKey, selectedChangePlan);
+
+            if (isUpgrading) {
+                const result = await upgradeUserPlan(selectedChangePlan);
+                if (result.error) {
+                    toast({ variant: "destructive", title: "Hata", description: result.error });
+                    return;
+                }
+                if ('checkoutFormContent' in result && result.checkoutFormContent) {
+                    setCheckoutFormContent(result.checkoutFormContent);
+                    setIsPlanChangeModalOpen(false);
+                    setTimeout(() => {
+                        setShowCheckoutInPage(true);
+                    }, 350);
+                }
+            } else {
+                const result = await downgradeUserPlan(selectedChangePlan);
+                if (result.error) {
+                    toast({ variant: "destructive", title: "Hata", description: result.error });
+                    return;
+                }
+                if ('success' in result && result.success) {
+                    toast({ title: "Paket Değişikliği Planlandı ✅", description: result.message });
+                    setIsPlanChangeModalOpen(false);
+                    router.refresh();
+                }
             }
         } catch (error) {
             console.error(error);
+            toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCancelPendingDowngrade = async () => {
+        setIsLoading(true);
+        try {
+            const result = await cancelPendingDowngrade();
+            if (result.error) {
+                toast({ variant: "destructive", title: "Hata", description: result.error });
+            } else {
+                toast({ title: "Başarılı", description: "Paket düşürme iptal edildi. Mevcut paketiniz devam edecek." });
+                router.refresh();
+            }
+        } catch (error) {
             toast({ variant: "destructive", title: "Hata", description: "Beklenmeyen bir hata oluştu." });
         } finally {
             setIsLoading(false);
@@ -278,10 +315,15 @@ export function SubscriptionCard({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                             cleanupIyzicoDOM();
                             setShowCheckoutInPage(false);
                             setCheckoutFormContent("");
+                            // Clean up any pending upgrade/downgrade intent since user cancelled
+                            try {
+                                await cancelPendingDowngrade();
+                                router.refresh();
+                            } catch (e) { /* ignore */ }
                         }}
                         className="text-slate-400 hover:text-slate-600"
                     >
@@ -376,6 +418,34 @@ export function SubscriptionCard({
                 </div>
             )}
 
+            {/* Pending Downgrade Banner */}
+            {hasPendingDowngrade && (
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                            <Clock className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold text-orange-800">Paket Düşürme Planlandı</p>
+                                <p className="text-xs text-orange-700 mt-1">
+                                    Mevcut dönem sonunda (<strong>{formattedEndDate}</strong>) paketiniz <strong>{pendingPlanName}</strong> olarak değişecektir.
+                                    Bu tarihe kadar mevcut paketinizin tüm özelliklerini kullanmaya devam edebilirsiniz.
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelPendingDowngrade}
+                            disabled={isLoading}
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 shrink-0 text-xs"
+                        >
+                            <X className="w-3.5 h-3.5 mr-1" />
+                            İptal Et
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Actions Toolbar */}
             <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-end gap-3">
 
@@ -420,11 +490,9 @@ export function SubscriptionCard({
                                 <div className="space-y-3">
                                     <label className="text-sm font-medium text-slate-700">Paket Seçimi</label>
                                     <div className="grid gap-3">
-                                        {allPrices.map((p) => {
-                                            const planName = p.product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
-                                            const planDescription = p.product_key === 'uppypro_ai'
-                                                ? 'Yapay zeka destekli otomatik yanıtlar dahil'
-                                                : 'Temel mesaj yönetimi özellikleri';
+                                        {allPrices.filter(p => SELF_SERVICE_PLANS.includes(p.product_key as any)).map((p) => {
+                                            const planName = getPackageName({ ai_product_key: p.product_key });
+                                            const features = PLAN_FEATURES[p.product_key];
                                             const isSelected = selectedReactivatePlan === p.product_key;
                                             return (
                                                 <div
@@ -435,17 +503,26 @@ export function SubscriptionCard({
                                                         }`}
                                                     onClick={() => setSelectedReactivatePlan(p.product_key)}
                                                 >
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-slate-900">{planName}</span>
                                                                 {p.product_key === currentProductKey && (
                                                                     <Badge variant="secondary" className="text-xs bg-slate-100">Önceki Paketiniz</Badge>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-slate-500 mt-0.5">{planDescription}</p>
+                                                            {features && (
+                                                                <ul className="text-xs text-slate-500 space-y-0.5 mt-1.5">
+                                                                    {features.features.map(f => (
+                                                                        <li key={f} className="flex items-center gap-1">
+                                                                            <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                                                                            {f}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
                                                         </div>
-                                                        <div className="text-right">
+                                                        <div className="text-right shrink-0 ml-4">
                                                             <span className="font-bold text-lg text-slate-900">
                                                                 {p.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
                                                             </span>
@@ -476,46 +553,149 @@ export function SubscriptionCard({
                     </Dialog>
                 )}
 
-                {/* Upgrade/Downgrade Button - only for Inbox/AI plans, not corporate */}
-                {status === 'active' && !cancel_at_period_end && !isCorporate && targetPrice && (
-                    <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+                {/* Plan Change Button - only for non-corporate active subscriptions */}
+                {status === 'active' && !cancel_at_period_end && !isCorporate && availablePlans.length > 0 && (
+                    <Dialog open={isPlanChangeModalOpen} onOpenChange={(open) => {
+                        setIsPlanChangeModalOpen(open);
+                        if (!open) setSelectedChangePlan("");
+                    }}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
                                 <ArrowLeftRight className="w-4 h-4 mr-2" />
-                                {isUpgrade ? `${targetPlanName}'a Yükselt` : `${targetPlanName}'a Geç`}
+                                Paket Değiştir
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-lg">
                             <DialogHeader>
-                                <DialogTitle>Paket Değişikliği</DialogTitle>
+                                <DialogTitle>Paket Değiştir</DialogTitle>
                                 <DialogDescription>
-                                    Mevcut paketiniz: <strong>{packageName}</strong> <br />
-                                    Yeni paket: <strong>{targetPlanName}</strong>
+                                    Mevcut paketiniz: <strong>{packageName}</strong>. Geçiş yapmak istediğiniz paketi seçin.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="py-4 space-y-4">
-                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm text-slate-500">Yeni Aylık Ücret</span>
-                                        <span className="font-bold text-lg">
-                                            {targetPrice.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
-                                            <span className="text-xs font-normal text-slate-500 ml-1">+ KDV</span>
-                                        </span>
+                            <div className="py-4 space-y-3">
+                                {/* Plan Cards */}
+                                {availablePlans.map((p) => {
+                                    const planName = getPackageName({ ai_product_key: p.product_key });
+                                    const isUp = isPlanUpgrade(currentProductKey, p.product_key);
+                                    const isDown = isPlanDowngrade(currentProductKey, p.product_key);
+                                    const isSelected = selectedChangePlan === p.product_key;
+                                    const features = PLAN_FEATURES[p.product_key];
+                                    const isDisabledByTrial = isInTrial && isDown;
+
+                                    return (
+                                        <div
+                                            key={p.product_key}
+                                            className={`p-4 rounded-lg border-2 transition-all ${isDisabledByTrial
+                                                ? 'border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed'
+                                                : isSelected
+                                                    ? isUp ? 'border-emerald-500 bg-emerald-50' : 'border-orange-400 bg-orange-50'
+                                                    : 'border-slate-200 hover:border-slate-300 bg-white cursor-pointer'
+                                                }`}
+                                            onClick={() => !isDisabledByTrial && setSelectedChangePlan(p.product_key)}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-slate-900">{planName}</span>
+                                                        {isUp && (
+                                                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[10px] px-1.5 py-0 gap-0.5">
+                                                                <ArrowUp className="w-3 h-3" /> Yükselt
+                                                            </Badge>
+                                                        )}
+                                                        {isDown && (
+                                                            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 text-[10px] px-1.5 py-0 gap-0.5">
+                                                                <ArrowDown className="w-3 h-3" /> Düşür
+                                                            </Badge>
+                                                        )}
+                                                        {isDisabledByTrial && (
+                                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Deneme süresinde kapalı</Badge>
+                                                        )}
+                                                    </div>
+                                                    {features && (
+                                                        <ul className="text-xs text-slate-500 space-y-0.5 mt-1">
+                                                            {features.features.map(f => (
+                                                                <li key={f} className="flex items-center gap-1">
+                                                                    <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                                                                    {f}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                                <div className="text-right shrink-0 ml-4">
+                                                    <span className="font-bold text-lg text-slate-900">
+                                                        {p.monthly_price_try?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} TL
+                                                    </span>
+                                                    <span className="text-xs text-slate-500 block">+ KDV / ay</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Kurumsal Paket Kartı */}
+                                <div className="p-4 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Building2 className="w-4 h-4 text-slate-600" />
+                                                <span className="font-bold text-slate-700">Kurumsal Paket</span>
+                                            </div>
+                                            <p className="text-xs text-slate-500">Özel otomasyon ve fiyatlandırma içerir</p>
+                                        </div>
+                                        <a
+                                            href="mailto:info@upgunai.com"
+                                            className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                                        >
+                                            <Mail className="w-4 h-4" />
+                                            İletişime Geç
+                                        </a>
                                     </div>
-                                    <p className="text-xs text-slate-500">
-                                        {isUpgrade
-                                            ? "Paket yükseltme işleminde fark ücreti anında tahsil edilebilir."
-                                            : "Paket düşürme işlemi bir sonraki fatura döneminde geçerli olur."}
-                                    </p>
                                 </div>
-                                <p className="text-xs text-slate-500">
-                                    Kurumsal plana geçmek için <a href="mailto:info@upgunai.com" className="text-blue-600 underline">info@upgunai.com</a> adresine mail atabilirsiniz.
-                                </p>
+
+                                {/* Dynamic Info Box */}
+                                {selectedChangePlan && (
+                                    <div className={`p-3 rounded-lg border text-sm ${isPlanUpgrade(currentProductKey, selectedChangePlan)
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                        : 'bg-orange-50 border-orange-200 text-orange-800'
+                                        }`}
+                                    >
+                                        {isPlanUpgrade(currentProductKey, selectedChangePlan) ? (
+                                            <div className="flex items-start gap-2">
+                                                <ArrowUp className="w-4 h-4 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <strong>Paket Yükseltme</strong>
+                                                    <p className="text-xs mt-1 opacity-80">
+                                                        Yeni paketiniz hemen aktif olacaktır. Ödeme anında kartınızdan çekilecek ve yeni dönem bugünden başlayacaktır.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start gap-2">
+                                                <Clock className="w-4 h-4 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <strong>Paket Düşürme</strong>
+                                                    <p className="text-xs mt-1 opacity-80">
+                                                        Mevcut paketiniz <strong>{formattedEndDate}</strong> tarihine kadar aktif kalacaktır.
+                                                        Bu tarihten itibaren yeni paket geçerli olacak ve aylık ücretiniz güncellenecektir.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)}>Vazgeç</Button>
-                                <Button onClick={handleChangePlan} disabled={isLoading}>
-                                    {isLoading ? 'İşleniyor...' : 'Onayla ve Değiştir'}
+                                <Button variant="outline" onClick={() => setIsPlanChangeModalOpen(false)}>Vazgeç</Button>
+                                <Button
+                                    onClick={handlePlanChange}
+                                    disabled={!selectedChangePlan || isLoading}
+                                    className={selectedChangePlan && isPlanUpgrade(currentProductKey, selectedChangePlan)
+                                        ? "bg-emerald-600 hover:bg-emerald-700"
+                                        : "bg-orange-600 hover:bg-orange-700"
+                                    }
+                                >
+                                    {isLoading ? 'İşleniyor...' : selectedChangePlan && isPlanUpgrade(currentProductKey, selectedChangePlan) ? 'Yükselt ve Öde' : 'Düşürmeyi Onayla'}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>

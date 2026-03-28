@@ -224,8 +224,8 @@ export async function deleteLead(leadId: string) {
     return { success: true };
 }
 
-// Update lead notes/tags
-export async function updateLeadDetails(leadId: string, data: { notes?: string; tags?: string[]; email?: string }) {
+// Update lead notes/tags/contact info
+export async function updateLeadDetails(leadId: string, data: { notes?: string; tags?: string[]; email?: string; phone?: string; website?: string; address?: string }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized" };
@@ -248,6 +248,9 @@ export async function updateLeadDetails(leadId: string, data: { notes?: string; 
         updateData.email = data.email;
         updateData.email_missing = !data.email;
     }
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.website !== undefined) updateData.website = data.website;
+    if (data.address !== undefined) updateData.address = data.address;
 
     const { error } = await adminDb.from("leads").update(updateData).eq("id", leadId);
 
@@ -312,6 +315,115 @@ export async function renameLeadList(listId: string, newName: string) {
     const { error } = await adminDb
         .from("lead_lists")
         .update({ name: newName, updated_at: new Date().toISOString() })
+        .eq("id", listId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/leads");
+    return { success: true };
+}
+
+// ============ FOLDER MANAGEMENT ============
+
+export async function createLeadFolder(name: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const { data: membership } = await supabase
+        .from("tenant_members")
+        .select("tenant_id, role")
+        .eq("user_id", user.id)
+        .eq("role", "agency_admin")
+        .maybeSingle();
+
+    if (!membership) return { error: "Unauthorized" };
+
+    const adminDb = createAdminClient();
+    const { data, error } = await adminDb
+        .from("lead_folders")
+        .insert({ name, tenant_id: membership.tenant_id })
+        .select()
+        .single();
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/leads");
+    return { success: true, folder: data };
+}
+
+export async function renameLeadFolder(folderId: string, newName: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const { data: membership } = await supabase
+        .from("tenant_members")
+        .select("tenant_id, role")
+        .eq("user_id", user.id)
+        .eq("role", "agency_admin")
+        .maybeSingle();
+
+    if (!membership) return { error: "Unauthorized" };
+
+    const adminDb = createAdminClient();
+    const { error } = await adminDb
+        .from("lead_folders")
+        .update({ name: newName })
+        .eq("id", folderId)
+        .eq("tenant_id", membership.tenant_id);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/leads");
+    return { success: true };
+}
+
+export async function deleteLeadFolder(folderId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const { data: membership } = await supabase
+        .from("tenant_members")
+        .select("tenant_id, role")
+        .eq("user_id", user.id)
+        .eq("role", "agency_admin")
+        .maybeSingle();
+
+    if (!membership) return { error: "Unauthorized" };
+
+    const adminDb = createAdminClient();
+    const { error } = await adminDb
+        .from("lead_folders")
+        .delete()
+        .eq("id", folderId)
+        .eq("tenant_id", membership.tenant_id);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/leads");
+    return { success: true };
+}
+
+export async function moveLeadList(listId: string, folderId: string | null) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const { data: membership } = await supabase
+        .from("tenant_members")
+        .select("tenant_id, role")
+        .eq("user_id", user.id)
+        .eq("role", "agency_admin")
+        .maybeSingle();
+
+    if (!membership) return { error: "Unauthorized" };
+
+    const adminDb = createAdminClient();
+    const { error } = await adminDb
+        .from("lead_lists")
+        .update({ folder_id: folderId })
         .eq("id", listId);
 
     if (error) return { error: error.message };

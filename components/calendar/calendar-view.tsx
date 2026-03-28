@@ -273,10 +273,10 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                         <Users className="w-4 h-4 text-slate-400" />
                         <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
                             <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Personel Seçin" />
+                                <SelectValue placeholder="Kayıt Seçin" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tüm Personeller</SelectItem>
+                                <SelectItem value="all">Tüm Kayıtlar</SelectItem>
                                 {initialEmployees.map((emp) => (
                                     <SelectItem key={emp.id} value={emp.id}>
                                         {emp.name} {emp.title ? `(${emp.title})` : ''}

@@ -74,7 +74,7 @@ export default async function SettingsPage() {
     let allPrices = [];
 
     // Always fetch pricing for standard plans + the current subscription's plan
-    const productKeys = ['uppypro_inbox', 'uppypro_ai'];
+    const productKeys = ['uppypro_inbox', 'uppypro_ai', 'uppypro_ai_trendyol'];
     if (subscription?.ai_product_key && !productKeys.includes(subscription.ai_product_key)) {
         productKeys.push(subscription.ai_product_key);
     }
@@ -115,7 +115,7 @@ export default async function SettingsPage() {
     );
     const aiContent = (
         <div className="space-y-6">
-            <AiSettingsForm settings={agentSettings} subscription={subscription} />
+            <AiSettingsForm settings={agentSettings} subscription={subscription} tenantId={member.tenant_id} />
             <EmailSettingsForm settings={emailSettings} />
         </div>
     );
@@ -195,6 +195,7 @@ export default async function SettingsPage() {
         <EmployeeSettingsTab
             tenantId={member.tenant_id}
             initialEmployees={employees || []}
+            initialResourceType={tenant?.resource_type_preference || "employee"}
         />
     );
 

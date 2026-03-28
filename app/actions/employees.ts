@@ -19,11 +19,25 @@ export async function getTenantEmployees(tenantId: string) {
     return employees || [];
 }
 
-export async function addTenantEmployee(tenantId: string, name: string, title?: string) {
+export async function addTenantEmployee(
+    tenantId: string,
+    name: string,
+    title?: string,
+    resourceType: string = "employee",
+    attributes: Record<string, any> = {},
+    extraInfo?: string
+) {
     const supabase = await createClient();
     const { data, error } = await supabase
         .from("tenant_employees")
-        .insert({ tenant_id: tenantId, name, title })
+        .insert({
+            tenant_id: tenantId,
+            name,
+            title,
+            resource_type: resourceType,
+            attributes,
+            extra_info: extraInfo || null,
+        })
         .select()
         .single();
 
@@ -33,14 +47,67 @@ export async function addTenantEmployee(tenantId: string, name: string, title?: 
     }
 
     revalidatePath("/panel/settings");
+    revalidatePath("/panel/calendar");
     return { success: true, employee: data };
 }
 
-export async function updateTenantEmployee(employeeId: string, name: string, title?: string) {
+/** Toplu ekleme: aynı özelliklerle birden fazla kaynak ekler */
+export async function addTenantEmployeesBatch(
+    tenantId: string,
+    names: string[],
+    title: string | undefined,
+    resourceType: string,
+    attributes: Record<string, any>,
+    extraInfo?: string
+) {
+    if (!names.length) return { success: false, error: "İsim listesi boş." };
+
     const supabase = await createClient();
+    const rows = names.map((n) => ({
+        tenant_id: tenantId,
+        name: n.trim(),
+        title,
+        resource_type: resourceType,
+        attributes,
+        extra_info: extraInfo || null,
+    }));
+
     const { data, error } = await supabase
         .from("tenant_employees")
-        .update({ name, title, updated_at: new Date().toISOString() })
+        .insert(rows)
+        .select();
+
+    if (error) {
+        console.error("Error batch adding:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/panel/settings");
+    revalidatePath("/panel/calendar");
+    return { success: true, employees: data };
+}
+
+export async function updateTenantEmployee(
+    employeeId: string,
+    name: string,
+    title?: string,
+    resourceType?: string,
+    attributes?: Record<string, any>,
+    extraInfo?: string
+) {
+    const supabase = await createClient();
+    const payload: any = {
+        name,
+        title,
+        updated_at: new Date().toISOString(),
+    };
+    if (resourceType !== undefined) payload.resource_type = resourceType;
+    if (attributes !== undefined) payload.attributes = attributes;
+    if (extraInfo !== undefined) payload.extra_info = extraInfo || null;
+
+    const { data, error } = await supabase
+        .from("tenant_employees")
+        .update(payload)
         .eq("id", employeeId)
         .select()
         .single();
@@ -51,6 +118,7 @@ export async function updateTenantEmployee(employeeId: string, name: string, tit
     }
 
     revalidatePath("/panel/settings");
+    revalidatePath("/panel/calendar");
     return { success: true, employee: data };
 }
 
@@ -63,6 +131,24 @@ export async function deleteTenantEmployee(employeeId: string) {
 
     if (error) {
         console.error("Error deleting employee:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/panel/settings");
+    revalidatePath("/panel/calendar");
+    return { success: true };
+}
+
+/** İşletmenin kaynak tipi tercihini günceller */
+export async function updateResourceTypePreference(tenantId: string, resourceType: string) {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from("tenants")
+        .update({ resource_type_preference: resourceType })
+        .eq("id", tenantId);
+
+    if (error) {
+        console.error("Error updating preference:", error);
         return { success: false, error: error.message };
     }
 

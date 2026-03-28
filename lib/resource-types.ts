@@ -1,0 +1,233 @@
+/**
+ * Kaynak Tipi Tanımlamaları
+ * Her kaynak tipi için form alanları, etiketler ve placeholder'lar
+ */
+
+export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table";
+
+export interface AttributeField {
+    key: string;
+    label: string;
+    type: "text" | "number" | "select" | "checkbox";
+    placeholder?: string;
+    options?: string[];
+    suffix?: string; // "kişi", "metre" gibi birim
+}
+
+export interface ResourceTypeConfig {
+    id: ResourceType;
+    label: string;
+    iconName: string;
+    namePlaceholder: string;
+    nameLabel: string;
+    titleLabel?: string;
+    titlePlaceholder?: string;
+    attributeFields: AttributeField[];
+    extraInfoPlaceholder: string;
+    /** Tablo sütun başlıkları */
+    tableColumns: { key: string; label: string }[];
+    /** Toplu ekleme placeholder */
+    batchPlaceholder: string;
+    /** Excel sütun eşleştirme seçenekleri */
+    excelMappableFields: { key: string; label: string }[];
+}
+
+export const RESOURCE_TYPES: ResourceTypeConfig[] = [
+    {
+        id: "employee",
+        label: "Personel",
+        iconName: "User",
+        namePlaceholder: "Örn: Ahmet Yılmaz",
+        nameLabel: "Ad Soyad",
+        titleLabel: "Ünvan / Görev",
+        titlePlaceholder: "Örn: Kuaför, Güzellik Uzmanı, Danışman",
+        attributeFields: [],
+        extraInfoPlaceholder: "Örn: 10 yıl deneyimli, İngilizce biliyor, uzman alanları...",
+        tableColumns: [
+            { key: "name", label: "Ad Soyad" },
+            { key: "title", label: "Ünvan" },
+        ],
+        batchPlaceholder: "Ahmet Yılmaz\nAyşe Demir\nMehmet Kaya",
+        excelMappableFields: [
+            { key: "name", label: "Ad Soyad" },
+            { key: "title", label: "Ünvan" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+    {
+        id: "room",
+        label: "Oda",
+        iconName: "DoorOpen",
+        namePlaceholder: "Örn: 201, Deluxe Suite, Kral Dairesi",
+        nameLabel: "Oda Adı / Numarası",
+        titleLabel: "Oda Tipi",
+        titlePlaceholder: "Örn: Standart, Deluxe, Suite, Aile Odası",
+        attributeFields: [
+            { key: "capacity", label: "Kapasite", type: "number", placeholder: "2", suffix: "kişi" },
+            { key: "bed_type", label: "Yatak Tipi", type: "select", options: ["Tek Kişilik", "Çift Kişilik", "King Size", "Twin (İki Tek)", "Ranza"] },
+            { key: "bathroom", label: "Banyo", type: "checkbox" },
+            { key: "view", label: "Manzara", type: "select", options: ["Deniz", "Kara", "Bahçe", "Şehir", "Havuz", "Dağ"] },
+            { key: "floor", label: "Kat", type: "number", placeholder: "2" },
+            { key: "size_m2", label: "Oda Büyüklüğü", type: "number", placeholder: "28", suffix: "m²" },
+        ],
+        extraInfoPlaceholder: "Örn: Mini bar dahil, jakuzi mevcut, yeni renovasyon, balkon var...",
+        tableColumns: [
+            { key: "name", label: "Oda" },
+            { key: "title", label: "Tip" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "view", label: "Manzara" },
+        ],
+        batchPlaceholder: "201\n202\n203\n301\n302",
+        excelMappableFields: [
+            { key: "name", label: "Oda Adı / Numarası" },
+            { key: "title", label: "Oda Tipi" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "bed_type", label: "Yatak Tipi" },
+            { key: "bathroom", label: "Banyo" },
+            { key: "view", label: "Manzara" },
+            { key: "floor", label: "Kat" },
+            { key: "size_m2", label: "m²" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+    {
+        id: "boat",
+        label: "Tekne",
+        iconName: "Ship",
+        namePlaceholder: "Örn: Blue Dream, Sea Star, Rüzgar",
+        nameLabel: "Tekne Adı",
+        titleLabel: "Tekne Tipi",
+        titlePlaceholder: "Örn: Gulet, Motor Yat, Yelkenli, Katamaran",
+        attributeFields: [
+            { key: "capacity", label: "Kapasite", type: "number", placeholder: "8", suffix: "kişi" },
+            { key: "length_m", label: "Uzunluk", type: "number", placeholder: "12", suffix: "metre" },
+            { key: "type", label: "Tekne Tipi", type: "select", options: ["Yelkenli", "Motor Yat", "Gulet", "Katamaran", "Sürat Teknesi", "Balıkçı Teknesi", "Tirhandil"] },
+            { key: "year", label: "Yapım Yılı", type: "number", placeholder: "2020" },
+            { key: "engine", label: "Motor Gücü", type: "text", placeholder: "200 HP" },
+            { key: "crew", label: "Mürettebat Dahil", type: "checkbox" },
+        ],
+        extraInfoPlaceholder: "Örn: Tam donanımlı mutfak, 2 kabin, WiFi, ses sistemi, dalış ekipmanı...",
+        tableColumns: [
+            { key: "name", label: "Tekne Adı" },
+            { key: "title", label: "Tip" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "length_m", label: "Uzunluk" },
+        ],
+        batchPlaceholder: "Blue Dream\nSea Star\nWind Rider",
+        excelMappableFields: [
+            { key: "name", label: "Tekne Adı" },
+            { key: "title", label: "Tekne Tipi" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "length_m", label: "Uzunluk (m)" },
+            { key: "type", label: "Tip" },
+            { key: "year", label: "Yapım Yılı" },
+            { key: "engine", label: "Motor Gücü" },
+            { key: "crew", label: "Mürettebat" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+    {
+        id: "vehicle",
+        label: "Araç Kiralama",
+        iconName: "Car",
+        namePlaceholder: "Örn: 34 ABC 123, BMW X5 Beyaz",
+        nameLabel: "Araç Adı / Plaka",
+        titleLabel: "Kategori",
+        titlePlaceholder: "Örn: Otomobil, SUV, Motorsiklet",
+        attributeFields: [
+            { key: "category", label: "Araç Kategorisi", type: "select", options: ["Otomobil", "SUV", "Minibüs", "Motorsiklet", "ATV", "Jet-Ski", "Bisiklet", "Scooter", "Karavan", "Pick-up"] },
+            { key: "brand", label: "Marka", type: "text", placeholder: "Örn: BMW, Toyota, Honda" },
+            { key: "model", label: "Model", type: "text", placeholder: "Örn: X5, Corolla, CBR" },
+            { key: "year", label: "Model Yılı", type: "number", placeholder: "2023" },
+            { key: "fuel", label: "Yakıt", type: "select", options: ["Benzin", "Dizel", "Elektrik", "Hibrit", "LPG", "Yok"] },
+            { key: "transmission", label: "Vites", type: "select", options: ["Otomatik", "Manuel", "Yok"] },
+        ],
+        extraInfoPlaceholder: "Örn: GPS dahil, bebek koltuğu mevcut, sigara içilmemiş, tam kasko...",
+        tableColumns: [
+            { key: "name", label: "Araç" },
+            { key: "title", label: "Kategori" },
+            { key: "brand_model", label: "Marka / Model" },
+            { key: "year", label: "Yıl" },
+        ],
+        batchPlaceholder: "34 ABC 01\n34 ABC 02\n34 ABC 03",
+        excelMappableFields: [
+            { key: "name", label: "Araç Adı / Plaka" },
+            { key: "title", label: "Kategori" },
+            { key: "category", label: "Araç Kategorisi" },
+            { key: "brand", label: "Marka" },
+            { key: "model", label: "Model" },
+            { key: "year", label: "Yıl" },
+            { key: "fuel", label: "Yakıt" },
+            { key: "transmission", label: "Vites" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+    {
+        id: "table",
+        label: "Masa",
+        iconName: "UtensilsCrossed",
+        namePlaceholder: "Örn: Masa 1, VIP Masa, Bahçe 3, Bar Tezgahı",
+        nameLabel: "Masa Adı / Numarası",
+        titleLabel: "Masa Tipi",
+        titlePlaceholder: "Örn: Normal, VIP, Loca, Bar",
+        attributeFields: [
+            { key: "capacity", label: "Kapasite", type: "number", placeholder: "4", suffix: "kişi" },
+            { key: "area", label: "Alan", type: "select", options: ["İç Mekan", "Bahçe", "Teras", "Balkon", "Çatı Katı", "Bar Alanı", "VIP Bölüm", "Loca"] },
+            { key: "smoking", label: "Sigara İçilebilir", type: "checkbox" },
+            { key: "reservable", label: "Rezerve Edilebilir", type: "checkbox" },
+            { key: "window_seat", label: "Cam Kenarı / Manzaralı", type: "checkbox" },
+            { key: "power_outlet", label: "Priz Mevcut", type: "checkbox" },
+            { key: "quiet_zone", label: "Sessiz Bölge", type: "checkbox" },
+            { key: "shape", label: "Masa Şekli", type: "select", options: ["Yuvarlak", "Kare", "Dikdörtgen", "Oval", "Bar Tezgahı"] },
+        ],
+        extraInfoPlaceholder: "Örn: Deniz manzaralı, şömine yanı, özel dekorasyon, bebek sandalyesi var, engelli erişimi uygun...",
+        tableColumns: [
+            { key: "name", label: "Masa" },
+            { key: "title", label: "Tip" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "area", label: "Alan" },
+        ],
+        batchPlaceholder: "Masa 1\nMasa 2\nMasa 3\nBahçe 1\nBahçe 2\nVIP 1",
+        excelMappableFields: [
+            { key: "name", label: "Masa Adı / Numarası" },
+            { key: "title", label: "Masa Tipi" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "area", label: "Alan" },
+            { key: "smoking", label: "Sigara" },
+            { key: "reservable", label: "Rezerve Edilebilir" },
+            { key: "window_seat", label: "Cam Kenarı" },
+            { key: "shape", label: "Masa Şekli" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+];
+
+export function getResourceTypeConfig(type: ResourceType): ResourceTypeConfig {
+    return RESOURCE_TYPES.find((r) => r.id === type) || RESOURCE_TYPES[0];
+}
+
+/** Kaynak özelliklerini okunabilir bir metin olarak formatlar */
+export function formatResourceAttributes(resource: any): string {
+    const config = getResourceTypeConfig(resource.resource_type || "employee");
+    const attrs = resource.attributes || {};
+    const parts: string[] = [];
+
+    for (const field of config.attributeFields) {
+        const val = attrs[field.key];
+        if (val === undefined || val === null || val === "" || val === false) continue;
+
+        if (field.type === "checkbox") {
+            parts.push(field.label);
+        } else if (field.suffix) {
+            parts.push(`${val} ${field.suffix}`);
+        } else {
+            parts.push(`${val}`);
+        }
+    }
+
+    if (resource.extra_info) {
+        parts.push(resource.extra_info);
+    }
+
+    return parts.join(", ");
+}

@@ -14,7 +14,7 @@ export interface SectorQuestion {
 export interface SectorDefinition {
   id: string;
   label: string;
-  emoji: string;
+  iconName: string;
   extraQuestions: SectorQuestion[];
   /** Ortak soruların placeholder'larını sektöre göre özelleştirir */
   placeholderOverrides?: Record<string, string>;
@@ -36,7 +36,7 @@ export const commonQuestions: SectorQuestion[] = [
 // Sektör tanımları
 export const sectors: SectorDefinition[] = [
   {
-    id: 'beauty', label: 'Güzellik & Cilt Bakım Merkezi', emoji: '💆‍♀️',
+    id: 'beauty', label: 'Güzellik & Cilt Bakım Merkezi', iconName: 'Sparkles',
     placeholderOverrides: {
       business_name: 'Örn: Bella Güzellik Merkezi',
       ai_name: 'Örn: Bella, Liya, Asistan',
@@ -52,7 +52,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'spa', label: 'SPA & Masaj Merkezi', emoji: '🧖',
+    id: 'spa', label: 'SPA & Masaj Merkezi', iconName: 'Leaf',
     placeholderOverrides: {
       business_name: 'Örn: Zen SPA & Wellness',
       ai_name: 'Örn: Zen, Huzur, Asistan',
@@ -67,7 +67,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'tattoo', label: 'Dövme & Tattoo Stüdyosu', emoji: '🎨',
+    id: 'tattoo', label: 'Dövme & Tattoo Stüdyosu', iconName: 'Pen',
     placeholderOverrides: {
       business_name: 'Örn: Ink Art Tattoo Studio',
       ai_name: 'Örn: Ink, Art, Asistan',
@@ -82,7 +82,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'hotel', label: 'Otel & Konaklama', emoji: '🏨',
+    id: 'hotel', label: 'Otel & Konaklama', iconName: 'Building2',
     placeholderOverrides: {
       business_name: 'Örn: Grand Palace Hotel',
       ai_name: 'Örn: Concierge, Asistan',
@@ -98,7 +98,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'hair_salon', label: 'Kuaför & Saç Tasarım', emoji: '✂️',
+    id: 'hair_salon', label: 'Kuaför & Saç Tasarım', iconName: 'Scissors',
     placeholderOverrides: {
       business_name: 'Örn: Studio Hair Design',
       ai_name: 'Örn: Stil, Bella, Asistan',
@@ -113,7 +113,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'medical_aesthetic', label: 'Medikal Estetik Merkezi', emoji: '💉',
+    id: 'medical_aesthetic', label: 'Medikal Estetik Merkezi', iconName: 'Syringe',
     placeholderOverrides: {
       business_name: 'Örn: Aura Medikal Estetik',
       ai_name: 'Örn: Aura, Asistan',
@@ -127,7 +127,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'physiotherapy', label: 'Fizyoterapi & Rehabilitasyon', emoji: '🏥',
+    id: 'physiotherapy', label: 'Fizyoterapi & Rehabilitasyon', iconName: 'HeartPulse',
     placeholderOverrides: {
       business_name: 'Örn: Hareket Fizyoterapi Merkezi',
       ai_name: 'Örn: Asistan, Sağlık',
@@ -141,7 +141,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'auto_service', label: 'Oto Servis & Yedek Parça', emoji: '🔧',
+    id: 'auto_service', label: 'Oto Servis & Yedek Parça', iconName: 'Wrench',
     placeholderOverrides: {
       business_name: 'Örn: Master Oto Servis',
       ai_name: 'Örn: Usta, Asistan',
@@ -156,7 +156,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'ecommerce', label: 'E-ticaret & Butik Mağaza', emoji: '🛍️',
+    id: 'ecommerce', label: 'E-ticaret & Butik Mağaza', iconName: 'ShoppingBag',
     placeholderOverrides: {
       business_name: 'Örn: Chic Boutique',
       ai_name: 'Örn: Stil, Butik, Asistan',
@@ -172,7 +172,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'dental', label: 'Diş Kliniği & Diş Hekimi', emoji: '🦷',
+    id: 'dental', label: 'Diş Kliniği & Diş Hekimi', iconName: 'Stethoscope',
     placeholderOverrides: {
       business_name: 'Örn: Gülüş Diş Kliniği',
       ai_name: 'Örn: Dişçim, Asistan',
@@ -186,7 +186,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'plastic_surgery', label: 'Estetik & Plastik Cerrahi', emoji: '🏥',
+    id: 'plastic_surgery', label: 'Estetik & Plastik Cerrahi', iconName: 'Heart',
     placeholderOverrides: {
       business_name: 'Örn: Aesthetic Center İstanbul',
       ai_name: 'Örn: Estetik, Asistan',
@@ -200,7 +200,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'photography', label: 'Fotoğrafçılık & Video', emoji: '📸',
+    id: 'photography', label: 'Fotoğrafçılık & Video', iconName: 'Camera',
     placeholderOverrides: {
       business_name: 'Örn: Frame Studio',
       ai_name: 'Örn: Frame, Lens, Asistan',
@@ -215,7 +215,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'psychology', label: 'Psikoloji & Terapi', emoji: '🧠',
+    id: 'psychology', label: 'Psikoloji & Terapi', iconName: 'Brain',
     placeholderOverrides: {
       business_name: 'Örn: İç Dünya Psikoloji Merkezi',
       ai_name: 'Örn: Destek, Asistan',
@@ -229,7 +229,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'restaurant', label: 'Restoran & Kafe', emoji: '🍽️',
+    id: 'restaurant', label: 'Restoran & Kafe', iconName: 'UtensilsCrossed',
     placeholderOverrides: {
       business_name: 'Örn: Lezzet Durağı Restoran',
       ai_name: 'Örn: Garson, Lezzet, Asistan',
@@ -244,21 +244,39 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'car_rental', label: 'Oto Galeri & Araç Kiralama', emoji: '🚗',
+    id: 'auto_gallery', label: 'Oto Galeri', iconName: 'Gauge',
     placeholderOverrides: {
       business_name: 'Örn: Premium Oto Galeri',
       ai_name: 'Örn: Oto, Asistan',
-      appointment_duration: 'Örn: 30 (test sürüşü)',
+      appointment_duration: 'Örn: 30 (test sürüşü), 45 (ekspertiz)',
       duration_hint: 'Test sürüşü (30 dk), Ekspertiz (45 dk)',
-      employees: 'Örn: Ali (Satış Danışmanı), Veli (Kiralama), Murat (Ekspertiz)',
+      employees: 'Örn: Ali (Satış Danışmanı), Murat (Ekspertiz Uzmanı)',
     },
     extraQuestions: [
-      { id: 'services', label: 'Hizmetler', placeholder: 'Örn: 2. el satış, kiralama, takas, ekspertiz', type: 'textarea', required: true },
-      { id: 'rental_policy', label: 'Kiralama Şartları', placeholder: 'Örn: Ehliyet 2 yıl, depozito, günlük/aylık kiralama', type: 'textarea' },
+      { id: 'services', label: 'Hizmetler', placeholder: 'Örn: 2. el satış, takas, ekspertiz, sigorta, kredi', type: 'textarea', required: true },
+      { id: 'vehicle_brands', label: 'Araç Markaları / Segmentler', placeholder: 'Örn: BMW, Mercedes, Audi, Toyota — Binek, SUV, Ticari', type: 'textarea' },
+      { id: 'payment_options', label: 'Ödeme Seçenekleri', placeholder: 'Örn: Nakit, kredi, takas, senet', type: 'text' },
     ]
   },
   {
-    id: 'wedding', label: 'Düğün & Organizasyon', emoji: '💒',
+    id: 'car_rental', label: 'Araç Kiralama', iconName: 'Car',
+    placeholderOverrides: {
+      business_name: 'Örn: GoRent Araç Kiralama',
+      ai_name: 'Örn: Rent, Asistan',
+      working_hours: 'Örn: Her gün 08:00-20:00',
+      appointment_duration: 'Örn: Günlük, Haftalık, Aylık kiralama',
+      duration_hint: 'Günlük kiralama (24 saat), Haftalık (7 gün)',
+      employees: 'Kayıtlı araçlarınız otomatik yüklenecek',
+    },
+    extraQuestions: [
+      { id: 'rental_policy', label: 'Kiralama Şartları', placeholder: 'Örn: Ehliyet 2 yıl, min yaş 21, depozito 5000 TL', type: 'textarea', required: true },
+      { id: 'pricing_model', label: 'Fiyatlandırma', placeholder: 'Örn: Otomobil günlük 800 TL, SUV günlük 1500 TL, haftalık %20 indirim', type: 'textarea' },
+      { id: 'delivery_options', label: 'Teslimat Seçenekleri', placeholder: 'Örn: Havalimanı teslim, adrese teslimat, şubeden teslim', type: 'text' },
+      { id: 'insurance_info', label: 'Sigorta Bilgisi', placeholder: 'Örn: Tam kasko dahil, mini hasar muafiyeti 3000 TL', type: 'text' },
+    ]
+  },
+  {
+    id: 'wedding', label: 'Düğün & Organizasyon', iconName: 'PartyPopper',
     placeholderOverrides: {
       business_name: 'Örn: Dream Wedding Organizasyon',
       ai_name: 'Örn: Dream, Düğün, Asistan',
@@ -272,7 +290,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'dietitian', label: 'Diyetisyen & Beslenme', emoji: '🥗',
+    id: 'dietitian', label: 'Diyetisyen & Beslenme', iconName: 'Apple',
     placeholderOverrides: {
       business_name: 'Örn: Sağlıklı Yaşam Diyetisyenlik',
       ai_name: 'Örn: Diyetim, Asistan',
@@ -286,7 +304,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'accounting', label: 'Muhasebe & Mali Müşavirlik', emoji: '📊',
+    id: 'accounting', label: 'Muhasebe & Mali Müşavirlik', iconName: 'Calculator',
     placeholderOverrides: {
       business_name: 'Örn: Güven Mali Müşavirlik',
       ai_name: 'Örn: Mali, Asistan',
@@ -300,7 +318,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'real_estate', label: 'Emlak Ofisi', emoji: '🏠',
+    id: 'real_estate', label: 'Emlak Ofisi', iconName: 'Home',
     placeholderOverrides: {
       business_name: 'Örn: Prestij Emlak',
       ai_name: 'Örn: Emlak, Asistan',
@@ -314,7 +332,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'education', label: 'Eğitim & Kurs Merkezi', emoji: '📚',
+    id: 'education', label: 'Eğitim & Kurs Merkezi', iconName: 'GraduationCap',
     placeholderOverrides: {
       business_name: 'Örn: Bilgi Akademi',
       ai_name: 'Örn: Akademi, Asistan',
@@ -328,7 +346,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'fitness', label: 'Spor & Fitness', emoji: '🏋️',
+    id: 'fitness', label: 'Spor & Fitness', iconName: 'Dumbbell',
     placeholderOverrides: {
       business_name: 'Örn: Power Gym Fitness',
       ai_name: 'Örn: Coach, Asistan',
@@ -343,7 +361,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'veterinary', label: 'Veteriner & Pet', emoji: '🐾',
+    id: 'veterinary', label: 'Veteriner & Pet', iconName: 'PawPrint',
     placeholderOverrides: {
       business_name: 'Örn: Can Dostum Veteriner Kliniği',
       ai_name: 'Örn: Patici, Asistan',
@@ -357,7 +375,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'law', label: 'Hukuk & Avukatlık', emoji: '⚖️',
+    id: 'law', label: 'Hukuk & Avukatlık', iconName: 'Scale',
     placeholderOverrides: {
       business_name: 'Örn: Adalet Hukuk Bürosu',
       ai_name: 'Örn: Hukuk, Asistan',
@@ -371,7 +389,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'cleaning', label: 'Temizlik & Ev Hizmetleri', emoji: '🧹',
+    id: 'cleaning', label: 'Temizlik & Ev Hizmetleri', iconName: 'SprayCan',
     placeholderOverrides: {
       business_name: 'Örn: Pirıl Temizlik Hizmetleri',
       ai_name: 'Örn: Pirıl, Asistan',
@@ -385,7 +403,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'printing', label: 'Matbaa & Reklam', emoji: '🖨️',
+    id: 'printing', label: 'Matbaa & Reklam', iconName: 'Printer',
     placeholderOverrides: {
       business_name: 'Örn: Baskı Merkezi Matbaa',
       ai_name: 'Örn: Baskı, Asistan',
@@ -398,7 +416,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'optics', label: 'Optik & Gözlükçü', emoji: '👓',
+    id: 'optics', label: 'Optik & Gözlükçü', iconName: 'Eye',
     placeholderOverrides: {
       business_name: 'Örn: Net Görüş Optik',
       ai_name: 'Örn: Optik, Asistan',
@@ -412,7 +430,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'florist', label: 'Çiçekçi & Peyzaj', emoji: '💐',
+    id: 'florist', label: 'Çiçekçi & Peyzaj', iconName: 'Flower2',
     placeholderOverrides: {
       business_name: 'Örn: Çiçek Bahçem',
       ai_name: 'Örn: Çiçek, Asistan',
@@ -426,7 +444,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'architecture', label: 'Mimarlık & İç Mimarlık', emoji: '🏗️',
+    id: 'architecture', label: 'Mimarlık & İç Mimarlık', iconName: 'Ruler',
     placeholderOverrides: {
       business_name: 'Örn: Tasarım Evi Mimarlık',
       ai_name: 'Örn: Tasarım, Asistan',
@@ -439,7 +457,7 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'pharmacy', label: 'Eczane', emoji: '💊',
+    id: 'pharmacy', label: 'Eczane', iconName: 'Pill',
     placeholderOverrides: {
       business_name: 'Örn: Şifa Eczanesi',
       ai_name: 'Örn: Eczacım, Asistan',
@@ -453,7 +471,23 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
-    id: 'other', label: 'Diğer Sektör', emoji: '🏢',
+    id: 'boat_rental', label: 'Tekne & Yat Kiralama', iconName: 'Ship',
+    placeholderOverrides: {
+      business_name: 'Örn: Blue Voyage Yat Kiralama',
+      ai_name: 'Örn: Kaptan, Asistan',
+      working_hours: 'Örn: Her gün 08:00-20:00 (Sezon: Mayıs-Ekim)',
+      appointment_duration: 'Örn: Günlük, Haftalık kiralama',
+      duration_hint: 'Günlük tur (8 saat), Haftalık kiralama (7 gün)',
+      employees: 'Kayıtlı tekneleriniz otomatik yüklenecek',
+    },
+    extraQuestions: [
+      { id: 'routes', label: 'Popüler Rotalar', placeholder: 'Örn: 12 Ada, Göcek Koyu, Bodrum-Datça', type: 'textarea', required: true },
+      { id: 'rental_policy', label: 'Kiralama Koşulları', placeholder: 'Örn: Ehliyet gerekli, sigorta, depozito, yaş sınırı', type: 'textarea' },
+      { id: 'season_info', label: 'Sezon Bilgisi', placeholder: 'Örn: Mayıs-Ekim arası aktif, kış bakımda', type: 'text' },
+    ]
+  },
+  {
+    id: 'other', label: 'Diğer Sektör', iconName: 'Building',
     placeholderOverrides: {
       business_name: 'Örn: Firma adınız',
       ai_name: 'Örn: Asistan',
@@ -543,27 +577,37 @@ Sen aynı zamanda işletmenin Trendyol mağazasının AI asistanısın.
 3. create_trendyol_return — İade talebi oluşturma
 ` : '';
 
+  // Kayıtlı kaynaklar bloğu
+  const registeredResources = answers.registered_resources || '';
+  const resourceBlock = registeredResources ? `
+
+## KAYITLI KAYNAKLAR:
+Bu işletmenin sistemde kayıtlı kaynakları aşağıdadır. AI asistan müşteriye bu kaynakları önerirken detaylı bilgi vermeli ve check_availability tool'u ile müsaitlik kontrolü yapmalıdır.
+${registeredResources}
+` : '';
+
   return `Sen bir AI asistan sistem mesajı oluşturma uzmanısın. Aşağıdaki bilgilere göre bir işletmenin WhatsApp ve Instagram üzerinden müşterilerle iletişim kuracak AI asistanı için kapsamlı ve profesyonel bir sistem mesajı oluştur.
 
 ## SEKTÖR: ${sectorLabel}
 
 ## İŞLETME BİLGİLERİ:
 ${answerLines}
-
+${resourceBlock}
 ## TALİMATLAR:
 1. Sistem mesajını Türkçe yaz.
 2. Mesaj, AI asistanın kimlik tanımıyla başlasın (adı, hangi firmada çalıştığı, ne yaptığı).
 3. Firmanın hizmetlerini, çalışma saatlerini ve iletişim bilgilerini net olarak belirt.
 4. İletişim tonunu kullanıcının belirttiği tarza göre ayarla.
 5. Sektöre özel bilgileri (hizmet listesi, fiyatlar, politikalar) detaylı şekilde dahil et.
-6. Personel listesi verildiyse hangi personelin hangi hizmeti verdiğini belirt.
-7. Mesajın sonuna aşağıdaki SABİT TOOL KURALLARINI ekle — bu kuralları DEĞİŞTİRME, aynen ekle:
+6. Personel veya kaynak listesi verildiyse hangi kaynağın hangi hizmeti verdiğini veya özelliklerini detaylı belirt.
+7. Eğer KAYITLI KAYNAKLAR bölümü varsa, bu kaynakları (odalar, tekneler, masalar, araçlar vb.) sistem mesajında detaylı olarak listele ve AI asistanın müşteriye doğru bilgi vermesini sağla. Her kaynağın ismi, özellikleri ve ek bilgilerini sistem mesajına dahil et.
+8. Mesajın sonuna aşağıdaki SABİT TOOL KURALLARINI ekle — bu kuralları DEĞİŞTİRME, aynen ekle:
 
 ---
 ${FIXED_TOOL_RULES}
 ---
 
-8. Sadece sistem mesajını üret, başka bir açıklama veya yorum ekleme.
-9. Mesaj en az 800, en fazla 2000 kelime olsun.
+9. Sadece sistem mesajını üret, başka bir açıklama veya yorum ekleme.
+10. Mesaj en az 800, en fazla 2000 kelime olsun.
 ${trendyolBlock}`;
 }

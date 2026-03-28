@@ -30,6 +30,9 @@ export default function LeadDetailPage() {
     const [statusHistory, setStatusHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [website, setWebsite] = useState("");
+    const [address, setAddress] = useState("");
     const [notes, setNotes] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [tags, setTags] = useState<string[]>([]);
@@ -48,6 +51,9 @@ export default function LeadDetailPage() {
             if (data) {
                 setLead(data);
                 setEmail(data.email || "");
+                setPhone(data.phone || "");
+                setWebsite(data.website || "");
+                setAddress(data.address || "");
                 setNotes(data.notes || "");
                 setTags(data.tags || []);
             }
@@ -68,12 +74,12 @@ export default function LeadDetailPage() {
     const handleSave = async () => {
         setSaving(true);
         setSaveMsg(null);
-        const result = await updateLeadDetails(leadId, { email, notes, tags });
+        const result = await updateLeadDetails(leadId, { email, phone, website, address, notes, tags });
         if (result.error) {
             setSaveMsg(`Hata: ${result.error}`);
         } else {
             setSaveMsg("Kaydedildi!");
-            setLead((prev: any) => ({ ...prev, email, notes, tags, email_missing: !email }));
+            setLead((prev: any) => ({ ...prev, email, phone, website, address, notes, tags, email_missing: !email }));
         }
         setSaving(false);
         setTimeout(() => setSaveMsg(null), 3000);
@@ -133,9 +139,18 @@ export default function LeadDetailPage() {
         <div className="p-6 max-w-5xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-                <Link href="/admin/leads" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <button 
+                    onClick={() => {
+                        if (window.history.length > 2) {
+                            router.back();
+                        } else {
+                            router.push(lead.list_id ? `/admin/leads?listId=${lead.list_id}` : "/admin/leads");
+                        }
+                    }} 
+                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                >
                     <ArrowLeft size={20} className="text-slate-500" />
-                </Link>
+                </button>
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-800">{lead.business_name}</h1>
                     <div className="flex items-center gap-3 mt-1">
@@ -168,84 +183,90 @@ export default function LeadDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: Main info */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Contact info card */}
+                    {/* Editable Contact & Info */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">İletişim Bilgileri</h2>
+                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-6">Müşteri Bilgileri</h2>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {lead.phone && (
-                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                                    <Phone size={18} className="text-slate-400" />
-                                    <div>
-                                        <p className="text-xs text-slate-400">Telefon</p>
-                                        <p className="text-sm font-medium text-slate-700">{lead.phone}</p>
-                                    </div>
-                                </div>
-                            )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
+                                    <Phone size={14} /> Telefon
+                                </label>
+                                <input
+                                    type="text"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="05..."
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                />
+                            </div>
 
-                            {lead.website && (
-                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                                    <Globe size={18} className="text-blue-400" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs text-slate-400">Website</p>
-                                        <a href={lead.website} target="_blank" rel="noopener" className="text-sm font-medium text-blue-600 hover:underline truncate block">
-                                            {lead.website.replace(/^https?:\/\//, "")}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Email */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center justify-between">
+                                    <span className="flex items-center gap-1.5"><Mail size={14} /> E-posta Adresi</span>
+                                    {lead.email_missing && (
+                                        <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-normal flex items-center gap-1">
+                                            <AlertCircle size={11} /> Eksik
+                                        </span>
+                                    )}
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="ornek@firma.com"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                />
+                            </div>
 
-                            {lead.address && (
-                                <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl md:col-span-2">
-                                    <MapPin size={18} className="text-slate-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs text-slate-400">Adres</p>
-                                        <p className="text-sm text-slate-700">{lead.address}</p>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Website */}
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
+                                    <Globe size={14} /> Website
+                                </label>
+                                <input
+                                    type="url"
+                                    value={website}
+                                    onChange={(e) => setWebsite(e.target.value)}
+                                    placeholder="https://"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                />
+                            </div>
 
-                            {lead.google_rating && (
-                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                                    <Star size={18} className="text-amber-400" />
-                                    <div>
-                                        <p className="text-xs text-slate-400">Google Rating</p>
-                                        <p className="text-sm font-medium text-slate-700">
-                                            {lead.google_rating} / 5
-                                            {lead.google_review_count && <span className="text-slate-400 ml-1">({lead.google_review_count} yorum)</span>}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Address */}
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
+                                    <MapPin size={14} /> Adres
+                                </label>
+                                <textarea
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    rows={2}
+                                    placeholder="Tam adres..."
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Email + Notes + Tags */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Düzenlenebilir Bilgiler</h2>
+                        {lead.google_rating && (
+                            <div className="mb-6 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3 w-max">
+                                <Star size={18} className="text-amber-400 fill-amber-400" />
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-slate-400 font-medium">Google Rating</p>
+                                    <p className="text-sm font-semibold text-slate-700">
+                                        {lead.google_rating} / 5
+                                        {lead.google_review_count && <span className="text-slate-400 font-normal ml-1">({lead.google_review_count} yorum)</span>}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
-                        {/* Email */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
-                                <Mail size={14} />
-                                E-posta Adresi
-                                {lead.email_missing && (
-                                    <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-normal flex items-center gap-1">
-                                        <AlertCircle size={11} /> Eksik — lütfen girin
-                                    </span>
-                                )}
-                            </label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="ornek@firma.com"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                            />
-                        </div>
+                        <hr className="border-slate-100 my-6" />
 
                         {/* Notes */}
-                        <div className="mb-4">
+                        <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
                                 <FileText size={14} /> Notlar
                             </label>
@@ -259,46 +280,48 @@ export default function LeadDetailPage() {
                         </div>
 
                         {/* Tags */}
-                        <div className="mb-4">
+                        <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-600 mb-1.5 flex items-center gap-1.5">
                                 <Tag size={14} /> Etiketler
                             </label>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {tags.map(tag => (
-                                    <span key={tag} className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-full flex items-center gap-1">
-                                        {tag}
-                                        <button onClick={() => removeTag(tag)} className="text-slate-400 hover:text-red-500">×</button>
-                                    </span>
-                                ))}
-                            </div>
+                            {tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {tags.map(tag => (
+                                        <span key={tag} className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full flex items-center gap-1">
+                                            {tag}
+                                            <button onClick={() => removeTag(tag)} className="text-slate-400 hover:text-red-500">×</button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={tagInput}
                                     onChange={(e) => setTagInput(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-                                    placeholder="Etiket ekle..."
-                                    className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                                    placeholder="Etiket ekle... (Enter'a basın)"
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
                                 />
-                                <button onClick={addTag} className="px-4 py-2 bg-slate-100 rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                                <button onClick={addTag} className="px-5 py-2.5 bg-slate-100 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors">
                                     Ekle
                                 </button>
                             </div>
                         </div>
 
                         {/* Save button */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                className="px-6 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-orange-500/20"
                             >
-                                <Save size={16} />
-                                {saving ? "Kaydediliyor..." : "Kaydet"}
+                                <Save size={18} />
+                                {saving ? "Kaydediliyor..." : "Tümünü Kaydet"}
                             </button>
                             {saveMsg && (
-                                <span className={`text-sm ${saveMsg.includes("Hata") ? "text-red-600" : "text-green-600"} flex items-center gap-1`}>
-                                    <CheckCircle2 size={14} /> {saveMsg}
+                                <span className={`text-sm ${saveMsg.includes("Hata") ? "text-red-600" : "text-green-600"} flex items-center gap-1.5 font-medium`}>
+                                    <CheckCircle2 size={16} /> {saveMsg}
                                 </span>
                             )}
                         </div>

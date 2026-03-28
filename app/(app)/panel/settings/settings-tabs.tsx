@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, CreditCard, User, Plug, MessageSquare, Users, Megaphone } from "lucide-react";
+import { Link, CreditCard, User, Plug, MessageSquare, Users, Megaphone, CalendarDays } from "lucide-react";
 import { ReactNode, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -44,8 +44,8 @@ export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, 
                     <span className="leading-tight text-center md:text-left">Hazır Cevaplar</span>
                 </TabsTrigger>
                 <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
-                    <Users className="w-4 h-4 shrink-0" />
-                    <span className="leading-tight text-center md:text-left">Çalışanlar</span>
+                    <CalendarDays className="w-4 h-4 shrink-0" />
+                    <span className="leading-tight text-center md:text-left">Takvim & Kaynak</span>
                 </TabsTrigger>
                 <TabsTrigger value="whatsapp-templates" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Megaphone className="w-4 h-4 shrink-0" />

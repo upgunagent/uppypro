@@ -18,11 +18,11 @@ export function NoEmployeesWarning() {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="text-base font-semibold text-orange-900 mb-1">
-                        Personel Kaydı Bulunamadı
+                        Kayıt Bulunamadı
                     </h3>
                     <p className="text-sm text-orange-700 leading-relaxed">
-                        Takvimi kullanabilmek için önce işletmenize en az bir personel eklemeniz gerekmektedir. 
-                        Personel eklemek için <strong>Ayarlar → Çalışanlar</strong> sayfasına gidin.
+                        Takvimi kullanabilmek için işletmenize en az bir personel veya hizmet kaynağı (örn: Oda, Tekne) eklemeniz gerekmektedir. 
+                        Eklemek için <strong>Ayarlar → Takvim & Kaynak</strong> sayfasına gidin.
                     </p>
                     <div className="mt-4 flex items-center gap-3">
                         <button
@@ -30,7 +30,7 @@ export function NoEmployeesWarning() {
                             className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
                         >
                             <Users className="w-4 h-4" />
-                            Çalışanlar Sayfasına Git
+                            Ayarlara Git
                             <ArrowRight className="w-4 h-4" />
                         </button>
                         <button

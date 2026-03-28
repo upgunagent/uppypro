@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSubscriptionCheckoutFormResult } from "@/lib/iyzico";
+import { getSubscriptionCheckoutFormResult, cancelSubscription as iyzicoCancel } from "@/lib/iyzico";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generatePdfBuffer } from "@/lib/pdf-generator";
 import { sendSubscriptionWelcomeEmail } from "@/app/actions/email";
@@ -112,6 +112,31 @@ export async function POST(request: Request) {
             // subscriptionReferenceCode fallback: referenceCode alanını da kontrol et
             const finalSubRefCode = subscriptionReferenceCode || result.referenceCode;
 
+            // --- UPGRADE DETECTION: If this is a plan upgrade payment, cancel old Iyzico subscription ---
+            const { data: currentSub } = await supabase
+                .from('subscriptions')
+                .select('cancel_reason, pending_product_key, iyzico_subscription_reference_code, ai_product_key')
+                .eq('tenant_id', tenantId)
+                .single();
+
+            let isUpgradePayment = false;
+            if (currentSub?.cancel_reason === 'PLAN_UPGRADE' && currentSub?.pending_product_key) {
+                isUpgradePayment = true;
+                isReactivation = true; // Skip welcome email for upgrades
+                console.log(`[IYZICO-CALLBACK-V2] UPGRADE detected: ${currentSub.ai_product_key} → ${currentSub.pending_product_key}`);
+
+                // Cancel the OLD Iyzico subscription now that payment is confirmed
+                if (currentSub.iyzico_subscription_reference_code) {
+                    try {
+                        const cancelResult = await iyzicoCancel(currentSub.iyzico_subscription_reference_code);
+                        console.log(`[IYZICO-CALLBACK-V2] Old subscription cancelled: ${currentSub.iyzico_subscription_reference_code}`, cancelResult.status);
+                    } catch (cancelErr) {
+                        console.error('[IYZICO-CALLBACK-V2] Failed to cancel old subscription:', cancelErr);
+                        // Continue anyway - new subscription is more important
+                    }
+                }
+            }
+
             // Sadece geçerli değerleri güncelle (undefined/null olan alanları DB'de eski halinde bırak)
             const updateData: any = {
                 status: 'active',
@@ -121,9 +146,16 @@ export async function POST(request: Request) {
                 canceled_at: null,
                 cancel_at_period_end: false,
                 cancel_reason: null,
+                pending_product_key: null, // Clear pending upgrade/downgrade
                 is_trial: isTrial,
                 trial_ends_at: trialEndsAt ? trialEndsAt.toISOString() : null,
             };
+
+            // If upgrade, set the new product key
+            if (isUpgradePayment && currentSub?.pending_product_key) {
+                updateData.ai_product_key = currentSub.pending_product_key;
+                console.log(`[IYZICO-CALLBACK-V2] Setting ai_product_key to: ${currentSub.pending_product_key}`);
+            }
 
             // Referans kodlarını sadece doluysa güncelle
             if (finalSubRefCode) updateData.iyzico_subscription_reference_code = finalSubRefCode;

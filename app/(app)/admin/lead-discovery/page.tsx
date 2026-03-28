@@ -61,6 +61,7 @@ const FEATURE_LABELS: Record<string, string> = {
 };
 
 export default function LeadDiscoveryPage() {
+    const [customSector, setCustomSector] = useState("");
     const [sectors, setSectors] = useState<Sector[]>([]);
     const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
     const [selectedCity, setSelectedCity] = useState("");
@@ -107,7 +108,7 @@ export default function LeadDiscoveryPage() {
                     sectorKeywords: selectedSector.keywords,
                     city: selectedCity,
                     district: selectedDistrict || undefined,
-                    sectorId: selectedSector.id,
+                    sectorId: selectedSector.id === "custom" ? undefined : selectedSector.id,
                     sectorName: selectedSector.name
                 })
             });
@@ -149,7 +150,7 @@ export default function LeadDiscoveryPage() {
                 selected,
                 listName.trim(),
                 {
-                    sectorId: selectedSector?.id,
+                    sectorId: selectedSector?.id === "custom" ? undefined : selectedSector?.id,
                     sectorName: selectedSector?.name,
                     city: selectedCity,
                     district: selectedDistrict || undefined
@@ -203,7 +204,62 @@ export default function LeadDiscoveryPage() {
             {/* Step 1: Sector Selection */}
             {step === "sector" && (
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-700 mb-4">Sektör Seçin</h2>
+                    <div className="mb-8">
+                        <h2 className="text-lg font-semibold text-slate-700 mb-4">Özel Sektör Arama</h2>
+                        <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <label className="block text-sm font-medium text-slate-600 mb-3">
+                                Aramak istediğiniz sektör veya iş kolunu yazın
+                            </label>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <input
+                                    type="text"
+                                    value={customSector}
+                                    onChange={(e) => setCustomSector(e.target.value)}
+                                    placeholder="Örn: Tekne Kiralama, İç Mimarlık, Spor Salonları..."
+                                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && customSector.trim()) {
+                                            setSelectedSector({
+                                                id: "custom",
+                                                name: customSector.trim(),
+                                                slug: "custom",
+                                                description: "Özel Arama",
+                                                keywords: [customSector.trim()],
+                                                uppypro_fit_score: 0,
+                                                uppypro_features: [],
+                                                icon: "search"
+                                            });
+                                            setStep("location");
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (customSector.trim()) {
+                                            setSelectedSector({
+                                                id: "custom",
+                                                name: customSector.trim(),
+                                                slug: "custom",
+                                                description: "Özel Arama",
+                                                keywords: [customSector.trim()],
+                                                uppypro_fit_score: 0,
+                                                uppypro_features: [],
+                                                icon: "search"
+                                            });
+                                            setStep("location");
+                                        }
+                                    }}
+                                    disabled={!customSector.trim()}
+                                    className="px-6 py-3 bg-slate-800 text-white rounded-xl font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+                                >
+                                    <Search size={18} />
+                                    Devam Et
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 className="text-lg font-semibold text-slate-700 mb-4">veya Hazır Listeden Seçin</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sectors.map(sector => (
                             <button

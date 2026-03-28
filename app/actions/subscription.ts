@@ -9,6 +9,7 @@ import {
     upgradeSubscription as iyzicoUpgrade,
     retrySubscription as iyzicoRetry
 } from "@/lib/iyzico";
+import { isPlanUpgrade } from "@/lib/subscription-utils";
 
 /**
  * Initialize Card Update Checkout Form
@@ -355,11 +356,11 @@ export async function retryUserPayment() {
 }
 
 /**
- * Change Plan (Upgrade/Downgrade)
- * Since Inbox and AI are different Iyzico products, we can't use the upgrade API.
- * Instead: cancel the old subscription → create a new checkout form for the new plan.
+ * Change Plan — UPGRADE path
+ * DON'T cancel old subscription before payment!
+ * Instead: create new checkout → save old ref as pending → callback cancels old + activates new
  */
-export async function changeUserPlan(newProductKey: string) {
+export async function upgradeUserPlan(newProductKey: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -393,6 +394,11 @@ export async function changeUserPlan(newProductKey: string) {
         return { error: "Zaten bu pakettesiniz." };
     }
 
+    // Verify this is actually an upgrade
+    if (!isPlanUpgrade(currentKey, newProductKey)) {
+        return { error: "Bu işlem paket yükseltme değil. Paket düşürmek için 'Paketi Düşür' seçeneğini kullanın." };
+    }
+
     // 2. Find New Pricing Plan
     const { data: price } = await adminDb
         .from("pricing")
@@ -420,23 +426,11 @@ export async function changeUserPlan(newProductKey: string) {
                     .eq("id", subscription.id);
                 subscription.iyzico_subscription_reference_code = subRefCode;
             }
-        } catch (e) { console.error("[PLAN-CHANGE] Self-healing failed:", e); }
+        } catch (e) { console.error("[UPGRADE] Self-healing failed:", e); }
     }
 
-    // 3. Cancel old Iyzico subscription
-    if (subscription.iyzico_subscription_reference_code) {
-        try {
-            const result = await iyzicoCancel(subscription.iyzico_subscription_reference_code);
-            console.log("[PLAN-CHANGE] Iyzico cancel result:", JSON.stringify(result));
-            if (result.status !== 'success') {
-                console.error("[PLAN-CHANGE] Cancel failed:", result.errorMessage);
-                return { error: `Mevcut abonelik iptal edilemedi: ${result.errorMessage}` };
-            }
-        } catch (e: any) {
-            console.error("[PLAN-CHANGE] Cancel exception:", e);
-            return { error: "Ödeme sağlayıcı hatası: " + e.message };
-        }
-    }
+    // 3. DO NOT cancel old subscription yet! Save old ref code for callback to cancel after payment.
+    const oldIyzicoRef = subscription.iyzico_subscription_reference_code || '';
 
     // 4. Get User Profile & Billing Info for new checkout form
     const [{ data: profile }, { data: billingInfo }] = await Promise.all([
@@ -486,21 +480,25 @@ export async function changeUserPlan(newProductKey: string) {
         });
 
         if (result.status !== 'success') {
-            console.error("[PLAN-CHANGE] Checkout init error:", result.errorMessage);
+            console.error("[UPGRADE] Checkout init error:", result.errorMessage);
             return { error: `Ödeme formu başlatılamadı: ${result.errorMessage}` };
         }
 
-        // 6. Update DB: mark as canceled (will be reactivated by callback) and save token
+        // 6. Save upgrade intent WITHOUT cancelling old subscription
+        // pending_product_key = new plan, cancel_reason = 'PLAN_UPGRADE' signals callback
+        // Old Iyzico ref code is preserved so callback can cancel it after payment
         await adminDb.from("subscriptions")
             .update({
-                status: 'canceled',
-                canceled_at: new Date().toISOString(),
-                cancel_reason: 'PLAN_CHANGE',
-                ai_product_key: newProductKey,
+                pending_product_key: newProductKey,
+                cancel_reason: 'PLAN_UPGRADE',
                 iyzico_checkout_token: result.token,
+                // Save old ref code in a metadata field for callback to use
+                // We keep status = 'active' and ai_product_key unchanged!
                 updated_at: new Date().toISOString()
             })
             .eq("id", subscription.id);
+
+        console.log(`[UPGRADE] Checkout created. Old ref: ${oldIyzicoRef}, Token: ${result.token}, pending: ${newProductKey}`);
 
         return {
             checkoutFormContent: result.checkoutFormContent,
@@ -508,8 +506,149 @@ export async function changeUserPlan(newProductKey: string) {
         };
 
     } catch (e: any) {
-        console.error("[PLAN-CHANGE] Exception:", e);
+        console.error("[UPGRADE] Exception:", e);
         return { error: "Sistem hatası: " + e.message };
+    }
+}
+
+/**
+ * Change Plan — DOWNGRADE path
+ * Mark pending_product_key in DB. Mevcut dönem bitimine kadar üst paket aktif kalır.
+ * Dönem sonunda cron/webhook yeni aboneliği tetikler.
+ */
+export async function downgradeUserPlan(newProductKey: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Yetkilendirme hatası." };
+
+    const adminDb = createAdminClient();
+    const { data: member } = await adminDb
+        .from("tenant_members")
+        .select("tenant_id, role")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!member || (member.role !== 'owner' && member.role !== 'admin' && member.role !== 'tenant_owner')) {
+        return { error: "Bu işlem için yetkiniz yok." };
+    }
+
+    const { data: subscription } = await adminDb
+        .from("subscriptions")
+        .select("*")
+        .eq("tenant_id", member.tenant_id)
+        .eq("status", "active")
+        .single();
+
+    if (!subscription) {
+        return { error: "Aktif abonelik bulunamadı." };
+    }
+
+    const currentKey = subscription.ai_product_key || 'uppypro_inbox';
+
+    // Trial döneminde düşürme engelle
+    const isInTrial = subscription.is_trial && subscription.trial_ends_at && new Date(subscription.trial_ends_at) > new Date();
+    if (isInTrial) {
+        return { error: "Deneme süresi boyunca yalnızca paket yükseltme yapılabilir. Düşürme işlemi deneme süresi sonrasında gerçekleştirilebilir." };
+    }
+
+    if (!isPlanUpgrade(newProductKey, currentKey)) {
+        return { error: "Bu bir düşürme işlemi değil." };
+    }
+
+    // Verify the target plan exists in pricing
+    const { data: price } = await adminDb
+        .from("pricing")
+        .select("product_key, monthly_price_try")
+        .eq("product_key", newProductKey)
+        .eq("billing_cycle", "monthly")
+        .single();
+
+    if (!price) {
+        return { error: "Hedef paket fiyat bilgisi bulunamadı." };
+    }
+
+    // Set pending downgrade
+    const { error } = await adminDb
+        .from("subscriptions")
+        .update({
+            pending_product_key: newProductKey,
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", subscription.id);
+
+    if (error) {
+        return { error: "Paket değişikliği kaydedilemedi." };
+    }
+
+    revalidatePath("/panel/settings");
+    return {
+        success: true,
+        message: `Paketiniz mevcut dönem sonunda (${new Date(subscription.current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}) ${getPackageNameByKey(newProductKey)} olarak güncellenecektir.`,
+        effectiveDate: subscription.current_period_end,
+    };
+}
+
+/**
+ * Cancel a pending downgrade
+ */
+export async function cancelPendingDowngrade() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Yetkilendirme hatası." };
+
+    const adminDb = createAdminClient();
+    const { data: member } = await adminDb
+        .from("tenant_members")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!member) return { error: "İşletme bulunamadı." };
+
+    const { error } = await adminDb
+        .from("subscriptions")
+        .update({ pending_product_key: null, cancel_reason: null, updated_at: new Date().toISOString() })
+        .eq("tenant_id", member.tenant_id)
+        .eq("status", "active");
+
+    if (error) return { error: "İşlem başarısız." };
+
+    revalidatePath("/panel/settings");
+    return { success: true };
+}
+
+/** Helper: product key'den paket adı (server-side) */
+function getPackageNameByKey(key: string): string {
+    const map: Record<string, string> = {
+        'uppypro_inbox': 'UppyPro Inbox',
+        'uppypro_ai': 'UppyPro AI',
+        'uppypro_ai_trendyol': 'UppyPro AI Trendyol',
+    };
+    return map[key] || key;
+}
+
+/**
+ * Legacy wrapper — kept for backward compatibility
+ * Routes to upgrade or downgrade based on plan hierarchy
+ */
+export async function changeUserPlan(newProductKey: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Yetkilendirme hatası." };
+
+    const adminDb = createAdminClient();
+    const { data: member } = await adminDb.from("tenant_members").select("tenant_id").eq("user_id", user.id).single();
+    if (!member) return { error: "İşletme bulunamadı." };
+
+    const { data: subscription } = await adminDb.from("subscriptions").select("ai_product_key").eq("tenant_id", member.tenant_id).eq("status", "active").single();
+    const currentKey = subscription?.ai_product_key || 'uppypro_inbox';
+
+    if (isPlanUpgrade(currentKey, newProductKey)) {
+        return upgradeUserPlan(newProductKey);
+    } else {
+        return downgradeUserPlan(newProductKey);
     }
 }
 
