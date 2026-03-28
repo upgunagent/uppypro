@@ -85,7 +85,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
 
     // Check Package for Header
     const sub = subscription;
-    const isEnterprise = sub?.ai_product_key?.includes('corporate') || sub?.ai_product_key === 'uppypro_enterprise';
+    const isEnterprise = sub?.ai_product_key?.includes('corporate');
     const isPro = sub?.ai_product_key === 'uppypro_ai';
 
     // Determine current plan display name
@@ -95,7 +95,6 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     else if (sub?.ai_product_key === 'uppypro_corporate_medium') currentPlanName = "Kurumsal (Medium)";
     else if (sub?.ai_product_key === 'uppypro_corporate_large') currentPlanName = "Kurumsal (Large)";
     else if (sub?.ai_product_key === 'uppypro_corporate_xl') currentPlanName = "Kurumsal (XL)";
-    else if (sub?.ai_product_key === 'uppypro_enterprise') currentPlanName = "Kurumsal (Özel)";
 
     // Composed Content
 

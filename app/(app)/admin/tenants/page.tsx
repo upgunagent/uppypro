@@ -76,7 +76,7 @@ export default async function TenantListPage() {
                     <TableBody>
                         {tenants?.map((tenant) => {
                             const sub = tenant.subscriptions?.[0];
-                            const isCorporate = sub?.ai_product_key?.startsWith('uppypro_corporate_') || sub?.ai_product_key === 'uppypro_enterprise';
+                            const isCorporate = sub?.ai_product_key?.startsWith('uppypro_corporate_');
                             const isPro = sub?.ai_product_key === 'uppypro_ai';
                             const corporateSize = sub?.ai_product_key?.replace('uppypro_corporate_', '').toUpperCase();
 

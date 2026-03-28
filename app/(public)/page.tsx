@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
     const prices = await getProductPrices();
 
-    const inboxPrice = prices?.uppypro_inbox || prices?.base_inbox || prices?.inbox || 895;
+    const inboxPrice = prices?.uppypro_inbox || 895;
     const aiPrice = prices?.ai || prices?.uppypro_ai || 4794;
     const aiTrendyolPrice = prices?.uppypro_ai_trendyol || 4995;
 

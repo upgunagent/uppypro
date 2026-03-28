@@ -125,7 +125,7 @@ export async function getProductPrices() {
         // Assuming frontend will be updated to use 'uppypro_corporate_small' or we map here.
         // For now, mapping simple keys.
 
-        if (item.product_key === 'base_inbox' || item.product_key === 'inbox') acc['inbox'] = item.monthly_price_try;
+        if (item.product_key === 'uppypro_inbox') acc['uppypro_inbox'] = item.monthly_price_try;
         else if (item.product_key === 'uppypro_ai') acc['ai'] = item.monthly_price_try;
         else acc[item.product_key] = item.monthly_price_try;
 

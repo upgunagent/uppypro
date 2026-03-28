@@ -59,7 +59,7 @@ export async function signupAction(data: SignupData) {
         if (memberError) throw new Error(`Üyelik bağlantısı hatası: ${memberError.message}`);
 
         // 5. Create Subscription (Pending)
-        const baseProductKey = 'base_inbox';
+        const baseProductKey = 'uppypro_inbox';
         // tier comes as "starter", "medium", "trendyol" etc. We mapped it in DBseed as "ai_starter", "ai_trendyol"
         const aiProductKey = data.planIdx.tier === 'none' ? null : `ai_${data.planIdx.tier}`;
 

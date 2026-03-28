@@ -22,26 +22,24 @@ export default async function AdminPricingPage() {
     const { data: prices } = await supabase
         .from("pricing")
         .select("*")
-        .in("product_key", ["uppypro_inbox", "base_inbox", "inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
+        .in("product_key", ["uppypro_inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"])
         .eq("billing_cycle", "monthly");
 
     // Fetch Product Reference Codes
     const { data: products } = await supabase
         .from("products")
         .select("key, iyzico_product_reference_code")
-        .in("key", ["uppypro_inbox", "base_inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"]);
+        .in("key", ["uppypro_inbox", "uppypro_ai", "uppypro_ai_trendyol", "uppypro_corporate_small", "uppypro_corporate_medium", "uppypro_corporate_large", "uppypro_corporate_xl"]);
 
     const getPriceData = (key: string, defaultPrice: number) => {
         // Handle alternative keys for inbox just in case
-        const found = prices?.find(p => p.product_key === key || (key === 'uppypro_inbox' && (p.product_key === 'base_inbox' || p.product_key === 'inbox')));
-        const productFound = products?.find(p => p.key === key || (key === 'uppypro_inbox' && p.key === 'base_inbox'));
+        const found = prices?.find(p => p.product_key === key);
+        const productFound = products?.find(p => p.key === key);
         return {
             price: found?.monthly_price_try || defaultPrice,
             code: found?.iyzico_pricing_plan_reference_code || "",
             productCode: productFound?.iyzico_product_reference_code || "",
-            // Use the actual product key from DB if it exists (e.g., base_inbox instead of uppypro_inbox) so updates go to the right row
             key: found?.product_key || key,
-            // Track the actual products table key separately
             productDbKey: productFound?.key || key
         };
     };

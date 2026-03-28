@@ -76,7 +76,7 @@ export async function completeSignupWithInvite(data: WizardData) {
         let aiKey = null;
 
         if (data.plan === 'ai_pro') {
-            aiKey = 'uppypro_enterprise';
+            aiKey = 'uppypro_ai';
         } else if (data.plan.startsWith('ai_')) {
             aiKey = 'uppypro_ai';
         }
@@ -124,29 +124,22 @@ export async function completeSignupWithInvite(data: WizardData) {
         // 8. Initialize Iyzico
         const productKey = aiKey || baseKey;
         
-        // Try multiple keys since DB might use 'base_inbox' or 'inbox' instead of 'uppypro_inbox'
+        // pricing tablosundan plan kodunu çek
         let planCode: string | null = null;
-        const keysToTry = productKey === 'uppypro_inbox' 
-            ? ['uppypro_inbox', 'base_inbox', 'inbox'] 
-            : [productKey];
+        const { data: prices } = await supabaseAdmin
+            .from("pricing")
+            .select("iyzico_pricing_plan_reference_code")
+            .eq("product_key", productKey)
+            .eq("billing_cycle", "monthly")
+            .maybeSingle();
         
-        for (const tryKey of keysToTry) {
-            const { data: prices } = await supabaseAdmin
-                .from("pricing")
-                .select("iyzico_pricing_plan_reference_code")
-                .eq("product_key", tryKey)
-                .eq("billing_cycle", "monthly")
-                .maybeSingle();
-            
-            if (prices?.iyzico_pricing_plan_reference_code) {
-                planCode = prices.iyzico_pricing_plan_reference_code;
-                console.log(`[SIGNUP] Found plan code for key '${tryKey}': ${planCode}`);
-                break;
-            }
+        if (prices?.iyzico_pricing_plan_reference_code) {
+            planCode = prices.iyzico_pricing_plan_reference_code;
+            console.log(`[SIGNUP] Found plan code for key '${productKey}': ${planCode}`);
         }
 
         if (!planCode) {
-            console.error("Plan code not found for", productKey, "tried keys:", keysToTry);
+            console.error("Plan code not found for", productKey);
             throw new Error("Ödeme planı bulunamadı. Lütfen yönetici ile iletişime geçin.");
         }
 

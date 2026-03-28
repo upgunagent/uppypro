@@ -134,7 +134,7 @@ export function SubscriptionCard({
     const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key, is_trial, trial_ends_at } = subscription;
     const packageName = getPackageName(subscription);
     const isCanceled = status === 'canceled';
-    const isCorporate = ai_product_key?.startsWith('uppypro_corporate_') || ai_product_key === 'uppypro_enterprise';
+    const isCorporate = ai_product_key?.startsWith('uppypro_corporate_');
 
     // Trial kontrolü
     const isInTrial = is_trial && trial_ends_at && new Date(trial_ends_at) > new Date();
@@ -420,7 +420,7 @@ export function SubscriptionCard({
                                 <div className="space-y-3">
                                     <label className="text-sm font-medium text-slate-700">Paket Seçimi</label>
                                     <div className="grid gap-3">
-                                        {allPrices.filter(p => p.product_key !== 'uppypro_enterprise').map((p) => {
+                                        {allPrices.map((p) => {
                                             const planName = p.product_key === 'uppypro_ai' ? 'UppyPro AI' : 'UppyPro Inbox';
                                             const planDescription = p.product_key === 'uppypro_ai'
                                                 ? 'Yapay zeka destekli otomatik yanıtlar dahil'

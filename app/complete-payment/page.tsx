@@ -61,7 +61,7 @@ export default async function CompletePaymentPage({ searchParams }: { searchPara
     const basePriceTry = pricingData?.monthly_price_try || 0;
     const totalPriceTry = basePriceTry * 1.2; // KDV dahil
     const packageName = (pricingData?.products as any)?.name || 'UppyPro';
-    const iyzicoPlanCode = subscription.iyzico_pricing_plan_reference_code || pricingData?.iyzico_pricing_plan_reference_code || '';
+    const iyzicoPlanCode = pricingData?.iyzico_pricing_plan_reference_code || '';
 
     const formattedBase = basePriceTry.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
     const formattedTotal = totalPriceTry.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
