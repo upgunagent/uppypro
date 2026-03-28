@@ -87,6 +87,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
     const sub = subscription;
     const isEnterprise = sub?.ai_product_key?.includes('corporate');
     const isPro = sub?.ai_product_key === 'uppypro_ai';
+    const isInTrial = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) > new Date();
 
     // Determine current plan display name
     let currentPlanName = "Inbox";
@@ -154,9 +155,16 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                             <span className="text-slate-500">Durum</span>
-                            <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
-                                {sub?.status === 'active' ? "Aktif" : "Pasif"}
-                            </Badge>
+                            <div className="flex gap-2 items-center">
+                                {isInTrial && (
+                                    <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none">
+                                        🎁 Deneme Süresi
+                                    </Badge>
+                                )}
+                                <Badge variant={sub?.status === 'active' ? 'default' : 'secondary'} className={sub?.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
+                                    {sub?.status === 'active' ? "Aktif" : "Pasif"}
+                                </Badge>
+                            </div>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                             <span className="text-slate-500">Fatura Dönemi</span>
@@ -170,12 +178,14 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                             <span className="text-slate-500">
-                                {sub?.cancel_at_period_end ? 'Erişim Bitiş Tarihi' : sub?.status === 'canceled' ? 'İptal Tarihi' : 'Sonraki Ödeme Tarihi'}
+                                {sub?.cancel_at_period_end ? 'Erişim Bitiş Tarihi' : sub?.status === 'canceled' ? 'İptal Tarihi' : (isInTrial ? 'Deneme Bitiş Tarihi' : 'Sonraki Ödeme Tarihi')}
                             </span>
                             <span className="font-medium text-slate-900">
                                 {sub?.status === 'canceled' && sub?.canceled_at
                                     ? new Date(sub.canceled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-                                    : (sub?.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-')}
+                                    : (isInTrial && sub?.trial_ends_at 
+                                        ? new Date(sub.trial_ends_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) 
+                                        : (sub?.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'))}
                             </span>
                         </div>
                         <div className="flex justify-between items-center py-2 pt-4">
