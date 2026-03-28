@@ -878,9 +878,14 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                     <div className="bg-gradient-to-br from-green-500 to-blue-900 p-2.5 md:p-8 rounded-xl md:rounded-3xl shadow-lg hover:shadow-xl hover:scale-105 duration-300 transition-all relative group text-white">
                         <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2">UppyPro Inbox</h3>
                         <p className="text-slate-100 text-[8px] md:text-sm mb-2 md:mb-6">Küçük işletmeler ve butikler için.</p>
-                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                        <div className="flex items-baseline gap-0.5 mb-1 md:mb-3">
                             <span className="text-sm md:text-4xl font-extrabold text-white">{formatPrice(inboxPriceVal)}</span>
                             <span className="text-slate-200 text-[7px] md:text-sm">+ KDV / ay</span>
+                        </div>
+                        <div className="mb-2 md:mb-4">
+                            <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-3 py-0.5 md:py-1 bg-white/20 backdrop-blur-sm text-white text-[7px] md:text-xs font-bold rounded-full border border-white/30 animate-shimmer">
+                                🎁 <span className="hidden md:inline">İlk</span> 7 gün ücretsiz
+                            </span>
                         </div>
                         <Link href="/uyelik?plan=base">
                             <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-white text-slate-900 text-[8px] md:text-sm font-bold hover:bg-slate-50 hover:text-green-600 transition-colors border-0">
@@ -937,9 +942,14 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                         </div>
                         <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2">UppyPro AI</h3>
                         <p className="text-slate-400 text-[8px] md:text-sm mb-2 md:mb-6">Otomasyon isteyen markalar.</p>
-                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                        <div className="flex items-baseline gap-0.5 mb-1 md:mb-3">
                             <span className="text-sm md:text-5xl font-extrabold text-white">{formatPrice(aiPriceVal)}</span>
                             <span className="text-slate-500 text-[7px] md:text-sm">+ KDV / ay</span>
+                        </div>
+                        <div className="mb-2 md:mb-4">
+                            <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-3 py-0.5 md:py-1 bg-orange-500/30 backdrop-blur-sm text-orange-200 text-[7px] md:text-xs font-bold rounded-full border border-orange-400/40 animate-shimmer">
+                                🎁 <span className="hidden md:inline">İlk</span> 7 gün ücretsiz
+                            </span>
                         </div>
                         <Link href="/uyelik?plan=ai_starter">
                             <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-orange-600 hover:bg-orange-700 text-white text-[8px] md:text-sm font-bold shadow-lg shadow-orange-500/25">
@@ -965,9 +975,14 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                         </div>
                         <h3 className="text-[10px] md:text-xl font-bold text-white mb-0.5 md:mb-2 mt-1 md:mt-0">UppyPro AI Trendyol</h3>
                         <p className="text-orange-100 text-[8px] md:text-sm mb-2 md:mb-6">E-ticaret satışlarını otomasyone edin.</p>
-                        <div className="flex items-baseline gap-0.5 mb-2 md:mb-6">
+                        <div className="flex items-baseline gap-0.5 mb-1 md:mb-3">
                             <span className="text-sm md:text-4xl font-extrabold text-white">{formatPrice(aiTrendyolPriceVal)}</span>
                             <span className="text-orange-200 text-[7px] md:text-sm">+ KDV / ay</span>
+                        </div>
+                        <div className="mb-2 md:mb-4">
+                            <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-3 py-0.5 md:py-1 bg-white/20 backdrop-blur-sm text-white text-[7px] md:text-xs font-bold rounded-full border border-white/30 animate-shimmer">
+                                🎁 <span className="hidden md:inline">İlk</span> 7 gün ücretsiz
+                            </span>
                         </div>
                         <Link href="/uyelik?plan=ai_trendyol">
                             <Button className="w-full h-6 md:h-12 rounded-md md:rounded-xl mb-2 md:mb-8 bg-black/80 hover:bg-black text-white text-[8px] md:text-sm font-bold shadow-lg border border-orange-300/20">
@@ -1004,7 +1019,7 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                 </div>
 
                 <p className="mt-12 text-center text-sm text-slate-400">
-                    * Tüm fiyatlara KDV eklenecektir. Kurumsal paketler için teklif iletilecektir.
+                    * Tüm fiyatlara KDV eklenecektir. Inbox, AI ve AI Trendyol paketlerinde ilk 7 gün ücretsiz deneme süresi bulunmaktadır. Kurumsal paketler için teklif iletilecektir.
                 </p>
             </div>
             <EnterpriseContactModal open={isEnterpriseModalOpen} onOpenChange={setIsEnterpriseModalOpen} />

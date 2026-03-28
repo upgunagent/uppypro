@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { LandingHeader, LandingFooter } from "@/components/landing/layout";
-import { FreeTrialModal } from "@/components/landing/free-trial-modal";
 import { CheckCircle2, ArrowRight, MessageSquare, Calendar, Bot, Users, TrendingUp, Clock, Zap, XCircle } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -21,7 +20,6 @@ export interface SectorData {
 }
 
 export function SectorPageContent({ sector }: { sector: SectorData }) {
-    const [freeTrialOpen, setFreeTrialOpen] = useState(false);
 
     return (
         <>
@@ -36,12 +34,12 @@ export function SectorPageContent({ sector }: { sector: SectorData }) {
                                 <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">{sector.title}</h1>
                                 <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-8">{sector.heroText}</p>
                                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <button
-                                        onClick={() => setFreeTrialOpen(true)}
-                                        className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold text-lg transition-colors shadow-lg shadow-orange-500/30"
+                                    <Link
+                                        href="/#pricing"
+                                        className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold text-lg transition-colors shadow-lg shadow-orange-500/30 text-center"
                                     >
-                                        14 Gün Ücretsiz Dene
-                                    </button>
+                                        7 Gün Ücretsiz Başla
+                                    </Link>
                                     <Link href="/#pricing" className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold text-lg transition-colors backdrop-blur-sm border border-white/20 text-center">
                                         Paketini Seç
                                     </Link>
@@ -179,14 +177,14 @@ export function SectorPageContent({ sector }: { sector: SectorData }) {
                     <section className="py-16 md:py-24 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
                         <div className="max-w-3xl mx-auto px-4 text-center">
                             <h2 className="text-2xl md:text-4xl font-bold mb-6">{sector.cta}</h2>
-                            <p className="text-orange-100 mb-8 text-lg">14 gün ücretsiz deneme süresi ile UppyPro&apos;yu keşfedin. Kredi kartı gerekmez.</p>
+                            <p className="text-orange-100 mb-8 text-lg">7 gün ücretsiz deneme süresi ile UppyPro&apos;yu keşfedin.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button
-                                    onClick={() => setFreeTrialOpen(true)}
-                                    className="px-8 py-4 bg-white text-orange-600 rounded-full font-semibold text-lg hover:bg-orange-50 transition-colors shadow-lg"
+                                <Link
+                                    href="/#pricing"
+                                    className="px-8 py-4 bg-white text-orange-600 rounded-full font-semibold text-lg hover:bg-orange-50 transition-colors shadow-lg text-center"
                                 >
                                     Hemen Başla <ArrowRight className="inline w-5 h-5 ml-1" />
-                                </button>
+                                </Link>
                                 <Link href="/#contact" className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold text-lg transition-colors border border-orange-400 text-center">
                                     Bize Ulaşın
                                 </Link>
@@ -196,7 +194,6 @@ export function SectorPageContent({ sector }: { sector: SectorData }) {
                 </main>
                 <LandingFooter />
             </div>
-            <FreeTrialModal open={freeTrialOpen} onOpenChange={setFreeTrialOpen} />
         </>
     );
 }

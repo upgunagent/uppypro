@@ -14,7 +14,7 @@ const SECTORS: Record<string, {
         name: "Güzellik & Kuaför", emoji: "💇‍♀️",
         title: "Güzellik Salonları ve Kuaförler İçin WhatsApp & Instagram Yönetimi",
         description: "Güzellik salonunuzun WhatsApp ve Instagram mesajlarını yapay zeka ile yönetin. Randevu otomasyonu, müşteri takibi ve 7/24 AI asistan.",
-        metaDesc: "Güzellik salonu ve kuaförler için WhatsApp yapay zeka asistanı. Randevu otomasyonu, müşteri takibi, Instagram DM yönetimi. 14 gün ücretsiz deneyin.",
+        metaDesc: "Güzellik salonu ve kuaförler için WhatsApp yapay zeka asistanı. Randevu otomasyonu, müşteri takibi, Instagram DM yönetimi. 7 gün ücretsiz deneyin.",
         heroText: "Müşterileriniz Instagram'dan ilham alıyor, WhatsApp'tan randevu istiyor. Peki siz bu mesajlara yetişebiliyor musunuz? UppyPro ile güzellik salonunuzun tüm dijital iletişimini tek panelden yönetin.",
         problems: [
             "Instagram'dan gelen DM'lere geç yanıt verme — müşteri rakibe gidiyor",
@@ -59,7 +59,7 @@ const SECTORS: Record<string, {
         name: "Klinik & Sağlık", emoji: "🏥",
         title: "Klinikler ve Sağlık Kuruluşları İçin WhatsApp & Instagram Yönetimi",
         description: "Kliniğinizin hasta iletişimini yapay zeka ile yönetin. Randevu otomasyonu, hasta takibi ve 7/24 AI asistan.",
-        metaDesc: "Klinikler için WhatsApp yapay zeka asistanı. Hasta randevu otomasyonu, hatırlatma mesajları, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Klinikler için WhatsApp yapay zeka asistanı. Hasta randevu otomasyonu, hatırlatma mesajları, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Hastalarınız WhatsApp'tan randevu almak, Instagram'dan bilgi edinmek istiyor. Kliniğinizin iletişim yükünü yapay zekaya devredin, siz tedaviye odaklanın.",
         problems: [
             "Telefon trafiği yoğunluğunda kaçan hastalar",
@@ -104,7 +104,7 @@ const SECTORS: Record<string, {
         name: "Otel & Konaklama", emoji: "🏨",
         title: "Oteller ve Konaklama Tesisleri İçin WhatsApp & Instagram Yönetimi",
         description: "Otelinizin misafir iletişimini yapay zeka ile yönetin. Rezervasyon otomasyonu, çok dilli destek ve 7/24 AI concierge.",
-        metaDesc: "Oteller için WhatsApp yapay zeka concierge. Rezervasyon otomasyonu, çok dilli misafir desteği, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Oteller için WhatsApp yapay zeka concierge. Rezervasyon otomasyonu, çok dilli misafir desteği, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Misafirleriniz dünyanın her yerinden yazıyor — farklı dillerde, farklı zaman dilimlerinde. UppyPro'nun AI concierge'i ile hiçbir mesajı kaçırmayın.",
         problems: [
             "Farklı dillerdeki misafir mesajlarına yanıt verilememesi",
@@ -148,7 +148,7 @@ const SECTORS: Record<string, {
         name: "Restoran & Kafe", emoji: "🍽️",
         title: "Restoran ve Kafeler İçin WhatsApp & Instagram Yönetimi",
         description: "Restoranınızın müşteri iletişimini yapay zeka ile yönetin. Rezervasyon, menü paylaşımı ve 7/24 AI asistan.",
-        metaDesc: "Restoranlar için WhatsApp yapay zeka asistanı. Rezervasyon otomasyonu, menü paylaşımı, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Restoranlar için WhatsApp yapay zeka asistanı. Rezervasyon otomasyonu, menü paylaşımı, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Müşterileriniz Instagram'da yemek fotoğraflarınızı görüyor, hemen WhatsApp'tan masa ayırtmak istiyor. Bu anı kaçırmayın.",
         problems: [
             "Yoğun saatlerde telefona bakılamıyor, rezervasyonlar kaçıyor",
@@ -192,7 +192,7 @@ const SECTORS: Record<string, {
         name: "E-Ticaret", emoji: "🛒",
         title: "E-Ticaret İşletmeleri İçin WhatsApp & Instagram Yönetimi",
         description: "E-ticaret mağazanızın müşteri iletişimini yapay zeka ile yönetin. Sipariş takibi, ürün bilgilendirme ve 7/24 destek.",
-        metaDesc: "E-ticaret için WhatsApp yapay zeka müşteri hizmetleri. Sipariş takibi, ürün bilgilendirme, Instagram DM otomasyonu. 14 gün ücretsiz.",
+        metaDesc: "E-ticaret için WhatsApp yapay zeka müşteri hizmetleri. Sipariş takibi, ürün bilgilendirme, Instagram DM otomasyonu. 7 gün ücretsiz.",
         heroText: "Müşterileriniz sipariş durumunu soruyor, ürün bilgisi istiyor, iade talep ediyor — hepsini yapay zeka ile anında yanıtlayın.",
         problems: [
             "Yüzlerce 'Kargom nerede?' mesajına aynı cevabı vermek",
@@ -236,7 +236,7 @@ const SECTORS: Record<string, {
         name: "Diş Klinikleri", emoji: "🦷",
         title: "Diş Klinikleri İçin WhatsApp & Instagram Yönetimi",
         description: "Diş kliniğinizin hasta iletişimini yapay zeka ile yönetin. Randevu otomasyonu, tedavi bilgilendirme ve 7/24 AI asistan.",
-        metaDesc: "Diş klinikleri için WhatsApp yapay zeka asistanı. Randevu otomasyonu, tedavi bilgilendirme, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Diş klinikleri için WhatsApp yapay zeka asistanı. Randevu otomasyonu, tedavi bilgilendirme, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Hastalarınız diş beyazlatma fiyatını soruyor, implant randevusu istiyor, kontrol zamanını merak ediyor. Tüm bu iletişimi AI asistanınıza devredin.",
         problems: [
             "Telefon yoğunluğunda kaçan randevu talepleri",
@@ -280,7 +280,7 @@ const SECTORS: Record<string, {
         name: "Eğitim Kurumları", emoji: "🎓",
         title: "Eğitim Kurumları İçin WhatsApp & Instagram Yönetimi",
         description: "Eğitim kurumunuzun veli ve öğrenci iletişimini yapay zeka ile yönetin. Kayıt otomasyonu, bilgilendirme ve 7/24 AI asistan.",
-        metaDesc: "Eğitim kurumları için WhatsApp yapay zeka asistanı. Kayıt bilgilendirme, veli iletişimi, Instagram yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Eğitim kurumları için WhatsApp yapay zeka asistanı. Kayıt bilgilendirme, veli iletişimi, Instagram yönetimi. 7 gün ücretsiz.",
         heroText: "Veliler kurs programını soruyor, kayıt bilgisi istiyor, ödeme detaylarını öğrenmek istiyor. AI asistanınız tüm soruları profesyonelce yanıtlasın.",
         problems: [
             "Kayıt dönemlerinde yoğun telefon trafiği",
@@ -324,7 +324,7 @@ const SECTORS: Record<string, {
         name: "Emlak", emoji: "🏠",
         title: "Emlak Ofisleri İçin WhatsApp & Instagram Yönetimi",
         description: "Emlak ofisinizin müşteri iletişimini yapay zeka ile yönetin. İlan bilgilendirme, randevu otomasyonu ve 7/24 AI asistan.",
-        metaDesc: "Emlak ofisleri için WhatsApp yapay zeka asistanı. İlan bilgilendirme, görüşme randevusu, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Emlak ofisleri için WhatsApp yapay zeka asistanı. İlan bilgilendirme, görüşme randevusu, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Potansiyel alıcılar Instagram'da ilanlarınızı görüyor, WhatsApp'tan detay soruyor. Bu fırsatları kaçırmayın — AI asistanınız anında yanıt versin.",
         problems: [
             "Instagram ilanlarına gelen DM'lere geç yanıt — müşteri kaybı",
@@ -368,7 +368,7 @@ const SECTORS: Record<string, {
         name: "Otomotiv", emoji: "🚗",
         title: "Otomotiv Sektörü İçin WhatsApp & Instagram Yönetimi",
         description: "Oto galeri, servis ve yedek parça işletmenizin iletişimini yapay zeka ile yönetin. Randevu, stok bilgilendirme ve 7/24 AI asistan.",
-        metaDesc: "Otomotiv sektörü için WhatsApp yapay zeka asistanı. Servis randevusu, araç bilgilendirme, Instagram DM yönetimi. 14 gün ücretsiz.",
+        metaDesc: "Otomotiv sektörü için WhatsApp yapay zeka asistanı. Servis randevusu, araç bilgilendirme, Instagram DM yönetimi. 7 gün ücretsiz.",
         heroText: "Müşterileriniz araç fiyatı soruyor, servis randevusu istiyor, yedek parça arıyor. Tüm bu taleplere AI asistanınız anında yanıt versin.",
         problems: [
             "Showroom, servis ve yedek parça arası iletişim karmaşası",
@@ -412,7 +412,7 @@ const SECTORS: Record<string, {
         name: "Sigorta", emoji: "🛡️",
         title: "Sigorta Acenteleri İçin WhatsApp & Instagram Yönetimi",
         description: "Sigorta acentenizin müşteri iletişimini yapay zeka ile yönetin. Poliçe bilgilendirme, yenileme hatırlatmaları ve 7/24 AI asistan.",
-        metaDesc: "Sigorta acenteleri için WhatsApp yapay zeka asistanı. Poliçe bilgilendirme, yenileme hatırlatma, müşteri takibi. 14 gün ücretsiz.",
+        metaDesc: "Sigorta acenteleri için WhatsApp yapay zeka asistanı. Poliçe bilgilendirme, yenileme hatırlatma, müşteri takibi. 7 gün ücretsiz.",
         heroText: "Müşterileriniz poliçe detayını soruyor, hasar ihbarı yapıyor, yenileme fiyatını öğrenmek istiyor. AI asistanınız tüm bu süreçleri profesyonelce yönetsin.",
         problems: [
             "Poliçe yenileme dönemlerinde yoğun telefon trafiği",

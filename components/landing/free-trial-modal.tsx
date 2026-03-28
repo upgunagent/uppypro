@@ -74,7 +74,7 @@ export function FreeTrialModal({ open, onOpenChange }: FreeTrialModalProps) {
                             <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-black/10 rounded-full blur-2xl pointer-events-none" />
                             <DialogHeader>
                                 <DialogTitle className="text-2xl font-bold relative z-10">
-                                    UppyPro&apos;yu 14 Gün Ücretsiz Dene
+                                    UppyPro&apos;yu 7 Gün Ücretsiz Dene
                                 </DialogTitle>
                                 <DialogDescription className="text-green-50 relative z-10 mt-2 leading-relaxed">
                                     Ücretsiz deneme sürümü için aşağıdaki formu doldurun, ekibimiz üyelik başlangıcı için en kısa sürede sizinle iletişime geçecektir.

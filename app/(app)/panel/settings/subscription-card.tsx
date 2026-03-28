@@ -131,10 +131,15 @@ export function SubscriptionCard({
         );
     }
 
-    const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key } = subscription;
+    const { status, billing_cycle, current_period_end, cancel_at_period_end, ai_product_key, is_trial, trial_ends_at } = subscription;
     const packageName = getPackageName(subscription);
     const isCanceled = status === 'canceled';
     const isCorporate = ai_product_key?.startsWith('uppypro_corporate_') || ai_product_key === 'uppypro_enterprise';
+
+    // Trial kontrolü
+    const isInTrial = is_trial && trial_ends_at && new Date(trial_ends_at) > new Date();
+    const trialEndDate = trial_ends_at ? new Date(trial_ends_at) : null;
+    const formattedTrialEndDate = trialEndDate?.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
     // Fiyat formatla
     let formattedPrice = '-';
@@ -255,6 +260,9 @@ export function SubscriptionCard({
         if (isCanceled) {
             return <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100">İptal Edildi</Badge>;
         }
+        if (isInTrial) {
+            return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">🎁 Deneme Süresi</Badge>;
+        }
         if (status === 'active') {
             return <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100">Aktif</Badge>;
         }
@@ -339,16 +347,34 @@ export function SubscriptionCard({
 
                 <div className="space-y-1">
                     <p className="text-sm text-slate-500">
-                        {cancel_at_period_end ? 'Erişim Bitiş Tarihi' : isCanceled ? 'İptal Tarihi' : 'Sonraki Ödeme'}
+                        {cancel_at_period_end ? 'Erişim Bitiş Tarihi' : isCanceled ? 'İptal Tarihi' : isInTrial ? 'Deneme Bitiş Tarihi' : 'Sonraki Ödeme'}
                     </p>
                     <span className="font-medium text-slate-900">
                         {isCanceled && subscription.canceled_at
                             ? new Date(subscription.canceled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-                            : formattedEndDate
+                            : isInTrial && formattedTrialEndDate
+                                ? formattedTrialEndDate
+                                : formattedEndDate
                         }
                     </span>
                 </div>
             </div>
+
+            {/* Trial Info Banner */}
+            {isInTrial && (
+                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                    <div className="flex items-start gap-3">
+                        <span className="text-xl">🎁</span>
+                        <div>
+                            <p className="text-sm font-semibold text-emerald-800">7 Günlük Ücretsiz Deneme Süresi</p>
+                            <p className="text-xs text-emerald-700 mt-1">
+                                Deneme süreniz <strong>{formattedTrialEndDate}</strong> tarihinde sona erecektir. 
+                                Bu tarihe kadar iptal etmezseniz, abonelik ücretiniz otomatik olarak kartınızdan çekilecektir.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Actions Toolbar */}
             <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-end gap-3">

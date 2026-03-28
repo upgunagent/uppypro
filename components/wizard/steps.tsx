@@ -702,6 +702,7 @@ import Script from "next/script";
 
 export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext: () => void, onBack: () => void }) {
     const [loading, setLoading] = useState(false);
+    const [formLoaded, setFormLoaded] = useState(false);
     const { toast } = useToast();
     const checkoutFormRef = useRef<HTMLDivElement>(null);
 
@@ -730,6 +731,7 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                             newScript.appendChild(document.createTextNode(oldScript.innerHTML));
                             oldScript.parentNode?.replaceChild(newScript, oldScript);
                         });
+                        setFormLoaded(true);
                     }
                 }, 100);
             }
@@ -748,7 +750,7 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
             <div className="text-center">
                 <h3 className="text-xl font-semibold mb-2">Güvenli Ödeme</h3>
                 <p className="text-slate-500 text-sm">
-                    Ödemeniz Iyzico güvencesiyle alınacaktır.
+                    Kredi kartı bilgileriniz Iyzico güvencesiyle kaydedilecektir. Deneme süresi boyunca ödeme alınmaz.
                 </p>
             </div>
 
@@ -762,8 +764,32 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                             </div>
                         </div>
 
+                        {/* Trial Period Info Banner */}
+                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                            <div className="flex items-start gap-3">
+                                <span className="text-2xl mt-0.5">🎁</span>
+                                <div className="space-y-2">
+                                    <p className="font-bold text-emerald-800 text-sm">7 Günlük Ücretsiz Deneme Süresi</p>
+                                    <ul className="space-y-1.5 text-xs text-emerald-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-emerald-500 mt-0.5">✓</span>
+                                            <span>Kredi kartı bilgileriniz güvenle kaydedilecek, <strong>şu an herhangi bir ücret çekilmeyecektir.</strong></span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-emerald-500 mt-0.5">✓</span>
+                                            <span>7 gün boyunca tüm özellikleri <strong>ücretsiz</strong> kullanabilirsiniz.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-orange-500 mt-0.5">⚠</span>
+                                            <span>7 günlük deneme süresi sonunda aboneliğinizi iptal etmediğiniz takdirde, <strong>abonelik ücreti kartınızdan otomatik olarak tahsil edilecektir.</strong></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         <Button onClick={handleStartPayment} disabled={loading} className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg shadow-lg">
-                            Ödeme Başlat
+                            Deneme Süresini Başlat
                         </Button>
                         <div className="flex justify-center mt-4">
                             <img src="/images/iyzico-ile-ode.png" alt="Iyzico ile Öde" className="h-8" />
@@ -772,10 +798,12 @@ export function StepPayment({ data, onNext, onBack }: { data: WizardData, onNext
                     </>
                 )}
 
-                <div className="w-full min-h-[400px] flex items-center justify-center">
-                    {loading && !checkoutFormRef.current?.hasChildNodes() && <Loader2 className="w-8 h-8 animate-spin text-orange-600" />}
-                    <div id="iyzipay-checkout-form" className="responsive w-full" ref={checkoutFormRef}></div>
-                </div>
+                {loading && !formLoaded && (
+                    <div className="w-full min-h-[200px] flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+                    </div>
+                )}
+                <div id="iyzipay-checkout-form" className="responsive w-full" ref={checkoutFormRef}></div>
             </div>
         </div>
     );

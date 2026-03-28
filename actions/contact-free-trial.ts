@@ -127,7 +127,7 @@ export async function sendFreeTrialContact(prevState: FreeTrialState, formData: 
         <div style="font-family: sans-serif; background-color: #f0fdf4; padding: 20px;">
           <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); padding: 24px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 22px;">🎉 Yeni 14 Günlük Ücretsiz Deneme Talebi</h1>
+              <h1 style="color: white; margin: 0; font-size: 22px;">🎉 Yeni 7 Günlük Ücretsiz Deneme Talebi</h1>
               <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">UppyPro Landing Page - Ücretsiz Dene Formu</p>
             </div>
             <div style="padding: 28px;">

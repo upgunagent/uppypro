@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Instagram, Settings, Send, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FreeTrialModal } from "@/components/landing/free-trial-modal";
+
 
 export function HeroSection() {
-    const [freeTrialOpen, setFreeTrialOpen] = useState(false);
+
 
     return (
         <>
@@ -54,21 +54,22 @@ export function HeroSection() {
                                         Paketi Seç
                                     </Button>
                                 </Link>
-                                <Button
-                                    size="lg"
-                                    onClick={() => setFreeTrialOpen(true)}
-                                    className="h-14 px-8 text-lg rounded-full bg-[#25D366] hover:bg-[#128C7E] text-white shadow-lg transition-colors"
-                                >
-                                    Ücretsiz Dene
-                                </Button>
+                                <Link href="/#pricing">
+                                    <Button
+                                        size="lg"
+                                        className="h-14 px-8 text-lg rounded-full bg-[#25D366] hover:bg-[#128C7E] text-white shadow-lg transition-colors"
+                                    >
+                                        7 Gün Ücretsiz Başla
+                                    </Button>
+                                </Link>
                             </div>
 
                             <div className="flex items-center gap-6 justify-center lg:justify-start text-sm text-slate-400 font-medium">
                                 <span className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-500" /> Kredi Kartı Gerekmez
+                                    <CheckCircle className="w-4 h-4 text-green-500" /> 7 Gün Ücretsiz Deneme
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-500" /> 14 Gün Ücretsiz
+                                    <CheckCircle className="w-4 h-4 text-green-500" /> Taahhüt Yok
                                 </span>
                             </div>
                         </div>
@@ -222,7 +223,6 @@ export function HeroSection() {
                 {/* end container */}
             </section>
 
-            <FreeTrialModal open={freeTrialOpen} onOpenChange={setFreeTrialOpen} />
         </>
     );
 }

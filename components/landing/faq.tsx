@@ -16,7 +16,7 @@ const faqs = [
     },
     {
         q: "Kredi kartı bilgisi girmem gerekiyor mu?",
-        a: "Hayır, 14 günlük deneme sürümü için kart bilgisi gerekmez. Ücretsiz deneme için talep oluşturmanız halinde ekibimiz en kısa sürede size ulaşıp deneme sürümünüzü aktif hale getirecektir."
+        a: "Evet, 7 günlük ücretsiz deneme süresinden yararlanmak için kredi kartı bilginizi girmeniz gerekir. Ancak deneme süresi boyunca kartınızdan herhangi bir ücret çekilmez. 7 gün içinde aboneliğinizi iptal ederseniz hiçbir ücret ödemeniz gerekmez. İptal etmezseniz, deneme süresi sonunda otomatik olarak abonelik ücreti tahsil edilir."
     },
     {
         q: "Otomasyon için çok büyük bir bütçe ayırmam gerekiyor mu?",

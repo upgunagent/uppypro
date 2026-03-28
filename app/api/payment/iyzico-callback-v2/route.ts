@@ -79,8 +79,31 @@ export async function POST(request: Request) {
 
         if (tenantId) {
             const now = new Date();
-            const nextMonth = new Date(now);
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+            // --- TRIAL PERIOD DETECTION ---
+            // Iyzico returns trialDays or trialEndDate when plan has trial
+            const trialDays = result.trialDays || result.data?.trialDays || 0;
+            const trialEndDateStr = result.trialEndDate || result.data?.trialEndDate;
+            const isTrial = trialDays > 0 || !!trialEndDateStr;
+
+            let periodEnd: Date;
+            let trialEndsAt: Date | null = null;
+
+            if (isTrial) {
+                // Trial period: first charge happens after trial days
+                if (trialEndDateStr) {
+                    trialEndsAt = new Date(trialEndDateStr);
+                } else {
+                    trialEndsAt = new Date(now);
+                    trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+                }
+                periodEnd = trialEndsAt;
+                console.log(`[IYZICO-CALLBACK-V2] TRIAL detected: ${trialDays} days, ends at ${trialEndsAt.toISOString()}`);
+            } else {
+                // Normal paid subscription: next charge in 1 month
+                periodEnd = new Date(now);
+                periodEnd.setMonth(periodEnd.getMonth() + 1);
+            }
 
             const cardLast4 = result.lastFourDigits;
             const cardBrand = result.cardAssociation;
@@ -93,11 +116,13 @@ export async function POST(request: Request) {
             const updateData: any = {
                 status: 'active',
                 current_period_start: now.toISOString(),
-                current_period_end: nextMonth.toISOString(),
+                current_period_end: periodEnd.toISOString(),
                 updated_at: now.toISOString(),
                 canceled_at: null,
                 cancel_at_period_end: false,
                 cancel_reason: null,
+                is_trial: isTrial,
+                trial_ends_at: trialEndsAt ? trialEndsAt.toISOString() : null,
             };
 
             // Referans kodlarını sadece doluysa güncelle
@@ -113,28 +138,32 @@ export async function POST(request: Request) {
                 .update(updateData)
                 .eq('tenant_id', tenantId);
 
-            // --- İlk ödemeyi payments tablosuna kaydet ---
-            try {
-                const paidPrice = result.paidPrice || result.price || 0;
-                await supabase.from('payments').insert({
-                    tenant_id: tenantId,
-                    amount_try: Math.round(paidPrice * 100), // kuruş cinsinden
-                    currency: 'TRY',
-                    status: 'success',
-                    type: isReactivation ? 'subscription_reactivation' : 'subscription_initial',
-                    provider: 'iyzico',
-                    provider_ref: {
-                        subscriptionReferenceCode: finalSubRefCode,
-                        customerReferenceCode,
-                        pricingPlanReferenceCode,
-                        paidPrice,
-                        cardLast4
-                    },
-                    created_at: now.toISOString()
-                });
-                console.log(`[IYZICO-CALLBACK-V2] Payment record saved for tenant ${tenantId} (${paidPrice} TL)`);
-            } catch (paymentErr) {
-                console.error('[IYZICO-CALLBACK-V2] Failed to save payment record:', paymentErr);
+            // --- İlk ödemeyi payments tablosuna kaydet (deneme süresinde ödeme alınmaz) ---
+            const paidPrice = result.paidPrice || result.price || 0;
+            if (!isTrial || paidPrice > 0) {
+                try {
+                    await supabase.from('payments').insert({
+                        tenant_id: tenantId,
+                        amount_try: Math.round(paidPrice * 100), // kuruş cinsinden
+                        currency: 'TRY',
+                        status: 'success',
+                        type: isReactivation ? 'subscription_reactivation' : 'subscription_initial',
+                        provider: 'iyzico',
+                        provider_ref: {
+                            subscriptionReferenceCode: finalSubRefCode,
+                            customerReferenceCode,
+                            pricingPlanReferenceCode,
+                            paidPrice,
+                            cardLast4
+                        },
+                        created_at: now.toISOString()
+                    });
+                    console.log(`[IYZICO-CALLBACK-V2] Payment record saved for tenant ${tenantId} (${paidPrice} TL)`);
+                } catch (paymentErr) {
+                    console.error('[IYZICO-CALLBACK-V2] Failed to save payment record:', paymentErr);
+                }
+            } else {
+                console.log(`[IYZICO-CALLBACK-V2] Trial period - no payment record created for tenant ${tenantId}`);
             }
 
             // --- REACTIVATION: Skip welcome email, redirect to settings ---
@@ -204,7 +233,10 @@ export async function POST(request: Request) {
                     const totalWithKdv = basePrice * 1.2;
                     const formattedPriceToDisplay = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalWithKdv) + ' (KDV Dahil)';
 
-                    console.log(`[IYZICO-CALLBACK-V2] Price: base=${basePrice}, total=${totalWithKdv}, plan=${finalPlanName}`);
+                    // Trial bilgisi emaile yansıtılacak
+                    const trialEndFormatted = trialEndsAt ? trialEndsAt.toLocaleDateString('tr-TR') : null;
+
+                    console.log(`[IYZICO-CALLBACK-V2] Price: base=${basePrice}, total=${totalWithKdv}, plan=${finalPlanName}, isTrial=${isTrial}`);
                     console.log("[IYZICO-CALLBACK-V2] Generating PDF Agreement with pdfmake (VFS fonts)...");
                     const pdfBuffer = await generatePdfBuffer({
                         buyer: {
@@ -262,15 +294,17 @@ export async function POST(request: Request) {
                     }
                     // ------------------------------------------
 
-                    console.log(`[IYZICO-CALLBACK-V2] Sending Welcome Email to ${buyerEmail}...`);
+                    console.log(`[IYZICO-CALLBACK-V2] Sending Welcome Email to ${buyerEmail}... (isTrial: ${isTrial})`);
                     await sendSubscriptionWelcomeEmail({
                         recipientEmail: buyerEmail,
                         recipientName: buyerName,
                         planName: finalPlanName,
                         priceFormatted: formattedPriceToDisplay,
                         billingCycle: "monthly",
-                        nextPaymentDate: nextMonth.toLocaleDateString('tr-TR'),
-                        agreementPdfBuffer: pdfBuffer || undefined
+                        nextPaymentDate: isTrial && trialEndFormatted ? trialEndFormatted : periodEnd.toLocaleDateString('tr-TR'),
+                        agreementPdfBuffer: pdfBuffer || undefined,
+                        isTrial: isTrial,
+                        trialEndDate: trialEndFormatted || undefined
                     });
                     console.log(`[IYZICO-CALLBACK-V2] Welcome Email Sent successfully. PDF attached: ${!!pdfBuffer}`);
                 }

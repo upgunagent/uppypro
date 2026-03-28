@@ -137,7 +137,7 @@ GÖREV
    - "Takvim özelliğiyle stilistlerinizin müsaitlik durumunu AI anında kontrol edecek" gibi
 5. Eğer birden fazla paket uygunsa, ana öneriyi yap ama alternatifi de kısaca belirt
 6. Sonunda bir CTA ekle:
-   - "Hemen **14 günlük ücretsiz deneme** ile Inbox paketini kullanmaya başlayabilirsiniz."
+   - "Hemen **7 günlük ücretsiz deneme** ile Inbox paketini kullanmaya başlayabilirsiniz."
    - Veya AI paketi önerdiysen: "**UppyPro AI** paketini seçerek 48 saat içinde size özel eğitilmiş yapay zeka asistanınızı aktif hale getirebiliriz."
    - ASLA "demo gösterelim", "bir görüşme planlayalım", "detayları görüşelim" gibi ifadeler KULLANMA.
    - Doğrudan harekete geçirici ol: ücretsiz deneme veya paket seçimi yönlendir.

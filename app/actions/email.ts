@@ -173,10 +173,12 @@ interface SubscriptionWelcomeEmailProps {
     billingCycle: string;
     nextPaymentDate: string;
     agreementPdfBuffer?: Buffer;
+    isTrial?: boolean;
+    trialEndDate?: string;
 }
 
 export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEmailProps) {
-    const { recipientEmail, recipientName, planName, priceFormatted, billingCycle, nextPaymentDate, agreementPdfBuffer } = props;
+    const { recipientEmail, recipientName, planName, priceFormatted, billingCycle, nextPaymentDate, agreementPdfBuffer, isTrial, trialEndDate } = props;
 
     const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
 
@@ -210,13 +212,16 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
     <div class="container">
         <div class="header">
             <img src="${logoUrl}" alt="UPGUN AI" class="logo">
-            <h1>Hoş Geldiniz! 🎉</h1>
+            <h1>${isTrial ? 'Deneme Süreniz Başladı! 🎉' : 'Hoş Geldiniz! 🎉'}</h1>
         </div>
         <div class="content">
             <p class="greeting">Sayın <strong>${recipientName}</strong>,</p>
-            <p class="message">UppyPro aboneliğiniz başarıyla başlatılmıştır. Aramıza katıldığınız için çok mutluyuz.</p>
+            <p class="message">${isTrial 
+                ? `UppyPro aboneliğiniz için <strong>7 günlük ücretsiz deneme süreniz</strong> başlamıştır. Deneme süreniz boyunca tüm özellikleri ücretsiz kullanabilirsiniz. Kartınızdan herhangi bir ücret çekilmeyecektir.`
+                : `UppyPro aboneliğiniz başarıyla başlatılmıştır. Aramıza katıldığınız için çok mutluyuz.`
+            }</p>
 
-            <div class="details-card">
+                <div class="details-card">
                 <div class="details-title">Abonelik Bilgileriniz</div>
                 <div class="detail-row">
                     <span class="detail-label">Paket:</span>
@@ -226,14 +231,32 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
                     <span class="detail-label">Ücret:</span>
                     <span class="detail-value">${priceFormatted} / ${billingCycle === 'monthly' ? 'Ay' : 'Yıl'}</span>
                 </div>
+                ${isTrial ? `
+                <div class="detail-row">
+                    <span class="detail-label">Deneme Süresi:</span>
+                    <span class="detail-value" style="color: #16a34a;">7 Gün Ücretsiz</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Deneme Bitiş Tarihi:</span>
+                    <span class="detail-value">${trialEndDate || nextPaymentDate}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">İlk Ödeme Tarihi:</span>
+                    <span class="detail-value" style="color: #ea580c;">${trialEndDate || nextPaymentDate}</span>
+                </div>
+                ` : `
                 <div class="detail-row">
                     <span class="detail-label">Sonraki Ödeme Tarihi:</span>
                     <span class="detail-value">${nextPaymentDate}</span>
                 </div>
+                `}
             </div>
 
             <div class="info-box">
-                ℹ️ Abonelik ücretiniz, iptal etmediğiniz sürece her yenileme döneminde kayıtlı kartınızdan otomatik olarak tahsil edilecektir.
+                ${isTrial 
+                    ? `⏰ <strong>Önemli:</strong> Deneme süreniz <strong>${trialEndDate || nextPaymentDate}</strong> tarihinde sona erecektir. Bu tarihe kadar aboneliğinizi iptal etmezseniz, kartınızdan <strong>${priceFormatted}</strong> tutarında ücret çekilecektir. İptal işlemi için UppyPro panelindeki Ayarlar sayfasını kullanabilirsiniz.`
+                    : `ℹ️ Abonelik ücretiniz, iptal etmediğiniz sürece her yenileme döneminde kayıtlı kartınızdan otomatik olarak tahsil edilecektir.`
+                }
             </div>
 
             <p class="message">
@@ -261,7 +284,7 @@ export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEma
         const emailPayload: any = {
             from: EMAIL_FROM,
             to: [recipientEmail],
-            subject: 'Aboneliğiniz Başladı - UppyPro',
+            subject: isTrial ? 'Deneme Süreniz Başladı - UppyPro' : 'Aboneliğiniz Başladı - UppyPro',
             html: htmlContent,
         };
 

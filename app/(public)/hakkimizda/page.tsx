@@ -210,7 +210,7 @@ export default function AboutPage() {
                 <section className="py-16 md:py-20 bg-gradient-to-br from-orange-500 to-orange-600 text-white">
                     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h2 className="text-2xl md:text-3xl font-bold mb-4">İşletmenizin İletişimini Dönüştürmeye Hazır mısınız?</h2>
-                        <p className="text-orange-100 mb-8 max-w-lg mx-auto">14 gün ücretsiz deneyin, farkı kendiniz görün. Teknik bilgi gerekmez, 15 dakikada kurulum.</p>
+                        <p className="text-orange-100 mb-8 max-w-lg mx-auto">7 gün ücretsiz deneyin, farkı kendiniz görün. Teknik bilgi gerekmez, 15 dakikada kurulum.</p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link href="/#pricing" className="px-8 py-3 bg-white text-orange-600 rounded-full font-semibold hover:bg-orange-50 transition-colors shadow-lg">
                                 Paketleri İncele

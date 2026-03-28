@@ -48,7 +48,10 @@ export async function POST(request: Request) {
                         status: 'active',
                         current_period_start: now.toISOString(),
                         current_period_end: nextMonth.toISOString(),
-                        updated_at: now.toISOString()
+                        updated_at: now.toISOString(),
+                        // Trial sona erdi, artık ücretli abonelik
+                        is_trial: false,
+                        trial_ends_at: null
                     })
                     .eq('iyzico_subscription_reference_code', subscriptionReferenceCode);
 

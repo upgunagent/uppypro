@@ -11,7 +11,6 @@ import {
     CheckCircle2, ChevronRight, Gift
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { FreeTrialModal } from "@/components/landing/free-trial-modal";
 
 // ==================== DATA ====================
 
@@ -63,7 +62,6 @@ export function PackageFinderSection() {
     const [isTyping, setIsTyping] = useState(false);
     const resultRef = useRef<HTMLDivElement>(null);
     const sectionRef = useRef<HTMLElement>(null);
-    const [showTrialModal, setShowTrialModal] = useState(false);
 
     // Typewriter effect
     useEffect(() => {
@@ -558,12 +556,12 @@ export function PackageFinderSection() {
                                                         transition={{ delay: 0.3 }}
                                                         className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100"
                                                     >
-                                                        <button
-                                                            onClick={() => setShowTrialModal(true)}
+                                                        <a
+                                                            href="/#pricing"
                                                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white rounded-xl font-bold text-sm shadow-lg shadow-green-500/25 hover:shadow-xl transition-all hover:scale-105"
                                                         >
-                                                            <Gift size={16} /> 14 Gün Ücretsiz Dene
-                                                        </button>
+                                                            <Gift size={16} /> 7 Gün Ücretsiz Başla
+                                                        </a>
                                                         <a
                                                             href="#pricing"
                                                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all hover:scale-105"
@@ -579,8 +577,7 @@ export function PackageFinderSection() {
                                                     </motion.div>
                                                 )}
 
-                                                {/* Free Trial Modal */}
-                                                <FreeTrialModal open={showTrialModal} onOpenChange={setShowTrialModal} />
+
                                             </>
                                         )}
                                     </div>

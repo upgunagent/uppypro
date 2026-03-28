@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { LandingHeader, LandingFooter } from "@/components/landing/layout";
-import { FreeTrialModal } from "@/components/landing/free-trial-modal";
 import { Calendar, Clock, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 
 interface BlogData {
@@ -14,7 +13,6 @@ interface BlogData {
 }
 
 export function BlogPostContent({ blog, slug }: { blog: BlogData; slug: string }) {
-    const [freeTrialOpen, setFreeTrialOpen] = useState(false);
 
     return (
         <>
@@ -103,12 +101,12 @@ export function BlogPostContent({ blog, slug }: { blog: BlogData; slug: string }
                                         <h3 className="text-lg font-bold text-slate-900 mb-2">{blog.uppyProTip.title}</h3>
                                         <p className="text-slate-600 leading-relaxed mb-4">{blog.uppyProTip.text}</p>
                                         <div className="flex flex-col sm:flex-row gap-3">
-                                            <button
-                                                onClick={() => setFreeTrialOpen(true)}
-                                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold text-sm transition-colors shadow-lg shadow-orange-500/20"
+                                            <Link
+                                                href="/#pricing"
+                                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold text-sm transition-colors shadow-lg shadow-orange-500/20 text-center"
                                             >
-                                                14 Gün Ücretsiz Dene
-                                            </button>
+                                                7 Gün Ücretsiz Başla
+                                            </Link>
                                             <Link href="/#pricing" className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 rounded-full font-semibold text-sm transition-colors border border-slate-200 text-center">
                                                 Paketleri İncele
                                             </Link>
@@ -128,7 +126,6 @@ export function BlogPostContent({ blog, slug }: { blog: BlogData; slug: string }
                 </main>
                 <LandingFooter />
             </div>
-            <FreeTrialModal open={freeTrialOpen} onOpenChange={setFreeTrialOpen} />
         </>
     );
 }

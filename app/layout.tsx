@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: "UppyPro — WhatsApp & Instagram Yapay Zeka Yönetim Paneli | UPGUN AI",
     template: "%s | UppyPro — UPGUN AI",
   },
-  description: "WhatsApp ve Instagram mesajlarınızı yapay zeka destekli tek panelden yönetin. 7/24 AI asistan, otomatik randevu, akıllı CRM, çok dilli çeviri. 14 gün ücretsiz deneyin.",
+  description: "WhatsApp ve Instagram mesajlarınızı yapay zeka destekli tek panelden yönetin. 7/24 AI asistan, otomatik randevu, akıllı CRM, çok dilli çeviri. 7 gün ücretsiz deneyin.",
   keywords: [
     "whatsapp yönetim paneli", "whatsapp crm", "instagram dm yönetimi",
     "whatsapp yapay zeka asistanı", "whatsapp business yönetim",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     url: "https://www.upgunai.com",
     siteName: "UppyPro — UPGUN AI",
     title: "UppyPro — WhatsApp & Instagram Yapay Zeka Yönetim Paneli",
-    description: "WhatsApp ve Instagram mesajlarınızı yapay zeka destekli tek panelden yönetin. 7/24 AI asistan, otomatik randevu, akıllı CRM. 14 gün ücretsiz.",
+    description: "WhatsApp ve Instagram mesajlarınızı yapay zeka destekli tek panelden yönetin. 7/24 AI asistan, otomatik randevu, akıllı CRM. 7 gün ücretsiz.",
     images: [
       {
         url: "/og-image1.png",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "UppyPro — WhatsApp & Instagram Yapay Zeka Yönetim Paneli",
-    description: "WhatsApp ve Instagram mesajlarınızı yapay zeka ile yönetin. 14 gün ücretsiz.",
+    description: "WhatsApp ve Instagram mesajlarınızı yapay zeka ile yönetin. 7 gün ücretsiz.",
     images: ["/og-image1.png"],
   },
   alternates: {

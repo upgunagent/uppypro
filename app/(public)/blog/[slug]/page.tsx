@@ -31,7 +31,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro ile WhatsApp Business API'nin Tam Gücünü Kullanın",
-            text: "UppyPro, WhatsApp Business API ve Instagram DM'yi tek bir panelde birleştirerek işletmenize yapay zeka destekli asistan, otomatik yanıtlar, ekip yönetimi ve CRM özellikleri sunar. Geçiş süreci sadece 15 dakika — teknik bilgi gerekmez. 14 gün ücretsiz deneyin ve farkı kendiniz görün."
+            text: "UppyPro, WhatsApp Business API ve Instagram DM'yi tek bir panelde birleştirerek işletmenize yapay zeka destekli asistan, otomatik yanıtlar, ekip yönetimi ve CRM özellikleri sunar. Geçiş süreci sadece 15 dakika — teknik bilgi gerekmez. 7 gün ücretsiz deneyin ve farkı kendiniz görün."
         },
     },
     "yapay-zeka-musteri-hizmetleri-2026": {
@@ -58,7 +58,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro AI Asistanı İşletmeniz İçin Çalıştırın",
-            text: "UppyPro'nun yapay zeka asistanı, WhatsApp ve Instagram mesajlarınızı 7/24 yanıtlar. Sektörünüze özel eğitilmiş AI, randevu alır, fiyat bildirir, sık sorulan soruları yanıtlar — siz isterseniz tek tıkla devralırsınız. 14 gün ücretsiz deneyin."
+            text: "UppyPro'nun yapay zeka asistanı, WhatsApp ve Instagram mesajlarınızı 7/24 yanıtlar. Sektörünüze özel eğitilmiş AI, randevu alır, fiyat bildirir, sık sorulan soruları yanıtlar — siz isterseniz tek tıkla devralırsınız. 7 gün ücretsiz deneyin."
         },
     },
     "instagram-dm-satis-donusturme": {
@@ -85,7 +85,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro ile Instagram DM'lerinizi Satışa Çevirin",
-            text: "UppyPro, Instagram DM'lerinizi ve WhatsApp mesajlarınızı tek panelde birleştirir. AI asistanınız saniyeler içinde yanıt verir, fiyat bildirir, randevu oluşturur. 7 stratejinin tamamını otomatik uygular. 14 gün ücretsiz deneyin."
+            text: "UppyPro, Instagram DM'lerinizi ve WhatsApp mesajlarınızı tek panelde birleştirir. AI asistanınız saniyeler içinde yanıt verir, fiyat bildirir, randevu oluşturur. 7 stratejinin tamamını otomatik uygular. 7 gün ücretsiz deneyin."
         },
     },
     "kucuk-isletmeler-iletisim-otomasyonu": {
@@ -112,7 +112,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro ile Küçük İşletmenizin İletişimini Büyütün",
-            text: "UppyPro, küçük işletmeler için özel olarak tasarlanmıştır. 15 dakikada kurulum, teknik bilgi gerekmez. WhatsApp + Instagram tek panelde, AI asistan 7/24 çalışır, siz istediğiniz an devralırsınız. Aylık 995 TL'den başlayan paketlerle 14 gün ücretsiz deneyin."
+            text: "UppyPro, küçük işletmeler için özel olarak tasarlanmıştır. 15 dakikada kurulum, teknik bilgi gerekmez. WhatsApp + Instagram tek panelde, AI asistan 7/24 çalışır, siz istediğiniz an devralırsınız. Aylık 995 TL'den başlayan paketlerle 7 gün ücretsiz deneyin."
         },
     },
     "randevu-noshow-orani-dusurme": {
@@ -139,7 +139,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro ile No-Show Oranınızı Minimuma İndirin",
-            text: "UppyPro'nun otomatik hatırlatma sistemi, randevu onayı, 24 saat öncesi ve 2 saat öncesi hatırlatmaları otomatik gönderir. Müşteriniz tek emoji ile onay veya iptal yapabilir, iptal durumunda AI otomatik alternatif saatler sunar. 14 gün ücretsiz deneyin."
+            text: "UppyPro'nun otomatik hatırlatma sistemi, randevu onayı, 24 saat öncesi ve 2 saat öncesi hatırlatmaları otomatik gönderir. Müşteriniz tek emoji ile onay veya iptal yapabilir, iptal durumunda AI otomatik alternatif saatler sunar. 7 gün ücretsiz deneyin."
         },
     },
     "musteri-sadakati-whatsapp-crm": {
@@ -166,7 +166,7 @@ const BLOGS: Record<string, {
         ],
         uppyProTip: {
             title: "UppyPro CRM ile Müşterilerinizi Elde Tutun",
-            text: "UppyPro'nun dahili CRM sistemi, her müşteri için otomatik kart oluşturur. Hizmet geçmişi, tercihler, özel günler — hepsi tek kartta. Periyodik hatırlatmalar, doğum günü kutlamaları ve geri bildirim toplama otomatik çalışır. 14 gün ücretsiz deneyin ve müşteri sadakatinizi artırın."
+            text: "UppyPro'nun dahili CRM sistemi, her müşteri için otomatik kart oluşturur. Hizmet geçmişi, tercihler, özel günler — hepsi tek kartta. Periyodik hatırlatmalar, doğum günü kutlamaları ve geri bildirim toplama otomatik çalışır. 7 gün ücretsiz deneyin ve müşteri sadakatinizi artırın."
         },
     },
 };

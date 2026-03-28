@@ -103,7 +103,7 @@ export default async function LandingPage() {
                 name: "Kredi kartı bilgisi girmem gerekiyor mu?",
                 acceptedAnswer: {
                     "@type": "Answer",
-                    text: "Hayır, 14 günlük deneme sürümü için kart bilgisi gerekmez. Ücretsiz deneme için talep oluşturmanız halinde ekibimiz en kısa sürede size ulaşıp deneme sürümünüzü aktif hale getirecektir.",
+                    text: "Evet, 7 günlük ücretsiz deneme süresinden yararlanmak için kredi kartı bilginizi girmeniz gerekir. Ancak deneme süresi boyunca kartınızdan herhangi bir ücret çekilmez. 7 gün içinde aboneliğinizi iptal ederseniz hiçbir ücret ödemeniz gerekmez.",
                 },
             },
             {
