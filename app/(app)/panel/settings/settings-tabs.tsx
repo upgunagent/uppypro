@@ -15,21 +15,28 @@ interface SettingsTabsProps {
     defaultValue?: string;
 }
 
-export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
+/** Helper: URL search params'ı güncelleyip router.replace yapar */
+function useTabParam(paramName: string, defaultValue: string) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const currentTab = searchParams.get("tab") || defaultValue;
+    const current = searchParams.get(paramName) || defaultValue;
 
-    const handleTabChange = useCallback((value: string) => {
+    const set = useCallback((value: string) => {
         const params = new URLSearchParams(searchParams.toString());
-        params.set("tab", value);
+        params.set(paramName, value);
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }, [router, pathname, searchParams]);
+    }, [router, pathname, searchParams, paramName]);
+
+    return [current, set] as const;
+}
+
+export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, subscriptionTab, employeeTab, chatSettingsTab, defaultValue = "connections" }: SettingsTabsProps) {
+    const [currentTab, setCurrentTab] = useTabParam("tab", defaultValue);
 
     return (
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full space-y-6">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto bg-slate-100 p-1.5 md:p-1 rounded-xl md:rounded-lg gap-1">
                 <TabsTrigger value="connections" className="data-[state=active]:bg-white data-[state=active]:text-[#ff6900] data-[state=active]:shadow-sm rounded-lg md:rounded-md transition-all text-slate-600 font-medium md:font-semibold hover:text-slate-900 flex flex-col md:flex-row items-center gap-1 md:gap-2 py-2 md:py-2.5 text-[11px] md:text-sm px-1 md:px-3">
                     <Plug className="w-4 h-4 shrink-0" />
@@ -88,8 +95,10 @@ export function SettingsTabs({ connectionTab, profileTab, whatsappTemplatesTab, 
 }
 
 export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent: ReactNode, aiContent: ReactNode }) {
+    const [currentSubtab, setCurrentSubtab] = useTabParam("subtab", "channels");
+
     return (
-        <Tabs defaultValue="channels" className="w-full space-y-6">
+        <Tabs value={currentSubtab} onValueChange={setCurrentSubtab} className="w-full space-y-6">
             <div className="pb-4 border-b border-slate-200">
                 <TabsList className="bg-transparent h-auto p-0 flex flex-wrap justify-start gap-2">
                     <TabsTrigger
@@ -119,8 +128,10 @@ export function ConnectionTabs({ channelsContent, aiContent }: { channelsContent
 }
 
 export function WhatsappTemplatesTabs({ existingTab, builderTab, campaignTab, reportsTab, customerListsTab }: { existingTab: ReactNode, builderTab: ReactNode, campaignTab: ReactNode, reportsTab: ReactNode, customerListsTab: ReactNode }) {
+    const [currentWt, setCurrentWt] = useTabParam("wt", "existing");
+
     return (
-        <Tabs defaultValue="existing" className="w-full space-y-6">
+        <Tabs value={currentWt} onValueChange={setCurrentWt} className="w-full space-y-6">
             <div className="pb-4 border-b border-slate-200">
                 <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <TabsTrigger
