@@ -869,7 +869,7 @@ export function PricingSection({ inboxPrice, aiPrice, aiTrendyolPrice }: { inbox
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-4xl font-bold text-slate-900 mb-4">İşletmenize Uygun Paketi Seçin</h2>
                     <p className="text-slate-500 text-lg">
-                        Taahhüt yok, gizli ücret yok. Büyüdükçe paketinizi yükseltin.
+                        Taahhüt yok, gizli ücret yok. Benzer uygulamalara kıyasla en yüksek faydayı en uygun ücretler ile elde edin.
                     </p>
                 </div>
 
