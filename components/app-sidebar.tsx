@@ -264,7 +264,24 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     }, [tenantId]);
 
 
+    const [hasTrendyol, setHasTrendyol] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    // Check Trendyol connection
+    useEffect(() => {
+        if (!tenantId) return;
+        const supabase = createClient();
+        const checkTrendyol = async () => {
+            const { count } = await supabase
+                .from('channel_connections')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .eq('channel', 'trendyol')
+                .eq('status', 'connected');
+            setHasTrendyol((count || 0) > 0);
+        };
+        checkTrendyol();
+    }, [tenantId]);
 
     useEffect(() => {
         const supabase = createClient();
@@ -508,6 +525,29 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         iconColor="text-white"
                         count={counts.instagram}
                     />
+                    {hasTrendyol && (
+                        <Link
+                            href="/panel/trendyol"
+                            className={clsx(
+                                "group relative flex items-center justify-center w-[54px] h-[54px] transition-all duration-300 hover:scale-110 active:scale-95",
+                                pathname.startsWith('/panel/trendyol') ? "scale-110" : ""
+                            )}
+                        >
+                            <Image
+                                src="/trendyol-icon.png"
+                                alt="Trendyol"
+                                width={50}
+                                height={50}
+                                className="rounded-full object-cover drop-shadow-[0_4px_8px_rgba(0,0,0,0.25)] transition-transform duration-300 group-hover:scale-110 active:scale-95"
+                            />
+
+                            {/* Hover Tooltip */}
+                            <div className="absolute left-[64px] px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-lg opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                                Trendyol
+                                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[4px] border-t-transparent border-r-[4px] border-r-slate-900 border-b-[4px] border-b-transparent"></div>
+                            </div>
+                        </Link>
+                    )}
                 </div>
             </div>
 
