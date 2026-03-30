@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { Trash2, Save, User, Clock, CalendarIcon, Check, ChevronsUpDown, Mail } from "lucide-react";
+import { Trash2, Save, User, Clock, CalendarIcon, Check, ChevronsUpDown, Mail, Users } from "lucide-react";
+import { getResourceTypeConfig, type ResourceType } from "@/lib/resource-types";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,6 +26,115 @@ interface EventDialogProps {
     profile?: { full_name: string; avatar_url?: string; company_name?: string; phone?: string };
     employees?: any[]; // The list of tenant employees
     preselectedEmployeeId?: string; // If a filter is currently active in CalendarView
+    resourceType?: string;
+}
+
+/** Kaynak tipine göre form etiketlerini döndürür */
+function getResourceLabels(type: string) {
+    switch (type) {
+        case "villa":
+            return {
+                resourceLabel: "Villa / Apart *",
+                resourcePlaceholder: "Villa / Apart Seçiniz...",
+                eventTitle: "Rezervasyon Oluştur",
+                editTitle: "Rezervasyon Düzenle",
+                titleLabel: "Rezervasyon Başlığı",
+                titlePlaceholder: "Örn: Konaklama, Özel Etkinlik...",
+                startLabel: "Giriş Tarihi",
+                endLabel: "Çıkış Tarihi",
+                customerLabel: "Misafir",
+                guestNameLabel: "Misafir Adı (Zorunlu)",
+                descLabel: "Notlar / Özel İstekler",
+                descPlaceholder: "Havuz ısıtma, ekstra yastık, erken giriş...",
+                saveValidation: "Lütfen başlık, tarihler ve villa/apart bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan villa/apart eklemelisiniz.",
+            };
+        case "room":
+            return {
+                resourceLabel: "Oda *",
+                resourcePlaceholder: "Oda Seçiniz...",
+                eventTitle: "Rezervasyon Oluştur",
+                editTitle: "Rezervasyon Düzenle",
+                titleLabel: "Rezervasyon Başlığı",
+                titlePlaceholder: "Örn: Konaklama, Grup Rezervasyon...",
+                startLabel: "Giriş Tarihi",
+                endLabel: "Çıkış Tarihi",
+                customerLabel: "Misafir",
+                guestNameLabel: "Misafir Adı (Zorunlu)",
+                descLabel: "Notlar / Özel İstekler",
+                descPlaceholder: "Ek yatak, mini bar, deniz manzaralı oda tercihi...",
+                saveValidation: "Lütfen başlık, tarihler ve oda bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan oda eklemelisiniz.",
+            };
+        case "boat":
+            return {
+                resourceLabel: "Tekne *",
+                resourcePlaceholder: "Tekne Seçiniz...",
+                eventTitle: "Kiralama / Tur Oluştur",
+                editTitle: "Kiralama / Tur Düzenle",
+                titleLabel: "Tur / Kiralama Başlığı",
+                titlePlaceholder: "Örn: Günlük Tur, Tekne Kiralama...",
+                startLabel: "Başlangıç",
+                endLabel: "Bitiş",
+                customerLabel: "Müşteri",
+                guestNameLabel: "Müşteri Adı (Zorunlu)",
+                descLabel: "Tur Detayları / Notlar",
+                descPlaceholder: "Rota bilgisi, yemek dahil, dalış ekipmanı...",
+                saveValidation: "Lütfen başlık, tarihler ve tekne bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan tekne eklemelisiniz.",
+            };
+        case "vehicle":
+            return {
+                resourceLabel: "Araç *",
+                resourcePlaceholder: "Araç Seçiniz...",
+                eventTitle: "Kiralama Oluştur",
+                editTitle: "Kiralama Düzenle",
+                titleLabel: "Kiralama Başlığı",
+                titlePlaceholder: "Örn: Günlük Kiralama, Haftalık...",
+                startLabel: "Teslim Alma",
+                endLabel: "Teslim Etme",
+                customerLabel: "Kiracı",
+                guestNameLabel: "Kiracı Adı (Zorunlu)",
+                descLabel: "Kiralama Notları",
+                descPlaceholder: "Ehliyet bilgisi, teslim noktası, km sınırı...",
+                saveValidation: "Lütfen başlık, tarihler ve araç bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan araç eklemelisiniz.",
+            };
+        case "table":
+            return {
+                resourceLabel: "Masa *",
+                resourcePlaceholder: "Masa Seçiniz...",
+                eventTitle: "Rezervasyon Oluştur",
+                editTitle: "Rezervasyon Düzenle",
+                titleLabel: "Rezervasyon Başlığı",
+                titlePlaceholder: "Örn: Akşam Yemeği, Doğum Günü...",
+                startLabel: "Başlangıç",
+                endLabel: "Bitiş",
+                customerLabel: "Müşteri",
+                guestNameLabel: "Müşteri Adı (Zorunlu)",
+                descLabel: "Rezervasyon Notları",
+                descPlaceholder: "Kişi sayısı, özel menü, doğum günü pastası...",
+                saveValidation: "Lütfen başlık, tarihler ve masa bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan masa eklemelisiniz.",
+            };
+        default: // employee
+            return {
+                resourceLabel: "Personel *",
+                resourcePlaceholder: "Personel Seçiniz...",
+                eventTitle: "Yeni Etkinlik/Randevu Oluştur",
+                editTitle: "Etkinliği Düzenle",
+                titleLabel: "Etkinlik Başlığı",
+                titlePlaceholder: "Örn: Toplantı, Görüşme...",
+                startLabel: "Başlangıç",
+                endLabel: "Bitiş",
+                customerLabel: "Katılımcı / Müşteri",
+                guestNameLabel: "Manuel Misafir Adı (Zorunlu)",
+                descLabel: "Açıklama / Notlar",
+                descPlaceholder: "Görüşme notları veya detaylar...",
+                saveValidation: "Lütfen başlık, tarihler ve personel bilgilerini eksiksiz giriniz.",
+                noResourceWarning: "Önce ayarlardan personel eklemelisiniz.",
+            };
+    }
 }
 
 interface Customer {
@@ -35,7 +145,7 @@ interface Customer {
     phone?: string;
 }
 
-export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenantId, defaultCustomerId, profile, employees = [], preselectedEmployeeId }: EventDialogProps) {
+export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenantId, defaultCustomerId, profile, employees = [], preselectedEmployeeId, resourceType = "employee" }: EventDialogProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false); // For Popover
@@ -51,6 +161,11 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
     const [guestEmail, setGuestEmail] = useState("");
 
     const [customers, setCustomers] = useState<Customer[]>([]);
+
+    // Dinamik etiketler: seçilen kaynağın tipine göre güncellenir
+    const selectedEmployee = employees.find(e => e.id === employeeId);
+    const activeResourceType = selectedEmployee?.resource_type || resourceType;
+    const labels = getResourceLabels(activeResourceType);
 
     useEffect(() => {
         if (isOpen) {
@@ -131,7 +246,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
 
     const handleSaveEvent = async () => {
         // If past, validation might differ (we only update description)
-        if (!isPast && (!title || !startTime || !endTime || !employeeId)) return alert("Lütfen başlık, tarihler ve personel bilgilerini eksiksiz giriniz.");
+        if (!isPast && (!title || !startTime || !endTime || !employeeId)) return alert(labels.saveValidation);
 
         setLoading(true);
         const supabase = createClient();
@@ -320,18 +435,18 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{event ? (isPast ? "Geçmiş Etkinlik Detayı" : "Etkinliği Düzenle") : "Yeni Etkinlik/Randevu Oluştur"}</DialogTitle>
+                    <DialogTitle>{event ? (isPast ? "Geçmiş Etkinlik Detayı" : labels.editTitle) : labels.eventTitle}</DialogTitle>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
                     {/* Title */}
                     <div className="space-y-2 flex-1">
-                        <label className="text-xs uppercase font-semibold text-slate-500">Etkinlik Başlığı</label>
+                        <label className="text-xs uppercase font-semibold text-slate-500">{labels.titleLabel}</label>
                         <div className="flex gap-2">
                             <Input
                                 value={title}
                                 onChange={e => setTitle(e.target.value)}
-                                placeholder="Örn: Toplantı, Görüşme..."
+                                placeholder={labels.titlePlaceholder}
                                 className="flex-1"
                                 disabled={isPast}
                             />
@@ -359,7 +474,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                     {/* Date/Time */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs uppercase font-semibold text-slate-500">Başlangıç</label>
+                            <label className="text-xs uppercase font-semibold text-slate-500">{labels.startLabel}</label>
                             <Input
                                 type="datetime-local"
                                 value={startTime}
@@ -379,7 +494,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs uppercase font-semibold text-slate-500">Bitiş</label>
+                            <label className="text-xs uppercase font-semibold text-slate-500">{labels.endLabel}</label>
                             <Input
                                 type="datetime-local"
                                 value={endTime}
@@ -390,16 +505,16 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                         </div>
                     </div>
 
-                    {/* Employee Selection */}
+                    {/* Resource Selection (Employee / Villa / Room / etc.) */}
                     <div className="space-y-2">
-                        <label className="text-xs uppercase font-semibold text-slate-500">Personel *</label>
+                        <label className="text-xs uppercase font-semibold text-slate-500">{labels.resourceLabel}</label>
                         <select
                             value={employeeId}
                             onChange={(e) => setEmployeeId(e.target.value)}
                             disabled={isPast || employees.length === 0}
                             className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            <option value="" disabled>Personel Seçiniz...</option>
+                            <option value="" disabled>{labels.resourcePlaceholder}</option>
                             {employees.map((emp) => (
                                 <option key={emp.id} value={emp.id}>
                                     {emp.name} {emp.title ? `(${emp.title})` : ''}
@@ -407,13 +522,13 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                             ))}
                         </select>
                         {employees.length === 0 && (
-                            <p className="text-xs text-rose-500">Önce ayarlardan personel eklemelisiniz.</p>
+                            <p className="text-xs text-rose-500">{labels.noResourceWarning}</p>
                         )}
                     </div>
 
                     {/* Customer or Guest */}
                     <div className="space-y-2">
-                        <label className="text-xs uppercase font-semibold text-slate-500">Katılımcı / Müşteri</label>
+                        <label className="text-xs uppercase font-semibold text-slate-500">{labels.customerLabel}</label>
                         <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger asChild>
                                 <Button
@@ -497,7 +612,7 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
                         <>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs uppercase font-semibold text-slate-500">Manuel Misafir Adı (Zorunlu)</label>
+                                    <label className="text-xs uppercase font-semibold text-slate-500">{labels.guestNameLabel}</label>
                                     <div className="relative">
                                         <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                                         <Input
@@ -541,11 +656,11 @@ export function EventDialog({ isOpen, onClose, onSave, event, initialSlot, tenan
 
                     {/* Description - ALWAYS EDITABLE */}
                     <div className="space-y-2">
-                        <label className="text-xs uppercase font-semibold text-slate-500">Açıklama / Notlar</label>
+                        <label className="text-xs uppercase font-semibold text-slate-500">{labels.descLabel}</label>
                         <Textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            placeholder="Görüşme notları veya detaylar..."
+                            placeholder={labels.descPlaceholder}
                             className="resize-none h-20"
                         />
                     </div>

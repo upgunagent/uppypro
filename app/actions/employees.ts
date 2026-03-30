@@ -153,5 +153,6 @@ export async function updateResourceTypePreference(tenantId: string, resourceTyp
     }
 
     revalidatePath("/panel/settings");
+    revalidatePath("/panel/calendar");
     return { success: true };
 }

@@ -12,13 +12,7 @@ import { Plus, ChevronLeft, ChevronRight, Calendar as CalIcon, Users } from "luc
 import { DaySummaryDialog } from "./day-summary-dialog";
 import { EventDialog } from "./event-dialog";
 import { clsx } from "clsx";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { RESOURCE_TYPES } from "@/lib/resource-types";
 
 // Setup Localizer
 const locales = {
@@ -51,9 +45,10 @@ interface CalendarViewProps {
     userId: string;
     profile?: any; // Business Profile
     initialEmployees: any[];
+    resourceType?: string;
 }
 
-export function CalendarView({ tenantId, userId, profile, initialEmployees }: CalendarViewProps) {
+export function CalendarView({ tenantId, userId, profile, initialEmployees, resourceType = "employee" }: CalendarViewProps) {
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<View>(Views.MONTH);
     const [date, setDate] = useState(new Date());
@@ -271,19 +266,18 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                     {/* Employee Filter */}
                     <div className="flex items-center gap-2 min-w-[200px]">
                         <Users className="w-4 h-4 text-slate-400" />
-                        <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Kayıt Seçin" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tüm Kayıtlar</SelectItem>
-                                {initialEmployees.map((emp) => (
-                                    <SelectItem key={emp.id} value={emp.id}>
-                                        {emp.name} {emp.title ? `(${emp.title})` : ''}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <select
+                            value={selectedEmployeeId}
+                            onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                            className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1"
+                        >
+                            <option value="all">Tüm Kayıtlar</option>
+                            {initialEmployees.map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.name} {emp.title ? `(${emp.title})` : ''}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
@@ -326,7 +320,8 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
     return (
         <div className="h-full">
             <style>{`
-                .rbc-calendar { font-family: inherit; }
+                .rbc-calendar { font-family: inherit; overflow: visible; }
+                .rbc-toolbar { overflow: visible; }
                 .rbc-header { padding: 12px 0; font-weight: 600; font-size: 0.875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
                 .rbc-month-view { border: none; }
                 .rbc-day-bg { border-left: 1px solid #e2e8f0; }
@@ -361,7 +356,9 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                 slotPropGetter={slotPropGetter}
                 tooltipAccessor={(event) => {
                     const empName = event.resource?.tenant_employees?.name;
-                    const empText = empName ? `\n👤 Personel: ${empName}` : '';
+                    const resConfig = RESOURCE_TYPES.find(r => r.id === resourceType);
+                    const resLabel = resConfig?.label || "Personel";
+                    const empText = empName ? `\n👤 ${resLabel}: ${empName}` : '';
                     return `${event.title}\n${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}${empText}`;
                 }}
                 eventPropGetter={(event) => {
@@ -417,6 +414,7 @@ export function CalendarView({ tenantId, userId, profile, initialEmployees }: Ca
                 profile={profile}
                 employees={initialEmployees}
                 preselectedEmployeeId={selectedEmployeeId === "all" ? undefined : selectedEmployeeId}
+                resourceType={resourceType}
             />
 
             <DaySummaryDialog

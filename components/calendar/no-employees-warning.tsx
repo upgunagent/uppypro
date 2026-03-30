@@ -18,10 +18,11 @@ export function NoEmployeesWarning() {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="text-base font-semibold text-orange-900 mb-1">
-                        Kayıt Bulunamadı
+                        Kaynak Bulunamadı
                     </h3>
                     <p className="text-sm text-orange-700 leading-relaxed">
-                        Takvimi kullanabilmek için işletmenize en az bir personel veya hizmet kaynağı (örn: Oda, Tekne) eklemeniz gerekmektedir. 
+                        Takvimi kullanabilmek için işletmenize en az bir kaynak eklemeniz gerekmektedir. 
+                        Sektörünüze göre <strong>personel, villa/apart, oda, tekne, araç</strong> veya <strong>masa</strong> ekleyebilirsiniz.
                         Eklemek için <strong>Ayarlar → Takvim & Kaynak</strong> sayfasına gidin.
                     </p>
                     <div className="mt-4 flex items-center gap-3">
