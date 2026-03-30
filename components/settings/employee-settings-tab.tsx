@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Info, type LucideIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Info, type LucideIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
     addTenantEmployee,
@@ -26,7 +26,7 @@ import {
 
 /** Lucide ikon mapping — resource iconName → React component */
 const RESOURCE_ICONS: Record<string, LucideIcon> = {
-    User, DoorOpen, Ship, Car, UtensilsCrossed,
+    User, DoorOpen, Ship, Car, UtensilsCrossed, Home,
 };
 
 function ResourceIcon({ name, className }: { name: string; className?: string }) {

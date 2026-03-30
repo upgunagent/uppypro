@@ -471,6 +471,25 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
+    id: 'villa_rental', label: 'Villa / Apart Kiralama', iconName: 'Home',
+    placeholderOverrides: {
+      business_name: 'Örn: Çeşme Tatil Villaları, Kaş Apart Evleri',
+      ai_name: 'Örn: Tatil, Konak, Villa Asistan',
+      working_hours: 'Örn: Her gün 09:00-21:00, 7/24 WhatsApp',
+      appointment_duration: 'Örn: Gecelik, Haftalık konaklama',
+      duration_hint: 'Minimum 2 gece, haftalık kiralama (7 gece)',
+      employees: 'Kayıtlı villa ve apartlarınız otomatik yüklenecek',
+    },
+    extraQuestions: [
+      { id: 'property_types', label: 'Mülk Tipleri', placeholder: 'Örn: Müstakil villa, apart daire, bungalov, dağ evi, taş ev, tiny house', type: 'textarea', required: true },
+      { id: 'stay_policy', label: 'Konaklama Koşulları', placeholder: 'Örn: Check-in 15:00, Check-out 11:00, minimum 2 gece, depozito 3000 TL, temizlik ücreti 500 TL', type: 'textarea', required: true },
+      { id: 'amenities', label: 'Olanaklar & Özellikler', placeholder: 'Örn: Özel havuz, bahçe, mangal, WiFi, klima, şömine, jakuzi, otopark, denize yakınlık', type: 'textarea' },
+      { id: 'nearby_attractions', label: 'Çevre & Konum Bilgisi', placeholder: 'Örn: Denize 200m, markete 5 dk yürüme, Çeşme merkeze 10 dk, havaalalına 45 dk', type: 'textarea' },
+      { id: 'pricing_model', label: 'Fiyatlandırma', placeholder: 'Örn: Villa gecelik 3000-8000 TL, apart gecelik 1000-2500 TL, haftalık %15 indirim, sezon farklılıkları', type: 'textarea' },
+      { id: 'cancellation_policy', label: 'İptal Politikası', placeholder: 'Örn: 14 gün öncesine kadar ücretsiz iptal, 7 gün öncesi %50 iade, son 3 gün iade yok', type: 'textarea' },
+    ]
+  },
+  {
     id: 'boat_rental', label: 'Tekne & Yat Kiralama', iconName: 'Ship',
     placeholderOverrides: {
       business_name: 'Örn: Blue Voyage Yat Kiralama',

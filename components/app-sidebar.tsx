@@ -265,9 +265,10 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
 
 
     const [hasTrendyol, setHasTrendyol] = useState(false);
+    const [trendyolOrderCount, setTrendyolOrderCount] = useState(0);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-    // Check Trendyol connection
+    // Check Trendyol connection + new order count
     useEffect(() => {
         if (!tenantId) return;
         const supabase = createClient();
@@ -278,9 +279,31 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                 .eq('tenant_id', tenantId)
                 .eq('channel', 'trendyol')
                 .eq('status', 'connected');
-            setHasTrendyol((count || 0) > 0);
+            const connected = (count || 0) > 0;
+            setHasTrendyol(connected);
+
+            if (connected) {
+                try {
+                    const { getTrendyolNewOrderCount } = await import('@/app/(app)/panel/trendyol/actions');
+                    const orderCount = await getTrendyolNewOrderCount();
+                    setTrendyolOrderCount(orderCount);
+                } catch { /* ignore */ }
+            }
         };
         checkTrendyol();
+
+        // 60 saniyede bir yeni sipariş sayısını güncelle
+        const interval = setInterval(async () => {
+            if (hasTrendyol) {
+                try {
+                    const { getTrendyolNewOrderCount } = await import('@/app/(app)/panel/trendyol/actions');
+                    const orderCount = await getTrendyolNewOrderCount();
+                    setTrendyolOrderCount(orderCount);
+                } catch { /* ignore */ }
+            }
+        }, 60000);
+
+        return () => clearInterval(interval);
     }, [tenantId]);
 
     useEffect(() => {
@@ -540,6 +563,13 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                                 height={50}
                                 className="rounded-full object-cover drop-shadow-[0_4px_8px_rgba(0,0,0,0.25)] transition-transform duration-300 group-hover:scale-110 active:scale-95"
                             />
+
+                            {/* Sipariş Badge */}
+                            {trendyolOrderCount > 0 && (
+                                <div className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[22px] h-[22px] px-1 bg-orange-500 border-[2px] border-white text-white text-[11px] font-bold rounded-full shadow-lg z-10 animate-in zoom-in">
+                                    {trendyolOrderCount > 99 ? '99+' : trendyolOrderCount}
+                                </div>
+                            )}
 
                             {/* Hover Tooltip */}
                             <div className="absolute left-[64px] px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-lg opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">

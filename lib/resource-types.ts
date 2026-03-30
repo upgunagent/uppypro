@@ -3,7 +3,7 @@
  * Her kaynak tipi için form alanları, etiketler ve placeholder'lar
  */
 
-export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table";
+export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table" | "villa";
 
 export interface AttributeField {
     key: string;
@@ -197,6 +197,60 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "reservable", label: "Rezerve Edilebilir" },
             { key: "window_seat", label: "Cam Kenarı" },
             { key: "shape", label: "Masa Şekli" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+    },
+    {
+        id: "villa",
+        label: "Villa / Apart",
+        iconName: "Home",
+        namePlaceholder: "Örn: Deniz Villa, Bahçe Apart 1, Sunset Suite",
+        nameLabel: "Mülk Adı",
+        titleLabel: "Mülk Tipi",
+        titlePlaceholder: "Örn: Villa, Apart, Bungalov, Müstakil Ev",
+        attributeFields: [
+            { key: "property_type", label: "Mülk Kategorisi", type: "select", options: ["Villa", "Apart Daire", "Bungalov", "Müstakil Ev", "Dağ Evi", "Taş Ev", "Çiftlik Evi", "Tiny House", "Container Ev"] },
+            { key: "capacity", label: "Kapasite", type: "number", placeholder: "6", suffix: "kişi" },
+            { key: "bedroom_count", label: "Yatak Odası", type: "number", placeholder: "3", suffix: "oda" },
+            { key: "bathroom_count", label: "Banyo Sayısı", type: "number", placeholder: "2", suffix: "banyo" },
+            { key: "size_m2", label: "Büyüklük", type: "number", placeholder: "120", suffix: "m²" },
+            { key: "view", label: "Manzara", type: "select", options: ["Deniz", "Göl", "Dağ", "Orman", "Şehir", "Bahçe", "Havuz", "Doğa"] },
+            { key: "pool", label: "Özel Havuz", type: "checkbox" },
+            { key: "garden", label: "Bahçe", type: "checkbox" },
+            { key: "bbq", label: "Mangal / Barbekü", type: "checkbox" },
+            { key: "wifi", label: "WiFi", type: "checkbox" },
+            { key: "parking", label: "Otopark", type: "checkbox" },
+            { key: "ac", label: "Klima", type: "checkbox" },
+            { key: "heating", label: "Isıtma", type: "checkbox" },
+            { key: "pet_friendly", label: "Evcil Hayvan Kabul", type: "checkbox" },
+            { key: "min_stay", label: "Minimum Konaklama", type: "number", placeholder: "2", suffix: "gece" },
+        ],
+        extraInfoPlaceholder: "Örn: Denize 50m, jakuzi mevcut, özel plaj, tam donanımlı mutfak, şömine var, bahçede salıncak...",
+        tableColumns: [
+            { key: "name", label: "Mülk Adı" },
+            { key: "title", label: "Tip" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "view", label: "Manzara" },
+        ],
+        batchPlaceholder: "Deniz Villa\nBahçe Villa\nApart 1\nApart 2\nBungalov 1",
+        excelMappableFields: [
+            { key: "name", label: "Mülk Adı" },
+            { key: "title", label: "Mülk Tipi" },
+            { key: "property_type", label: "Mülk Kategorisi" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "bedroom_count", label: "Yatak Odası" },
+            { key: "bathroom_count", label: "Banyo Sayısı" },
+            { key: "size_m2", label: "m²" },
+            { key: "view", label: "Manzara" },
+            { key: "pool", label: "Havuz" },
+            { key: "garden", label: "Bahçe" },
+            { key: "bbq", label: "Mangal" },
+            { key: "wifi", label: "WiFi" },
+            { key: "parking", label: "Otopark" },
+            { key: "ac", label: "Klima" },
+            { key: "heating", label: "Isıtma" },
+            { key: "pet_friendly", label: "Evcil Hayvan" },
+            { key: "min_stay", label: "Min. Konaklama" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
     },

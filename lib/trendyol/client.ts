@@ -44,6 +44,9 @@ export interface TrendyolOrder {
     quantity: number;
     amount: number;
     barcode: string;
+    merchantSku?: string;
+    productCode?: number;
+    imageUrl?: string;
   }[];
   shipmentAddress?: {
     firstName: string;

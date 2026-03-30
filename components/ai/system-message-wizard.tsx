@@ -41,6 +41,7 @@ const SECTOR_RESOURCE_MAP: Record<string, ResourceType[]> = {
   restaurant: ["table"],
   car_rental: ["vehicle"],
   boat_rental: ["boat"],
+  villa_rental: ["villa"],
   // Personel bazlı sektörler — ayrıca belirtmeye gerek yok, hepsi employee
 };
 
@@ -116,6 +117,7 @@ export function SystemMessageWizard({ tenantId, onComplete, onClose }: Props) {
       boat: "Tekne",
       vehicle: "Araç",
       table: "Masa",
+      villa: "Villa / Apart",
     };
     return labels[type] || type;
   }
