@@ -30,6 +30,19 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# diagnostic scripts (may contain secrets)
+check_*.js
+debug_*.js
+debug_*.ts
+test_*.js
+test-*.js
+diagnose.*
+verify_*.js
+sim_*.js
+*.log
+result.json
+debug.json
+
 # env files (can opt-in for committing if needed)
 .env*
 
