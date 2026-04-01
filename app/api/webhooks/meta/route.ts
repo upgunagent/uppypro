@@ -331,7 +331,8 @@ export async function POST(request: Request) {
                     let tenantIdForEvents = null;
 
                     if (recipientIdForTenant) {
-                        const { data: conn } = await supabaseAdmin
+                        // Try ig_user_id first
+                        let { data: conn } = await supabaseAdmin
                             .from("channel_connections")
                             .select("tenant_id")
                             .eq("channel", "instagram")
@@ -339,6 +340,19 @@ export async function POST(request: Request) {
                             .order('created_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();
+                        
+                        // Fallback: try page_id (IGSID can differ from ig_user_id)
+                        if (!conn) {
+                            const { data: conn2 } = await supabaseAdmin
+                                .from("channel_connections")
+                                .select("tenant_id")
+                                .eq("channel", "instagram")
+                                .eq("status", "connected")
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .maybeSingle();
+                            conn = conn2;
+                        }
                         if (conn) tenantIdForEvents = conn.tenant_id;
                     }
 
@@ -458,14 +472,41 @@ export async function POST(request: Request) {
             let accessToken = null;
 
             if (channel === 'instagram') {
-                const { data: conn } = await supabaseAdmin
+                // Try matching by ig_user_id first
+                let { data: conn } = await supabaseAdmin
                     .from("channel_connections")
-                    .select("tenant_id, access_token_encrypted")
+                    .select("tenant_id, access_token_encrypted, meta_identifiers")
                     .eq("channel", "instagram")
                     .contains("meta_identifiers", { ig_user_id: recipientId })
                     .order('created_at', { ascending: false })
                     .limit(1)
                     .maybeSingle();
+
+                // Fallback: If ig_user_id doesn't match, search all connected IG accounts
+                // This handles cases where IGSID (recipient) differs from ig_user_id (OAuth)
+                if (!conn) {
+                    console.log(`[Webhook] ig_user_id match failed for ${recipientId}, trying fallback...`);
+                    const { data: conn2 } = await supabaseAdmin
+                        .from("channel_connections")
+                        .select("tenant_id, access_token_encrypted, meta_identifiers")
+                        .eq("channel", "instagram")
+                        .eq("status", "connected")
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    conn = conn2;
+
+                    // Update the stored ig_user_id so future lookups work directly
+                    if (conn && recipientId) {
+                        console.log(`[Webhook] Updating ig_user_id for tenant ${conn.tenant_id}: ${conn.meta_identifiers?.ig_user_id} -> ${recipientId}`);
+                        const updatedMeta = { ...conn.meta_identifiers, ig_user_id: recipientId, ig_id: recipientId };
+                        await supabaseAdmin
+                            .from("channel_connections")
+                            .update({ meta_identifiers: updatedMeta })
+                            .eq("tenant_id", conn.tenant_id)
+                            .eq("channel", "instagram");
+                    }
+                }
 
                 if (conn) {
                     tenantId = conn.tenant_id;
