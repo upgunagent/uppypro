@@ -81,6 +81,18 @@ export async function fetchInstagramProfile(username: string): Promise<{ success
         const profilePic = data.business_discovery?.profile_picture_url;
 
         if (profilePic) {
+            // Upload to Supabase Storage for a permanent URL
+            // Instagram CDN URLs expire after a few days/weeks
+            try {
+                const { uploadProfilePic } = await import("@/lib/meta");
+                const permanentUrl = await uploadProfilePic(cleanUsername, profilePic);
+                if (permanentUrl) {
+                    return { success: true, url: permanentUrl };
+                }
+            } catch (uploadErr) {
+                console.error("Failed to upload profile pic to storage:", uploadErr);
+            }
+            // Fallback to CDN URL if upload fails
             return { success: true, url: profilePic };
         } else {
             return { success: false, error: "Profil fotoğrafı bulunamadı." };
