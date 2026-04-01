@@ -214,7 +214,7 @@ export async function sendToChannel(
                 return { success: false, error: "WhatsApp Phone Number ID missing in connection" };
             }
 
-            url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+            url = `https://graph.facebook.com/v24.0/${phoneNumberId}/messages`;
 
             if (type === 'text') {
                 body = {
@@ -259,7 +259,7 @@ export async function sendToChannel(
                                             const senderId = identifiers?.phone_number_id;
 
                                             if (senderId) {
-                                                const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${senderId}/media`, {
+                                                const uploadRes = await fetch(`https://graph.facebook.com/v24.0/${senderId}/media`, {
                                                     method: "POST",
                                                     headers: { "Authorization": `Bearer ${accessToken}` },
                                                     body: formData

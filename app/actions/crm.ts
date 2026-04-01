@@ -36,14 +36,14 @@ export async function fetchInstagramProfile(username: string): Promise<{ success
         }
 
         const accessToken = connection.access_token_encrypted;
-        let igId = connection.meta_identifiers?.ig_id;
+        let igId = connection.meta_identifiers?.ig_id || connection.meta_identifiers?.ig_user_id;
         const pageId = connection.meta_identifiers?.page_id;
 
         // Fallback: If ig_id is missing but we have page_id, try to fetch connected IG account dynamically
         if (!igId && pageId) {
             try {
                 // Fetch linked IG account from Page
-                const pageResp = await fetch(`https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${accessToken}`);
+                const pageResp = await fetch(`https://graph.facebook.com/v24.0/${pageId}?fields=instagram_business_account&access_token=${accessToken}`);
                 const pageData = await pageResp.json();
 
                 if (pageData.instagram_business_account?.id) {
@@ -65,7 +65,7 @@ export async function fetchInstagramProfile(username: string): Promise<{ success
         // Clean username
         const cleanUsername = username.replace('@', '').trim();
 
-        const url = `https://graph.facebook.com/v18.0/${igId}?fields=business_discovery.username(${cleanUsername}){profile_picture_url}&access_token=${accessToken}`;
+        const url = `https://graph.facebook.com/v24.0/${igId}?fields=business_discovery.username(${cleanUsername}){profile_picture_url}&access_token=${accessToken}`;
 
         const response = await fetch(url);
         const data = await response.json();

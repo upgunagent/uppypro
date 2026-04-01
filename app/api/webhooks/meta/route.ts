@@ -473,7 +473,7 @@ export async function POST(request: Request) {
 
                     if (accessToken && eventData.sender_id) {
                         try {
-                            const igProfileUrl = `https://graph.facebook.com/v21.0/${eventData.sender_id}?fields=username,name,profile_pic&access_token=${accessToken}`;
+                            const igProfileUrl = `https://graph.facebook.com/v24.0/${eventData.sender_id}?fields=username,name,profile_pic&access_token=${accessToken}`;
                             const profileRes = await fetch(igProfileUrl);
                             const profileData = await profileRes.json();
                             if (profileData.username) {
