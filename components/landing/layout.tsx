@@ -19,6 +19,7 @@ const SECTORS = [
     { name: "Sigorta", slug: "sigorta", emoji: "🛡️" },
     { name: "Tekne & Yat Kiralama", slug: "tekne-yat-kiralama", emoji: "⛵" },
     { name: "Villa & Apart Kiralama", slug: "villa-apart-kiralama", emoji: "🏡" },
+    { name: "Stüdyo Kiralama", slug: "studyo-kiralama", emoji: "🎤" },
 ];
 
 export function LandingHeader() {

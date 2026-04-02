@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const sectors = [
         "guzellik-salonu", "klinik-saglik", "otel-konaklama", "restoran-kafe",
         "e-ticaret", "dis-klinigi", "egitim", "emlak", "otomotiv", "sigorta",
-        "tekne-yat-kiralama", "villa-apart-kiralama",
+        "tekne-yat-kiralama", "villa-apart-kiralama", "studyo-kiralama",
     ];
 
     const sectorPages = sectors.map((slug) => ({
