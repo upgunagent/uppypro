@@ -863,25 +863,94 @@ async function processAIResponseInBackground(
                         n8nStatus = "BUILT_IN_SUCCESS";
                         console.log(`[AI Agent] Built-in reply: ${replyText.substring(0, 50)}...`);
 
-                        await supabaseAdmin
-                            .from("messages")
-                            .insert({
-                                tenant_id: tenantId,
-                                conversation_id: conversation.id,
-                                direction: 'OUT',
-                                sender: 'BOT',
-                                text: replyText,
-                                message_type: 'text',
-                                is_read: true
-                            });
+                        // Parse [SEND_PHOTO:resource_name] tags from AI response
+                        const photoRegex = /\[SEND_PHOTO:(.+?)\]/g;
+                        let photoMatch;
+                        const photosToSend: string[] = [];
+                        while ((photoMatch = photoRegex.exec(replyText)) !== null) {
+                            photosToSend.push(photoMatch[1].trim());
+                        }
 
-                        const { sendToChannel } = await import("@/lib/meta");
-                        await sendToChannel(
-                            tenantId,
-                            channel as "whatsapp" | "instagram",
-                            eventData.sender_id,
-                            replyText
-                        );
+                        // Clean text: remove [SEND_PHOTO:...] tags
+                        const cleanText = replyText.replace(photoRegex, '').replace(/\n{3,}/g, '\n\n').trim();
+
+                        // Save clean text to messages table
+                        if (cleanText) {
+                            await supabaseAdmin
+                                .from("messages")
+                                .insert({
+                                    tenant_id: tenantId,
+                                    conversation_id: conversation.id,
+                                    direction: 'OUT',
+                                    sender: 'BOT',
+                                    text: cleanText,
+                                    message_type: 'text',
+                                    is_read: true
+                                });
+
+                            const { sendToChannel } = await import("@/lib/meta");
+                            await sendToChannel(
+                                tenantId,
+                                channel as "whatsapp" | "instagram",
+                                eventData.sender_id,
+                                cleanText
+                            );
+                        }
+
+                        // Send photos as separate image messages
+                        if (photosToSend.length > 0) {
+                            try {
+                                // Fetch tenant resources to find photo URLs
+                                const { data: resources } = await supabaseAdmin
+                                    .from("tenant_employees")
+                                    .select("name, attributes")
+                                    .eq("tenant_id", tenantId);
+
+                                const { sendToChannel } = await import("@/lib/meta");
+
+                                for (const resourceName of photosToSend) {
+                                    const resource = resources?.find(
+                                        (r: any) => r.name.toLowerCase() === resourceName.toLowerCase()
+                                    );
+                                    const photoUrl = resource?.attributes?.cover_photo;
+
+                                    if (photoUrl) {
+                                        // Small delay to preserve message order
+                                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                                        const caption = `📸 ${resource.name}`;
+                                        await sendToChannel(
+                                            tenantId,
+                                            channel as "whatsapp" | "instagram",
+                                            eventData.sender_id,
+                                            caption,
+                                            'image',
+                                            photoUrl
+                                        );
+
+                                        // Save photo message to DB
+                                        await supabaseAdmin
+                                            .from("messages")
+                                            .insert({
+                                                tenant_id: tenantId,
+                                                conversation_id: conversation.id,
+                                                direction: 'OUT',
+                                                sender: 'BOT',
+                                                text: caption,
+                                                message_type: 'image',
+                                                media_url: photoUrl,
+                                                is_read: true
+                                            });
+
+                                        console.log(`[AI Agent] Sent cover photo for: ${resourceName}`);
+                                    } else {
+                                        console.warn(`[AI Agent] No cover photo found for resource: ${resourceName}`);
+                                    }
+                                }
+                            } catch (photoErr: any) {
+                                console.error("[AI Agent] Error sending resource photos:", photoErr.message);
+                            }
+                        }
                     } else {
                         n8nStatus = "BUILT_IN_NO_RESPONSE";
                     }

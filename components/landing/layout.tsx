@@ -17,6 +17,8 @@ const SECTORS = [
     { name: "Emlak", slug: "emlak", emoji: "🏠" },
     { name: "Otomotiv", slug: "otomotiv", emoji: "🚗" },
     { name: "Sigorta", slug: "sigorta", emoji: "🛡️" },
+    { name: "Tekne & Yat Kiralama", slug: "tekne-yat-kiralama", emoji: "⛵" },
+    { name: "Villa & Apart Kiralama", slug: "villa-apart-kiralama", emoji: "🏡" },
 ];
 
 export function LandingHeader() {

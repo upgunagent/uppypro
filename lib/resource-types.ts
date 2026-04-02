@@ -3,12 +3,12 @@
  * Her kaynak tipi için form alanları, etiketler ve placeholder'lar
  */
 
-export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table" | "villa";
+export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table" | "villa" | "studio";
 
 export interface AttributeField {
     key: string;
     label: string;
-    type: "text" | "number" | "select" | "checkbox";
+    type: "text" | "number" | "select" | "multi-select" | "checkbox";
     placeholder?: string;
     options?: string[];
     suffix?: string; // "kişi", "metre" gibi birim
@@ -30,6 +30,12 @@ export interface ResourceTypeConfig {
     batchPlaceholder: string;
     /** Excel sütun eşleştirme seçenekleri */
     excelMappableFields: { key: string; label: string }[];
+    /** Fotoğraf yükleme etkin mi? */
+    photosEnabled: boolean;
+    /** Fotoğraf yükleme alanı altındaki bilgilendirme metni */
+    photoHint: string;
+    /** Detay URL alanı altındaki bilgilendirme metni */
+    detailUrlHint: string;
 }
 
 export const RESOURCE_TYPES: ResourceTypeConfig[] = [
@@ -53,6 +59,9 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "title", label: "Ünvan" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: false,
+        photoHint: "",
+        detailUrlHint: "",
     },
     {
         id: "room",
@@ -64,7 +73,7 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
         titlePlaceholder: "Örn: Standart, Deluxe, Suite, Aile Odası",
         attributeFields: [
             { key: "capacity", label: "Kapasite", type: "number", placeholder: "2", suffix: "kişi" },
-            { key: "bed_type", label: "Yatak Tipi", type: "select", options: ["Tek Kişilik", "Çift Kişilik", "King Size", "Twin (İki Tek)", "Ranza"] },
+            { key: "bed_type", label: "Yatak Tipi", type: "multi-select", options: ["Tek Kişilik", "Çift Kişilik", "King Size", "Twin (İki Tek)", "Ranza"] },
             { key: "bathroom", label: "Banyo", type: "checkbox" },
             { key: "view", label: "Manzara", type: "select", options: ["Deniz", "Kara", "Bahçe", "Şehir", "Havuz", "Dağ"] },
             { key: "floor", label: "Kat", type: "number", placeholder: "2" },
@@ -89,6 +98,9 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "size_m2", label: "m²" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: true,
+        photoHint: "Odanın kapak fotoğrafını yükleyin. AI asistan müşteriye oda önerirken bu görseli gönderecektir.",
+        detailUrlHint: "Otelinizin web sitesinde bu odanın detay sayfası varsa URL'sini ekleyin. AI asistan müşteriye 'Tüm fotoğraflar ve detaylar için' bu linki paylaşacaktır.",
     },
     {
         id: "boat",
@@ -125,6 +137,9 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "crew", label: "Mürettebat" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: true,
+        photoHint: "Teknenin kapak fotoğrafını yükleyin. AI asistan müşteriye tekne önerirken bu görseli gönderecektir.",
+        detailUrlHint: "Web sitenizde bu teknenin detay veya galeri sayfası varsa URL'sini ekleyin. AI asistan müşteriye 'Daha fazla fotoğraf ve detaylar için' bu linki paylaşacaktır.",
     },
     {
         id: "vehicle",
@@ -161,6 +176,9 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "transmission", label: "Vites" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: true,
+        photoHint: "Aracın kapak fotoğrafını yükleyin. AI asistan müşteriye araç önerirken bu görseli gönderecektir.",
+        detailUrlHint: "Web sitenizde bu aracın detay sayfası varsa URL'sini ekleyin. AI asistan müşteriye 'Araç detayları için' bu linki paylaşacaktır.",
     },
     {
         id: "table",
@@ -199,6 +217,9 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "shape", label: "Masa Şekli" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: true,
+        photoHint: "Masa veya alanın fotoğrafını yükleyin. AI asistan müşteriye rezervasyon önerirken bu görseli paylaşabilir.",
+        detailUrlHint: "Restoranınızın web sitesinde mekan fotoğraflarının olduğu sayfa varsa URL'sini ekleyin.",
     },
     {
         id: "villa",
@@ -253,6 +274,52 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
             { key: "min_stay", label: "Min. Konaklama" },
             { key: "extra_info", label: "Ek Bilgiler" },
         ],
+        photosEnabled: true,
+        photoHint: "Mülkün kapak fotoğrafını yükleyin. AI asistan müşteriye villa/apart önerirken bu görseli gönderecektir.",
+        detailUrlHint: "Web sitenizde bu mülkün detaylı galeri sayfası varsa URL'sini ekleyin. AI asistan müşteriye 'Tüm fotoğraflar ve detaylar için' bu linki paylaşacaktır.",
+    },
+    {
+        id: "studio",
+        label: "Stüdyo",
+        iconName: "Mic",
+        namePlaceholder: "Örn: Studio A, Kaya Records, Ana Sahne",
+        nameLabel: "Stüdyo Adı",
+        titleLabel: "Stüdyo Tipi",
+        titlePlaceholder: "Örn: Müzik Kayıt, Fotoğraf, Video, Film",
+        attributeFields: [
+            { key: "studio_type", label: "Stüdyo Türü", type: "select", options: ["Müzik Kayıt", "Fotoğraf", "Video", "Film"] },
+            { key: "capacity", label: "Kapasite", type: "number", placeholder: "5", suffix: "kişi" },
+            { key: "size_m2", label: "Alan", type: "number", placeholder: "40", suffix: "m²" },
+            { key: "hourly_rate", label: "Saatlik Ücret", type: "text", placeholder: "Örn: 500 TL/saat" },
+            { key: "daily_rate", label: "Günlük Ücret", type: "text", placeholder: "Örn: 3000 TL/gün" },
+            { key: "soundproof", label: "Ses Yalıtımlı", type: "checkbox" },
+            { key: "ac", label: "Klima", type: "checkbox" },
+            { key: "parking", label: "Otopark", type: "checkbox" },
+            { key: "wifi", label: "Wi-Fi", type: "checkbox" },
+            { key: "equipment", label: "Sağlanan Ekipman", type: "multi-select", options: ["Mikrofon", "Mikser", "Amplifikatör", "Davul Seti", "Piyano/Klavye", "Işık Sistemi", "Green Screen", "Kamera", "Tripod", "Fon Perde", "Reflektör", "Teleprompter"] },
+        ],
+        extraInfoPlaceholder: "Örn: Profesyonel ses mühendisi desteği mevcut, 24 saat açık, kayıt sonrası mix-mastering hizmeti...",
+        tableColumns: [
+            { key: "name", label: "Stüdyo" },
+            { key: "title", label: "Tip" },
+            { key: "studio_type", label: "Tür" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "size_m2", label: "m²" },
+        ],
+        batchPlaceholder: "Studio A\nStudio B\nStudio C",
+        excelMappableFields: [
+            { key: "name", label: "Stüdyo Adı" },
+            { key: "title", label: "Stüdyo Tipi" },
+            { key: "studio_type", label: "Tür" },
+            { key: "capacity", label: "Kapasite" },
+            { key: "size_m2", label: "Alan (m²)" },
+            { key: "hourly_rate", label: "Saatlik Ücret" },
+            { key: "daily_rate", label: "Günlük Ücret" },
+            { key: "extra_info", label: "Ek Bilgiler" },
+        ],
+        photosEnabled: true,
+        photoHint: "Stüdyonuzun kapak fotoğrafını yükleyin. AI asistan müşteriye stüdyo önerirken bu görseli gönderecektir.",
+        detailUrlHint: "Web sitenizde bu stüdyonun detaylı tanıtım sayfası varsa URL'sini ekleyin. AI asistan müşteriye 'Detaylar ve görseller için' bu linki paylaşacaktır.",
     },
 ];
 
@@ -272,6 +339,8 @@ export function formatResourceAttributes(resource: any): string {
 
         if (field.type === "checkbox") {
             parts.push(field.label);
+        } else if (Array.isArray(val)) {
+            if (val.length > 0) parts.push(val.join(" + "));
         } else if (field.suffix) {
             parts.push(`${val} ${field.suffix}`);
         } else {

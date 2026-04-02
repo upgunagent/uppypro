@@ -506,6 +506,24 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
+    id: 'studio_rental', label: 'Stüdyo Kiralama', iconName: 'Mic',
+    placeholderOverrides: {
+      business_name: 'Örn: SoundWave Studios, Lens Fotoğraf Stüdyosu',
+      ai_name: 'Örn: Studio, Asistan',
+      working_hours: 'Örn: Pzt-Cmt 09:00-22:00, Pazar 10:00-18:00',
+      appointment_duration: 'Örn: Saatlik (1-8 saat), Günlük',
+      duration_hint: 'Kayıt seansı (2-4 saat), Fotoğraf çekimi (1-3 saat), Video prodüksiyon (4-8 saat)',
+      employees: 'Kayıtlı stüdyolarınız otomatik yüklenecek',
+    },
+    extraQuestions: [
+      { id: 'studio_types', label: 'Stüdyo Tipleri', placeholder: 'Örn: Müzik kayıt stüdyosu, fotoğraf stüdyosu, video prodüksiyon, film seti, podcast stüdyosu', type: 'textarea', required: true },
+      { id: 'equipment_services', label: 'Sağlanan Ekipman & Hizmetler', placeholder: 'Örn: Profesyonel mikrofon, mikser, ışık sistemi, green screen, kamera, ses mühendisi desteği, mix-mastering', type: 'textarea', required: true },
+      { id: 'booking_policy', label: 'Rezervasyon Koşulları', placeholder: 'Örn: Minimum 2 saat, iptal 24 saat öncesine kadar ücretsiz, %50 kapora, ekipman hasarı müşteriye aittir', type: 'textarea', required: true },
+      { id: 'pricing_model', label: 'Fiyatlandırma', placeholder: 'Örn: Müzik stüdyosu 500 TL/saat, fotoğraf stüdyosu 300 TL/saat, günlük paket %20 indirimli, ses mühendisi +200 TL/saat', type: 'textarea' },
+      { id: 'additional_services', label: 'Ek Hizmetler', placeholder: 'Örn: Ses mühendisi, ışıkçı, makyöz, catering, mix-mastering, renk düzeltme, video kurgu', type: 'textarea' },
+    ]
+  },
+  {
     id: 'other', label: 'Diğer Sektör', iconName: 'Building',
     placeholderOverrides: {
       business_name: 'Örn: Firma adınız',
@@ -551,6 +569,14 @@ export const FIXED_TOOL_RULES = `
 - Ürün fotoğrafı ise: ürünü tanımla, bilgi ver
 - Ekran görüntüsü ise: sorunu anla, çözüm öner
 - "Göremiyorum" deme, görseli incele ve yanıt ver.
+
+## Kaynak Fotoğraf Paylaşım Kuralları
+- Müşteriye bir kaynak (oda, villa, tekne, araç vb.) önerdiğinde ve o kaynağın kapak fotoğrafı (cover_photo) varsa, görseli paylaş.
+- Fotoğraf göndermek için mesajına [SEND_PHOTO:kaynak_adı] formatını ekle. Örnek: [SEND_PHOTO:Sunset Villa]
+- Her kaynak önerisinde kapak fotoğrafını gönder. Müşteri detay isterse veya daha fazla fotoğraf görmek isterse detay URL'sini paylaş.
+- Eğer kaynağın detay URL'si (detail_url) varsa, mesajına "📸 Tüm fotoğraflar ve detaylar için: [URL]" satırını ekle.
+- Asla fotoğraf URL'sini doğrudan text mesaj olarak gönderme. Her zaman [SEND_PHOTO:kaynak_adı] formatını kullan.
+- Fotoğrafı yalnızca kaynak hakkında bilgi verirken gönder. Genel sohbette fotoğraf gönderme.
 `.trim();
 
 // Gemini'ye gönderilen meta-prompt (üretim talimatı)

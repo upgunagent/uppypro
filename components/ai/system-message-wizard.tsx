@@ -10,7 +10,7 @@ import {
   User, DoorOpen, Ship, Car, UtensilsCrossed, Leaf, Pen, Building2, Scissors, Syringe,
   HeartPulse, Wrench, ShoppingBag, Stethoscope, Heart, Camera, Brain, Gauge,
   PartyPopper, Apple, Calculator, Home, GraduationCap, Dumbbell, PawPrint, Scale,
-  SprayCan, Printer, Eye, Flower2, Ruler, Pill, Building, type LucideIcon
+  SprayCan, Printer, Eye, Flower2, Ruler, Pill, Building, Mic, type LucideIcon
 } from "lucide-react";
 import { sectors, commonQuestions, type SectorDefinition } from "@/lib/ai/system-message-template";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +21,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Sparkles, Leaf, Pen, Building2, Scissors, Syringe, HeartPulse, Wrench, ShoppingBag,
   Stethoscope, Heart, Camera, Brain, UtensilsCrossed, Gauge, Car, PartyPopper, Apple,
   Calculator, Home, GraduationCap, Dumbbell, PawPrint, Scale, SprayCan, Printer, Eye,
-  Flower2, Ruler, Pill, Ship, Building, User, DoorOpen,
+  Flower2, Ruler, Pill, Ship, Building, User, DoorOpen, Mic,
 };
 
 function SectorIcon({ name, className }: { name: string; className?: string }) {
@@ -42,6 +42,7 @@ const SECTOR_RESOURCE_MAP: Record<string, ResourceType[]> = {
   car_rental: ["vehicle"],
   boat_rental: ["boat"],
   villa_rental: ["villa"],
+  studio_rental: ["studio"],
   // Personel bazlı sektörler — ayrıca belirtmeye gerek yok, hepsi employee
 };
 
@@ -143,7 +144,16 @@ export function SystemMessageWizard({ tenantId, onComplete, onClose }: Props) {
         const attrs = formatResourceAttributes(r);
         const titlePart = r.title ? ` (${r.title})` : "";
         const attrsPart = attrs ? ` — ${attrs}` : "";
-        lines.push(`- ${r.name}${titlePart}${attrsPart}`);
+
+        // Kapak fotoğrafı bilgisi
+        const coverPhoto = r.attributes?.cover_photo;
+        const photoPart = coverPhoto ? ` | 📸 Kapak fotoğrafı mevcut (cover_photo: ${coverPhoto})` : "";
+
+        // Detay URL bilgisi  
+        const detailUrl = r.attributes?.detail_url;
+        const urlPart = detailUrl ? ` | 🔗 Detay URL: ${detailUrl}` : "";
+
+        lines.push(`- ${r.name}${titlePart}${attrsPart}${photoPart}${urlPart}`);
       }
     }
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Info, type LucideIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Info, Camera, X as XIcon, ImageIcon, Link2, Loader2, Mic, type LucideIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
     addTenantEmployee,
@@ -16,6 +16,11 @@ import {
     deleteTenantEmployee,
     updateResourceTypePreference,
 } from "@/app/actions/employees";
+import {
+    uploadResourceCoverPhoto,
+    deleteResourceCoverPhoto,
+    updateResourceDetailUrl,
+} from "@/app/actions/resource-photos";
 import {
     RESOURCE_TYPES,
     getResourceTypeConfig,
@@ -26,7 +31,7 @@ import {
 
 /** Lucide ikon mapping — resource iconName → React component */
 const RESOURCE_ICONS: Record<string, LucideIcon> = {
-    User, DoorOpen, Ship, Car, UtensilsCrossed, Home,
+    User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Mic,
 };
 
 function ResourceIcon({ name, className }: { name: string; className?: string }) {
@@ -68,11 +73,23 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
     const [attributes, setAttributes] = useState<Record<string, any>>({});
     const [extraInfo, setExtraInfo] = useState("");
 
+    // Photo & Detail URL State
+    const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
+    const [detailUrl, setDetailUrl] = useState("");
+    const [photoUploading, setPhotoUploading] = useState(false);
+    const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+    const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+    const photoInputRef = useRef<HTMLInputElement>(null);
+
     // Batch State
     const [batchNames, setBatchNames] = useState("");
     const [batchTitle, setBatchTitle] = useState("");
     const [batchAttributes, setBatchAttributes] = useState<Record<string, any>>({});
     const [batchExtraInfo, setBatchExtraInfo] = useState("");
+    const [batchPhotoFile, setBatchPhotoFile] = useState<File | null>(null);
+    const [batchPhotoPreview, setBatchPhotoPreview] = useState<string | null>(null);
+    const [batchDetailUrl, setBatchDetailUrl] = useState("");
+    const batchPhotoInputRef = useRef<HTMLInputElement>(null);
 
     // Excel State
     const [excelData, setExcelData] = useState<any[]>([]);
@@ -99,6 +116,10 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
         setTitle("");
         setAttributes({});
         setExtraInfo("");
+        setCoverPhotoUrl(null);
+        setDetailUrl("");
+        setPendingPhotoFile(null);
+        setPendingPhotoPreview(null);
         setIsDialogOpen(true);
     };
 
@@ -108,12 +129,49 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
         setTitle(employee.title || "");
         setAttributes(employee.attributes || {});
         setExtraInfo(employee.extra_info || "");
+        setCoverPhotoUrl(employee.attributes?.cover_photo || null);
+        setDetailUrl(employee.attributes?.detail_url || "");
         setIsDialogOpen(true);
     };
 
     const openDeleteDialog = (employee: Employee) => {
         setSelectedEmployee(employee);
         setIsDeleteDialogOpen(true);
+    };
+
+    // Photo upload handler
+    const handlePhotoUpload = async (file: File, resourceId: string) => {
+        setPhotoUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        const result = await uploadResourceCoverPhoto(resourceId, tenantId, formData);
+        if (result.success && result.url) {
+            setCoverPhotoUrl(result.url);
+            // Update local employee state
+            setEmployees((prev) => prev.map((e) =>
+                e.id === resourceId ? { ...e, attributes: { ...e.attributes, cover_photo: result.url } } : e
+            ));
+            toast({ title: "Başarılı", description: "Kapak fotoğrafı yüklendi." });
+        } else {
+            toast({ variant: "destructive", title: "Hata", description: result.error || "Fotoğraf yüklenemedi." });
+        }
+        setPhotoUploading(false);
+    };
+
+    // Photo delete handler
+    const handlePhotoDelete = async (resourceId: string) => {
+        setPhotoUploading(true);
+        const result = await deleteResourceCoverPhoto(resourceId, tenantId);
+        if (result.success) {
+            setCoverPhotoUrl(null);
+            setEmployees((prev) => prev.map((e) =>
+                e.id === resourceId ? { ...e, attributes: { ...e.attributes, cover_photo: undefined } } : e
+            ));
+            toast({ title: "Başarılı", description: "Fotoğraf silindi." });
+        } else {
+            toast({ variant: "destructive", title: "Hata", description: result.error || "Fotoğraf silinemedi." });
+        }
+        setPhotoUploading(false);
     };
 
     const handleSave = async () => {
@@ -123,9 +181,21 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
         }
         setLoading(true);
 
+        // Detay URL'yi attributes'a ekle
+        const saveAttributes = { ...attributes };
+        if (detailUrl.trim()) {
+            saveAttributes.detail_url = detailUrl.trim();
+        } else {
+            delete saveAttributes.detail_url;
+        }
+        // cover_photo zaten ayrı action ile kaydediliyor, attributes'tan kopyalamayalım
+        if (coverPhotoUrl) {
+            saveAttributes.cover_photo = coverPhotoUrl;
+        }
+
         if (selectedEmployee) {
             const result = await updateTenantEmployee(
-                selectedEmployee.id, name, title, activeType, attributes, extraInfo
+                selectedEmployee.id, name, title, activeType, saveAttributes, extraInfo
             );
             if (result.success && result.employee) {
                 setEmployees(employees.map((e) => e.id === selectedEmployee.id ? result.employee as Employee : e));
@@ -135,9 +205,23 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                 toast({ variant: "destructive", title: "Hata", description: result.error || "Güncelleme başarısız." });
             }
         } else {
-            const result = await addTenantEmployee(tenantId, name, title, activeType, attributes, extraInfo);
+            const result = await addTenantEmployee(tenantId, name, title, activeType, saveAttributes, extraInfo);
             if (result.success && result.employee) {
-                setEmployees([...employees, result.employee as Employee]);
+                const newEmployee = result.employee as Employee;
+
+                // Bekleyen fotoğraf varsa hemen yükle
+                if (pendingPhotoFile) {
+                    const formData = new FormData();
+                    formData.append("file", pendingPhotoFile);
+                    const photoResult = await uploadResourceCoverPhoto(newEmployee.id, tenantId, formData);
+                    if (photoResult.success && photoResult.url) {
+                        newEmployee.attributes = { ...newEmployee.attributes, cover_photo: photoResult.url };
+                    }
+                    setPendingPhotoFile(null);
+                    setPendingPhotoPreview(null);
+                }
+
+                setEmployees([...employees, newEmployee]);
                 toast({ title: "Başarılı", description: "Yeni kayıt eklendi." });
                 setIsDialogOpen(false);
             } else {
@@ -153,6 +237,9 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
         setBatchTitle("");
         setBatchAttributes({});
         setBatchExtraInfo("");
+        setBatchPhotoFile(null);
+        setBatchPhotoPreview(null);
+        setBatchDetailUrl("");
         setIsBatchDialogOpen(true);
     };
 
@@ -163,12 +250,35 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
             return;
         }
         setLoading(true);
+
+        // Detay URL'yi batch attributes'a ekle
+        const saveBatchAttrs = { ...batchAttributes };
+        if (batchDetailUrl.trim()) {
+            saveBatchAttrs.detail_url = batchDetailUrl.trim();
+        }
+
         const result = await addTenantEmployeesBatch(
-            tenantId, names, batchTitle || undefined, activeType, batchAttributes, batchExtraInfo
+            tenantId, names, batchTitle || undefined, activeType, saveBatchAttrs, batchExtraInfo
         );
         if (result.success && result.employees) {
-            setEmployees([...employees, ...(result.employees as Employee[])]);
-            toast({ title: "Başarılı", description: `${result.employees.length} kayıt eklendi.` });
+            const newEmployees = result.employees as Employee[];
+
+            // Bekleyen fotoğraf varsa her kaynağa yükle
+            if (batchPhotoFile && newEmployees.length > 0) {
+                for (const emp of newEmployees) {
+                    const formData = new FormData();
+                    formData.append("file", batchPhotoFile);
+                    const photoResult = await uploadResourceCoverPhoto(emp.id, tenantId, formData);
+                    if (photoResult.success && photoResult.url) {
+                        emp.attributes = { ...emp.attributes, cover_photo: photoResult.url };
+                    }
+                }
+                setBatchPhotoFile(null);
+                setBatchPhotoPreview(null);
+            }
+
+            setEmployees([...employees, ...newEmployees]);
+            toast({ title: "Başarılı", description: `${newEmployees.length} kayıt eklendi.` });
             setIsBatchDialogOpen(false);
         } else {
             toast({ variant: "destructive", title: "Hata", description: result.error || "Toplu ekleme başarısız." });
@@ -280,7 +390,11 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
     const renderAttributeFields = (cfg: ResourceTypeConfig, vals: Record<string, any>, target: "single" | "batch") => (
         <div className="grid grid-cols-2 gap-3">
             {cfg.attributeFields.map((field) => (
-                <div key={field.key} className={field.type === "checkbox" ? "flex items-center gap-2 col-span-1" : "space-y-1 col-span-1"}>
+                <div key={field.key} className={
+                    field.type === "checkbox" ? "flex items-center gap-2 col-span-1" :
+                    field.type === "multi-select" ? "space-y-1.5 col-span-2" :
+                    "space-y-1 col-span-1"
+                }>
                     {field.type === "checkbox" ? (
                         <>
                             <input
@@ -291,6 +405,44 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                                 className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                             />
                             <label htmlFor={`${target}-${field.key}`} className="text-sm text-slate-700">{field.label}</label>
+                        </>
+                    ) : field.type === "multi-select" ? (
+                        <>
+                            <label className="text-xs font-medium text-slate-600">{field.label}</label>
+                            <div className="flex flex-wrap gap-2">
+                                {field.options?.map((option) => {
+                                    const currentVal: string[] = Array.isArray(vals[field.key]) ? vals[field.key] : [];
+                                    const isChecked = currentVal.includes(option);
+                                    return (
+                                        <label
+                                            key={option}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-all ${
+                                                isChecked
+                                                    ? "border-orange-400 bg-orange-50 text-orange-700 font-medium"
+                                                    : "border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50/50"
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => {
+                                                    const newVal = isChecked
+                                                        ? currentVal.filter(v => v !== option)
+                                                        : [...currentVal, option];
+                                                    setAttr(field.key, newVal, target);
+                                                }}
+                                                className="w-3.5 h-3.5 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                            />
+                                            {option}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            {Array.isArray(vals[field.key]) && vals[field.key].length > 0 && (
+                                <p className="text-xs text-emerald-600 mt-1">
+                                    ✅ Seçili: {vals[field.key].join(", ")}
+                                </p>
+                            )}
                         </>
                     ) : (
                         <>
@@ -332,6 +484,7 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
         }
         const attrVal = (emp.attributes || {})[colKey];
         if (attrVal === undefined || attrVal === null || attrVal === "") return "-";
+        if (Array.isArray(attrVal)) return attrVal.join(", ") || "-";
         if (typeof attrVal === "boolean") return attrVal ? "✓" : "-";
         return String(attrVal);
     };
@@ -494,6 +647,121 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                                 </>
                             )}
 
+                            {/* 📸 Kapak Fotoğrafı & Detay URL Bölümü */}
+                            {config.photosEnabled && (
+                                <>
+                                    <div className="border-t border-dashed border-slate-200 pt-3 mt-2">
+                                        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                            <Camera className="w-3.5 h-3.5" /> Görsel & Detay Linki
+                                        </p>
+                                    </div>
+
+                                    {/* Kapak Fotoğrafı */}
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium flex items-center gap-1.5">
+                                            <ImageIcon className="w-4 h-4 text-slate-500" />
+                                            Kapak Fotoğrafı
+                                        </label>
+
+                                        {(coverPhotoUrl || pendingPhotoPreview) ? (
+                                            <div className="relative w-full max-w-[200px] aspect-[4/3] rounded-xl overflow-hidden border-2 border-blue-200 shadow-sm group">
+                                                <img
+                                                    src={coverPhotoUrl || pendingPhotoPreview || ""}
+                                                    alt="Kapak"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute top-1.5 left-1.5">
+                                                    <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md shadow-sm uppercase">
+                                                        {pendingPhotoPreview && !coverPhotoUrl ? "Önizleme" : "Kapak"}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (selectedEmployee && coverPhotoUrl) {
+                                                            handlePhotoDelete(selectedEmployee.id);
+                                                        } else {
+                                                            // Bekleyen dosyayı temizle
+                                                            setPendingPhotoFile(null);
+                                                            if (pendingPhotoPreview) {
+                                                                URL.revokeObjectURL(pendingPhotoPreview);
+                                                                setPendingPhotoPreview(null);
+                                                            }
+                                                        }
+                                                    }}
+                                                    disabled={photoUploading}
+                                                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                >
+                                                    <XIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => photoInputRef.current?.click()}
+                                                disabled={photoUploading}
+                                                className="w-full max-w-[200px] aspect-[4/3] rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer"
+                                            >
+                                                {photoUploading ? (
+                                                    <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Camera className="w-8 h-8 text-slate-400" />
+                                                        <span className="text-xs text-slate-500 font-medium">Fotoğraf Yükle</span>
+                                                        <span className="text-[10px] text-slate-400">Max 5MB • JPG, PNG, WebP</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+
+                                        <input
+                                            ref={photoInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (!f) return;
+                                                if (selectedEmployee) {
+                                                    // Düzenleme modunda: direkt yükle
+                                                    handlePhotoUpload(f, selectedEmployee.id);
+                                                } else {
+                                                    // Oluşturma modunda: dosyayı beklet, önizleme göster
+                                                    setPendingPhotoFile(f);
+                                                    setPendingPhotoPreview(URL.createObjectURL(f));
+                                                }
+                                                e.target.value = "";
+                                            }}
+                                        />
+
+                                        <div className="flex gap-2 items-start bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                                            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-blue-700 leading-relaxed">{config.photoHint}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Detay URL */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium flex items-center gap-1.5">
+                                            <Link2 className="w-4 h-4 text-slate-500" />
+                                            Detay Sayfası URL
+                                            <span className="text-xs text-slate-400 font-normal">(opsiyonel)</span>
+                                        </label>
+                                        <Input
+                                            type="url"
+                                            value={detailUrl}
+                                            onChange={(e) => setDetailUrl(e.target.value)}
+                                            placeholder="Örn: https://firmaniz.com/kaynak-detay"
+                                            className="h-9"
+                                        />
+                                        <div className="flex gap-2 items-start bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                                            <Link2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-emerald-700 leading-relaxed">{config.detailUrlHint}</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
                             <div className="space-y-1 pt-2">
                                 <label className="text-sm font-medium">Ek Bilgiler</label>
                                 <Textarea
@@ -553,6 +821,92 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                                     className="min-h-[50px]"
                                 />
                             </div>
+
+                            {/* 📸 Toplu Kapak Fotoğrafı & Detay URL */}
+                            {config.photosEnabled && (
+                                <>
+                                    <div className="border-t border-dashed border-slate-200 pt-3">
+                                        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                            <Camera className="w-3.5 h-3.5" /> Ortak Görsel & Detay Linki
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium flex items-center gap-1.5">
+                                            <ImageIcon className="w-4 h-4 text-slate-500" />
+                                            Ortak Kapak Fotoğrafı
+                                        </label>
+
+                                        {batchPhotoPreview ? (
+                                            <div className="relative w-full max-w-[180px] aspect-[4/3] rounded-xl overflow-hidden border-2 border-blue-200 shadow-sm group">
+                                                <img src={batchPhotoPreview} alt="Önizleme" className="w-full h-full object-cover" />
+                                                <div className="absolute top-1.5 left-1.5">
+                                                    <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md shadow-sm uppercase">Önizleme</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setBatchPhotoFile(null);
+                                                        if (batchPhotoPreview) URL.revokeObjectURL(batchPhotoPreview);
+                                                        setBatchPhotoPreview(null);
+                                                    }}
+                                                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                >
+                                                    <XIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => batchPhotoInputRef.current?.click()}
+                                                className="w-full max-w-[180px] aspect-[4/3] rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer"
+                                            >
+                                                <Camera className="w-7 h-7 text-slate-400" />
+                                                <span className="text-xs text-slate-500 font-medium">Fotoğraf Yükle</span>
+                                                <span className="text-[10px] text-slate-400">Max 5MB</span>
+                                            </button>
+                                        )}
+
+                                        <input
+                                            ref={batchPhotoInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) {
+                                                    setBatchPhotoFile(f);
+                                                    setBatchPhotoPreview(URL.createObjectURL(f));
+                                                }
+                                                e.target.value = "";
+                                            }}
+                                        />
+
+                                        <div className="flex gap-2 items-start bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                                            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-blue-700 leading-relaxed">
+                                                Bu fotoğraf tüm eklenen kaynaklara ortak olarak atanacaktır. Farklılaştırmak istediğiniz kaynakların fotoğraflarını sonra <strong>düzenleme</strong> ekranından değiştirebilirsiniz.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Detay URL */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium flex items-center gap-1.5">
+                                            <Link2 className="w-4 h-4 text-slate-500" />
+                                            Ortak Detay Sayfası URL
+                                            <span className="text-xs text-slate-400 font-normal">(opsiyonel)</span>
+                                        </label>
+                                        <Input
+                                            type="url"
+                                            value={batchDetailUrl}
+                                            onChange={(e) => setBatchDetailUrl(e.target.value)}
+                                            placeholder="Örn: https://firmaniz.com/kaynak-detay"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="border-t border-dashed border-slate-200 pt-3 space-y-1">
                                 <label className="text-sm font-medium">{config.nameLabel} Listesi (her satır = yeni kayıt) *</label>
