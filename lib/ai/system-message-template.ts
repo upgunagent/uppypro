@@ -643,7 +643,7 @@ export const FIXED_TOOL_RULES = `
 - Toplam ücreti hesapla: (yetişkin × yetişkin fiyatı) + (çocuk × çocuk fiyatı) + ek hizmetler
 - Asla kapasite kontrolü yapmadan tur rezervasyonu oluşturma.
 - Tur dolduysa veya o tarihte aktif değilse başka tarihleri öner.
-- Tur rezervasyonu oluşturulduktan sonra mail_gonder tool'u ile müşteriye onay maili gönder.
+- Tur rezervasyonu oluşturulduktan sonra mail_gonder tool'unu ÇAĞIRMA. Tur rezervasyon e-postaları sistem tarafından otomatik gönderilir.
 
 ## Tur Rezervasyon Değişiklik ve İptal Kuralları
 - Müşteri mevcut bir tur rezervasyonunu değiştirmek isterse modify_tour_booking tool'unu kullan.
