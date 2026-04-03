@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { resend, EMAIL_FROM } from "@/lib/resend";
 
 export async function updateAiSettings(formData: FormData) {
     const supabase = await createClient();
@@ -72,73 +71,6 @@ export async function updateAiSettings(formData: FormData) {
             const { injectTrendyolToolsToSystemMessage } = await import("@/lib/trendyol/system-message-inject");
             await injectTrendyolToolsToSystemMessage(member.tenant_id);
         }
-    }
-
-    // Admin bilgilendirme e-postası
-    try {
-        const { data: profile } = await adminDb
-            .from("profiles")
-            .select("full_name, phone")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-        const { data: tenant } = await adminDb
-            .from("tenants")
-            .select("name")
-            .eq("id", member.tenant_id)
-            .maybeSingle();
-
-        const { data: billingInfo } = await adminDb
-            .from("billing_info")
-            .select("contact_email, contact_phone")
-            .eq("tenant_id", member.tenant_id)
-            .maybeSingle();
-
-        const ownerName = profile?.full_name || user.email || "Bilinmiyor";
-        const businessName = tenant?.name || "Bilinmiyor";
-        const businessEmail = billingInfo?.contact_email || user.email || "—";
-        const businessPhone = billingInfo?.contact_phone || profile?.phone || "—";
-        const savedAt = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
-
-        await resend.emails.send({
-            from: EMAIL_FROM,
-            to: "info@upgunai.com",
-            subject: `⚡ AI Asistan Aktivasyon Gerekli: ${businessName}`,
-            html: `
-                <div style="font-family:sans-serif;background:#f8fafc;padding:24px;">
-                <div style="max-width:620px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-                <div style="background:linear-gradient(135deg,#6d28d9 0%,#4f46e5 100%);padding:24px 28px;">
-                    <h1 style="color:white;margin:0;font-size:20px;font-weight:700;">⚡ AI Asistan Aktivasyon Talebi</h1>
-                    <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;">Bir üye sistem mesajını güncelledi — n8n üzerinde 48 saat içinde aktif edilmesi gerekiyor.</p>
-                </div>
-                <div style="padding:28px;">
-                    <div style="background:#fef3c7;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 16px;margin-bottom:24px;">
-                    <strong style="color:#92400e;font-size:14px;">⏰ Aksiyon Gerekli</strong>
-                    <p style="color:#78350f;font-size:13px;margin:4px 0 0;">Bu üyenin AI asistanı n8n üzerinde en geç <strong>48 saat</strong> içinde aktif hale getirilmelidir.</p>
-                    </div>
-                    <h2 style="color:#1e293b;font-size:15px;font-weight:700;margin:0 0 12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">👤 Hesap Sahibi</h2>
-                    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;width:150px;">Ad Soyad</td><td style="padding:8px 0;color:#0f172a;font-weight:600;font-size:14px;">${ownerName}</td></tr>
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;">E-posta</td><td style="padding:8px 0;font-size:14px;"><a href="mailto:${user.email}" style="color:#6d28d9;">${user.email}</a></td></tr>
-                    </table>
-                    <h2 style="color:#1e293b;font-size:15px;font-weight:700;margin:0 0 12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">🏢 İşletme Bilgileri</h2>
-                    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;width:150px;">İşletme Adı</td><td style="padding:8px 0;color:#0f172a;font-weight:600;font-size:14px;">${businessName}</td></tr>
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;">E-posta</td><td style="padding:8px 0;font-size:14px;"><a href="mailto:${businessEmail}" style="color:#6d28d9;">${businessEmail}</a></td></tr>
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;">Telefon</td><td style="padding:8px 0;font-size:14px;"><a href="tel:${businessPhone}" style="color:#6d28d9;">${businessPhone}</a></td></tr>
-                    <tr><td style="padding:8px 0;color:#64748b;font-size:13px;">Tenant ID</td><td style="padding:8px 0;color:#94a3b8;font-size:12px;font-family:monospace;">${member.tenant_id}</td></tr>
-                    </table>
-                    <h2 style="color:#1e293b;font-size:15px;font-weight:700;margin:0 0 12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">🤖 Sistem Mesajı &amp; Firma Bilgi Tabanı</h2>
-                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #6d28d9;border-radius:8px;padding:16px;font-size:13px;color:#334155;white-space:pre-wrap;line-height:1.7;">${systemMessage}</div>
-                </div>
-                <div style="background:#f8fafc;padding:16px 28px;text-align:center;border-top:1px solid #f1f5f9;">
-                    <p style="color:#94a3b8;font-size:11px;margin:0;">UppyPro Panel — AI Asistan Ayarları • ${savedAt}</p>
-                </div>
-                </div></div>
-            `,
-        });
-    } catch (emailErr) {
-        console.error("[AI Settings] Admin bildirim maili gönderilemedi:", emailErr);
     }
 
     revalidatePath("/panel/settings");
