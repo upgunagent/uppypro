@@ -7,12 +7,18 @@ export async function sendPasswordResetEmail(email: string) {
     const supabaseAdmin = createAdminClient();
 
     try {
+        // Vercel deployment'ında NEXT_PUBLIC_APP_URL vercel.app döndürüyorsa production domaine zorla
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://upgunai.com";
+        if (baseUrl.includes("vercel.app")) {
+            baseUrl = "https://upgunai.com";
+        }
+
         // Generate Recovery Link
         const { data, error } = await supabaseAdmin.auth.admin.generateLink({
             type: "recovery",
             email: email,
             options: {
-                redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/update-password`
+                redirectTo: `${baseUrl}/update-password`
             }
         });
 
@@ -180,7 +186,13 @@ interface SubscriptionWelcomeEmailProps {
 export async function sendSubscriptionWelcomeEmail(props: SubscriptionWelcomeEmailProps) {
     const { recipientEmail, recipientName, planName, priceFormatted, billingCycle, nextPaymentDate, agreementPdfBuffer, isTrial, trialEndDate } = props;
 
-    const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/brand-logo-text.png`;
+    // Vercel deployment'ında NEXT_PUBLIC_APP_URL vercel.app döndürüyorsa production domaine zorla
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://upgunai.com";
+    if (baseUrl.includes("vercel.app")) {
+        baseUrl = "https://upgunai.com";
+    }
+
+    const logoUrl = `${baseUrl}/brand-logo-text.png`;
 
     const htmlContent = `
 <!DOCTYPE html>

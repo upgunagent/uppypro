@@ -75,7 +75,12 @@ export async function signupAction(data: SignupData) {
 
         if (subError) throw new Error(`Abonelik oluşturma hatası: ${subError.message}`);
 
-        // 6. Send Welcome Email
+        // Vercel deployment'ında NEXT_PUBLIC_APP_URL vercel.app döndürüyorsa production domaine zorla
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://upgunai.com";
+        if (baseUrl.includes("vercel.app")) {
+            baseUrl = "https://upgunai.com";
+        }
+
         try {
             await resend.emails.send({
                 from: EMAIL_FROM,
@@ -86,7 +91,7 @@ export async function signupAction(data: SignupData) {
                     <p>UppyPro'ya hoş geldiniz! Hesabınız başarıyla oluşturuldu.</p>
                     <p>Şirketiniz: <strong>${data.companyName}</strong></p>
                     <p>Panelinize giriş yaparak hemen başlayabilirsiniz.</p>
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" style="display:inline-block;padding:10px 20px;background:#ea580c;color:white;text-decoration:none;border-radius:5px;">Panele Git</a>
+                    <a href="${baseUrl}/login" style="display:inline-block;padding:10px 20px;background:#ea580c;color:white;text-decoration:none;border-radius:5px;">Panele Git</a>
                 `
             });
         } catch (mailErr) {
