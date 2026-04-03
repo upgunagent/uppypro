@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resend, EMAIL_FROM } from "@/lib/resend";
 
 export interface TourBookingEmailData {
-  type: "booking_created" | "booking_confirmed";
+  type: "booking_created" | "booking_confirmed" | "booking_cancelled" | "booking_modified";
   guestName: string;
   guestEmail: string;
   guestPhone?: string;
@@ -32,6 +32,10 @@ export interface TourBookingEmailData {
   paymentTerms?: string;
   selectedServices?: { name: string; total: number }[];
   description?: string;
+  // Değişiklik için
+  oldAdultCount?: number;
+  oldChildCount?: number;
+  oldTotalPrice?: number;
 }
 
 /**
@@ -75,9 +79,13 @@ export async function sendTourBookingEmail(
     .eq("tenant_id", tenantId)
     .maybeSingle();
 
-  const subject = data.type === "booking_created"
-    ? `🎫 Tur Rezervasyonunuz Alındı — ${businessName}`
-    : `✅ Tur Rezervasyonunuz Onaylandı — ${businessName}`;
+  const subjectMap: Record<string, string> = {
+    booking_created: `🎫 Tur Rezervasyonunuz Alındı — ${businessName}`,
+    booking_confirmed: `✅ Tur Rezervasyonunuz Onaylandı — ${businessName}`,
+    booking_cancelled: `❌ Tur Rezervasyonunuz İptal Edildi — ${businessName}`,
+    booking_modified: `🔄 Tur Rezervasyonunuz Güncellendi — ${businessName}`,
+  };
+  const subject = subjectMap[data.type] || `📋 Tur Rezervasyon Bildirimi — ${businessName}`;
 
   const html = buildTourEmailHtml(data, {
     businessName,
@@ -158,16 +166,41 @@ interface BusinessInfo {
 }
 
 function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): string {
-  const isConfirmed = data.type === "booking_confirmed";
   const currency = data.currency || "TL";
   const totalGuests = data.adultCount + data.childCount;
 
-  const headerColor = isConfirmed ? "#059669" : "#f59e0b";
-  const headerIcon = isConfirmed ? "✅" : "🎫";
-  const headerTitle = isConfirmed ? "Rezervasyonunuz Onaylandı!" : "Rezervasyonunuz Alındı!";
-  const headerSubtitle = isConfirmed
-    ? "Harika haber! Tur rezervasyonunuz onaylanmıştır."
-    : "Rezervasyonunuz başarıyla oluşturuldu ve işletme onayı beklenmektedir.";
+  const styleMap: Record<string, { color: string; icon: string; title: string; subtitle: string }> = {
+    booking_created: {
+      color: "#f59e0b",
+      icon: "🎫",
+      title: "Rezervasyonunuz Alındı!",
+      subtitle: "Rezervasyonunuz başarıyla oluşturuldu ve işletme onayı beklenmektedir.",
+    },
+    booking_confirmed: {
+      color: "#059669",
+      icon: "✅",
+      title: "Rezervasyonunuz Onaylandı!",
+      subtitle: "Harika haber! Tur rezervasyonunuz onaylanmıştır.",
+    },
+    booking_cancelled: {
+      color: "#dc2626",
+      icon: "❌",
+      title: "Rezervasyonunuz İptal Edildi",
+      subtitle: "Tur rezervasyonunuz iptal edilmiştir.",
+    },
+    booking_modified: {
+      color: "#2563eb",
+      icon: "🔄",
+      title: "Rezervasyonunuz Güncellendi",
+      subtitle: "Tur rezervasyonunuzda değişiklik yapılmıştır.",
+    },
+  };
+
+  const style = styleMap[data.type] || styleMap.booking_created;
+  const headerColor = style.color;
+  const headerIcon = style.icon;
+  const headerTitle = style.title;
+  const headerSubtitle = style.subtitle;
 
   // Build info rows
   let detailRows = `
@@ -304,18 +337,50 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
     </div>`;
   }
 
-  // Status badge for non-confirmed
-  const statusBadge = isConfirmed
-    ? `<div style="margin:20px 0;text-align:center;">
+  // Değişiklik bilgisi
+  let modificationInfo = "";
+  if (data.type === "booking_modified" && (data.oldAdultCount !== undefined || data.oldChildCount !== undefined)) {
+    const oldTotal = (data.oldAdultCount || 0) + (data.oldChildCount || 0);
+    modificationInfo = `
+    <div style="margin:16px 0;padding:14px 16px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;">
+      <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px;">🔄 Yapılan Değişiklikler</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:4px 0;color:#64748b;font-size:13px;width:100px;">Önceki</td>
+          <td style="padding:4px 0;color:#94a3b8;font-size:13px;text-decoration:line-through;">${data.oldAdultCount || 0}Y + ${data.oldChildCount || 0}Ç = ${oldTotal} kişi${data.oldTotalPrice ? ` • ${data.oldTotalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#64748b;font-size:13px;">Yeni</td>
+          <td style="padding:4px 0;color:#059669;font-weight:700;font-size:13px;">${data.adultCount}Y + ${data.childCount}Ç = ${totalGuests} kişi${data.totalPrice ? ` • ${data.totalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
+        </tr>
+      </table>
+    </div>`;
+  }
+
+  // Status badge
+  const statusBadgeMap: Record<string, string> = {
+    booking_confirmed: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#dcfce7;color:#166534;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #86efac;">
            ✅ ONAYLANDI — Keyifli bir tur dileriz!
          </span>
-       </div>`
-    : `<div style="margin:20px 0;text-align:center;">
+       </div>`,
+    booking_created: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#fef9c3;color:#854d0e;font-weight:700;padding:10px 24px;border-radius:99px;font-size:13px;border:2px solid #fde047;">
            ⏳ İşletme onayı beklenmektedir. Onaylandığında size bilgi verilecektir.
          </span>
-       </div>`;
+       </div>`,
+    booking_cancelled: `<div style="margin:20px 0;text-align:center;">
+         <span style="display:inline-block;background:#fee2e2;color:#991b1b;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #fca5a5;">
+           ❌ İPTAL EDİLDİ
+         </span>
+       </div>`,
+    booking_modified: `<div style="margin:20px 0;text-align:center;">
+         <span style="display:inline-block;background:#dbeafe;color:#1e40af;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #93c5fd;">
+           🔄 GÜNCELLEME YAPILDI
+         </span>
+       </div>`,
+  };
+  const statusBadge = statusBadgeMap[data.type] || "";
 
   // İşletme bilgileri footer
   const contactItems: string[] = [];
@@ -354,9 +419,11 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
         Merhaba <strong>${data.guestName}</strong>,
       </p>
       <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
-        ${isConfirmed
-          ? "Tur rezervasyonunuz onaylanmıştır. Aşağıda tüm detayları bulabilirsiniz:"
-          : "Tur rezervasyonunuz başarıyla oluşturulmuştur. İşte rezervasyon detaylarınız:"}
+        ${{booking_created: "Tur rezervasyonunuz başarıyla oluşturulmuştur. İşte rezervasyon detaylarınız:",
+           booking_confirmed: "Tur rezervasyonunuz onaylanmıştır. Aşağıda tüm detayları bulabilirsiniz:",
+           booking_cancelled: "Tur rezervasyonunuz iptal edilmiştir. İptal edilen rezervasyonun detayları aşağıdadır:",
+           booking_modified: "Tur rezervasyonunuzda değişiklik yapılmıştır. Güncel detaylar aşağıdadır:",
+        }[data.type] || ""}
       </p>
 
       <!-- Rezervasyon Detayları -->
@@ -365,7 +432,8 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
         ${detailRows}
       </table>
 
-      ${paymentSection}
+      ${modificationInfo}
+      ${data.type !== "booking_cancelled" ? paymentSection : ""}
       ${statusBadge}
 
       <!-- Müşteri Bilgileri -->

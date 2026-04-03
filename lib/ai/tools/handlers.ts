@@ -1076,7 +1076,7 @@ async function handleCancelTourBooking(
   if (customerId) {
     const { data } = await supabase
       .from("tour_bookings")
-      .select("id, guest_name, booking_date, adult_count, child_count, status, tour_id")
+      .select("id, guest_name, guest_email, guest_phone, booking_date, adult_count, child_count, total_price, status, tour_id")
       .eq("tenant_id", context.tenantId)
       .eq("booking_date", args.date)
       .eq("customer_id", customerId)
@@ -1089,7 +1089,7 @@ async function handleCancelTourBooking(
   if (!bookings || bookings.length === 0) {
     const { data } = await supabase
       .from("tour_bookings")
-      .select("id, guest_name, booking_date, adult_count, child_count, status, tour_id")
+      .select("id, guest_name, guest_email, guest_phone, booking_date, adult_count, child_count, total_price, status, tour_id")
       .eq("tenant_id", context.tenantId)
       .eq("booking_date", args.date)
       .ilike("guest_name", `%${args.customer_name}%`)
@@ -1115,6 +1115,37 @@ async function handleCancelTourBooking(
 
   if (error) {
     return JSON.stringify({ success: false, error: error.message });
+  }
+
+  // 📧 İptal e-postası gönder
+  if (booking.guest_email) {
+    try {
+      const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+      const { data: tour } = await supabase
+        .from("tours")
+        .select("name, currency, departure_time, return_time, departure_point, route")
+        .eq("id", booking.tour_id)
+        .single();
+
+      await sendTourBookingEmail(context.tenantId, {
+        type: "booking_cancelled",
+        guestName: booking.guest_name,
+        guestEmail: booking.guest_email,
+        guestPhone: booking.guest_phone || undefined,
+        tourName: tour?.name || "Tur",
+        bookingDate: booking.booking_date,
+        adultCount: booking.adult_count,
+        childCount: booking.child_count,
+        totalPrice: booking.total_price || undefined,
+        currency: tour?.currency || "TL",
+        departureTime: tour?.departure_time || undefined,
+        returnTime: tour?.return_time || undefined,
+        departurePoint: tour?.departure_point || undefined,
+        route: tour?.route || undefined,
+      });
+    } catch (emailErr: any) {
+      console.error("[AI Tour] Cancel email failed:", emailErr.message);
+    }
   }
 
   return JSON.stringify({
@@ -1144,7 +1175,7 @@ async function handleModifyTourBooking(
   if (customerId) {
     const { data } = await supabase
       .from("tour_bookings")
-      .select("id, guest_name, booking_date, adult_count, child_count, total_price, description, status, tour_id")
+      .select("id, guest_name, guest_email, guest_phone, booking_date, adult_count, child_count, total_price, description, status, tour_id")
       .eq("tenant_id", context.tenantId)
       .eq("booking_date", args.date)
       .eq("customer_id", customerId)
@@ -1157,7 +1188,7 @@ async function handleModifyTourBooking(
   if (!bookings || bookings.length === 0) {
     const { data } = await supabase
       .from("tour_bookings")
-      .select("id, guest_name, booking_date, adult_count, child_count, total_price, description, status, tour_id")
+      .select("id, guest_name, guest_email, guest_phone, booking_date, adult_count, child_count, total_price, description, status, tour_id")
       .eq("tenant_id", context.tenantId)
       .eq("booking_date", args.date)
       .ilike("guest_name", `%${args.customer_name}%`)
@@ -1241,6 +1272,40 @@ async function handleModifyTourBooking(
 
   if (error) {
     return JSON.stringify({ success: false, error: error.message });
+  }
+
+  // 📧 Değişiklik e-postası gönder
+  if (booking.guest_email) {
+    try {
+      const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+      const { data: tourInfo } = await supabase
+        .from("tours")
+        .select("name, currency, departure_time, return_time, departure_point, route")
+        .eq("id", booking.tour_id)
+        .single();
+
+      await sendTourBookingEmail(context.tenantId, {
+        type: "booking_modified",
+        guestName: booking.guest_name,
+        guestEmail: booking.guest_email,
+        guestPhone: booking.guest_phone || undefined,
+        tourName: tourInfo?.name || "Tur",
+        bookingDate: booking.booking_date,
+        adultCount: newAdult,
+        childCount: newChild,
+        totalPrice: newTotalPrice || undefined,
+        currency: tourInfo?.currency || "TL",
+        departureTime: tourInfo?.departure_time || undefined,
+        returnTime: tourInfo?.return_time || undefined,
+        departurePoint: tourInfo?.departure_point || undefined,
+        route: tourInfo?.route || undefined,
+        oldAdultCount: booking.adult_count,
+        oldChildCount: booking.child_count,
+        oldTotalPrice: booking.total_price || undefined,
+      });
+    } catch (emailErr: any) {
+      console.error("[AI Tour] Modify email failed:", emailErr.message);
+    }
   }
 
   return JSON.stringify({

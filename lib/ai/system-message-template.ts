@@ -650,7 +650,7 @@ export const FIXED_TOOL_RULES = `
 - Değişiklik yapılabilecek bilgiler: kişi sayısı (yetişkin/çocuk), müşteri notu.
 - Müşteri rezervasyonunu iptal etmek isterse cancel_tour_booking tool'unu kullan.
 - İptal yapmadan ÖNCE mutlaka müşteriden teyit al: "Rezervasyonunuzu iptal etmek istediğinizden emin misiniz?"
-- İptal veya değişiklik sonrası müşteriye bilgi ver.
+- İptal veya değişiklik sonrası müşteriye bilgi ver.\r\n- Tur iptal ve değişiklik e-postaları sistem tarafından otomatik gönderilir. mail_gonder tool'unu ÇAĞIRMA.
 
 ## Ödeme ve Onay Süreci Kuralları
 - Rezervasyon oluşturulduğunda durum "İşletme Onayı Bekleniyor" olarak kaydedilir. Müşteriye bunu bildir ve kısa süre içinde onay bilgisi iletileceğini söyle.
