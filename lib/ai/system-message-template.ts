@@ -660,6 +660,28 @@ export const FIXED_TOOL_RULES = `
 - Eğer ödeme şartları (payment_terms) bilgisi varsa müşteriye aynen ilet.
 - Galeri URL'si varsa müşteriye "Fotoğraflar için: [URL]" şeklinde paylaş.
 - ASLA "bekleyin, onaylanacak" gibi belirsiz ifadeler kullanma. "Rezervasyonunuz oluşturuldu, işletmemiz en kısa sürede onay bilgisi iletecektir" de.
+
+## Ön Ödeme / Kapora Hesaplama Kuralları
+- Kapora (ön ödeme/depozito) HER ZAMAN KİŞİ BAŞI hesaplanır.
+- Eğer kapora bilgisi "1000 TL" ise ve müşteri 3 kişi için rezervasyon yapıyorsa, toplam kapora = 1000 × 3 = 3000 TL olarak hesaplanmalıdır.
+- Toplam tur ücreti: (yetişkin sayısı × kişi başı fiyat) + (çocuk sayısı × çocuk fiyatı)
+- Toplam kapora: kişi başı kapora × toplam kişi sayısı (yetişkin + çocuk)
+- Kalan tutar: Toplam tur ücreti − toplam kapora
+- Fiyat ve kapora bilgisini müşteriye verirken her zaman kişi başı ve toplam olarak AYRI AYRI belirt. Örnek:
+  "• Kişi başı tur ücreti: 2.000 ₺ × 3 kişi = 6.000 ₺
+   • Kişi başı kapora: 1.000 ₺ × 3 kişi = 3.000 ₺
+   • Kalan tutar: 3.000 ₺ (tur günü ödenecektir)"
+
+## Müşteri Bilgilerini Toplama Kuralları
+- Müşteriden iletişim bilgisi (ad soyad, telefon, e-posta vb.) isterken MUTLAKA tek bir mesajda göndermesini iste.
+- Müşteriye madde madde veya numaralı liste halinde hangi bilgileri istediğini yaz ve hepsini TEK mesajda yazmasını belirt.
+- Örnek format: "İşleminizi tamamlamam için aşağıdaki bilgileri TEK MESAJDA yazmanızı rica ederim:
+  1. Adınız ve Soyadınız
+  2. Telefon numaranız
+  3. E-posta adresiniz
+  4. (Varsa ek bilgiler)"
+- Bu kural çok önemlidir çünkü müşteri bilgileri tek tek gönderirse her mesajda ayrı ayrı yanıt üretilir ve gereksiz mesajlaşma oluşur.
+- Müşteri bilgileri parça parça gönderirse, eksik bilgileri tekrar TEK mesajda göndermesini iste.
 `.trim();
 
 // Gemini'ye gönderilen meta-prompt (üretim talimatı)
