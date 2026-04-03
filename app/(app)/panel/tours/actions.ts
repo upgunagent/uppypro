@@ -461,6 +461,45 @@ export async function updateBookingStatus(bookingId: string, status: string) {
     }
   }
 
+  // 📧 İptal edildiğinde müşteriye iptal maili gönder
+  if (status === "cancelled") {
+    try {
+      const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+
+      const { data: booking } = await supabase
+        .from("tour_bookings")
+        .select(`
+          guest_name, guest_email, guest_phone, booking_date,
+          adult_count, child_count, total_price, tenant_id,
+          tours:tour_id(name, currency, departure_time, return_time, departure_point, route)
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (booking?.guest_email && booking.tours) {
+        const t: any = booking.tours;
+        await sendTourBookingEmail(booking.tenant_id, {
+          type: "booking_cancelled",
+          guestName: booking.guest_name,
+          guestEmail: booking.guest_email,
+          guestPhone: booking.guest_phone || undefined,
+          tourName: t.name,
+          bookingDate: booking.booking_date,
+          adultCount: booking.adult_count,
+          childCount: booking.child_count,
+          totalPrice: booking.total_price || undefined,
+          currency: t.currency || "TL",
+          departureTime: t.departure_time || undefined,
+          returnTime: t.return_time || undefined,
+          departurePoint: t.departure_point || undefined,
+          route: t.route || undefined,
+        });
+      }
+    } catch (emailErr: any) {
+      console.error("[Tour] Cancellation email failed:", emailErr.message);
+    }
+  }
+
   revalidatePath("/panel/tours");
   return { success: true };
 }
