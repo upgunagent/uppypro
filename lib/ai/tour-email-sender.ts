@@ -1,7 +1,7 @@
 /**
- * Tur Rezervasyonu E-posta Bildirim Modülü
- * Rezervasyon oluşturulduğunda ve onaylandığında müşteriye bildirim maili gönderir.
- * İşletmenin SMTP ayarı varsa kendi mailinden, yoksa Resend (upgunai.com) ile gönderir.
+ * Tur Rezervasyonu E-posta Bildirim Modulu
+ * Rezervasyon olusturuldugunda ve onaylandiginda musteriye bildirim maili gonderir.
+ * Isletmenin SMTP ayari varsa kendi mailinden, yoksa Resend (upgunai.com) ile gonderir.
  */
 
 import nodemailer from "nodemailer";
@@ -32,47 +32,39 @@ export interface TourBookingEmailData {
   paymentTerms?: string;
   selectedServices?: { name: string; total: number }[];
   description?: string;
-  // Değişiklik için
   oldAdultCount?: number;
   oldChildCount?: number;
   oldTotalPrice?: number;
 }
 
-/**
- * Tur rezervasyonu bildirim maili gönderir
- */
 export async function sendTourBookingEmail(
   tenantId: string,
   data: TourBookingEmailData
 ): Promise<void> {
   if (!data.guestEmail) {
-    console.warn("[Tour Email] Müşteri e-posta adresi yok, mail gönderilmedi.");
+    console.warn("[Tour Email] Musteri e-posta adresi yok, mail gonderilmedi.");
     return;
   }
 
   const supabase = createAdminClient();
 
-  // Firma bilgisini al
   const { data: tenant } = await supabase
     .from("tenants")
     .select("name")
     .eq("id", tenantId)
     .maybeSingle();
 
-  // Fatura bilgisinden ek iletişim bilgileri al (fallback)
   const { data: billingInfo } = await supabase
     .from("billing_info")
     .select("contact_email, contact_phone, company_name, address")
     .eq("tenant_id", tenantId)
     .maybeSingle();
 
-  const businessName = tenant?.name || billingInfo?.company_name || "İşletme";
+  const businessName = tenant?.name || billingInfo?.company_name || "Isletme";
   const businessPhone = billingInfo?.contact_phone || "";
   const businessAddress = billingInfo?.address || "";
-  const businessWebsite = "";
   const businessEmail = billingInfo?.contact_email || "";
 
-  // SMTP ayarlarını kontrol et
   const { data: emailSettings } = await supabase
     .from("email_settings")
     .select("*")
@@ -80,18 +72,17 @@ export async function sendTourBookingEmail(
     .maybeSingle();
 
   const subjectMap: Record<string, string> = {
-    booking_created: `🎫 Tur Rezervasyonunuz Alındı — ${businessName}`,
-    booking_confirmed: `✅ Tur Rezervasyonunuz Onaylandı — ${businessName}`,
-    booking_cancelled: `❌ Tur Rezervasyonunuz İptal Edildi — ${businessName}`,
-    booking_modified: `🔄 Tur Rezervasyonunuz Güncellendi — ${businessName}`,
+    booking_created: `Tur Rezervasyonunuz Alindi - ${businessName}`,
+    booking_confirmed: `Tur Rezervasyonunuz Onaylandi - ${businessName}`,
+    booking_cancelled: `Tur Rezervasyonunuz Iptal Edildi - ${businessName}`,
+    booking_modified: `Tur Rezervasyonunuz Guncellendi - ${businessName}`,
   };
-  const subject = subjectMap[data.type] || `📋 Tur Rezervasyon Bildirimi — ${businessName}`;
+  const subject = subjectMap[data.type] || `Tur Rezervasyon Bildirimi - ${businessName}`;
 
   const html = buildTourEmailHtml(data, {
     businessName,
     businessPhone,
     businessAddress,
-    businessWebsite,
     businessEmail,
   });
 
@@ -101,9 +92,9 @@ export async function sendTourBookingEmail(
     } else {
       await sendViaResend(data.guestEmail, subject, html, businessName, tenantId);
     }
-    console.log(`[Tour Email] ${data.type} mail gönderildi: ${data.guestEmail}`);
+    console.log(`[Tour Email] ${data.type} mail gonderildi: ${data.guestEmail}`);
   } catch (err: any) {
-    console.error(`[Tour Email] Gönderim hatası:`, err.message);
+    console.error(`[Tour Email] Gonderim hatasi:`, err.message);
   }
 }
 
@@ -161,7 +152,6 @@ interface BusinessInfo {
   businessName: string;
   businessPhone: string;
   businessAddress: string;
-  businessWebsite: string;
   businessEmail: string;
 }
 
@@ -169,60 +159,55 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   const currency = data.currency || "TL";
   const totalGuests = data.adultCount + data.childCount;
 
-  const styleMap: Record<string, { color: string; icon: string; title: string; subtitle: string }> = {
+  const styleMap: Record<string, { color: string; title: string; subtitle: string }> = {
     booking_created: {
       color: "#f59e0b",
-      icon: "🎫",
-      title: "Rezervasyonunuz Alındı!",
-      subtitle: "Rezervasyonunuz başarıyla oluşturuldu ve işletme onayı beklenmektedir.",
+      title: "Rezervasyonunuz Alindi!",
+      subtitle: "Rezervasyonunuz basariyla olusturuldu ve isletme onayi beklenmektedir.",
     },
     booking_confirmed: {
       color: "#059669",
-      icon: "✅",
-      title: "Rezervasyonunuz Onaylandı!",
-      subtitle: "Harika haber! Tur rezervasyonunuz onaylanmıştır.",
+      title: "Rezervasyonunuz Onaylandi!",
+      subtitle: "Harika haber! Tur rezervasyonunuz onaylanmistir.",
     },
     booking_cancelled: {
       color: "#dc2626",
-      icon: "❌",
-      title: "Rezervasyonunuz İptal Edildi",
-      subtitle: "Tur rezervasyonunuz iptal edilmiştir.",
+      title: "Rezervasyonunuz Iptal Edildi",
+      subtitle: "Tur rezervasyonunuz iptal edilmistir.",
     },
     booking_modified: {
       color: "#2563eb",
-      icon: "🔄",
-      title: "Rezervasyonunuz Güncellendi",
-      subtitle: "Tur rezervasyonunuzda değişiklik yapılmıştır.",
+      title: "Rezervasyonunuz Guncellendi",
+      subtitle: "Tur rezervasyonunuzda degisiklik yapilmistir.",
     },
   };
 
   const style = styleMap[data.type] || styleMap.booking_created;
   const headerColor = style.color;
-  const headerIcon = style.icon;
   const headerTitle = style.title;
   const headerSubtitle = style.subtitle;
 
-  // Build info rows
+  // Detail rows
   let detailRows = `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;width:140px;vertical-align:top;">🚢 Tur</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;width:140px;vertical-align:top;">Tur</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:700;font-size:14px;border-bottom:1px solid #f1f5f9;">${data.tourName}</td>
     </tr>
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">📅 Tarih</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Tarih</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:700;font-size:14px;border-bottom:1px solid #f1f5f9;">${formatDate(data.bookingDate)}</td>
     </tr>
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">👥 Kişi Sayısı</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Kisi Sayisi</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">
-        ${data.adultCount} Yetişkin${data.childCount > 0 ? ` + ${data.childCount} Çocuk` : ""} (Toplam ${totalGuests} kişi)
+        ${data.adultCount} Yetiskin${data.childCount > 0 ? ` + ${data.childCount} Cocuk` : ""} (Toplam ${totalGuests} kisi)
       </td>
     </tr>`;
 
   if (data.departureTime) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">⏰ Kalkış Saati</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Kalkis Saati</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:700;font-size:15px;border-bottom:1px solid #f1f5f9;">${data.departureTime}</td>
     </tr>`;
   }
@@ -230,7 +215,7 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   if (data.returnTime) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">🏁 Dönüş Saati</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Donus Saati</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">${data.returnTime}</td>
     </tr>`;
   }
@@ -238,7 +223,7 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   if (data.departurePoint) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">📍 Kalkış Noktası</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Kalkis Noktasi</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">${data.departurePoint}</td>
     </tr>`;
   }
@@ -246,7 +231,7 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   if (data.route) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">🗺️ Güzergah</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Guzergah</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">${data.route}</td>
     </tr>`;
   }
@@ -254,17 +239,16 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   if (data.vehicleType) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">🚤 Araç Tipi</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Arac Tipi</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">${data.vehicleType}</td>
     </tr>`;
   }
 
-  // Seçilen ek hizmetler
   if (data.selectedServices && data.selectedServices.length > 0) {
     const svcList = data.selectedServices.map(s => `${s.name}: ${s.total} ${currency}`).join(", ");
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">🏷️ Ek Hizmetler</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Ek Hizmetler</td>
       <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:14px;border-bottom:1px solid #f1f5f9;">${svcList}</td>
     </tr>`;
   }
@@ -272,12 +256,12 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   if (data.description) {
     detailRows += `
     <tr>
-      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">📝 Notlar</td>
+      <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Notlar</td>
       <td style="padding:10px 16px;color:#0f172a;font-size:13px;border-bottom:1px solid #f1f5f9;">${data.description}</td>
     </tr>`;
   }
 
-  // Ödeme bilgileri bölümü
+  // Payment section
   let paymentSection = "";
   if (data.totalPrice || data.depositRequired) {
     let paymentRows = "";
@@ -285,7 +269,7 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
     if (data.totalPrice) {
       paymentRows += `
       <tr>
-        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">💰 Toplam Tutar</td>
+        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Toplam Tutar</td>
         <td style="padding:10px 16px;color:#059669;font-weight:800;font-size:18px;border-bottom:1px solid #f1f5f9;">${data.totalPrice.toLocaleString("tr-TR")} ${currency}</td>
       </tr>`;
     }
@@ -294,10 +278,10 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
       const totalDeposit = data.depositAmount * totalGuests;
       paymentRows += `
       <tr>
-        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">💳 Kapora</td>
+        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Kapora</td>
         <td style="padding:10px 16px;color:#dc2626;font-weight:700;font-size:15px;border-bottom:1px solid #f1f5f9;">
           ${totalDeposit.toLocaleString("tr-TR")} ${currency}
-          <span style="color:#94a3b8;font-size:11px;font-weight:400;"> (${data.depositAmount} ${currency} × ${totalGuests} kişi)</span>
+          <span style="color:#94a3b8;font-size:11px;font-weight:400;"> (${data.depositAmount} ${currency} x ${totalGuests} kisi)</span>
         </td>
       </tr>`;
     }
@@ -305,8 +289,8 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
     if (data.paymentMethods && data.paymentMethods.length > 0) {
       paymentRows += `
       <tr>
-        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">🏦 Ödeme</td>
-        <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:13px;border-bottom:1px solid #f1f5f9;">${data.paymentMethods.join(" • ")}</td>
+        <td style="padding:10px 16px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">Odeme Yontemi</td>
+        <td style="padding:10px 16px;color:#0f172a;font-weight:600;font-size:13px;border-bottom:1px solid #f1f5f9;">${data.paymentMethods.join(" / ")}</td>
       </tr>`;
     }
 
@@ -314,7 +298,7 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
       const ibanList = data.ibanInfo.map(i => `<div style="margin-bottom:4px;font-size:12px;">${i}</div>`).join("");
       paymentRows += `
       <tr>
-        <td style="padding:10px 16px;color:#64748b;font-size:13px;vertical-align:top;">🏧 Banka Bilgileri</td>
+        <td style="padding:10px 16px;color:#64748b;font-size:13px;vertical-align:top;">Banka Bilgileri</td>
         <td style="padding:10px 16px;color:#0f172a;font-weight:500;font-size:13px;">${ibanList}</td>
       </tr>`;
     }
@@ -323,35 +307,35 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
       paymentRows += `
       <tr>
         <td colspan="2" style="padding:10px 16px;color:#64748b;font-size:12px;font-style:italic;">
-          📋 ${data.paymentTerms}
+          ${data.paymentTerms}
         </td>
       </tr>`;
     }
 
     paymentSection = `
     <div style="margin-top:16px;">
-      <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">💰 Ödeme Bilgileri</div>
+      <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Odeme Bilgileri</div>
       <table style="width:100%;border-collapse:collapse;background:#f0fdf4;border-radius:10px;overflow:hidden;border:1px solid #bbf7d0;">
         ${paymentRows}
       </table>
     </div>`;
   }
 
-  // Değişiklik bilgisi
+  // Modification info
   let modificationInfo = "";
   if (data.type === "booking_modified" && (data.oldAdultCount !== undefined || data.oldChildCount !== undefined)) {
     const oldTotal = (data.oldAdultCount || 0) + (data.oldChildCount || 0);
     modificationInfo = `
     <div style="margin:16px 0;padding:14px 16px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;">
-      <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px;">🔄 Yapılan Değişiklikler</div>
+      <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px;">Yapilan Degisiklikler</div>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:4px 0;color:#64748b;font-size:13px;width:100px;">Önceki</td>
-          <td style="padding:4px 0;color:#94a3b8;font-size:13px;text-decoration:line-through;">${data.oldAdultCount || 0}Y + ${data.oldChildCount || 0}Ç = ${oldTotal} kişi${data.oldTotalPrice ? ` • ${data.oldTotalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
+          <td style="padding:4px 0;color:#64748b;font-size:13px;width:100px;">Onceki</td>
+          <td style="padding:4px 0;color:#94a3b8;font-size:13px;text-decoration:line-through;">${data.oldAdultCount || 0}Y + ${data.oldChildCount || 0}C = ${oldTotal} kisi${data.oldTotalPrice ? ` - ${data.oldTotalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
         </tr>
         <tr>
           <td style="padding:4px 0;color:#64748b;font-size:13px;">Yeni</td>
-          <td style="padding:4px 0;color:#059669;font-weight:700;font-size:13px;">${data.adultCount}Y + ${data.childCount}Ç = ${totalGuests} kişi${data.totalPrice ? ` • ${data.totalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
+          <td style="padding:4px 0;color:#059669;font-weight:700;font-size:13px;">${data.adultCount}Y + ${data.childCount}C = ${totalGuests} kisi${data.totalPrice ? ` - ${data.totalPrice.toLocaleString("tr-TR")} ${currency}` : ""}</td>
         </tr>
       </table>
     </div>`;
@@ -361,51 +345,54 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
   const statusBadgeMap: Record<string, string> = {
     booking_confirmed: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#dcfce7;color:#166534;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #86efac;">
-           ✅ ONAYLANDI — Keyifli bir tur dileriz!
+           ONAYLANDI - Keyifli bir tur dileriz!
          </span>
        </div>`,
     booking_created: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#fef9c3;color:#854d0e;font-weight:700;padding:10px 24px;border-radius:99px;font-size:13px;border:2px solid #fde047;">
-           ⏳ İşletme onayı beklenmektedir. Onaylandığında size bilgi verilecektir.
+           Isletme onayi beklenmektedir. Onaylandiginda size bilgi verilecektir.
          </span>
        </div>`,
     booking_cancelled: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#fee2e2;color:#991b1b;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #fca5a5;">
-           ❌ İPTAL EDİLDİ
+           IPTAL EDILDI
          </span>
        </div>`,
     booking_modified: `<div style="margin:20px 0;text-align:center;">
          <span style="display:inline-block;background:#dbeafe;color:#1e40af;font-weight:700;padding:10px 24px;border-radius:99px;font-size:14px;border:2px solid #93c5fd;">
-           🔄 GÜNCELLEME YAPILDI
+           GUNCELLEME YAPILDI
          </span>
        </div>`,
   };
   const statusBadge = statusBadgeMap[data.type] || "";
 
-  // İşletme bilgileri footer
+  // Contact footer
   const contactItems: string[] = [];
-  if (biz.businessPhone) contactItems.push(`📞 ${biz.businessPhone}`);
-  if (biz.businessEmail) contactItems.push(`✉️ ${biz.businessEmail}`);
-  if (biz.businessAddress) contactItems.push(`📍 ${biz.businessAddress}`);
-  if (biz.businessWebsite) contactItems.push(`🌐 ${biz.businessWebsite}`);
+  if (biz.businessPhone) contactItems.push(`Tel: ${biz.businessPhone}`);
+  if (biz.businessEmail) contactItems.push(`E-posta: ${biz.businessEmail}`);
+  if (biz.businessAddress) contactItems.push(`Adres: ${biz.businessAddress}`);
 
   const contactBlock = contactItems.length > 0
     ? `<div style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
-         <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">📌 İşletme İletişim Bilgileri</div>
+         <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Isletme Iletisim Bilgileri</div>
          <div style="color:#475569;font-size:13px;line-height:22px;">${contactItems.join("<br/>")}</div>
        </div>`
     : "";
 
-  return `
-<!DOCTYPE html>
+  const bodyTextMap: Record<string, string> = {
+    booking_created: "Tur rezervasyonunuz basariyla olusturulmustur. Iste rezervasyon detaylariniz:",
+    booking_confirmed: "Tur rezervasyonunuz onaylanmistir. Asagida tum detaylari bulabilirsiniz:",
+    booking_cancelled: "Tur rezervasyonunuz iptal edilmistir. Iptal edilen rezervasyonun detaylari asagidadir:",
+    booking_modified: "Tur rezervasyonunuzda degisiklik yapilmistir. Guncel detaylar asagidadir:",
+  };
+
+  return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f1f5f9;">
   <div style="max-width:580px;margin:24px auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.1);">
     
-    <!-- Header -->
     <div style="background:linear-gradient(135deg,${headerColor} 0%,${headerColor}99 50%,${headerColor}cc 100%);padding:36px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:12px;">${headerIcon}</div>
       <h1 style="color:white;margin:0;font-size:24px;font-weight:800;letter-spacing:-0.5px;">${headerTitle}</h1>
       <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:14px;line-height:1.5;">${headerSubtitle}</p>
       <div style="margin-top:12px;display:inline-block;background:rgba(255,255,255,0.2);padding:4px 16px;border-radius:99px;">
@@ -413,21 +400,15 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
       </div>
     </div>
 
-    <!-- Body -->
     <div style="padding:28px 24px;">
       <p style="color:#334155;font-size:15px;margin:0 0 6px;">
         Merhaba <strong>${data.guestName}</strong>,
       </p>
       <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
-        ${{booking_created: "Tur rezervasyonunuz başarıyla oluşturulmuştur. İşte rezervasyon detaylarınız:",
-           booking_confirmed: "Tur rezervasyonunuz onaylanmıştır. Aşağıda tüm detayları bulabilirsiniz:",
-           booking_cancelled: "Tur rezervasyonunuz iptal edilmiştir. İptal edilen rezervasyonun detayları aşağıdadır:",
-           booking_modified: "Tur rezervasyonunuzda değişiklik yapılmıştır. Güncel detaylar aşağıdadır:",
-        }[data.type] || ""}
+        ${bodyTextMap[data.type] || ""}
       </p>
 
-      <!-- Rezervasyon Detayları -->
-      <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">📋 Rezervasyon Detayları</div>
+      <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Rezervasyon Detaylari</div>
       <table style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
         ${detailRows}
       </table>
@@ -436,23 +417,21 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
       ${data.type !== "booking_cancelled" ? paymentSection : ""}
       ${statusBadge}
 
-      <!-- Müşteri Bilgileri -->
       <div style="padding:14px 16px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;margin-top:16px;">
-        <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px;">👤 Müşteri Bilgileri</div>
+        <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px;">Musteri Bilgileri</div>
         <div style="color:#334155;font-size:13px;line-height:22px;">
           <strong>${data.guestName}</strong><br/>
-          ${data.guestEmail ? `✉️ ${data.guestEmail}<br/>` : ""}
-          ${data.guestPhone ? `📱 ${data.guestPhone}` : ""}
+          ${data.guestEmail ? `E-posta: ${data.guestEmail}<br/>` : ""}
+          ${data.guestPhone ? `Telefon: ${data.guestPhone}` : ""}
         </div>
       </div>
 
       ${contactBlock}
     </div>
 
-    <!-- Footer -->
     <div style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
       <p style="color:#94a3b8;font-size:11px;margin:0 0 4px;">
-        Bu e-posta <strong>${biz.businessName}</strong> tarafından otomatik olarak gönderilmiştir.
+        Bu e-posta <strong>${biz.businessName}</strong> tarafindan otomatik olarak gonderilmistir.
       </p>
       <p style="color:#cbd5e1;font-size:10px;margin:0;">
         Powered by <a href="https://upgunai.com" style="color:#3b82f6;text-decoration:none;font-weight:600;">UpgunAI</a>
@@ -466,8 +445,8 @@ function buildTourEmailHtml(data: TourBookingEmailData, biz: BusinessInfo): stri
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr + "T12:00:00");
-    const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-    const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    const days = ["Pazar", "Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma", "Cumartesi"];
+    const months = ["Ocak", "Subat", "Mart", "Nisan", "Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim", "Kasim", "Aralik"];
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${days[d.getDay()]}`;
   } catch {
     return dateStr;
