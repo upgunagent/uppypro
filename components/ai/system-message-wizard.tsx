@@ -43,10 +43,10 @@ const SECTOR_RESOURCE_MAP: Record<string, ResourceType[]> = {
   boat_rental: ["boat"],
   villa_rental: ["villa"],
   studio_rental: ["studio"],
-  // Tur sektörleri — turlar ayrı tabloda ama sihirbaz kaynakları da göstersin
-  boat_tours: ["boat"],
-  bus_tours: ["vehicle"],
-  travel_agency: ["employee"],
+  // Tur sektörleri — tours tablosundan çekilecek
+  boat_tours: ["tour", "boat"],
+  bus_tours: ["tour", "vehicle"],
+  travel_agency: ["tour", "employee"],
   // Personel bazlı sektörler — ayrıca belirtmeye gerek yok, hepsi employee
 };
 
@@ -88,19 +88,55 @@ export function SystemMessageWizard({ tenantId, onComplete, onClose }: Props) {
     const fetchResources = async () => {
       setResourcesLoading(true);
       const supabase = createClient();
-      const { data } = await supabase
+
+      // 1. tenant_employees tablosundan kaynaklar (personel, tekne, araç, oda vb.)
+      const { data: empData } = await supabase
         .from("tenant_employees")
         .select("id, name, title, resource_type, attributes, extra_info")
         .eq("tenant_id", tenantId)
         .order("name");
 
-      if (data) {
-        setAllResources(data as RegisteredResource[]);
-        // Auto-select all relevant resources
-        const relevantTypes = getRelevantResourceTypes(selectedSector.id);
-        const relevant = data.filter(r => relevantTypes.includes(r.resource_type as ResourceType));
-        setSelectedResourceIds(new Set(relevant.map(r => r.id)));
-      }
+      // 2. tours tablosundan turlar (ayrı tablo)
+      const { data: tourData } = await supabase
+        .from("tours")
+        .select("id, name, tour_type, description, capacity, price_per_person, child_price, currency, departure_time, return_time, duration_hours, departure_point, route, destination, vehicle_type, category, extra_info, cover_photo, detail_url")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .order("name");
+
+      // Tours verisini RegisteredResource formatına dönüştür
+      const tourResources: RegisteredResource[] = (tourData || []).map((t: any) => ({
+        id: `tour_${t.id}`,
+        name: t.name,
+        title: t.category || t.tour_type || null,
+        resource_type: "tour",
+        attributes: {
+          capacity: t.capacity,
+          price_per_person: t.price_per_person,
+          child_price: t.child_price,
+          currency: t.currency,
+          departure_time: t.departure_time,
+          return_time: t.return_time,
+          duration_hours: t.duration_hours,
+          departure_point: t.departure_point,
+          route: t.route,
+          destination: t.destination,
+          vehicle_type: t.vehicle_type,
+          tour_type: t.tour_type,
+          cover_photo: t.cover_photo,
+          detail_url: t.detail_url,
+        },
+        extra_info: t.extra_info || t.description || null,
+      }));
+
+      const combined = [...(empData || []) as RegisteredResource[], ...tourResources];
+
+      setAllResources(combined);
+      // Auto-select all relevant resources
+      const relevantTypes = getRelevantResourceTypes(selectedSector.id);
+      const relevant = combined.filter(r => relevantTypes.includes(r.resource_type as ResourceType));
+      setSelectedResourceIds(new Set(relevant.map(r => r.id)));
+
       setResourcesLoading(false);
     };
     fetchResources();
@@ -123,6 +159,8 @@ export function SystemMessageWizard({ tenantId, onComplete, onClose }: Props) {
       vehicle: "Araç",
       table: "Masa",
       villa: "Villa / Apart",
+      studio: "Stüdyo",
+      tour: "Tur",
     };
     return labels[type] || type;
   }
@@ -143,21 +181,48 @@ export function SystemMessageWizard({ tenantId, onComplete, onClose }: Props) {
     const lines: string[] = [];
     for (const [type, resources] of Object.entries(groups)) {
       const label = getResourceTypeLabel(type);
-      lines.push(`\n### ${label}ler:`);
+      lines.push(`\n### ${label}lar:`);
       for (const r of resources) {
-        const attrs = formatResourceAttributes(r);
-        const titlePart = r.title ? ` (${r.title})` : "";
-        const attrsPart = attrs ? ` — ${attrs}` : "";
+        // Tur kaynakları için özel formatlama
+        if (type === "tour") {
+          const attrs = r.attributes || {};
+          const parts: string[] = [];
+          if (attrs.capacity) parts.push(`${attrs.capacity} kişi kapasite`);
+          if (attrs.price_per_person) parts.push(`${attrs.price_per_person} ${attrs.currency || 'TRY'}/kişi`);
+          if (attrs.child_price) parts.push(`Çocuk: ${attrs.child_price} ${attrs.currency || 'TRY'}`);
+          if (attrs.departure_time) parts.push(`Kalkış: ${attrs.departure_time}`);
+          if (attrs.return_time) parts.push(`Dönüş: ${attrs.return_time}`);
+          if (attrs.duration_hours) parts.push(`${attrs.duration_hours} saat`);
+          if (attrs.departure_point) parts.push(`Kalkış: ${attrs.departure_point}`);
+          if (attrs.route) parts.push(`Güzergah: ${attrs.route}`);
+          if (attrs.destination) parts.push(`Varış: ${attrs.destination}`);
+          if (attrs.vehicle_type) parts.push(`Araç: ${attrs.vehicle_type}`);
 
-        // Kapak fotoğrafı bilgisi
-        const coverPhoto = r.attributes?.cover_photo;
-        const photoPart = coverPhoto ? ` | 📸 Kapak fotoğrafı mevcut (cover_photo: ${coverPhoto})` : "";
+          const attrsPart = parts.length ? ` — ${parts.join(", ")}` : "";
+          const titlePart = r.title ? ` (${r.title})` : "";
 
-        // Detay URL bilgisi  
-        const detailUrl = r.attributes?.detail_url;
-        const urlPart = detailUrl ? ` | 🔗 Detay URL: ${detailUrl}` : "";
+          const coverPhoto = attrs.cover_photo;
+          const photoPart = coverPhoto ? ` | 📸 Kapak fotoğrafı mevcut (cover_photo: ${coverPhoto})` : "";
+          const detailUrl = attrs.detail_url;
+          const urlPart = detailUrl ? ` | 🔗 Detay URL: ${detailUrl}` : "";
 
-        lines.push(`- ${r.name}${titlePart}${attrsPart}${photoPart}${urlPart}`);
+          const extraPart = r.extra_info ? ` | Not: ${r.extra_info}` : "";
+          lines.push(`- ${r.name}${titlePart}${attrsPart}${photoPart}${urlPart}${extraPart}`);
+        } else {
+          const attrs = formatResourceAttributes(r);
+          const titlePart = r.title ? ` (${r.title})` : "";
+          const attrsPart = attrs ? ` — ${attrs}` : "";
+
+          // Kapak fotoğrafı bilgisi
+          const coverPhoto = r.attributes?.cover_photo;
+          const photoPart = coverPhoto ? ` | 📸 Kapak fotoğrafı mevcut (cover_photo: ${coverPhoto})` : "";
+
+          // Detay URL bilgisi  
+          const detailUrl = r.attributes?.detail_url;
+          const urlPart = detailUrl ? ` | 🔗 Detay URL: ${detailUrl}` : "";
+
+          lines.push(`- ${r.name}${titlePart}${attrsPart}${photoPart}${urlPart}`);
+        }
       }
     }
 

@@ -3,7 +3,7 @@
  * Her kaynak tipi için form alanları, etiketler ve placeholder'lar
  */
 
-export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table" | "villa" | "studio";
+export type ResourceType = "employee" | "room" | "boat" | "vehicle" | "table" | "villa" | "studio" | "tour";
 
 export interface AttributeField {
     key: string;
