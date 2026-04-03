@@ -6,4 +6,4 @@ const resendApiKey = process.env.RESEND_API_KEY!;
 export const resend = new Resend(resendApiKey);
 
 // Domain to send from
-export const EMAIL_FROM = 'UppyPro <noreply@upgunai.com>';
+export const EMAIL_FROM = 'UppyPro <bildirim@upgunai.com>';
