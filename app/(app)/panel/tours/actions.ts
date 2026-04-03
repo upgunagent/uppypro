@@ -256,10 +256,10 @@ export async function createManualBooking(
 ) {
   const supabase = await createClient();
 
-  // Kapasite kontrolü
+  // Kapasite kontrolü + tur detayları (email için de lazım)
   const { data: tour } = await supabase
     .from("tours")
-    .select("capacity, price_per_person, child_price, currency")
+    .select("name, capacity, price_per_person, child_price, currency, departure_time, return_time, departure_point, route, vehicle_type, requires_deposit, deposit_amount, accepts_credit_card, accepts_cash, accepts_bank_transfer, payment_terms, selected_iban_ids")
     .eq("id", tourId)
     .single();
 
@@ -329,6 +329,57 @@ export async function createManualBooking(
     .single();
 
   if (error) return { success: false, error: error.message };
+
+  // 📧 Manuel rezervasyon oluşturulduğunda e-posta gönder
+  if (data && bookingData.guest_email) {
+    try {
+      const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+
+      const paymentMethods: string[] = [];
+      if (tour.accepts_credit_card) paymentMethods.push("Kredi Kartı");
+      if (tour.accepts_cash) paymentMethods.push("Nakit");
+      if (tour.accepts_bank_transfer) paymentMethods.push("Banka Havalesi");
+
+      let ibanInfo: string[] = [];
+      if (tour.accepts_bank_transfer && tour.selected_iban_ids?.length > 0) {
+        const { data: bankAccounts } = await supabase
+          .from("tenant_bank_accounts")
+          .select("bank_name, iban, account_holder")
+          .in("id", tour.selected_iban_ids)
+          .eq("is_active", true);
+        if (bankAccounts) {
+          ibanInfo = bankAccounts.map((a: any) => `${a.bank_name}: ${a.iban}${a.account_holder ? ` (${a.account_holder})` : ""}`);
+        }
+      }
+
+      await sendTourBookingEmail(tenantId, {
+        type: "booking_created",
+        guestName: bookingData.guest_name,
+        guestEmail: bookingData.guest_email,
+        guestPhone: bookingData.guest_phone,
+        tourName: tour.name,
+        bookingDate: bookingData.booking_date,
+        adultCount: bookingData.adult_count || 1,
+        childCount: bookingData.child_count || 0,
+        totalPrice: totalPrice,
+        currency: tour.currency || "TL",
+        departureTime: tour.departure_time || undefined,
+        returnTime: tour.return_time || undefined,
+        departurePoint: tour.departure_point || undefined,
+        route: tour.route || undefined,
+        vehicleType: tour.vehicle_type || undefined,
+        depositAmount: tour.deposit_amount || undefined,
+        depositRequired: tour.requires_deposit || false,
+        paymentMethods: paymentMethods.length > 0 ? paymentMethods : undefined,
+        ibanInfo: ibanInfo.length > 0 ? ibanInfo : undefined,
+        paymentTerms: tour.payment_terms || undefined,
+        description: bookingData.description || undefined,
+      });
+    } catch (emailErr: any) {
+      console.error("[Tour] Manual booking email failed:", emailErr.message);
+    }
+  }
+
   revalidatePath("/panel/tours");
   return { success: true, booking: data };
 }
@@ -341,6 +392,75 @@ export async function updateBookingStatus(bookingId: string, status: string) {
     .eq("id", bookingId);
 
   if (error) return { success: false, error: error.message };
+
+  // 📧 Onaylandığında müşteriye onay maili gönder
+  if (status === "confirmed") {
+    try {
+      const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+
+      // Booking + tour bilgilerini çek
+      const { data: booking } = await supabase
+        .from("tour_bookings")
+        .select(`
+          guest_name, guest_email, guest_phone, booking_date,
+          adult_count, child_count, total_price, selected_services, description,
+          tenant_id,
+          tours:tour_id(name, currency, departure_time, return_time, departure_point, route, vehicle_type,
+            requires_deposit, deposit_amount, accepts_credit_card, accepts_cash, accepts_bank_transfer,
+            payment_terms, selected_iban_ids)
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (booking?.guest_email && booking.tours) {
+        const t: any = booking.tours;
+        const paymentMethods: string[] = [];
+        if (t.accepts_credit_card) paymentMethods.push("Kredi Kartı");
+        if (t.accepts_cash) paymentMethods.push("Nakit");
+        if (t.accepts_bank_transfer) paymentMethods.push("Banka Havalesi");
+
+        let ibanInfo: string[] = [];
+        if (t.accepts_bank_transfer && t.selected_iban_ids?.length > 0) {
+          const { data: bankAccounts } = await supabase
+            .from("tenant_bank_accounts")
+            .select("bank_name, iban, account_holder")
+            .in("id", t.selected_iban_ids)
+            .eq("is_active", true);
+          if (bankAccounts) {
+            ibanInfo = bankAccounts.map((a: any) => `${a.bank_name}: ${a.iban}${a.account_holder ? ` (${a.account_holder})` : ""}`);
+          }
+        }
+
+        await sendTourBookingEmail(booking.tenant_id, {
+          type: "booking_confirmed",
+          guestName: booking.guest_name,
+          guestEmail: booking.guest_email,
+          guestPhone: booking.guest_phone || undefined,
+          tourName: t.name,
+          bookingDate: booking.booking_date,
+          adultCount: booking.adult_count,
+          childCount: booking.child_count,
+          totalPrice: booking.total_price || undefined,
+          currency: t.currency || "TL",
+          departureTime: t.departure_time || undefined,
+          returnTime: t.return_time || undefined,
+          departurePoint: t.departure_point || undefined,
+          route: t.route || undefined,
+          vehicleType: t.vehicle_type || undefined,
+          depositAmount: t.deposit_amount || undefined,
+          depositRequired: t.requires_deposit || false,
+          paymentMethods: paymentMethods.length > 0 ? paymentMethods : undefined,
+          ibanInfo: ibanInfo.length > 0 ? ibanInfo : undefined,
+          paymentTerms: t.payment_terms || undefined,
+          selectedServices: booking.selected_services || undefined,
+          description: booking.description || undefined,
+        });
+      }
+    } catch (emailErr: any) {
+      console.error("[Tour] Confirmation email failed:", emailErr.message);
+    }
+  }
+
   revalidatePath("/panel/tours");
   return { success: true };
 }

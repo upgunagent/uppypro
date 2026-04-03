@@ -845,7 +845,7 @@ async function handleCreateTourBooking(
   // 1. Turu bul
   const { data: tours } = await supabase
     .from("tours")
-    .select("id, name, capacity, price_per_person, child_price, child_age_limit, available_days, currency, accepts_credit_card, accepts_cash, accepts_bank_transfer, requires_deposit, deposit_amount, payment_terms, selected_iban_ids, gallery_url, cover_photo")
+    .select("id, name, capacity, price_per_person, child_price, child_age_limit, available_days, currency, accepts_credit_card, accepts_cash, accepts_bank_transfer, requires_deposit, deposit_amount, payment_terms, selected_iban_ids, gallery_url, cover_photo, departure_time, return_time, departure_point, route, vehicle_type")
     .eq("tenant_id", context.tenantId)
     .eq("is_active", true)
     .ilike("name", `%${args.tour_name}%`)
@@ -1002,6 +1002,38 @@ async function handleCreateTourBooking(
     if (bankAccounts) {
       ibanInfo = bankAccounts.map((a: any) => `${a.bank_name}: ${a.iban}${a.account_holder ? ` (${a.account_holder})` : ""}`);
     }
+  }
+
+  // 📧 Otomatik e-posta gönder (rezervasyon alındı)
+  try {
+    const { sendTourBookingEmail } = await import("@/lib/ai/tour-email-sender");
+    await sendTourBookingEmail(context.tenantId, {
+      type: "booking_created",
+      guestName: args.customer_name,
+      guestEmail: args.customer_email,
+      guestPhone: args.customer_phone,
+      tourName: tour.name,
+      bookingDate: args.date,
+      adultCount: adultCount,
+      childCount: childCount,
+      totalPrice: totalPrice,
+      currency: currency,
+      departureTime: tour.departure_time || undefined,
+      returnTime: tour.return_time || undefined,
+      departurePoint: tour.departure_point || undefined,
+      route: tour.route || undefined,
+      vehicleType: tour.vehicle_type || undefined,
+      depositAmount: tour.deposit_amount || undefined,
+      depositRequired: tour.requires_deposit || false,
+      paymentMethods: paymentMethods.length > 0 ? paymentMethods : undefined,
+      ibanInfo: ibanInfo.length > 0 ? ibanInfo : undefined,
+      paymentTerms: tour.payment_terms || undefined,
+      selectedServices: selectedServicesData.length > 0 ? selectedServicesData : undefined,
+      description: args.description || undefined,
+    });
+  } catch (emailErr: any) {
+    console.error("[AI Tour] Email sending failed:", emailErr.message);
+    // Don't fail the booking if email fails
   }
 
   return JSON.stringify({
