@@ -102,7 +102,7 @@ export function AiSettingsForm({ tenantId, initialSettings }: AiSettingsFormProp
                     </label>
                     <select
                         name="ai_model"
-                        defaultValue={initialSettings?.ai_model || 'gemini-2.5-flash'}
+                        defaultValue={initialSettings?.ai_model || 'gemini-3-pro-preview'}
                         className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-white"
                         disabled={isPending}
                     >

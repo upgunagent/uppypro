@@ -48,6 +48,7 @@ export async function updateAiSettings(formData: FormData) {
 
     if (aiOperationalEnabled && (!existingSettings?.ai_mode || existingSettings?.ai_mode === 'disabled')) {
         updates.ai_mode = 'built_in';
+        updates.ai_model = 'gemini-3-pro-preview';
     }
 
     // Update agent settings
