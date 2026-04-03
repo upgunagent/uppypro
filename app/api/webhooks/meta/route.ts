@@ -898,12 +898,18 @@ async function processAIResponseInBackground(
                                 });
 
                             const { sendToChannel } = await import("@/lib/meta");
-                            await sendToChannel(
+                            const sendResult = await sendToChannel(
                                 tenantId,
                                 channel as "whatsapp" | "instagram",
                                 eventData.sender_id,
                                 cleanText
                             );
+
+                            if (!sendResult.success) {
+                                console.error(`[AI Agent] sendToChannel FAILED for ${channel}:`, sendResult.error, JSON.stringify(sendResult.data));
+                            } else {
+                                console.log(`[AI Agent] Message sent to ${channel} successfully`);
+                            }
                         }
 
                         // Send photos as separate image messages
@@ -914,6 +920,7 @@ async function processAIResponseInBackground(
                                     .from("tenant_employees")
                                     .select("name, attributes")
                                     .eq("tenant_id", tenantId);
+
 
                                 const { sendToChannel } = await import("@/lib/meta");
 
