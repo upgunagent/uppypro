@@ -208,7 +208,8 @@ export function ChannelCard({ type, connection }: ChannelCardProps) {
 
         // Callback sayfasından postMessage dinle
         const messageHandler = (event: MessageEvent) => {
-            if (event.origin !== window.location.origin) return;
+            // Origin check removed intentionally: 
+            // if we are on uppypro.vercel.app and redirect is on upgunai.com, origin differs.
             if (event.data?.type === "IG_OAUTH_SUCCESS") {
                 clearInterval(closedTimer);
                 window.removeEventListener("message", messageHandler);

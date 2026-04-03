@@ -18,7 +18,7 @@ function popupResponse(type: "IG_OAUTH_SUCCESS" | "IG_OAUTH_ERROR", message?: st
         <p>${isSuccess ? "Instagram hesabınız bağlandı. Bu pencere kapanıyor..." : (message || "Bir hata oluştu.")}</p>
     </div>
     <script>
-        try { if (window.opener) { window.opener.postMessage(${payload}, window.location.origin); } } catch(e){}
+        try { if (window.opener) { window.opener.postMessage(${payload}, "*"); } } catch(e){}
         setTimeout(() => window.close(), ${isSuccess ? 1500 : 4000});
     </script>
     </body></html>`;
