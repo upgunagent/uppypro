@@ -51,7 +51,7 @@ export async function sendTourBookingEmail(
   // Firma bilgisini al
   const { data: tenant } = await supabase
     .from("tenants")
-    .select("name, phone, address, website, email, logo_url")
+    .select("name")
     .eq("id", tenantId)
     .maybeSingle();
 
@@ -63,10 +63,10 @@ export async function sendTourBookingEmail(
     .maybeSingle();
 
   const businessName = tenant?.name || billingInfo?.company_name || "İşletme";
-  const businessPhone = tenant?.phone || billingInfo?.contact_phone || "";
-  const businessAddress = tenant?.address || billingInfo?.address || "";
-  const businessWebsite = tenant?.website || "";
-  const businessEmail = tenant?.email || billingInfo?.contact_email || "";
+  const businessPhone = billingInfo?.contact_phone || "";
+  const businessAddress = billingInfo?.address || "";
+  const businessWebsite = "";
+  const businessEmail = billingInfo?.contact_email || "";
 
   // SMTP ayarlarını kontrol et
   const { data: emailSettings } = await supabase
