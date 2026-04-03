@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect, useCallback } from "react";
 import {
   ChevronLeft, ChevronRight, Plus, Users, X, Check, Loader2,
   Calendar as CalendarIcon, MapPin, Clock, DollarSign, Ship,
@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import {
   createManualBooking, updateBookingStatus, reviewTourBooking,
-  setTourDateOverride, removeTourDateOverride, updateTourBooking
+  setTourDateOverride, removeTourDateOverride, updateTourBooking,
+  getTourMonthData
 } from "../actions";
 import Link from "next/link";
 
@@ -102,6 +103,7 @@ export function TourDetailClient({ tour, tenantId, initialBookings, initialOverr
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showBookingDialog, setShowBookingDialog] = useState<string | null>(null); // booking_date
   const [isPending, startTransition] = useTransition();
+  const [isLoadingMonth, setIsLoadingMonth] = useState(false);
   const { toast } = useToast();
 
   // Booking form
@@ -169,14 +171,34 @@ export function TourDetailClient({ tour, tenantId, initialBookings, initialOverr
     return dateBookings.reduce((sum, b) => sum + (b.adult_count || 0) + (b.child_count || 0), 0);
   }
 
+  // Ay verilerini çek
+  const loadMonthData = useCallback(async (targetYear: number, targetMonth: number) => {
+    setIsLoadingMonth(true);
+    try {
+      const ms = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
+      const me = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${new Date(targetYear, targetMonth + 1, 0).getDate()}`;
+      const data = await getTourMonthData(tour.id, ms, me);
+      setBookings(data.bookings as Booking[]);
+      setOverrides(data.overrides as DateOverride[]);
+    } catch (err) {
+      console.error("[Tour] Month data fetch error:", err);
+    } finally {
+      setIsLoadingMonth(false);
+    }
+  }, [tour.id]);
+
   function prevMonth() {
-    setCurrentDate(new Date(year, month - 1, 1));
+    const newDate = new Date(year, month - 1, 1);
+    setCurrentDate(newDate);
     setSelectedDate(null);
+    loadMonthData(newDate.getFullYear(), newDate.getMonth());
   }
 
   function nextMonth() {
-    setCurrentDate(new Date(year, month + 1, 1));
+    const newDate = new Date(year, month + 1, 1);
+    setCurrentDate(newDate);
     setSelectedDate(null);
+    loadMonthData(newDate.getFullYear(), newDate.getMonth());
   }
 
   async function handleToggleDateActive(date: string, dayKey: string) {

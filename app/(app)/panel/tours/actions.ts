@@ -549,3 +549,31 @@ export async function deleteTourCoverPhoto(
   revalidatePath("/panel/tours");
   return { success: true };
 }
+
+// ─── AY BAZLI VERİ ÇEKME ───
+
+export async function getTourMonthData(tourId: string, monthStart: string, monthEnd: string) {
+  const supabase = await createClient();
+
+  const [bookingsResult, overridesResult] = await Promise.all([
+    supabase
+      .from("tour_bookings")
+      .select("*")
+      .eq("tour_id", tourId)
+      .gte("booking_date", monthStart)
+      .lte("booking_date", monthEnd)
+      .order("booking_date")
+      .order("created_at"),
+    supabase
+      .from("tour_date_overrides")
+      .select("*")
+      .eq("tour_id", tourId)
+      .gte("date", monthStart)
+      .order("date"),
+  ]);
+
+  return {
+    bookings: bookingsResult.data || [],
+    overrides: overridesResult.data || [],
+  };
+}
