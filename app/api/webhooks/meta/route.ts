@@ -836,7 +836,8 @@ async function processAIResponseInBackground(
         else if (currentRealMode !== 'BOT') skipReason = `Mode is ${currentRealMode}`;
 
         // Determine AI mode: built_in (Gemini), webhook (n8n), or disabled
-        const aiMode = settings?.ai_mode || (settings?.n8n_webhook_url ? 'webhook' : 'disabled');
+        // Default to 'built_in' if ai_mode is not explicitly set (new tenants)
+        const aiMode = settings?.ai_mode || (settings?.n8n_webhook_url ? 'webhook' : 'built_in');
 
         if (!skipReason && aiMode === 'disabled') {
             skipReason = "AI mode disabled";

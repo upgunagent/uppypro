@@ -47,6 +47,27 @@ export function AiSettingsForm({ settings, subscription, tenantId }: { settings:
                     title: "Başarılı",
                     description: "AI ayarları güncellendi.",
                 });
+
+                // AI pasif durumdaysa kullanıcıya aktifleştirme uyarısı göster
+                const currentEnabled = formData.get("aiOperationalEnabled") === "true";
+                if (!currentEnabled) {
+                    // Küçük bir gecikme ile uyarı göster (toast üzerine binmemesi için)
+                    setTimeout(() => {
+                        const activate = window.confirm(
+                            "⚠️ AI Asistanınız şu anda PASİF durumda!\n\n" +
+                            "Eğitim dokümanınız başarıyla kaydedildi ancak AI asistan henüz devrede değil. " +
+                            "Müşterilerinize otomatik yanıt verebilmesi için asistanı aktif hale getirmeniz gerekmektedir.\n\n" +
+                            "AI asistanı şimdi aktif hale getirmek ister misiniz?"
+                        );
+                        if (activate) {
+                            setIsAiEnabled(true);
+                            // Form'u tekrar submit et — aktif durumla
+                            setTimeout(() => {
+                                formRef.current?.requestSubmit();
+                            }, 50);
+                        }
+                    }, 500);
+                }
             }
         } catch (error) {
             toast({
