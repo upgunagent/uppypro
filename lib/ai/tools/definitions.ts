@@ -283,6 +283,160 @@ export const aiToolDefinitions = [
           required: ["order_number", "reason"],
         },
       },
+      // ─── TUR TOOLS ───
+      {
+        name: "list_available_tours",
+        description:
+          "İşletmenin aktif turlarını listeler. Müşteri 'hangi turlarınız var?', 'turlar ne zaman?', 'neler yapılabilir?' gibi sorular sorduğunda bu aracı kullan. Opsiyonel tarih filtresi ile o gün aktif turları gösterir.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            date: {
+              type: SchemaType.STRING,
+              description:
+                "Opsiyonel: Belirli bir tarih için tur listesi (YYYY-MM-DD formatında). Belirtilmezse tüm aktif turlar döner.",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: "check_tour_availability",
+        description:
+          "Belirtilen turun belirtilen tarihte müsait olup olmadığını ve istenen kişi sayısı için yer olup olmadığını kontrol eder. Tur rezervasyonu oluşturmadan ÖNCE mutlaka bu tool çağrılmalıdır. Asla kapasite kontrolü yapmadan tur rezervasyonu oluşturma.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            date: {
+              type: SchemaType.STRING,
+              description: "Kontrol edilecek tarih (YYYY-MM-DD formatında)",
+            },
+            tour_name: {
+              type: SchemaType.STRING,
+              description: "Tur adı",
+            },
+            guest_count: {
+              type: SchemaType.NUMBER,
+              description: "Toplam kaç kişilik yer kontrol edilecek (yetişkin + çocuk)",
+            },
+          },
+          required: ["date", "tour_name", "guest_count"],
+        },
+      },
+      {
+        name: "create_tour_booking",
+        description:
+          "Tur için kapasite bazlı rezervasyon oluşturur. Önce check_tour_availability ile müsaitlik kontrol edilmiş olmalıdır. Kişi sayısı ve opsiyonel hizmet seçenekleri belirtilmelidir. Oluşturulduktan sonra mail_gonder tool'u ile onay maili gönder.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            customer_name: {
+              type: SchemaType.STRING,
+              description: "Müşterinin adı soyadı",
+            },
+            customer_email: {
+              type: SchemaType.STRING,
+              description: "Müşterinin e-posta adresi",
+            },
+            customer_phone: {
+              type: SchemaType.STRING,
+              description: "Müşterinin telefon numarası",
+            },
+            date: {
+              type: SchemaType.STRING,
+              description: "Tur tarihi (YYYY-MM-DD formatında)",
+            },
+            tour_name: {
+              type: SchemaType.STRING,
+              description: "Tur adı",
+            },
+            adult_count: {
+              type: SchemaType.NUMBER,
+              description: "Yetişkin sayısı",
+            },
+            child_count: {
+              type: SchemaType.NUMBER,
+              description: "Çocuk sayısı (opsiyonel, varsayılan 0)",
+            },
+            selected_services: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
+              description:
+                "Seçilen opsiyonel hizmetler (ör: ['İçecek Paketi', 'Dalış Ekipmanı'])",
+            },
+            description: {
+              type: SchemaType.STRING,
+              description: "Ek notlar veya özel istekler",
+            },
+          },
+          required: [
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            "date",
+            "tour_name",
+            "adult_count",
+          ],
+        },
+      },
+      {
+        name: "cancel_tour_booking",
+        description:
+          "Müşterinin mevcut bir tur rezervasyonunu iptal eder. Müşterinin adı ve tarih bilgisiyle eşleşen rezervasyonu bulur ve iptal eder. İptal öncesi mutlaka müşteriden teyit alınmalıdır.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            customer_name: {
+              type: SchemaType.STRING,
+              description: "Müşterinin adı soyadı (rezervasyonda kayıtlı)",
+            },
+            date: {
+              type: SchemaType.STRING,
+              description: "Tur tarihi (YYYY-MM-DD formatında)",
+            },
+            tour_name: {
+              type: SchemaType.STRING,
+              description: "Tur adı (opsiyonel, birden fazla tur varsa ayırt etmek için)",
+            },
+          },
+          required: ["customer_name", "date"],
+        },
+      },
+      {
+        name: "modify_tour_booking",
+        description:
+          "Müşterinin mevcut bir tur rezervasyonunu günceller. Kişi sayısı (yetişkin/çocuk) ve not bilgisi değiştirilebilir. Müşterinin adı ve tarih bilgisiyle eşleşen rezervasyonu bulur.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            customer_name: {
+              type: SchemaType.STRING,
+              description: "Müşterinin adı soyadı (rezervasyonda kayıtlı)",
+            },
+            date: {
+              type: SchemaType.STRING,
+              description: "Tur tarihi (YYYY-MM-DD formatında)",
+            },
+            tour_name: {
+              type: SchemaType.STRING,
+              description: "Tur adı (opsiyonel)",
+            },
+            new_adult_count: {
+              type: SchemaType.NUMBER,
+              description: "Yeni yetişkin sayısı (değiştirilecekse)",
+            },
+            new_child_count: {
+              type: SchemaType.NUMBER,
+              description: "Yeni çocuk sayısı (değiştirilecekse)",
+            },
+            new_description: {
+              type: SchemaType.STRING,
+              description: "Yeni not / açıklama (değiştirilecekse)",
+            },
+          },
+          required: ["customer_name", "date"],
+        },
+      },
     ],
   },
 ];

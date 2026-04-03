@@ -10,7 +10,7 @@ import {
   User, DoorOpen, Ship, Car, UtensilsCrossed, Leaf, Pen, Building2, Scissors, Syringe,
   HeartPulse, Wrench, ShoppingBag, Stethoscope, Heart, Camera, Brain, Gauge,
   PartyPopper, Apple, Calculator, Home, GraduationCap, Dumbbell, PawPrint, Scale,
-  SprayCan, Printer, Eye, Flower2, Ruler, Pill, Building, Mic, type LucideIcon
+  SprayCan, Printer, Eye, Flower2, Ruler, Pill, Building, Mic, Compass, type LucideIcon
 } from "lucide-react";
 import { sectors, commonQuestions, type SectorDefinition } from "@/lib/ai/system-message-template";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +21,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Sparkles, Leaf, Pen, Building2, Scissors, Syringe, HeartPulse, Wrench, ShoppingBag,
   Stethoscope, Heart, Camera, Brain, UtensilsCrossed, Gauge, Car, PartyPopper, Apple,
   Calculator, Home, GraduationCap, Dumbbell, PawPrint, Scale, SprayCan, Printer, Eye,
-  Flower2, Ruler, Pill, Ship, Building, User, DoorOpen, Mic,
+  Flower2, Ruler, Pill, Ship, Building, User, DoorOpen, Mic, Compass,
 };
 
 function SectorIcon({ name, className }: { name: string; className?: string }) {
@@ -43,6 +43,10 @@ const SECTOR_RESOURCE_MAP: Record<string, ResourceType[]> = {
   boat_rental: ["boat"],
   villa_rental: ["villa"],
   studio_rental: ["studio"],
+  // Tur sektörleri — turlar ayrı tabloda ama sihirbaz kaynakları da göstersin
+  boat_tours: ["boat"],
+  bus_tours: ["vehicle"],
+  travel_agency: ["employee"],
   // Personel bazlı sektörler — ayrıca belirtmeye gerek yok, hepsi employee
 };
 

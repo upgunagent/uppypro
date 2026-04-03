@@ -8,6 +8,7 @@ import { aiToolDefinitions } from "@/lib/ai/tools/definitions";
 import { executeToolCall } from "@/lib/ai/tools/handlers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAiUsage } from "@/lib/usage-logger";
+import { buildDynamicResourceContext } from "@/lib/ai/dynamic-context-builder";
 import type { Content, Part } from "@google/generative-ai";
 
 const MAX_TOOL_ROUNDS = 5; // Sonsuz döngü koruması
@@ -105,6 +106,9 @@ export async function processWithBuiltInAI(
   // 6. Gemini model & chat oluştur
   const model = getGeminiModel(modelName);
 
+  // Dinamik kaynak ve tur bilgilerini çek (her mesajda güncel)
+  const dynamicContext = await buildDynamicResourceContext(supabase, tenantId);
+
   // Bugünün tarihi ve saatini sistem mesajına ekle (Türkiye timezone)
   const now = new Date();
   const turkeyTime = now.toLocaleString("tr-TR", {
@@ -119,7 +123,7 @@ export async function processWithBuiltInAI(
   const turkeyDateISO = now.toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" }); // YYYY-MM-DD format
   const dateContext = `\n\n[SİSTEM BİLGİSİ]\nBugünün tarihi: ${turkeyDateISO} (${turkeyTime})\nTüm tarih işlemlerinde bu bilgiyi referans al. "Yarın" dendiğinde bugüne 1 gün ekle.`;
 
-  const fullSystemMessage = settings.system_message + dateContext;
+  const fullSystemMessage = settings.system_message + dynamicContext + dateContext;
 
   const chat = model.startChat({
     history,

@@ -524,6 +524,53 @@ export const sectors: SectorDefinition[] = [
     ]
   },
   {
+    id: 'boat_tours', label: 'Tekne Turları', iconName: 'Ship',
+    placeholderOverrides: {
+      business_name: 'Örn: Göcek Blue Cruise',
+      ai_name: 'Örn: Kaptan Asistan',
+      employees: 'Turlarınız kaynaklarda tanımlıdır',
+      duration_hint: 'Tam gün (8 saat), Yarım gün (4 saat)',
+    },
+    extraQuestions: [
+      { id: 'tours_info', label: 'Turlarınız (Turlar kaynaklarda tanımlıysa boş bırakabilirsiniz)', placeholder: 'Örn: Göcek 6 Koy Turu (50 kişi, 500₺/kişi, 09:00-17:00), 12 Ada Turu (40 kişi, 600₺/kişi)', type: 'textarea' },
+      { id: 'boat_types', label: 'Tekne Tipleri', placeholder: 'Örn: Gület, Motoryat, Gulet, Yelkenli', type: 'text' },
+      { id: 'included_services', label: 'Fiyata Dahil Olanlar', placeholder: 'Örn: Öğle yemeği, sigorta, havlu, snorkel ekipmanı', type: 'textarea' },
+      { id: 'optional_services', label: 'Opsiyonel Hizmetler', placeholder: 'Örn: İçecek paketi (+150₺), dalış ekipmanı (+200₺)', type: 'textarea' },
+      { id: 'safety_info', label: 'Güvenlik ve İptal Koşulları', placeholder: 'Örn: Hava şartlarına bağlı iptal, 24 saat öncesi ücretsiz iptal, can yeleği mevcut', type: 'textarea' },
+    ]
+  },
+  {
+    id: 'bus_tours', label: 'Otobüs / Gezi Turları', iconName: 'Car',
+    placeholderOverrides: {
+      business_name: 'Örn: Kapadokya Gezileri',
+      ai_name: 'Örn: Gezi Asistanı',
+      employees: 'Turlarınız kaynaklarda tanımlıdır',
+      duration_hint: 'Tam gün (10 saat), 2 gün 1 gece',
+    },
+    extraQuestions: [
+      { id: 'tours_info', label: 'Turlarınız', placeholder: 'Örn: Kapadokya Günlük Tur (45 kişi, 750₺), Pamukkale Turu (40 kişi, 600₺)', type: 'textarea' },
+      { id: 'vehicle_info', label: 'Araç Bilgileri', placeholder: 'Örn: Klimalı lüks otobüs, 45 koltuk, WiFi mevcut', type: 'text' },
+      { id: 'guide_info', label: 'Rehber Bilgisi', placeholder: 'Örn: Profesyonel Türkçe/İngilizce rehber dahil', type: 'text' },
+      { id: 'included_services', label: 'Fiyata Dahil Olanlar', placeholder: 'Örn: Kahvaltı, müze girişleri, rehber, sigorta', type: 'textarea' },
+      { id: 'pickup_info', label: 'Alış Noktaları', placeholder: 'Örn: Otellerden ücretsiz alış, Centrum taksim buluşma', type: 'text' },
+    ]
+  },
+  {
+    id: 'travel_agency', label: 'Seyahat Acentası', iconName: 'Compass',
+    placeholderOverrides: {
+      business_name: 'Örn: Sunrise Travel',
+      ai_name: 'Örn: Seyahat Danışmanı',
+      employees: 'Turlarınız kaynaklarda tanımlıdır',
+    },
+    extraQuestions: [
+      { id: 'tours_info', label: 'Tur Paketleri', placeholder: 'Örn: Mısır 5 Gece All Inclusive (kişi başı 25.000₺), Dubai 4 Gece (18.000₺)', type: 'textarea' },
+      { id: 'destinations', label: 'Destinasyonlar', placeholder: 'Örn: Mısır, Dubai, Yunanistan Adaları, Roma, Bali', type: 'text' },
+      { id: 'package_includes', label: 'Paketlere Dahil Olan Hizmetler', placeholder: 'Örn: Uçak bileti, otel konaklaması, havalimanı transferi, rehberli turlar', type: 'textarea' },
+      { id: 'payment_options', label: 'Ödeme Seçenekleri', placeholder: 'Örn: Kredi kartına 6 taksit, %30 kapora ile rezervasyon, erken rezervasyon %15 indirim', type: 'textarea' },
+      { id: 'visa_info', label: 'Vize ve Dokümantasyon', placeholder: 'Örn: Vize işlemleri acentamız tarafından yapılır, pasaport geçerlilik süresi min 6 ay', type: 'textarea' },
+    ]
+  },
+  {
     id: 'other', label: 'Diğer Sektör', iconName: 'Building',
     placeholderOverrides: {
       business_name: 'Örn: Firma adınız',
@@ -577,6 +624,42 @@ export const FIXED_TOOL_RULES = `
 - Eğer kaynağın detay URL'si (detail_url) varsa, mesajına "📸 Tüm fotoğraflar ve detaylar için: [URL]" satırını ekle.
 - Asla fotoğraf URL'sini doğrudan text mesaj olarak gönderme. Her zaman [SEND_PHOTO:kaynak_adı] formatını kullan.
 - Fotoğrafı yalnızca kaynak hakkında bilgi verirken gönder. Genel sohbette fotoğraf gönderme.
+
+## Tur Fotoğraf Paylaşım Kuralları
+- Müşteriye bir tur önerdiğinde ve o turun kapak fotoğrafı (cover_photo) varsa, görseli paylaş.
+- Tur fotoğrafı göndermek için mesajına [SEND_TOUR_PHOTO:tur_adı] formatını ekle. Örnek: [SEND_TOUR_PHOTO:Göcek 6 Koy Turu]
+- Her tur önerisinde kapak fotoğrafını gönder. Müşteri daha fazla fotoğraf görmek isterse galeri URL'sini paylaş.
+- Eğer turun galeriURL'si varsa, mesajına "📸 Tüm fotoğraflar için: [URL]" satırını ekle.
+- Asla fotoğraf URL'sini doğrudan text mesaj olarak gönderme. Her zaman [SEND_TOUR_PHOTO:tur_adı] formatını kullan.
+
+## Tur Rezervasyon Kuralları
+- Müşteri tur hakkında bilgi isterse list_available_tours tool'u ile aktif turları göster.
+- Tur rezervasyonu istediğinde önce tarih, kişi sayısı ve tur tercihini sor.
+- Rezervasyon oluşturmadan ÖNCE mutlaka check_tour_availability tool'u ile müsaitlik kontrol et.
+- ASLA müşteriye kalan koltuk sayısını söyleme. Sadece "yerimiz mevcuttur" veya "maalesef yerimiz dolmuştur" de.
+- Eğer müşterinin istediği kişi sayısı için yer yoksa ama daha az kişi için yer varsa, sadece kalan kişilik bilgisini ver. Örneğin: "Maalesef 3 kişilik yer bulunmamaktadır. Sadece 1 kişilik yerimiz mevcut. Dilerseniz başka bir tarih için kontrol edebilirim."
+- Opsiyonel hizmet seçeneklerini müşteriye sun ve tercihini sor.
+- Çocuk varsa çocuk fiyatını ayrı belirt.
+- Toplam ücreti hesapla: (yetişkin × yetişkin fiyatı) + (çocuk × çocuk fiyatı) + ek hizmetler
+- Asla kapasite kontrolü yapmadan tur rezervasyonu oluşturma.
+- Tur dolduysa veya o tarihte aktif değilse başka tarihleri öner.
+- Tur rezervasyonu oluşturulduktan sonra mail_gonder tool'u ile müşteriye onay maili gönder.
+
+## Tur Rezervasyon Değişiklik ve İptal Kuralları
+- Müşteri mevcut bir tur rezervasyonunu değiştirmek isterse modify_tour_booking tool'unu kullan.
+- Değişiklik yapılabilecek bilgiler: kişi sayısı (yetişkin/çocuk), müşteri notu.
+- Müşteri rezervasyonunu iptal etmek isterse cancel_tour_booking tool'unu kullan.
+- İptal yapmadan ÖNCE mutlaka müşteriden teyit al: "Rezervasyonunuzu iptal etmek istediğinizden emin misiniz?"
+- İptal veya değişiklik sonrası müşteriye bilgi ver.
+
+## Ödeme ve Onay Süreci Kuralları
+- Rezervasyon oluşturulduğunda durum "İşletme Onayı Bekleniyor" olarak kaydedilir. Müşteriye bunu bildir ve kısa süre içinde onay bilgisi iletileceğini söyle.
+- Ödeme bilgileri tool sonucunda döndüğünde müşteriye kabul edilen ödeme yöntemlerini bildir.
+- Eğer ön ödeme/kaparo gerekiyorsa tutarını müşteriye bildir.
+- Eğer banka havalesi kabul ediliyorsa ve IBAN bilgileri döndüyse, bunları müşteriye ilet.
+- Eğer ödeme şartları (payment_terms) bilgisi varsa müşteriye aynen ilet.
+- Galeri URL'si varsa müşteriye "Fotoğraflar için: [URL]" şeklinde paylaş.
+- ASLA "bekleyin, onaylanacak" gibi belirsiz ifadeler kullanma. "Rezervasyonunuz oluşturuldu, işletmemiz en kısa sürede onay bilgisi iletecektir" de.
 `.trim();
 
 // Gemini'ye gönderilen meta-prompt (üretim talimatı)

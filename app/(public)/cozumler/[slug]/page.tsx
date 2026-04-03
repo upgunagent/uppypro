@@ -601,6 +601,51 @@ const SECTORS: Record<string, {
             { before: "Gece ve hafta sonu gelen taleplere pazartesi yanıt veriliyor", after: "7/24 AI asistan tüm talepleri anında karşılıyor" },
         ],
     },
+    "gunluk-turlar": {
+        name: "Günlük Turlar", emoji: "🚤",
+        title: "Günlük Tur ve Tekne Turu Firmaları İçin WhatsApp & Instagram Yönetimi",
+        description: "Günlük turlarınızın ve yat gezilerinizin müşteri iletişimini yapay zeka ile yönetin. Rezervasyon, ödeme bilgisi, kota kontrolü ve 7/24 AI asistan.",
+        metaDesc: "Günlük turlar ve günübirlik tekne organizasyonları için WhatsApp yapay zeka asistanı. Rezervasyon otomasyonu, kota takibi, WhatsApp'tan bilet satışı. 7 gün ücretsiz deneyin.",
+        heroText: "Sezonda bilet satışlarını hızlandırmak ve kapasitenizi tam doldurmak her şeydir. Müşterileriniz bilet fiyatı, tur detayları ve müsaitlik sorarken zaman kaybetmeyin — AI asistanınız 7/24 satış yapsın.",
+        problems: [
+            "Sezonun en yoğun günlerinde yüzlerce Instagram DM ve WhatsApp mesajına yetişememek",
+            "Farklı tur rotaları, yetişkin/çocuk fiyatları gibi karmaşık detayların sürekli sorulması",
+            "Müşteriler mesaj beklerken tekne/araç kapasitesinin dolması veya doldurulamayan kapasite.",
+            "Yabancı turistlerin rezervasyon taleplerine dilden dolayı yanıt vermekte zorlanmak",
+            "Kapora, iptaller ve ödeme kurallarının her misafire tek tek anlatılması",
+            "Buluşma noktası ve saatlerin tarif edilmesindeki anlaşmazlıklar"
+        ],
+        solutions: [
+            { title: "AI Bilet & Rezervasyon", desc: "Müşteri tur seçsin ve kişi sayısını yazsın, AI anında fiyat hesaplayıp boş koltuk durumuna göre rezervasyon oluştursun.", icon: "calendar" },
+            { title: "Çok Dilli Satış", desc: "Turistler İngilizce, Rusça veya Almanca yazsın; AI kendi dillerinde mükemmel şekilde fiyat verip biletleri satsın.", icon: "message" },
+            { title: "Tur & Rota Katalogları", desc: "12 Adalar, Dalış Turu, Sunset Turu — her turun menüsünü, güzergahını ve kişi başı ücretini saniyeler içinde paylaşın.", icon: "bot" },
+            { title: "Buluşma Yeri Asistanı", desc: "Rezervasyon yapanlara otomatik olarak konum, kalkış saati ve 'nelere dikkat edilmeli' (havlu, güneş kremi) gibi rehberler anında gönderilsin.", icon: "users" },
+        ],
+        features: [
+            "WhatsApp ve Instagram tek panelde yönetilir",
+            "Tura özel kapasite/rota kontrolü",
+            "Yetişkin & Çocuk detaylı otomatik fiyat hesaplama",
+            "40+ dilde kusursuz otomatik çeviri",
+            "Ekipman ve yeme-içme (opsiyonel hizmet) eklentileri sunma",
+            "Tekne kalkmadan önce konum ve check-in talimatı gönderme",
+            "Instagram DM'deki görselleri rezervasyona dönüştürme",
+            "7/24 uyumadan mesaj cevaplayan asistan",
+        ],
+        cta: "Günlük tur operasyonlarınızda kaçan tek bir bilet bile olmasın, AI ile güverteyi doldurun.",
+        scenario: "Temmuz sıcağı. Tekneniz saat 10:00'da limandan ayrılacak. Sabah 08:30 civarı WhatsApp'tan onlarca mesaj geliyor: 'Bugün için 3 kişilik yer var mı?', 'Çocuk ücretsiz mi?', 'Nereden biniyoruz?', 'Öğle yemeğinde ne var?'. Instagram'da harika koy içerikli videoları gören turistler İngilizce ve Rusça yazıyor. Sizin ise kaptan ve mürettebatla ilgilenmeniz gerek.\n\nEğer UppyPro kullansaydınız: Yabancı turistlere AI kendi dilinde yanıt verdi, 'Sunset' turu için 4 satış yaptı. Bugün 10:00 turu için yer soran ailelere anında kota durumunu belirtti, yetişkin-çocuk fiyatlarıyla tutarı hesapladı, rezervasyonu alıp buluşma yerinin konumunu WhatsApp üzerinden hemen gönderdi. Öğle yemeği seçenekleri (Tavuk/Balık) misafir kartlarına eklendi.\n\nSiz sadece misafirleri karşılarken tekneniz tam kapasite dolu, mesaj kuyruğu ise 0'da kaldı. Tur sonunda tüm misafirlerinize otomatik memnuniyet anketi gönderilip işletmeniz için harika yorumlar toplanır.",
+        stats: [
+            { value: "Tam Kapasite", label: "Doluluk", desc: "Tüm platformlardan anında bilet satışıyla sağlanan doluluk" },
+            { value: "Sıfır Hata", label: "Konum/Zaman", desc: "Otomatik buluşma saati ve konum iletimi" },
+            { value: "40+ Dil", label: "Turist Uyumu", desc: "Ziyaretçilerle anında hatasız iletişim" },
+            { value: "7/24", label: "Satış", desc: "Gece rezervasyonlarıyla ertesi güne dolu başlama" },
+        ],
+        beforeAfter: [
+            { before: "Sabah telaşında fiyat, güzergah ve çocuk tarifesi soranlara dönülemiyor.", after: "Yapay zeka tüm tarifeyi kendi hesaplıyor, bilet satışını gerçekleştiriyor." },
+            { before: "Yabancı dil engeli nedeniyle turist müşteriler rakiplere kayıyor.", after: "AI turiste kendi dilinde yanıtlıyor, ödeme koşullarını İngilizce/Rusça anlatıyor." },
+            { before: "Limana varış ve buluşma konumu defalarca kopyala-yapıştır yapılıyor.", after: "AI onaylı rezervasyonlara otomatik bilgilendirme ve navigasyon pini gönderiyor." },
+            { before: "Rezervasyonlar post-it'ler veya karalama defterlerinde karışıyor, overbooking oluyor.", after: "Kapasite kontrollü sistem, sadece yer varsa onay veriyor." },
+        ],
+    },
 };
 
 export const dynamicParams = true;

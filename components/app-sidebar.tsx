@@ -24,7 +24,8 @@ import {
     Target,
     Mail,
     BarChart3,
-    ShoppingBag
+    ShoppingBag,
+    Compass
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -263,6 +264,57 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
         };
     }, [tenantId]);
 
+    // Tour check - aktif tur var mı + incelenmemiş tur rezervasyonu sayısı
+    const [hasTours, setHasTours] = useState(false);
+    const [tourBadgeCount, setTourBadgeCount] = useState(0);
+
+    useEffect(() => {
+        if (!tenantId) return;
+        const supabase = createClient();
+
+        const checkTours = async () => {
+            const { count: tourCount } = await supabase
+                .from('tours')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .eq('is_active', true);
+            setHasTours((tourCount || 0) > 0);
+
+            if ((tourCount || 0) > 0) {
+                const { count: unreviewed } = await supabase
+                    .from('tour_bookings')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .eq('is_reviewed', false);
+                setTourBadgeCount(unreviewed || 0);
+            }
+        };
+        checkTours();
+
+        // Realtime: tour_bookings değiştiğinde badge güncelle
+        const tourChannel = supabase
+            .channel(`sidebar-tours:${tenantId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tour_bookings',
+                    filter: `tenant_id=eq.${tenantId}`
+                },
+                () => {
+                    checkTours();
+                }
+            )
+            .subscribe();
+
+        const tourInterval = setInterval(checkTours, 15000);
+
+        return () => {
+            supabase.removeChannel(tourChannel);
+            clearInterval(tourInterval);
+        };
+    }, [tenantId]);
 
     const [hasTrendyol, setHasTrendyol] = useState(false);
     const [trendyolOrderCount, setTrendyolOrderCount] = useState(0);
@@ -582,6 +634,17 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
             </div>
 
             <div className="p-4 border-t border-slate-100 w-full space-y-4 flex flex-col items-center">
+                {hasTours && (
+                    <TenantSidebarItem
+                        href="/panel/tours"
+                        icon={Compass}
+                        label="Turlar"
+                        isActive={pathname.startsWith("/panel/tours")}
+                        gradient="bg-emerald-500 shadow-emerald-500/20"
+                        iconColor="text-white"
+                        count={tourBadgeCount}
+                    />
+                )}
                 <TenantSidebarItem
                     href="/panel/calendar"
                     icon={CalendarIcon}

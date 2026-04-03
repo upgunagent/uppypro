@@ -104,7 +104,7 @@ export const RESOURCE_TYPES: ResourceTypeConfig[] = [
     },
     {
         id: "boat",
-        label: "Tekne",
+        label: "Tekne Kiralama",
         iconName: "Ship",
         namePlaceholder: "Örn: Blue Dream, Sea Star, Rüzgar",
         nameLabel: "Tekne Adı",

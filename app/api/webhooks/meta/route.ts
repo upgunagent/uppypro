@@ -871,8 +871,16 @@ async function processAIResponseInBackground(
                             photosToSend.push(photoMatch[1].trim());
                         }
 
-                        // Clean text: remove [SEND_PHOTO:...] tags
-                        const cleanText = replyText.replace(photoRegex, '').replace(/\n{3,}/g, '\n\n').trim();
+                        // Parse [SEND_TOUR_PHOTO:tour_name] tags from AI response
+                        const tourPhotoRegex = /\[SEND_TOUR_PHOTO:(.+?)\]/g;
+                        let tourPhotoMatch;
+                        const tourPhotosToSend: string[] = [];
+                        while ((tourPhotoMatch = tourPhotoRegex.exec(replyText)) !== null) {
+                            tourPhotosToSend.push(tourPhotoMatch[1].trim());
+                        }
+
+                        // Clean text: remove [SEND_PHOTO:...] and [SEND_TOUR_PHOTO:...] tags
+                        const cleanText = replyText.replace(photoRegex, '').replace(tourPhotoRegex, '').replace(/\n{3,}/g, '\n\n').trim();
 
                         // Save clean text to messages table
                         if (cleanText) {
@@ -949,6 +957,60 @@ async function processAIResponseInBackground(
                                 }
                             } catch (photoErr: any) {
                                 console.error("[AI Agent] Error sending resource photos:", photoErr.message);
+                            }
+                        }
+
+                        // Send tour photos as separate image messages
+                        if (tourPhotosToSend.length > 0) {
+                            try {
+                                // Fetch tenant tours to find photo URLs
+                                const { data: tours } = await supabaseAdmin
+                                    .from("tours")
+                                    .select("name, cover_photo")
+                                    .eq("tenant_id", tenantId)
+                                    .eq("is_active", true);
+
+                                const { sendToChannel } = await import("@/lib/meta");
+
+                                for (const tourName of tourPhotosToSend) {
+                                    const tour = tours?.find(
+                                        (t: any) => t.name.toLowerCase() === tourName.toLowerCase()
+                                    );
+                                    const photoUrl = tour?.cover_photo;
+
+                                    if (photoUrl) {
+                                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                                        const caption = `📸 ${tour.name}`;
+                                        await sendToChannel(
+                                            tenantId,
+                                            channel as "whatsapp" | "instagram",
+                                            eventData.sender_id,
+                                            caption,
+                                            'image',
+                                            photoUrl
+                                        );
+
+                                        await supabaseAdmin
+                                            .from("messages")
+                                            .insert({
+                                                tenant_id: tenantId,
+                                                conversation_id: conversation.id,
+                                                direction: 'OUT',
+                                                sender: 'BOT',
+                                                text: caption,
+                                                message_type: 'image',
+                                                media_url: photoUrl,
+                                                is_read: true
+                                            });
+
+                                        console.log(`[AI Agent] Sent cover photo for tour: ${tourName}`);
+                                    } else {
+                                        console.warn(`[AI Agent] No cover photo found for tour: ${tourName}`);
+                                    }
+                                }
+                            } catch (tourPhotoErr: any) {
+                                console.error("[AI Agent] Error sending tour photos:", tourPhotoErr.message);
                             }
                         }
                     } else {

@@ -54,7 +54,8 @@ export default async function SettingsPage() {
         { data: tenant_locations },
         { data: employees },
         { data: cannedResponses },
-        { data: emailSettings }
+        { data: emailSettings },
+        { data: tours }
     ] = await Promise.all([
         supabase.from("tenants").select("*").eq("id", member.tenant_id).single(),
         supabase.from("profiles").select("*").eq("user_id", user.id).single(),
@@ -66,7 +67,8 @@ export default async function SettingsPage() {
         supabase.from("tenant_locations").select("*").eq("tenant_id", member.tenant_id).order("created_at", { ascending: false }),
         supabase.from("tenant_employees").select("*").eq("tenant_id", member.tenant_id).order("name", { ascending: true }),
         supabase.from("canned_responses").select("*").eq("tenant_id", member.tenant_id).order("shortcut", { ascending: true }),
-        supabase.from("email_settings").select("*").eq("tenant_id", member.tenant_id).maybeSingle()
+        supabase.from("email_settings").select("*").eq("tenant_id", member.tenant_id).maybeSingle(),
+        supabase.from("tours").select("id, name, tour_type, capacity, is_active, price_per_person, departure_time, route").eq("tenant_id", member.tenant_id).order("sort_order")
     ]);
 
     // Fetch pricing for both plans to support upgrade/downgrade UI
@@ -196,6 +198,7 @@ export default async function SettingsPage() {
             tenantId={member.tenant_id}
             initialEmployees={employees || []}
             initialResourceType={tenant?.resource_type_preference || "employee"}
+            initialTours={tours || []}
         />
     );
 

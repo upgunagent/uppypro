@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Info, Camera, X as XIcon, ImageIcon, Link2, Loader2, Mic, type LucideIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarDays, Upload, FileSpreadsheet, Layers, User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Info, Camera, X as XIcon, ImageIcon, Link2, Loader2, Mic, Compass, ChevronRight, type LucideIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
     addTenantEmployee,
@@ -31,7 +31,7 @@ import {
 
 /** Lucide ikon mapping — resource iconName → React component */
 const RESOURCE_ICONS: Record<string, LucideIcon> = {
-    User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Mic,
+    User, DoorOpen, Ship, Car, UtensilsCrossed, Home, Mic, Compass,
 };
 
 function ResourceIcon({ name, className }: { name: string; className?: string }) {
@@ -50,16 +50,29 @@ interface Employee {
     created_at: string;
 }
 
+interface TourSummary {
+    id: string;
+    name: string;
+    tour_type: string;
+    capacity: number;
+    is_active: boolean;
+    price_per_person: number | null;
+    departure_time: string | null;
+    route: string | null;
+}
+
 interface EmployeeSettingsTabProps {
     tenantId: string;
     initialEmployees: Employee[];
     initialResourceType?: string;
+    initialTours?: TourSummary[];
 }
 
-export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourceType = "employee" }: EmployeeSettingsTabProps) {
+export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourceType = "employee", initialTours = [] }: EmployeeSettingsTabProps) {
     const { toast } = useToast();
     const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
     const [activeType, setActiveType] = useState<ResourceType>(initialResourceType as ResourceType);
+    const [showToursPanel, setShowToursPanel] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
     const [isExcelDialogOpen, setIsExcelDialogOpen] = useState(false);
@@ -105,6 +118,7 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
     );
 
     const handleTypeChange = async (type: ResourceType) => {
+        setShowToursPanel(false);
         setActiveType(type);
         await updateResourceTypePreference(tenantId, type);
     };
@@ -502,29 +516,104 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                 </div>
             </div>
 
-            {/* Resource Type Selector */}
-            <div className="flex flex-wrap gap-2">
+            {/* Resource Type Selector & Tours */}
+            <div className="flex flex-nowrap overflow-x-auto gap-1.5 pb-2 -mb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {RESOURCE_TYPES.map((rt) => (
                     <button
                         key={rt.id}
                         onClick={() => handleTypeChange(rt.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                            activeType === rt.id
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[13px] font-medium transition-all shrink-0 ${
+                            activeType === rt.id && !showToursPanel
                                 ? "border-orange-400 bg-orange-50 text-orange-700 shadow-sm"
                                 : "border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50/50"
                         }`}
                     >
-                        <ResourceIcon name={rt.iconName} className="w-4 h-4" />
-                        <span>{rt.label}</span>
-                        <span className="text-xs bg-slate-100 text-slate-500 rounded-full px-2 py-0.5 ml-1">
+                        <ResourceIcon name={rt.iconName} className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">{rt.label}</span>
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5 ml-0.5 shrink-0">
                             {employees.filter((e) => (e.resource_type || "employee") === rt.id).length}
                         </span>
                     </button>
                 ))}
+                <button
+                    onClick={() => setShowToursPanel(true)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[13px] font-medium transition-all shrink-0 ${
+                        showToursPanel
+                            ? "border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm"
+                            : "border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50"
+                    }`}
+                >
+                    <Compass className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap">Turlar</span>
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5 ml-0.5 shrink-0">
+                        {initialTours.length}
+                    </span>
+                </button>
             </div>
 
-            {/* Main Card */}
-            <Card className="border-orange-500">
+            {showToursPanel ? (
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/20">
+                                <Compass className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-800">Tur Yönetimi</h3>
+                                <p className="text-sm text-slate-500">
+                                    Tekne turları, otobüs gezileri, kültürel turlar ve seyahat paketlerini yönetin.
+                                </p>
+                            </div>
+                        </div>
+                        <a
+                            href="/panel/tours"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            {initialTours.length > 0 ? 'Turları Yönet' : 'İlk Turunuzu Ekleyin'}
+                            <ChevronRight className="w-4 h-4" />
+                        </a>
+                    </div>
+
+                    {initialTours.length > 0 ? (
+                        <div className="space-y-2">
+                            {initialTours.map((tour) => (
+                                <div key={tour.id} className={`flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-emerald-100 shadow-sm transition-all hover:shadow-md ${!tour.is_active ? 'opacity-60' : ''}`}>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`w-2.5 h-2.5 rounded-full ${tour.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`} />
+                                        <div>
+                                            <span className="text-sm font-semibold text-slate-800">{tour.name}</span>
+                                            <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                                                <span className="font-medium text-slate-600">{tour.capacity} kişi</span>
+                                                {tour.price_per_person && <span>• {tour.price_per_person}₺/kişi</span>}
+                                                {tour.route && <span className="truncate max-w-[150px] sm:max-w-[200px]">• {tour.route}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href={`/panel/tours/${tour.id}`} className="text-sm text-emerald-600 hover:text-emerald-700 font-medium px-3 py-1.5 rounded-md hover:bg-emerald-50 transition-colors">
+                                        Detaya Git
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white border-2 border-dashed border-emerald-200 rounded-xl p-8 text-center mt-4">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                                <Compass className="w-8 h-8 text-emerald-400" />
+                            </div>
+                            <h4 className="font-semibold text-lg text-slate-800 mb-2">Henüz tur eklenmedi</h4>
+                            <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+                                Tekne turu, otobüs gezisi veya kültürel tur ekleyin. 
+                                AI asistanınız müşterilere otomatik tur bilgisi verecek ve rezervasyon oluşturacak.
+                            </p>
+                            <a href="/panel/tours" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors">
+                                <Plus className="w-4 h-4" /> Tur Oluştur
+                            </a>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <Card className="border-orange-500">
                 <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
                     <div>
                         <CardTitle className="text-xl flex items-center gap-2">
@@ -1030,6 +1119,7 @@ export function EmployeeSettingsTab({ tenantId, initialEmployees, initialResourc
                     </DialogContent>
                 </Dialog>
             </Card>
+            )}
         </div>
     );
 }
