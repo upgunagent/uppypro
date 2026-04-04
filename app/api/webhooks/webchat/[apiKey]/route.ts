@@ -39,11 +39,16 @@ export async function POST(
     return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { session_id, message, visitor_name, visitor_email, visitor_phone } = body;
+  // n8n widget uyumlulugu: chatId -> session_id, action: "sendMessage" body formatini destekle
+  const session_id = body.session_id || body.chatId || body.sessionId;
+  const message = body.message || body.text || body.input || body.content;
+  const visitor_name = body.visitor_name || body.name || body.userName;
+  const visitor_email = body.visitor_email || body.email;
+  const visitor_phone = body.visitor_phone || body.phone;
 
   if (!session_id || !message) {
     return NextResponse.json(
-      { success: false, error: "session_id and message are required" },
+      { success: false, error: "session_id/chatId and message are required" },
       { status: 400 }
     );
   }
@@ -154,9 +159,8 @@ export async function POST(
     })
     .eq("id", conversation.id);
 
-  // 4. AI modu kontrol - insan devraldiysa yani bekleme mesaji ver
+  // 4. AI modu kontrol - insan devraldiysa bekleme mesaji ver
   if (!conversation.is_ai_mode) {
-    // Insan modunda - son agent mesajini dondur (varsa)
     const { data: lastAgentMsg } = await supabase
       .from("messages")
       .select("text")
@@ -166,12 +170,15 @@ export async function POST(
       .limit(1)
       .maybeSingle();
 
+    const replyText = lastAgentMsg?.text || "Mesajiniz alindi. Isletme temsilcimiz en kisa surede donecektir.";
+
     return NextResponse.json({
+      output: replyText,
+      text: replyText,
+      reply: replyText,
       success: true,
-      reply: lastAgentMsg?.text || "Mesajiniz alindi. Isletme temsilcimiz en kisa surede donecektir.",
       conversation_id: conversation.id,
       mode: "human",
-      timestamp: new Date().toISOString(),
     });
   }
 
@@ -214,29 +221,34 @@ export async function POST(
         .eq("id", conversation.id);
 
       return NextResponse.json({
-        success: true,
+        output: aiReply,
+        text: aiReply,
         reply: aiReply,
+        success: true,
         conversation_id: conversation.id,
         mode: "ai",
-        timestamp: new Date().toISOString(),
       });
     }
 
+    const fallbackReply = "Mesajiniz alindi, en kisa surede size donecegiz.";
     return NextResponse.json({
+      output: fallbackReply,
+      text: fallbackReply,
+      reply: fallbackReply,
       success: true,
-      reply: "Mesajiniz alindi, en kisa surede size donecegiz.",
       conversation_id: conversation.id,
       mode: "ai",
-      timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
     console.error("[Webchat] AI processing error:", err);
+    const errorReply = "Su anda teknik bir sorun yasiyoruz. Lutfen kisa bir sure sonra tekrar deneyiniz.";
     return NextResponse.json({
+      output: errorReply,
+      text: errorReply,
+      reply: errorReply,
       success: true,
-      reply: "Su anda teknik bir sorun yasiyoruz. Lutfen kisa bir sure sonra tekrar deneyiniz.",
       conversation_id: conversation.id,
       mode: "error",
-      timestamp: new Date().toISOString(),
     });
   }
 }
