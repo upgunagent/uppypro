@@ -137,7 +137,10 @@ function buildTourSection(tours: any[], overrides: any[]): string {
     "   c) Tüm detayları (tur adı, tarih, kişi sayısı, yetişkin/çocuk, fiyat) tek bir özet mesajda müşteriye yaz.",
     "   d) Müşteriye \"Rezervasyonunuzu bu bilgilerle oluşturmamı ister misiniz?\" diye sor.",
     "   e) Müşteriden AÇIKÇA 'evet', 'onay', 'tamam', 'olur', 'oluştur' gibi bir onay mesajı gelmedikçe create_tour_booking ÇAĞIRMA.",
-    "3. Müşterinin zaten mevcut bir rezervasyonu varsa (konuşma geçmişinde görüyorsan) tekrar oluşturma. Güncelleme isteyip istemediğini sor.",
+    "3. MEVCUT REZERVASYON KONTROLÜ (ÇOK ÖNEMLİ):",
+    "   - Konuşma geçmişinde daha önce create_tour_booking YAPILDIYSA (başarılı sonuç döndüyse), bu müşterinin zaten aktif bir rezervasyonu VAR demektir.",
+    "   - Müşteriye ASLA 'tekrar rezervasyon oluşturayım mı?' diye sorma. Bunun yerine mevcut rezervasyon bilgilerini hatırlat ve 'Bu rezervasyonunuz üzerinde bir değişiklik yapmak ister misiniz?' de.",
+    "   - Müşteri açıkça 'yeni bir tur için de / farklı bir tarih için de / ek bir rezervasyon' derse ANCAK o zaman yeni rezervasyon akışı başlat.",
     "4. Sadece telefon numarası veya iletişim bilgisi göndermek kesinlikle 'onay' anlamına GELMEZ.",
     "5. Dekont, ödeme belgesi veya anlayamadığın bir görsel gönderildiğinde asla bunu bir sipariş/onay olarak YORUMLAMA. 'Ödemenizi aldık' diye uydurmayın. İşletme sahibine iletileceğini söyle.",
   ];

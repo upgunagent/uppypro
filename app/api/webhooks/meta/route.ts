@@ -478,7 +478,15 @@ export async function POST(request: Request) {
                 channel = 'instagram';
             }
 
-            // FINAL SAFETY CHECK
+            // ═══ FILTER: Instagram auto-generated junk messages ═══
+            // Instagram sends '[template]' for phone buttons, '[Sticker]' etc.
+            // These are NOT real user messages and should be completely ignored.
+            const junkPatterns = ['[template]', '[sticker]', '[reel]', '[story]'];
+            const textLower = (eventData.text || '').trim().toLowerCase();
+            if (junkPatterns.includes(textLower) || (textLower.startsWith('[') && textLower.endsWith(']') && textLower.length < 20)) {
+                console.log(`[Webhook] Skipping Instagram auto-generated message: "${eventData.text}"`);
+                continue;
+            }
             if (!eventData || !recipientId || (!eventData.text && !eventData.media_url)) {
                 console.log("Skipping invalid/empty event payload");
                 continue;
