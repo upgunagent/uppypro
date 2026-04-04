@@ -444,6 +444,49 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                             <div className="text-center text-gray-500 mt-24">
                                 Aramanızla eşleşen sonuç bulunamadı.
                             </div>
+                        ) : currentTab === 'webchat' ? (
+                            <div className="flex flex-col items-center justify-center mt-6 px-4">
+                                <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-2xl overflow-hidden max-w-md w-full shadow-sm">
+                                    {/* Header */}
+                                    <div className="w-full bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 p-8 text-center">
+                                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
+                                            <Globe className="w-8 h-8 text-white" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white">Web Chat</h3>
+                                        <p className="text-sm text-white/80 mt-1">Web sitenizden gelen mesajlar</p>
+                                    </div>
+
+                                    <div className="p-6 space-y-4">
+                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                            Web sitenize entegre ettiginiz <strong>chatbot widget</strong> uzerinden gelen tum musteri mesajlari burada gorunecektir. AI asistanınız otomatik olarak yanitlayacak veya siz devralabileceksiniz.
+                                        </p>
+
+                                        <div className="bg-white rounded-xl p-4 border border-violet-100">
+                                            <p className="text-sm font-semibold text-slate-700 mb-2">Nasil calisir?</p>
+                                            <ul className="text-sm text-slate-600 leading-relaxed space-y-2">
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-violet-500 font-bold mt-0.5">1.</span>
+                                                    <span>Admin sizin icin <strong>Webhook URL</strong> olusturur</span>
+                                                </li>
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-violet-500 font-bold mt-0.5">2.</span>
+                                                    <span>Bu URL&apos;yi web sitenizdeki chatbot widget&apos;iniza baglarsiniz</span>
+                                                </li>
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-violet-500 font-bold mt-0.5">3.</span>
+                                                    <span>Ziyaretciler yazdikca mesajlar burada gorunur, AI otomatik yanitlar</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
+                                            <p className="text-xs text-violet-700 leading-relaxed">
+                                                Henuz web sitenizden bir mesaj gelmedi. Widget entegrasyonu tamamlandiginda, gelen mesajlar WhatsApp ve Instagram mesajlari gibi burada listelenecektir.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center mt-6 px-4">
                                 <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl overflow-hidden max-w-md w-full shadow-sm">
