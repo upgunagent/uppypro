@@ -326,7 +326,7 @@ export const aiToolDefinitions = [
       {
         name: "create_tour_booking",
         description:
-          "Tur için kapasite bazlı rezervasyon oluşturur. Önce check_tour_availability ile müsaitlik kontrol edilmiş olmalıdır. Kişi sayısı ve opsiyonel hizmet seçenekleri belirtilmelidir. Oluşturulduktan sonra mail_gonder tool'u ile onay maili gönder.",
+          "Tur için kapasite bazlı rezervasyon oluşturur. Önce check_tour_availability ile müsaitlik kontrol edilmiş olmalıdır. Kişi sayısı ve opsiyonel hizmet seçenekleri belirtilmelidir. Rezervasyon oluşturulduğunda e-posta otomatik gönderilir, ayrıca mail_gonder çağırmana GEREK YOK.",
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
