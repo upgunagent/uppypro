@@ -6,7 +6,7 @@ import { Resend } from "resend";
 // Kampanya mailleri: aynı Resend hesabı, farklı gönderici (marketing@upgunai.com)
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.LEAD_CAMPAIGN_FROM_EMAIL || "UPGUN AI <marketing@upgunai.com>";
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.upgunai.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.upgunai.com";
 const DAILY_LIMIT = parseInt(process.env.LEAD_DAILY_SEND_LIMIT || "100");
 const SEND_INTERVAL = parseInt(process.env.LEAD_SEND_INTERVAL_MS || "5000");
 const COOLDOWN_DAYS = parseInt(process.env.LEAD_COOLDOWN_DAYS || "7");

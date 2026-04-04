@@ -16,7 +16,7 @@ export function AdminWebchatCard({ tenantId, webchatEnabled, webchatApiKey }: We
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://app.upgunai.com"}/api/webhooks/webchat/${webchatApiKey}`;
+    const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.upgunai.com"}/api/webhooks/webchat/${webchatApiKey}`;
 
     const handleToggle = async (checked: boolean) => {
         setLoading(true);
