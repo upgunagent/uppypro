@@ -41,7 +41,7 @@ export async function POST(
 
   // n8n widget uyumlulugu: chatId -> session_id, action: "sendMessage" body formatini destekle
   const session_id = body.session_id || body.chatId || body.sessionId;
-  const message = body.message || body.text || body.input || body.content;
+  const message = body.message || body.text || body.input || body.chatInput || body.content;
   const visitor_name = body.visitor_name || body.name || body.userName;
   const visitor_email = body.visitor_email || body.email;
   const visitor_phone = body.visitor_phone || body.phone;
