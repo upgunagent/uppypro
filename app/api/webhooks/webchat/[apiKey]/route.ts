@@ -19,6 +19,22 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// CORS headers — widget herhangi bir domain'den çalışabilir
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+function jsonResponse(data: any, init?: { status?: number }) {
+  return NextResponse.json(data, { ...init, headers: corsHeaders });
+}
+
+// Preflight (OPTIONS) handler — CORS için zorunlu
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ apiKey: string }> }
@@ -28,7 +44,7 @@ export async function POST(
   // Rate limit
   const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
   if (!checkRateLimit(ip)) {
-    return NextResponse.json({ success: false, error: "Rate limit exceeded" }, { status: 429 });
+    return jsonResponse({ success: false, error: "Rate limit exceeded" }, { status: 429 });
   }
 
   // Parse body
@@ -36,7 +52,7 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+    return jsonResponse({ success: false, error: "Invalid JSON body" }, { status: 400 });
   }
 
   // n8n widget uyumlulugu: chatId -> session_id, action: "sendMessage" body formatini destekle
@@ -47,14 +63,14 @@ export async function POST(
   const visitor_phone = body.visitor_phone || body.phone;
 
   if (!session_id || !message) {
-    return NextResponse.json(
+    return jsonResponse(
       { success: false, error: "session_id/chatId and message are required" },
       { status: 400 }
     );
   }
 
   if (typeof message !== "string" || message.length > 2000) {
-    return NextResponse.json(
+    return jsonResponse(
       { success: false, error: "Message must be a string with max 2000 characters" },
       { status: 400 }
     );
@@ -70,11 +86,11 @@ export async function POST(
     .maybeSingle();
 
   if (!tenant) {
-    return NextResponse.json({ success: false, error: "Invalid API key" }, { status: 403 });
+    return jsonResponse({ success: false, error: "Invalid API key" }, { status: 403 });
   }
 
   if (!tenant.webchat_enabled) {
-    return NextResponse.json({ success: false, error: "Webchat is disabled for this tenant" }, { status: 403 });
+    return jsonResponse({ success: false, error: "Webchat is disabled for this tenant" }, { status: 403 });
   }
 
   // 2. Conversation bul veya olustur
@@ -115,7 +131,7 @@ export async function POST(
 
     if (convError || !newConv) {
       console.error("[Webchat] Conversation creation error:", convError);
-      return NextResponse.json({ success: false, error: "Failed to create conversation" }, { status: 500 });
+      return jsonResponse({ success: false, error: "Failed to create conversation" }, { status: 500 });
     }
     conversation = newConv;
 
@@ -147,7 +163,7 @@ export async function POST(
 
   if (msgError) {
     console.error("[Webchat] Message save error:", msgError);
-    return NextResponse.json({ success: false, error: "Failed to save message" }, { status: 500 });
+    return jsonResponse({ success: false, error: "Failed to save message" }, { status: 500 });
   }
 
   // Conversation'i guncelle (son mesaj bilgisi)
@@ -172,7 +188,7 @@ export async function POST(
 
     const replyText = lastAgentMsg?.text || "Mesajiniz alindi. Isletme temsilcimiz en kisa surede donecektir.";
 
-    return NextResponse.json({
+    return jsonResponse({
       output: replyText,
       text: replyText,
       reply: replyText,
@@ -220,7 +236,7 @@ export async function POST(
         })
         .eq("id", conversation.id);
 
-      return NextResponse.json({
+      return jsonResponse({
         output: aiReply,
         text: aiReply,
         reply: aiReply,
@@ -231,7 +247,7 @@ export async function POST(
     }
 
     const fallbackReply = "Mesajiniz alindi, en kisa surede size donecegiz.";
-    return NextResponse.json({
+    return jsonResponse({
       output: fallbackReply,
       text: fallbackReply,
       reply: fallbackReply,
@@ -242,7 +258,7 @@ export async function POST(
   } catch (err: any) {
     console.error("[Webchat] AI processing error:", err);
     const errorReply = "Su anda teknik bir sorun yasiyoruz. Lutfen kisa bir sure sonra tekrar deneyiniz.";
-    return NextResponse.json({
+    return jsonResponse({
       output: errorReply,
       text: errorReply,
       reply: errorReply,
@@ -262,7 +278,7 @@ export async function GET(
   const sessionId = request.nextUrl.searchParams.get("session_id");
 
   if (!sessionId) {
-    return NextResponse.json({ success: false, error: "session_id is required" }, { status: 400 });
+    return jsonResponse({ success: false, error: "session_id is required" }, { status: 400 });
   }
 
   const supabase = createAdminClient();
@@ -275,7 +291,7 @@ export async function GET(
     .maybeSingle();
 
   if (!tenant || !tenant.webchat_enabled) {
-    return NextResponse.json({ success: false, error: "Invalid or disabled" }, { status: 403 });
+    return jsonResponse({ success: false, error: "Invalid or disabled" }, { status: 403 });
   }
 
   // Conversation bul
@@ -288,7 +304,7 @@ export async function GET(
     .maybeSingle();
 
   if (!conv) {
-    return NextResponse.json({ success: true, messages: [] });
+    return jsonResponse({ success: true, messages: [] });
   }
 
   // Son 50 mesaji getir
@@ -299,7 +315,7 @@ export async function GET(
     .order("created_at", { ascending: true })
     .limit(50);
 
-  return NextResponse.json({
+  return jsonResponse({
     success: true,
     messages: (messages || []).map((m) => ({
       role: m.direction === "IN" ? "user" : "assistant",
