@@ -452,11 +452,22 @@ export async function POST(request: Request) {
                         eventData.type = att.type === 'file' ? 'document' : att.type;
                         eventData.media_url = att.payload?.url;
                         eventData.text = rawText || "[Media]";
+                    } else if (att.type === 'share' || att.type === 'story_mention' || att.type === 'story_reply' || att.type === 'ig_reel') {
+                        // Instagram share/story/reel attachments — NOT actual media for AI to process
+                        if (rawText) {
+                            eventData.text = rawText;
+                            eventData.type = 'text';
+                            eventData.media_url = null;
+                        } else {
+                            console.log(`[Webhook] Skipping Instagram ${att.type} attachment with no user text.`);
+                            continue;
+                        }
                     } else {
-                        // Unknown attachment type — prefer text if available
-                        eventData.type = att.type || 'text';
-                        eventData.media_url = att.payload?.url || null;
-                        eventData.text = rawText || "[Media]";
+                        // Unknown attachment type — treat as text only, never as media
+                        console.log(`[Webhook] Unknown Instagram attachment type: ${att.type}, treating as text.`);
+                        eventData.type = 'text';
+                        eventData.media_url = null;
+                        eventData.text = rawText || `[${att.type}]`;
                     }
                 } else {
                     eventData.text = rawText;

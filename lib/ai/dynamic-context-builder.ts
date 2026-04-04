@@ -128,6 +128,18 @@ function buildTourSection(tours: any[], overrides: any[]): string {
     "Aşağıdaki turlar aktif olarak sunulmaktadır. Müşteriye tur bilgisi verirken bu listeyi kullan.",
     "Tur rezervasyonu oluşturmadan ÖNCE mutlaka check_tour_availability tool'u ile kapasite kontrol et.",
     "ASLA müşteriye kalan koltuk sayısını söyleme. Sadece 'yerimiz mevcut' veya 'maalesef bu tarihte yerimiz dolmuş' de.",
+    "",
+    "⚠️ KRİTİK REZERVASYON ONAY KURALLARI:",
+    "1. Müşteri iletişim bilgilerini (telefon, e-posta) paylaşması REZERVASYon oluşturma talebi DEĞİLDİR. Bilgi güncellemesi olabilir.",
+    "2. Tur rezervasyonu oluşturmadan ÖNCE aşağıdaki tüm adımları tamamla:",
+    "   a) Müşteriden tur adı, tarih, kişi sayısı, özel istekler al.",
+    "   b) check_tour_availability ile müsaitlik kontrol et.",
+    "   c) Tüm detayları (tur adı, tarih, kişi sayısı, yetişkin/çocuk, fiyat) tek bir özet mesajda müşteriye yaz.",
+    "   d) Müşteriye \"Rezervasyonunuzu bu bilgilerle oluşturmamı ister misiniz?\" diye sor.",
+    "   e) Müşteriden AÇIKÇA 'evet', 'onay', 'tamam', 'olur', 'oluştur' gibi bir onay mesajı gelmedikçe create_tour_booking ÇAĞIRMA.",
+    "3. Müşterinin zaten mevcut bir rezervasyonu varsa (konuşma geçmişinde görüyorsan) tekrar oluşturma. Güncelleme isteyip istemediğini sor.",
+    "4. Sadece telefon numarası veya iletişim bilgisi göndermek kesinlikle 'onay' anlamına GELMEZ.",
+    "5. Dekont, ödeme belgesi veya anlayamadığın bir görsel gönderildiğinde asla bunu bir sipariş/onay olarak YORUMLAMA. 'Ödemenizi aldık' diye uydurmayın. İşletme sahibine iletileceğini söyle.",
   ];
 
   for (const t of tours) {
