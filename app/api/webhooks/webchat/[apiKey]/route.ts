@@ -196,24 +196,127 @@ export async function POST(
     );
 
     if (aiReply) {
-      // AI yanitini kaydet
-      await supabase.from("messages").insert({
-        conversation_id: conversation.id,
-        tenant_id: tenant.id,
-        direction: "OUT",
-        sender: "BOT",
-        text: aiReply,
-        external_message_id: `webchat_ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        message_type: "text",
-      });
+      // ═══ Parse [SEND_PHOTO:resource_name] tags ═══
+      const photoRegex = /\[SEND_PHOTO:(.+?)\]/g;
+      let photoMatch;
+      const photosToSend: string[] = [];
+      while ((photoMatch = photoRegex.exec(aiReply)) !== null) {
+        photosToSend.push(photoMatch[1].trim());
+      }
+
+      // ═══ Parse [SEND_TOUR_PHOTO:tour_name] tags ═══
+      const tourPhotoRegex = /\[SEND_TOUR_PHOTO:(.+?)\]/g;
+      let tourPhotoMatch;
+      const tourPhotosToSend: string[] = [];
+      while ((tourPhotoMatch = tourPhotoRegex.exec(aiReply)) !== null) {
+        tourPhotosToSend.push(tourPhotoMatch[1].trim());
+      }
+
+      // Clean text: remove tags
+      const cleanText = aiReply
+        .replace(/\[SEND_PHOTO:(.+?)\]/g, '')
+        .replace(/\[SEND_TOUR_PHOTO:(.+?)\]/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+      // Save clean text message to DB
+      if (cleanText) {
+        await supabase.from("messages").insert({
+          conversation_id: conversation.id,
+          tenant_id: tenant.id,
+          direction: "OUT",
+          sender: "BOT",
+          text: cleanText,
+          external_message_id: `webchat_ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          message_type: "text",
+        });
+      }
+
+      // ═══ Resolve resource photos ═══
+      const imageUrls: { url: string; caption: string }[] = [];
+
+      if (photosToSend.length > 0) {
+        try {
+          const { data: resources } = await supabase
+            .from("tenant_employees")
+            .select("name, attributes")
+            .eq("tenant_id", tenant.id);
+
+          for (const resourceName of photosToSend) {
+            const resource = resources?.find(
+              (r: any) => r.name.toLowerCase() === resourceName.toLowerCase()
+            );
+            const photoUrl = resource?.attributes?.cover_photo;
+            if (photoUrl) {
+              const caption = `📸 ${resource.name}`;
+              imageUrls.push({ url: photoUrl, caption });
+
+              // Save photo message to DB (panel'de de görünsün)
+              await supabase.from("messages").insert({
+                conversation_id: conversation.id,
+                tenant_id: tenant.id,
+                direction: "OUT",
+                sender: "BOT",
+                text: caption,
+                message_type: "image",
+                media_url: photoUrl,
+                is_read: true,
+              });
+
+              console.log(`[Webchat] Sent cover photo for resource: ${resourceName}`);
+            }
+          }
+        } catch (photoErr: any) {
+          console.error("[Webchat] Error resolving resource photos:", photoErr.message);
+        }
+      }
+
+      // ═══ Resolve tour photos ═══
+      if (tourPhotosToSend.length > 0) {
+        try {
+          const { data: tours } = await supabase
+            .from("tours")
+            .select("name, cover_photo")
+            .eq("tenant_id", tenant.id)
+            .eq("is_active", true);
+
+          for (const tourName of tourPhotosToSend) {
+            const tour = tours?.find(
+              (t: any) => t.name.toLowerCase() === tourName.toLowerCase()
+            );
+            const photoUrl = tour?.cover_photo;
+            if (photoUrl) {
+              const caption = `📸 ${tour.name}`;
+              imageUrls.push({ url: photoUrl, caption });
+
+              // Save photo message to DB (panel'de de görünsün)
+              await supabase.from("messages").insert({
+                conversation_id: conversation.id,
+                tenant_id: tenant.id,
+                direction: "OUT",
+                sender: "BOT",
+                text: caption,
+                message_type: "image",
+                media_url: photoUrl,
+                is_read: true,
+              });
+
+              console.log(`[Webchat] Sent cover photo for tour: ${tourName}`);
+            }
+          }
+        } catch (tourPhotoErr: any) {
+          console.error("[Webchat] Error resolving tour photos:", tourPhotoErr.message);
+        }
+      }
 
       return jsonResponse({
-        output: aiReply,
-        text: aiReply,
-        reply: aiReply,
+        output: cleanText,
+        text: cleanText,
+        reply: cleanText,
         success: true,
         conversation_id: conversation.id,
         mode: "ai",
+        images: imageUrls, // Widget bu listeyi kullanarak fotoğrafları render edecek
       });
     }
 
@@ -278,21 +381,23 @@ export async function GET(
     return jsonResponse({ success: true, messages: [] });
   }
 
-  // Son 50 mesaji getir
+  // Son 50 mesaji getir (media_url ve message_type dahil)
   const { data: messages } = await supabase
     .from("messages")
-    .select("direction, sender, text, created_at")
+    .select("direction, sender, text, created_at, message_type, media_url")
     .eq("conversation_id", conv.id)
     .order("created_at", { ascending: true })
     .limit(50);
 
   return jsonResponse({
     success: true,
-    messages: (messages || []).map((m) => ({
+    messages: (messages || []).map((m: any) => ({
       role: m.direction === "IN" ? "user" : "assistant",
       text: m.text,
       sender: m.sender,
       timestamp: m.created_at,
+      message_type: m.message_type || "text",
+      media_url: m.media_url || null,
     })),
   });
 }

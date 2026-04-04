@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UPGUN AI</title>
+<style>
+  :root{
+    --blue:#ff7206;
+    --blue-dark:#ff7206;
+    --bg:#f4f4f4;
+    --panel:#ffffff;
+    --shadow:0 10px 28px rgba(0,0,0,.22);
+  }
+  html,body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+
+  /* --- Açma butonu (resimli kart) --- */
+  #chat-button{
+    position:fixed;
+    right:100px;
+    bottom:120px;
+    width:115px;
+    height:144px;
+    border:none;
+    background:transparent;
+    padding:0;
+    cursor:pointer;
+    z-index:1001;
+    filter: drop-shadow(0 6px 16px rgba(0,0,0,0.45)) 
+            drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+    animation:float 3.5s ease-in-out infinite;
+  }
+  #chat-button img{
+    width:150%;
+    height:150%;
+    display:block;
+    border-radius:12px;
+    object-fit:contain;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-28px);}
+  }
+
+  #chat-box{
+    position:fixed;
+    right:60px;
+    bottom:100px;
+    width:370px;
+    height:540px;
+    display:none;
+    flex-direction:column;
+    background:#f7f9fc;
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    z-index:1000;
+    /* SLIDE EKLENDİ */
+    transform:translateX(420px);
+    opacity:0;
+    transition:transform .35s ease, opacity .35s ease;
+  }
+  #chat-box.open{transform:translateX(0);opacity:1;}
+  #chat-box.closing{transform:translateX(420px);opacity:0;}
+
+  /* --- Başlık --- */
+  #chat-header{
+    background:#fff;color:#000;display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.15)
+  }
+  #chat-header .title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:600
+  }
+  #chat-header .title .brand-logo{
+    height:20px;
+    display:block;
+  }
+  #chat-header .title .avatar{
+    width:32px;height:32px;border-radius:50%;overflow:hidden;flex:0 0 32px;
+    background:#0b5fb8;
+    box-shadow:0 0 10px rgba(47,106,115,0.6), 0 0 20px rgba(47,106,115,0.4);
+  }
+  #chat-header .title .avatar img{
+    width:100%;height:100%;object-fit:contain;border-radius:50%;
+  }
+  #chat-header .icons{display:flex;align-items:center;gap:14px}
+  #chat-header .icon-btn{background:none;border:0;cursor:pointer;line-height:0;padding:0;opacity:.95}
+  #chat-header .icon-btn:hover{opacity:.8}
+
+  /* --- Gövde / mesajlar --- */
+  #chat-body{
+    flex:1;
+    background:var(--bg);
+    padding:14px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column
+  }
+  #chat-body::-webkit-scrollbar{ width:8px; }
+  #chat-body::-webkit-scrollbar-track{ background:transparent; }
+  #chat-body::-webkit-scrollbar-thumb{ background:#ff7206; border-radius:4px; }
+  #chat-body{ scrollbar-width:thin; scrollbar-color:#ff7206 transparent; }
+
+  .msg-row{display:flex;gap:8px;margin-bottom:12px;align-items:flex-start}
+  .msg-row.bot .msg-avatar{
+    width:auto;
+    height:auto;
+    border-radius:0;
+    overflow:visible;
+    flex:0 0 auto;
+    box-shadow:none;
+    background:transparent;
+  }
+  .msg-row.bot .msg-avatar img{
+    width:38px;
+    height:38px;
+    object-fit:contain;
+    border-radius:0;
+  }
+  .msg-bubble{
+    background:var(--panel);border-radius:12px;padding:10px 14px;max-width:78%;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;
+  }
+  .msg-bubble img{
+    max-width:100%;
+    border-radius:8px;
+    margin-top:5px;
+    display:block;
+    cursor:pointer;
+  }
+  .msg-row.user{justify-content:flex-end}
+  .msg-row.user .msg-bubble{background:#fff}
+
+  /* --- Alt bar --- */
+  #chat-footer{background:#fff;border-top:1px solid #e5e9f0;padding:10px;display:flex;align-items:center;gap:8px}
+  #file-input{display:none}
+  .attach-btn{background:none;border:0;cursor:pointer;line-height:0;padding:6px;border-radius:6px;display:flex;}
+  .attach-btn:hover{background:#eff5ff}
+  #chat-input{flex:1;border:1px solid #cfd7e3;border-radius:10px;padding:9px 12px;font-size:14px;outline:none}
+  #send-btn{background:#ff7206;border:0;color:#fff;font-weight:700;border-radius:10px;padding:8px 16px;cursor:pointer}
+  #send-btn:hover{background:#000}
+
+  #chat-input:disabled{ background:#f3f4f6; color:#9ca3af; cursor:not-allowed; }
+  #send-btn:disabled{ opacity:.6; cursor:not-allowed; }
+  .msg-bubble a{color:var(--blue);text-decoration:underline}
+
+  .typing{align-self:flex-start;background:#fff;border-radius:12px;padding:10px 14px;display:inline-flex;gap:6px}
+  .dot{width:6px;height:6px;border-radius:50%;background:#ff7206;animation:blink 1.2s infinite}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%{opacity:.4;transform:translateY(0)}20%{opacity:1;transform:translateY(-2px)}100%{opacity:.4;transform:translateY(0)}}
+
+  /* --- Lightbox (fotoğraf büyütme) --- */
+  #lightbox-overlay{
+    display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,.85);z-index:9999;justify-content:center;align-items:center;cursor:pointer;
+  }
+  #lightbox-overlay.active{display:flex;}
+  #lightbox-overlay img{max-width:90%;max-height:90%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+</style>
+</head>
+<body>
+
+<!-- Açma butonu -->
+<button id="chat-button" aria-label="Sohbeti aç">
+  <img src="https://www.upgunai.com/uppypro-question.png" alt="Chat Button">
+</button>
+
+<div id="chat-box">
+  <div id="chat-header">
+    <div class="title">
+      <img class="brand-logo" src="https://www.upgunai.com/brand-logo-text.png" alt="UPGUNai Logo">
+      <span></span>
+    </div>
+    <div class="icons">
+      <button class="icon-btn" id="expand-btn" title="Büyüt/Küçült">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4" stroke="#000" stroke-width="2" stroke-linecap="round"/><path d="M9 5l-4 4M15 5l4 4M19 15l-4 4M5 15l4 4" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="clear-btn" title="Sohbeti temizle">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z" fill="#000" opacity=".25"/><path d="M10 11v8M14 11v8" stroke="#000" stroke-width="2" stroke-linecap="round"/><path d="M3 7h18M9 7l1.2-2.4A2 2 0 0 1 12 3a2 2 0 0 1 1.8 1.1L15 7" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="close-btn" title="Kapat">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="chat-body">
+    <div class="msg-row bot">
+      <div class="msg-avatar">
+        <img src="https://www.upgunai.com/uppypro-bot-avatar.png" alt="AI Avatar">
+      </div>
+      <div class="msg-bubble"><strong>UPGUN AI'a hoşgeldiniz.</strong> Size nasıl yardımcı olabilirim?</div>
+    </div>
+  </div>
+
+  <div id="chat-footer">
+    <label class="attach-btn" for="file-input" title="Resim Gönder"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M7 13.5l6.5-6.5a3 3 0 1 1 4.2 4.2L9.8 18.1a5 5 0 0 1-7.1-7.1L12 1.7" fill="none" stroke="#2f6a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
+    <input id="file-input" type="file" accept="image/*" />
+    
+    <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." />
+    <button id="send-btn">Gönder</button>
+  </div>
+</div>
+
+<!-- Lightbox overlay (fotoğraf büyütme) -->
+<div id="lightbox-overlay" onclick="this.classList.remove('active')">
+  <img id="lightbox-img" src="" alt="Büyütülmüş fotoğraf" />
+</div>
+
+<script>
+  let LOCAL_URL = window.location.href.includes("localhost") 
+      ? "http://localhost:3000/api/webhooks/webchat/6c49554b-6299-46a8-9d29-cd678e6564f6"
+      : "https://www.upgunai.com/api/webhooks/webchat/6c49554b-6299-46a8-9d29-cd678e6564f6";
+
+  const CHAT_URL = LOCAL_URL;
+  const SESSION_KEY = "chatId";
+
+  let knownBotTexts = new Set();
+  let knownBotImages = new Set(); // Fotoğraf duplicate kontrolü
+
+  function getChatId(){
+    let id=sessionStorage.getItem(SESSION_KEY);
+    if(!id){
+      id="chat_"+Math.random().toString(36).slice(2,11);
+      sessionStorage.setItem(SESSION_KEY,id);
+    }
+    return id;
+  }
+
+  // Markdown ve Link parser
+  function linkify(t){
+    if(!t) return "";
+    
+    // Sistem içi etiketleri temizle
+    t = t.replace(/\[SEND_PHOTO:.*?\]/g, "");
+    t = t.replace(/\[SEND_TOUR_PHOTO:.*?\]/g, "");
+    
+    // AI Görseller: ![Resim Adı](url) formatını <img> yapar
+    t = t.replace(/!\[(.*?)\]\((https?:\/\/[^\s]+)\)/g, '<img src="$2" alt="$1" onclick="openLightbox(this.src)" style="max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; cursor: pointer;" />');
+    
+    // Normal URL'leri tıklanabilir link yap
+    t = t.replace(/(^|[^"'])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+    
+    // Kalın metinler
+    t = t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    return t.trim();
+  }
+
+  // Fotoğraf büyütme (lightbox)
+  function openLightbox(src){
+    const overlay = document.getElementById('lightbox-overlay');
+    const img = document.getElementById('lightbox-img');
+    img.src = src;
+    overlay.classList.add('active');
+  }
+
+  function handleBotPayload(d){
+    let rawText = "";
+    if (typeof d === "string") rawText = d;
+    else if (d && typeof d.output === "string") rawText = d.output;
+    else if (d && typeof d.text === "string") rawText = d.text;
+    else if (d && typeof d.message === "string") rawText = d.message;
+
+    rawText = (rawText || "").trim();
+    if (rawText) {
+      addBot(rawText);
+    } else {
+      addBot("Üzgünüm, isteğinizi şu an anlayamadım.");
+    }
+
+    // ═══ API'den dönen fotoğrafları render et ═══
+    if (d && Array.isArray(d.images) && d.images.length > 0) {
+      d.images.forEach(function(img) {
+        if (img.url) {
+          addBotImage(img.url, img.caption || "📸 Fotoğraf");
+        }
+      });
+    }
+  }
+
+  const bO=document.getElementById('chat-button'),
+        box=document.getElementById('chat-box'),
+        bC=document.getElementById('close-btn'),
+        bCl=document.getElementById('clear-btn'),
+        bE=document.getElementById('expand-btn'),
+        body=document.getElementById('chat-body'),
+        input=document.getElementById('chat-input'),
+        send=document.getElementById('send-btn'),
+        file=document.getElementById('file-input');
+
+  let isBusy=false;
+  function setInputEnabled(enabled){
+    input.disabled=!enabled;
+    send.disabled=!enabled;
+  }
+
+  bO.addEventListener('click',()=>{
+    box.style.display='flex';
+    box.classList.remove('closing');
+    void box.offsetWidth; 
+    box.classList.add('open'); 
+    bO.style.display='none';
+  });
+  
+  bC.addEventListener('click',()=>{
+    box.classList.remove('open');
+    box.classList.add('closing'); 
+    const onEnd=(e)=>{
+      if(e.propertyName==='transform'){
+        box.style.display='none';
+        box.classList.remove('closing');
+        bO.style.display='inline-block';
+        box.removeEventListener('transitionend',onEnd);
+      }
+    };
+    box.addEventListener('transitionend',onEnd);
+  });
+  
+  bCl.addEventListener('click',()=>{
+    body.innerHTML='';
+    knownBotTexts.clear();
+    knownBotImages.clear();
+    addBot("UPGUN AI'a hoşgeldiniz. Size nasıl yardımcı olabilirim?");
+  });
+  
+  let ex=false;
+  bE.addEventListener('click',()=>{
+    ex=!ex;
+    box.style.width=ex?'600px':'370px';
+    box.style.height=ex?'700px':'540px';
+    box.classList.toggle('expanded', ex);
+  });
+
+  function addUser(t){
+    const r=document.createElement('div');
+    r.className='msg-row user';
+    const b=document.createElement('div');
+    b.className='msg-bubble';
+    
+    if(t.includes("data:image/")) {
+       b.innerHTML = t.replace(/(data:image\/[^\s]+)/, '<img src="$1" style="max-width: 100%; border-radius: 8px;" />');
+    } else {
+       b.textContent=t;
+    }
+    
+    r.appendChild(b);
+    body.appendChild(r);
+    body.scrollTop=body.scrollHeight;
+  }
+
+  function addBot(t){
+    if(!t) return;
+    
+    const signature = t.substring(0, 80);
+    if(knownBotTexts.has(signature)) return;
+    knownBotTexts.add(signature);
+
+    const r=document.createElement('div');
+    r.className='msg-row bot';
+    const a=document.createElement('div');
+    a.className='msg-avatar';
+    a.innerHTML='<img src="https://www.upgunai.com/uppypro-bot-avatar.png" alt="AI Avatar">';
+    const b=document.createElement('div');
+    b.className='msg-bubble';
+    
+    b.innerHTML=linkify(t);
+    
+    if(b.innerHTML.trim().length > 0) {
+        r.appendChild(a);
+        r.appendChild(b);
+        body.appendChild(r);
+        body.scrollTop=body.scrollHeight;
+    }
+  }
+
+  // ═══ YENİ: Bot fotoğraf mesajı ekleme ═══
+  function addBotImage(imageUrl, caption){
+    if(!imageUrl) return;
+    
+    // Duplicate kontrolü
+    const sig = imageUrl.substring(0, 100);
+    if(knownBotImages.has(sig)) return;
+    knownBotImages.add(sig);
+
+    const r=document.createElement('div');
+    r.className='msg-row bot';
+    const a=document.createElement('div');
+    a.className='msg-avatar';
+    a.innerHTML='<img src="https://www.upgunai.com/uppypro-bot-avatar.png" alt="AI Avatar">';
+    const b=document.createElement('div');
+    b.className='msg-bubble';
+    
+    // Fotoğraf + caption
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = caption || "Fotoğraf";
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "8px";
+    img.style.cursor = "pointer";
+    img.onclick = function(){ openLightbox(imageUrl); };
+    
+    if(caption) {
+      const cap = document.createElement('div');
+      cap.style.fontSize = "13px";
+      cap.style.color = "#666";
+      cap.style.marginTop = "6px";
+      cap.textContent = caption;
+      b.appendChild(img);
+      b.appendChild(cap);
+    } else {
+      b.appendChild(img);
+    }
+    
+    r.appendChild(a);
+    r.appendChild(b);
+    body.appendChild(r);
+    body.scrollTop=body.scrollHeight;
+  }
+
+  function showTyping(){
+    hideTyping();
+    const t=document.createElement('div');
+    t.className='typing';
+    t.id='typing';
+    t.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    body.appendChild(t);
+    body.scrollTop=body.scrollHeight;
+  }
+  
+  function hideTyping(){
+    const t=document.getElementById('typing');
+    if(t)t.remove();
+  }
+
+  async function sendMessage(){
+    const m=input.value.trim();
+    if(!m || isBusy) return;
+
+    isBusy=true;
+    setInputEnabled(false);
+
+    addUser(m);
+    input.value='';
+    showTyping();
+    
+    try{
+      const r=await fetch(CHAT_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({sessionId:getChatId(),chatInput:m})
+      });
+      const d=await r.json();
+      hideTyping();
+      handleBotPayload(d);
+    }catch(e){
+      hideTyping();
+      addBot("⚠️ Sunucuya bağlanılamadı.");
+    }finally{
+      isBusy=false;
+      setInputEnabled(true);
+    }
+  }
+
+  send.addEventListener('click',sendMessage);
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // ====== Dosya Yükleme ======
+  file.addEventListener('change',async e=>{
+    const f=e.target.files[0];
+    if(!f || isBusy) return;
+
+    const reader = new FileReader();
+    reader.onload = async function() {
+        const base64Data = reader.result;
+        
+        isBusy=true;
+        setInputEnabled(false);
+
+        addUser(`[Dosya Gönderildi] ${f.name}\n${base64Data}`);
+        showTyping();
+
+        try {
+            const payload = JSON.stringify({
+               sessionId: getChatId(),
+               chatInput: `[Müşteri Gelen Görseli]: ${f.name} - Not: Bu bir görseldir (URL: ${base64Data})`
+            });
+            
+            const r=await fetch(CHAT_URL, {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: payload
+            });
+            const d=await r.json();
+            hideTyping();
+            handleBotPayload(d);
+            
+        } catch(_){
+            hideTyping();
+            addBot("⚠️ Dosya gönderilirken hata oluştu.");
+        } finally {
+            isBusy=false;
+            setInputEnabled(true);
+        }
+    };
+    reader.readAsDataURL(f);
+    e.target.value='';
+  });
+
+  // ====== POLLING: Arka Plan Mesaj Tespiti (image desteği eklendi) ======
+  let lastMessageCount = 0;
+  async function pollMessages() {
+    if(box.style.display === 'none') return;
+    try {
+      const res = await fetch(CHAT_URL + "?session_id=" + getChatId());
+      const data = await res.json();
+      
+      if(data.success && data.messages) {
+        if(lastMessageCount === 0) {
+          lastMessageCount = data.messages.length;
+          return;
+        }
+
+        if(data.messages.length > lastMessageCount) {
+          const newMessages = data.messages.slice(lastMessageCount);
+          newMessages.forEach(m => {
+            if(m.role === 'assistant') {
+              // Fotoğraf mesajı mı yoksa metin mesajı mı?
+              if(m.message_type === 'image' && m.media_url) {
+                addBotImage(m.media_url, m.text || "📸 Fotoğraf");
+              } else {
+                addBot(m.text);
+              }
+            }
+          });
+          lastMessageCount = data.messages.length;
+        }
+      }
+    } catch(err) {} // Sessizce geç
+  }
+  setInterval(pollMessages, 3000);
+
+</script>
+</body>
+</html>
