@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendMessage, toggleMode, editMessage, markConversationAsRead, deleteConversation, clearConversationMessages } from "@/app/actions/chat";
 import { ContactInfoSheet } from "@/components/crm/contact-info-sheet";
-import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, ArrowLeft, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare, Plus } from "lucide-react";
+import { Send, Bot, User, Smile, Sparkles, Paperclip, MoreVertical, Edit2, X, Check, CheckCheck, MessageCircle, Instagram, ArrowDown, ArrowLeft, Trash2, Ban, Eraser, Menu, Search, FileText, Download, MapPin, Link as LinkIcon, Phone, MousePointerClick, MessageSquarePlus, MessageSquare, Plus, Globe } from "lucide-react";
 import { clsx } from "clsx";
 import { WavRecorder } from "@/lib/audio/wav-recorder";
 import { UserPlus, UserCheck } from "lucide-react";
@@ -785,6 +785,8 @@ export default function ChatInterface({
                                 </div>
                             ) : platform === 'whatsapp' ? (
                                 <MessageCircle className="text-green-500 w-5 h-5" />
+                            ) : platform === 'webchat' ? (
+                                <Globe className="text-violet-500 w-5 h-5" />
                             ) : (
                                 <Instagram className="text-pink-500 w-5 h-5" />
                             )}

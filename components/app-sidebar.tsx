@@ -25,7 +25,8 @@ import {
     Mail,
     BarChart3,
     ShoppingBag,
-    Compass
+    Compass,
+    Globe
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -41,7 +42,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const searchParams = useSearchParams();
     const currentTab = searchParams.get('tab') || 'all';
     const router = useRouter();
-    const [counts, setCounts] = useState({ all: 0, whatsapp: 0, instagram: 0 });
+    const [counts, setCounts] = useState({ all: 0, whatsapp: 0, instagram: 0, webchat: 0 });
     const [notificationCount, setNotificationCount] = useState(0);
     const [unreadTicketsCount, setUnreadTicketsCount] = useState(0);
     const [newCalendarCount, setNewCalendarCount] = useState(0);
@@ -67,12 +68,13 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                 .eq('direction', 'IN');
 
             if (messages) {
-                const newCounts = { all: 0, whatsapp: 0, instagram: 0 };
+                const newCounts = { all: 0, whatsapp: 0, instagram: 0, webchat: 0 };
                 messages.forEach((msg: any) => {
                     const channel = msg.conversations?.channel;
                     newCounts.all++;
                     if (channel === 'whatsapp') newCounts.whatsapp++;
                     if (channel === 'instagram') newCounts.instagram++;
+                    if (channel === 'webchat') newCounts.webchat++;
                 });
                 setCounts(newCounts);
             }
@@ -319,6 +321,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
     const [hasTrendyol, setHasTrendyol] = useState(false);
     const [trendyolOrderCount, setTrendyolOrderCount] = useState(0);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [hasWebchat, setHasWebchat] = useState(false);
 
     // Check Trendyol connection + new order count
     useEffect(() => {
@@ -343,6 +346,17 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
             }
         };
         checkTrendyol();
+
+        // Check webchat enabled
+        const checkWebchat = async () => {
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('webchat_enabled')
+                .eq('id', tenantId)
+                .maybeSingle();
+            setHasWebchat(tenantData?.webchat_enabled || false);
+        };
+        checkWebchat();
 
         // 60 saniyede bir yeni sipariş sayısını güncelle
         const interval = setInterval(async () => {
@@ -600,6 +614,17 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                         iconColor="text-white"
                         count={counts.instagram}
                     />
+                    {hasWebchat && (
+                        <TenantSidebarItem
+                            href="/panel/inbox?tab=webchat"
+                            icon={Globe}
+                            label="Web"
+                            isActive={pathname.includes('/inbox') && currentTab === 'webchat'}
+                            gradient="bg-gradient-to-tr from-violet-500 to-purple-600 shadow-violet-500/20"
+                            iconColor="text-white"
+                            count={counts.webchat}
+                        />
+                    )}
                     {hasTrendyol && (
                         <Link
                             href="/panel/trendyol"

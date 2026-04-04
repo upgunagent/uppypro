@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MessageCircle, Instagram, Trash2, Search, MessageSquare } from "lucide-react";
+import { MessageCircle, Instagram, Trash2, Search, MessageSquare, Globe } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { deleteConversation } from "@/app/actions/chat";
@@ -222,6 +222,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                     {currentTab === 'all' && 'Tüm Mesajlar'}
                     {currentTab === 'whatsapp' && 'WhatsApp'}
                     {currentTab === 'instagram' && 'Instagram'}
+                    {currentTab === 'webchat' && 'Web'}
                 </h1>
 
                 {/* Mobile Top Tabs (Hidden on Desktop) */}
@@ -319,12 +320,16 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                             ? "bg-gradient-to-r from-red-500 via-red-700 to-rose-900 text-white"
                                             : conv.channel === 'whatsapp'
                                                 ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white"
-                                                : (isSelected ? "bg-slate-50 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300"),
-                                        ((conv.channel === 'instagram' || conv.channel === 'whatsapp') && !isSelected) && "border-transparent",
+                                                : conv.channel === 'webchat'
+                                                    ? "bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600 text-white"
+                                                    : (isSelected ? "bg-slate-50 text-slate-900" : "bg-white border-slate-100 text-slate-900 hover:border-slate-300"),
+                                        ((conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat') && !isSelected) && "border-transparent",
                                         (conv.channel === 'instagram' && !isSelected) && "shadow-red-500/20",
                                         (conv.channel === 'whatsapp' && !isSelected) && "shadow-green-500/20",
+                                        (conv.channel === 'webchat' && !isSelected) && "shadow-violet-500/20",
                                         (conv.channel === 'instagram' && isSelected) && "shadow-red-500/40",
-                                        (conv.channel === 'whatsapp' && isSelected) && "shadow-green-500/40"
+                                        (conv.channel === 'whatsapp' && isSelected) && "shadow-green-500/40",
+                                        (conv.channel === 'webchat' && isSelected) && "shadow-violet-500/40"
                                     )}>
 
                                         {/* Selection Ring for Gradient Cards */}
@@ -335,7 +340,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                         <div className="flex items-center gap-2.5 md:gap-4 flex-1 min-w-0">
                                             <div className={clsx(
                                                 "rounded-full flex items-center justify-center shrink-0 w-9 h-9 md:w-12 md:h-12 border shadow-sm backdrop-blur-sm",
-                                                (conv.channel === 'instagram' || conv.channel === 'whatsapp')
+                                                (conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat')
                                                     ? "bg-white/20 border-white/30"
                                                     : "bg-slate-50 border-slate-200"
                                             )}>
@@ -348,18 +353,20 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     />
                                                 ) : conv.channel === 'whatsapp' ? (
                                                     <MessageCircle className={clsx("w-4 h-4 md:w-6 md:h-6", "text-white")} />
+                                                ) : conv.channel === 'webchat' ? (
+                                                    <Globe className={clsx("w-4 h-4 md:w-6 md:h-6", "text-white")} />
                                                 ) : (
                                                     <Instagram className={clsx("w-4 h-4 md:w-6 md:h-6", (conv.channel === 'instagram') ? "text-white" : "text-pink-600")} />
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <div className={clsx("flex items-center gap-1.5 font-bold text-sm md:text-lg", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white" : "text-slate-800")}>
+                                                <div className={clsx("flex items-center gap-1.5 font-bold text-sm md:text-lg", (conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat') ? "text-white" : "text-slate-800")}>
                                                     <span className="truncate">{safeString(conv.customer_handle || conv.external_thread_id)}</span>
                                                     {conv.channel === 'instagram' && (
                                                         <Instagram size={16} className="text-white/90 shrink-0" />
                                                     )}
                                                 </div>
-                                                <div className={clsx("text-xs md:text-sm capitalize flex items-center gap-2", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white/90" : "text-slate-500")}>
+                                                <div className={clsx("text-xs md:text-sm capitalize flex items-center gap-2", (conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat') ? "text-white/90" : "text-slate-500")}>
                                                     {conv.mode === 'BOT' && <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md uppercase tracking-wide font-bold">AI</span>}
                                                     <span className="block truncate flex-1 font-medium opacity-90">
                                                         {(() => {
@@ -383,7 +390,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                             {(() => {
                                                 const msgs = Array.isArray(conv.messages) ? conv.messages : [];
                                                 const unreadCount = msgs.filter(m => m.direction === 'IN' && !m.is_read).length;
-                                                const isColored = conv.channel === 'instagram' || conv.channel === 'whatsapp';
+                                                const isColored = conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat';
 
                                                 if (unreadCount > 0) {
                                                     return (
@@ -404,7 +411,7 @@ export function ConversationList({ initialConversations, tenantId, currentTab = 
                                                     );
                                                 }
                                             })()}
-                                            <span className={clsx("text-xs font-medium", (conv.channel === 'instagram' || conv.channel === 'whatsapp') ? "text-white/80" : "text-slate-400")}>{timeStr}</span>
+                                            <span className={clsx("text-xs font-medium", (conv.channel === 'instagram' || conv.channel === 'whatsapp' || conv.channel === 'webchat') ? "text-white/80" : "text-slate-400")}>{timeStr}</span>
                                         </div>
                                     </div>
 

@@ -22,7 +22,7 @@ interface ToolContext {
  * Önce email, sonra telefon, sonra isim ile arar.
  * Bulamazsa yeni müşteri kartı oluşturur.
  */
-async function findOrCreateCustomer(
+export async function findOrCreateCustomer(
   supabase: any,
   tenantId: string,
   name: string,

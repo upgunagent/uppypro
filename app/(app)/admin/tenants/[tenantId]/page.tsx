@@ -10,6 +10,7 @@ import { AdminBillingForm } from "./admin-billing-form";
 import { AdminAiSettingsForm } from "./admin-ai-settings-form";
 import { ManageSubscriptionForm } from "./billing/manage-subscription-form";
 import { ChannelCard } from "@/components/channel-card";
+import { AdminWebchatCard } from "./admin-webchat-card";
 
 export default async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> }) {
     const supabase = await createClient(); // For auth check
@@ -109,6 +110,11 @@ export default async function TenantDetail({ params }: { params: Promise<{ tenan
             <div className="w-full max-w-[380px] pointer-events-none">
                 <ChannelCard type="instagram" connection={ig} />
             </div>
+            <AdminWebchatCard
+                tenantId={tenantId}
+                webchatEnabled={tenant.webchat_enabled || false}
+                webchatApiKey={tenant.webchat_api_key || ''}
+            />
             <p className="w-full text-xs text-slate-400 mt-2">* Kanal bağlantıları şu an sadece işletme paneli üzerinden yönetilebilir.</p>
         </div>
     );

@@ -45,10 +45,54 @@ export async function deleteTenant(tenantId: string) {
             }
         }
 
-        revalidatePath("/admin/tenants");
+    revalidatePath("/admin/tenants");
         return { success: true };
     } catch (error: any) {
         console.error("Delete tenant error:", error);
         return { success: false, error: error.message };
     }
+}
+
+export async function toggleWebchat(tenantId: string, enabled: boolean) {
+    const supabase = createAdminClient();
+
+    const { error } = await supabase
+        .from("tenants")
+        .update({ webchat_enabled: enabled })
+        .eq("id", tenantId);
+
+    if (error) return { success: false, error: error.message };
+
+    // Channel connection yonet
+    if (enabled) {
+        // Webchat channel yoksa olustur
+        const { data: existing } = await supabase
+            .from("channel_connections")
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("channel", "webchat")
+            .maybeSingle();
+
+        if (!existing) {
+            await supabase.from("channel_connections").insert({
+                tenant_id: tenantId,
+                channel: "webchat",
+                status: "connected",
+            });
+        } else {
+            await supabase
+                .from("channel_connections")
+                .update({ status: "connected" })
+                .eq("id", existing.id);
+        }
+    } else {
+        await supabase
+            .from("channel_connections")
+            .update({ status: "disconnected" })
+            .eq("tenant_id", tenantId)
+            .eq("channel", "webchat");
+    }
+
+    revalidatePath(`/admin/tenants/${tenantId}`);
+    return { success: true };
 }

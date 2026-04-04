@@ -28,8 +28,8 @@ export async function sendMessage(conversationId: string, text: string, mediaUrl
 
     if (error) throw new Error(error.message);
 
-    // 3. Trigger Outbound API (Meta Send)
-    if (process.env.MOCK_META_SEND !== "true") {
+    // 3. Trigger Outbound API (Meta Send) - Webchat icin Meta API cagrilmaz
+    if (process.env.MOCK_META_SEND !== "true" && conv.channel !== "webchat") {
         const result = await sendToChannel(
             conv.tenant_id,
             conv.channel,
@@ -191,6 +191,8 @@ export async function editMessage(messageId: string, newText: string, conversati
 
         } else if (conv?.channel === 'instagram') {
             warningMsg = "Not: Instagram doğrudan mesaj düzenlemeyi henüz desteklememektedir. Değişiklik sadece panelinize yansıdı, müşterinin ekranında değişmedi.";
+        } else if (conv?.channel === 'webchat') {
+            // Webchat icin direkt duzenleme yapilir, uyari gerekmez
         } else {
             return { success: false, error: "Bu kanal için düzenleme desteklenmiyor." };
         }
