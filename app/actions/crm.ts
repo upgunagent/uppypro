@@ -129,6 +129,17 @@ export async function deleteCustomerAction(customerId: string): Promise<{ succes
             return { success: false, error: "İlişkili konuşmalar güncellenemedi." };
         }
 
+        // 2.5. Unlink Tour Bookings (Set customer_id = NULL)
+        const { error: bookingError } = await supabase
+            .from("tour_bookings")
+            .update({ customer_id: null })
+            .eq("customer_id", customerId);
+
+        if (bookingError) {
+            console.error("Error unlinking tour bookings:", bookingError);
+            return { success: false, error: "İlişkili tur rezervasyonları güncellenemedi." };
+        }
+
         // 3. Delete Customer Notes
         const { error: noteError } = await supabase
             .from("customer_notes")

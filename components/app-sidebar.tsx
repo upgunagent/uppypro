@@ -287,7 +287,7 @@ export function AppSidebar({ role, tenantId }: SidebarProps) {
                     .from('tour_bookings')
                     .select('*', { count: 'exact', head: true })
                     .eq('tenant_id', tenantId)
-                    .eq('is_reviewed', false);
+                    .eq('status', 'pending');
                 setTourBadgeCount(unreviewed || 0);
             }
         };

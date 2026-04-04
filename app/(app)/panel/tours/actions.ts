@@ -534,7 +534,7 @@ export async function getUnreviewedTourBookingCount(tenantId: string): Promise<n
     .from("tour_bookings")
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .eq("is_reviewed", false);
+    .eq("status", "pending");
   return count || 0;
 }
 
