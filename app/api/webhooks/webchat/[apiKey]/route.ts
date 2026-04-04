@@ -100,19 +100,16 @@ export async function POST(
     .select("*")
     .eq("tenant_id", tenant.id)
     .eq("channel", "webchat")
-    .eq("channel_conversation_id", session_id)
+    .eq("external_thread_id", session_id)
     .maybeSingle();
 
   if (existingConv) {
     conversation = existingConv;
-    // Visitor bilgilerini guncelle (isim, email vb.)
-    if (visitor_name || visitor_email || visitor_phone) {
-      const updates: any = {};
-      if (visitor_name) updates.contact_name = visitor_name;
-      if (visitor_phone) updates.contact_phone = visitor_phone;
+    // Visitor ismini guncelle
+    if (visitor_name) {
       await supabase
         .from("conversations")
-        .update(updates)
+        .update({ customer_handle: visitor_name })
         .eq("id", conversation.id);
     }
   } else {
@@ -121,17 +118,16 @@ export async function POST(
       .insert({
         tenant_id: tenant.id,
         channel: "webchat",
-        channel_conversation_id: session_id,
-        contact_name: visitor_name || "Web Ziyaretcisi",
-        contact_phone: visitor_phone || null,
-        is_ai_mode: true,
+        external_thread_id: session_id,
+        customer_handle: visitor_name || "Web Ziyaretcisi",
+        mode: "BOT",
       })
       .select("*")
       .single();
 
     if (convError || !newConv) {
       console.error("[Webchat] Conversation creation error:", convError);
-      return jsonResponse({ success: false, error: "Failed to create conversation" }, { status: 500 });
+      return jsonResponse({ output: "Bir hata olustu, lutfen tekrar deneyin.", success: false }, { status: 500 });
     }
     conversation = newConv;
 
@@ -155,38 +151,22 @@ export async function POST(
     conversation_id: conversation.id,
     tenant_id: tenant.id,
     direction: "IN",
-    sender: visitor_name || "Web Ziyaretcisi",
+    sender: "CUSTOMER",
     text: message,
-    is_read: false,
-    channel_message_id: `webchat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    external_message_id: `webchat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    message_type: "text",
   });
 
   if (msgError) {
     console.error("[Webchat] Message save error:", msgError);
-    return jsonResponse({ success: false, error: "Failed to save message" }, { status: 500 });
+    return jsonResponse({ output: "Mesaj kaydedilemedi.", success: false }, { status: 500 });
   }
 
-  // Conversation'i guncelle (son mesaj bilgisi)
-  await supabase
-    .from("conversations")
-    .update({
-      last_message: message,
-      last_message_at: new Date().toISOString(),
-    })
-    .eq("id", conversation.id);
+  // Conversation updated_at otomatik guncellenir
 
   // 4. AI modu kontrol - insan devraldiysa bekleme mesaji ver
-  if (!conversation.is_ai_mode) {
-    const { data: lastAgentMsg } = await supabase
-      .from("messages")
-      .select("text")
-      .eq("conversation_id", conversation.id)
-      .eq("direction", "OUT")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const replyText = lastAgentMsg?.text || "Mesajiniz alindi. Isletme temsilcimiz en kisa surede donecektir.";
+  if (conversation.mode === "HUMAN") {
+    const replyText = "Mesajiniz alindi. Isletme temsilcimiz en kisa surede donecektir.";
 
     return jsonResponse({
       output: replyText,
@@ -221,20 +201,11 @@ export async function POST(
         conversation_id: conversation.id,
         tenant_id: tenant.id,
         direction: "OUT",
-        sender: "AI",
+        sender: "BOT",
         text: aiReply,
-        is_read: true,
-        channel_message_id: `webchat_ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        external_message_id: `webchat_ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        message_type: "text",
       });
-
-      // Conversation'i guncelle
-      await supabase
-        .from("conversations")
-        .update({
-          last_message: aiReply,
-          last_message_at: new Date().toISOString(),
-        })
-        .eq("id", conversation.id);
 
       return jsonResponse({
         output: aiReply,
