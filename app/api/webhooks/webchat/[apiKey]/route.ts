@@ -127,7 +127,7 @@ export async function POST(
 
     if (convError || !newConv) {
       console.error("[Webchat] Conversation creation error:", convError);
-      return jsonResponse({ output: "Bir hata olustu, lutfen tekrar deneyin.", success: false }, { status: 500 });
+      return jsonResponse({ output: `Hata: ${convError?.message || 'Bilinmeyen hata'}`, success: false, debug: convError }, { status: 500 });
     }
     conversation = newConv;
 
@@ -159,7 +159,7 @@ export async function POST(
 
   if (msgError) {
     console.error("[Webchat] Message save error:", msgError);
-    return jsonResponse({ output: "Mesaj kaydedilemedi.", success: false }, { status: 500 });
+    return jsonResponse({ output: `Mesaj hatasi: ${msgError?.message || 'Bilinmeyen'}`, success: false, debug: msgError }, { status: 500 });
   }
 
   // Conversation updated_at otomatik guncellenir
