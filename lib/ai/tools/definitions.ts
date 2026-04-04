@@ -437,6 +437,29 @@ export const aiToolDefinitions = [
           required: ["customer_name", "date"],
         },
       },
+      {
+        name: "check_my_tour_bookings",
+        description:
+          "Müşterinin mevcut tur rezervasyonlarını sorgular. Müşteri 'rezervasyonumu kontrol et', 'kaç rezervasyonum var', 'daha önce rezervasyon yapmıştım' gibi sorular sorduğunda veya create_tour_booking öncesi mevcut rezervasyon kontrolü yapmak için bu aracı kullan. İsim, email veya telefon ile arama yapılır.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            customer_name: {
+              type: SchemaType.STRING,
+              description: "Müşterinin adı soyadı",
+            },
+            customer_email: {
+              type: SchemaType.STRING,
+              description: "Müşterinin e-posta adresi (opsiyonel)",
+            },
+            customer_phone: {
+              type: SchemaType.STRING,
+              description: "Müşterinin telefon numarası (opsiyonel)",
+            },
+          },
+          required: ["customer_name"],
+        },
+      },
     ],
   },
 ];

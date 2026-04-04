@@ -165,6 +165,8 @@ export async function executeToolCall(
         return await handleCancelTourBooking(args, context);
       case "modify_tour_booking":
         return await handleModifyTourBooking(args, context);
+      case "check_my_tour_bookings":
+        return await handleCheckMyTourBookings(args, context);
       default:
         return JSON.stringify({ error: `Bilinmeyen tool: ${toolName}` });
     }
@@ -941,6 +943,43 @@ async function handleCreateTourBooking(
     args.customer_phone
   );
 
+  // 6.5 DUPLIKAT KONTROLÜ: Aynı müşteri + aynı tur + aynı tarih için aktif booking var mı?
+  let duplicateQuery = supabase
+    .from("tour_bookings")
+    .select("id, guest_name, adult_count, child_count, total_price, status, created_at")
+    .eq("tour_id", tour.id)
+    .eq("booking_date", args.date)
+    .neq("status", "cancelled");
+
+  // customer_id varsa onunla, yoksa isimle kontrol et
+  if (customerId) {
+    duplicateQuery = duplicateQuery.eq("customer_id", customerId);
+  } else {
+    duplicateQuery = duplicateQuery.ilike("guest_name", args.customer_name?.trim());
+  }
+
+  const { data: existingUserBookings } = await duplicateQuery;
+
+  if (existingUserBookings && existingUserBookings.length > 0) {
+    const existing = existingUserBookings[0];
+    return JSON.stringify({
+      success: false,
+      duplicate: true,
+      existing_booking: {
+        booking_id: existing.id,
+        guest_name: existing.guest_name,
+        tour_name: tour.name,
+        date: args.date,
+        adult_count: existing.adult_count,
+        child_count: existing.child_count,
+        total_price: `${existing.total_price} ${tour.currency || "TL"}`,
+        status: existing.status,
+        total_existing: existingUserBookings.length,
+      },
+      error: `Bu müşterinin ${args.date} tarihinde ${tour.name} için zaten ${existingUserBookings.length} adet aktif rezervasyonu bulunmaktadır. Yeni bir rezervasyon oluşturulamaz. Mevcut rezervasyonu güncellemek için modify_tour_booking kullanın.`,
+    });
+  }
+
   // 7. Rezervasyon oluştur
   const { data: booking, error } = await supabase
     .from("tour_bookings")
@@ -1317,5 +1356,75 @@ async function handleModifyTourBooking(
     new_guests: `${newAdult}Y + ${newChild}Ç`,
     new_total_price: newTotalPrice,
     message: `✅ ${booking.guest_name} adına ${booking.booking_date} tarihli rezervasyon güncellendi. Kişi sayısı: ${newAdult} yetişkin + ${newChild} çocuk. ${newTotalPrice ? `Yeni toplam: ${newTotalPrice} TL` : ""}`,
+  });
+}
+
+async function handleCheckMyTourBookings(
+  args: Record<string, any>,
+  context: ToolContext
+): Promise<string> {
+  const supabase = createAdminClient();
+
+  // Müşteriyi bul (isim, email veya telefon ile)
+  let query = supabase
+    .from("tour_bookings")
+    .select(`
+      id, guest_name, guest_email, guest_phone,
+      booking_date, adult_count, child_count,
+      total_price, status, description, created_at,
+      tours:tour_id(name, currency)
+    `)
+    .eq("tenant_id", context.tenantId)
+    .neq("status", "cancelled")
+    .order("booking_date", { ascending: true });
+
+  // Arama kriteri: isim, email veya telefon
+  const identifier = args.customer_name || args.customer_email || args.customer_phone || "";
+  if (args.customer_email) {
+    query = query.ilike("guest_email", `%${args.customer_email.trim()}%`);
+  } else if (args.customer_phone) {
+    const digits = args.customer_phone.replace(/\D/g, "").slice(-10);
+    query = query.ilike("guest_phone", `%${digits}%`);
+  } else if (args.customer_name) {
+    query = query.ilike("guest_name", `%${args.customer_name.trim()}%`);
+  } else {
+    return JSON.stringify({
+      success: false,
+      error: "Müşteri bilgisi (isim, email veya telefon) belirtilmelidir.",
+    });
+  }
+
+  const { data: bookings, error } = await query;
+
+  if (error) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+
+  if (!bookings || bookings.length === 0) {
+    return JSON.stringify({
+      success: true,
+      message: `"${identifier}" için aktif rezervasyon bulunamadı.`,
+      bookings: [],
+      total: 0,
+    });
+  }
+
+  const results = bookings.map((b: any) => ({
+    booking_id: b.id,
+    tour_name: b.tours?.name || "Bilinmeyen tur",
+    date: b.booking_date,
+    guest_name: b.guest_name,
+    adult_count: b.adult_count,
+    child_count: b.child_count,
+    total_price: `${b.total_price} ${b.tours?.currency || "TL"}`,
+    status: b.status === "pending_approval" ? "İşletme Onayı Bekliyor" : b.status === "confirmed" ? "Onaylandı" : b.status,
+    description: b.description,
+  }));
+
+  return JSON.stringify({
+    success: true,
+    message: `${results.length} adet aktif rezervasyon bulundu.`,
+    bookings: results,
+    total: results.length,
   });
 }
