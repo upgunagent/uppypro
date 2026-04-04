@@ -271,7 +271,7 @@ export async function GET(
     .select("id")
     .eq("tenant_id", tenant.id)
     .eq("channel", "webchat")
-    .eq("channel_conversation_id", sessionId)
+    .eq("external_thread_id", sessionId)
     .maybeSingle();
 
   if (!conv) {

@@ -1,6 +1,9 @@
 -- Web Chat Webhook Module
 -- Her isletmeye ozel webhook URL olusturma ve webchat kanali icin destek
 
+-- 0. channel_type enum'una 'webchat' degerini ekle
+ALTER TYPE channel_type ADD VALUE IF NOT EXISTS 'webchat';
+
 -- 1. tenants tablosuna webchat alanlari ekle
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS webchat_enabled BOOLEAN DEFAULT false;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS webchat_api_key TEXT;
